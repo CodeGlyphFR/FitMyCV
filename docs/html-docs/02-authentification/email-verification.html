@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verification Email | FitMyCV.io</title>
+  <title>Vérification Email | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -29,115 +29,317 @@
           <span>/</span>
           <a href="./overview.html">Authentification</a>
           <span>/</span>
-          <span>Verification Email</span>
+          <span>Vérification Email</span>
         </div>
 
-        <h1>Verification Email</h1>
+        <h1>Vérification Email</h1>
         <p class="lead">
-          Le système de verification email permet de confirmer l'adresse email des utilisateurs inscrits par credentials.
+          Le système de vérification email gère trois flux distincts : la confirmation d'adresse
+          après inscription credentials, le renvoi du lien de vérification et le changement d'adresse
+          email. Les utilisateurs OAuth sont automatiquement vérifiés à la création du compte.
         </p>
 
-        <h2>Flux de Verification</h2>
+        <h2>Flux de Vérification à l'Inscription</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Processus de verification</div>
+          <div class="diagram-title">Processus complet : inscription &rarr; vérification &rarr; connexion automatique</div>
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
+    participant F as Frontend
     participant A as API
     participant DB as PostgreSQL
     participant E as Email Service
 
-    Note over U,E: Inscription
-    U->>A: POST /register
-    A->>DB: Creer User (emailVerified: null)
-    A->>DB: Creer VerificationToken
-    A->>E: Envoyer email verification
-    E->>U: Email avec lien
+    Note over U,E: Étape 1 - Inscription
+    U->>F: Formulaire d'inscription
+    F->>A: POST /api/auth/register
+    A->>DB: CREATE User (emailVerified: null)
+    A->>DB: CREATE EmailVerificationToken (userId)
+    A->>E: Envoyer email de vérification
+    A->>F: { ok: true }
+    F->>U: Redirection /auth/verify-email-required
 
-    Note over U,E: Verification
-    U->>A: GET /verify?token=xxx
-    A->>DB: Verifier token valide
-    A->>DB: UPDATE User.emailVerified
-    A->>DB: DELETE VerificationToken
-    A->>U: Redirection login
+    Note over U,E: Étape 2 - Vérification
+    U->>E: Ouvre email, clic lien
+    E->>F: /auth/verify-email?token=xxx
+    F->>A: GET /api/auth/verify-email?token=xxx
+    A->>DB: verifyToken(token) - valider et non expiré
+    A->>DB: UPDATE User SET emailVerified = NOW()
+    A->>DB: DELETE EmailVerificationToken
+    A->>F: { success: true, user: { id, email, name } }
+
+    Note over U,E: Étape 3 - Connexion automatique
+    F->>F: Redirection vers /auth/complete-signin?token=autoSignInToken
+    F->>A: signIn('credentials', { autoSignInToken })
+    A->>DB: verifyAutoSignInToken()
+    A->>DB: DELETE AutoSignInToken (usage unique)
+    A->>A: Créer session JWT (7 jours)
+    A->>F: Session créée
+    F->>U: Redirection vers /
           </div>
         </div>
 
-        <h2>Modèle VerificationToken</h2>
+        <h2>Token de Vérification Email</h2>
 
-        <pre><code>// prisma/schema.prisma
+        <p>Les tokens de vérification sont stockés dans la table <code>EmailVerificationToken</code>
+        et gérés par <code>lib/email/emailService.js</code>.</p>
 
-model VerificationToken {
-  identifier String   // Email de l'utilisateur
-  token      String   @unique
-  expires    DateTime
+        <pre><code class="language-javascript">// Création du token à l'inscription (lib/email/emailService.js)
+export async function createVerificationToken(userId) {
+  // Supprimer les anciens tokens de l'utilisateur
+  await prisma.emailVerificationToken.deleteMany({
+    where: { userId },
+  });
 
-  @@unique([identifier, token])
-}</code></pre>
-
-        <h2>Generation du Token</h2>
-
-        <pre><code>// lib/auth/verification.js
-import crypto from 'crypto';
-import prisma from '@/lib/prisma';
-
-export async function createVerificationToken(email) {
-  // Generer token unique
   const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
-  // Expiration dans 24h
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-  // Sauvegarder en base
-  await prisma.verificationToken.create({
-    data: {
-      identifier: email,
-      token,
-      expires
-    }
+  await prisma.emailVerificationToken.create({
+    data: { userId, token, expires },
   });
 
   return token;
 }
 
+// Vérification du token
 export async function verifyToken(token) {
-  const record = await prisma.verificationToken.findUnique({
-    where: { token }
+  const record = await prisma.emailVerificationToken.findUnique({
+    where: { token },
   });
 
   if (!record || record.expires < new Date()) {
-    return null;
+    return { valid: false, error: 'Token invalide ou expiré' };
   }
 
-  // Marquer l'email comme vérifie
+  return { valid: true, userId: record.userId };
+}
+
+// Marquer l'email comme vérifié
+export async function markEmailAsVerified(userId) {
   await prisma.user.update({
-    where: { email: record.identifier },
-    data: { emailVerified: new Date() }
+    where: { id: userId },
+    data: { emailVerified: new Date() },
   });
-
-  // Supprimer le token utilise
-  await prisma.verificationToken.delete({
-    where: { token }
-  });
-
-  return record.identifier;
 }</code></pre>
 
-        <h2>Email de Verification</h2>
+        <h2>Token de Connexion Automatique (Auto Sign-In)</h2>
 
-        <pre><code>// lib/email/templates/verification.js
+        <p>Après la vérification de l'email, un token temporaire est généré pour connecter automatiquement
+        l'utilisateur sans qu'il ait à saisir à nouveau ses identifiants.</p>
 
-export function getVerificationEmailTemplate(name, verifyUrl) {
-  return {
-    subject: 'Verifiez votre email - FitMyCV.io',
-    html: \`
-      <h1>Bienvenue sur FitMyCV.io, \${name} !</h1>
-      <p>Cliquez sur le lien ci-dessous pour verifier votre email :</p>
-      <a href="\${verifyUrl}">Verifier mon email</a>
-      <p>Ce lien expire dans 24 heures.</p>
-    \`
-  };
+        <div class="card-grid">
+          <div class="card">
+            <h4>Caractéristiques du Token</h4>
+            <ul>
+              <li><strong>Taille</strong> : 32 bytes (crypto.randomBytes)</li>
+              <li><strong>Expiration</strong> : 5 minutes</li>
+              <li><strong>Usage unique</strong> : supprimé après utilisation</li>
+              <li><strong>Stockage</strong> : table <code>AutoSignInToken</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Flux d'Utilisation</h4>
+            <ul>
+              <li>Créé par <code>createAutoSignInToken(userId)</code></li>
+              <li>Vérifié par <code>verifyAutoSignInToken(token)</code></li>
+              <li>Supprimé par <code>deleteAutoSignInToken(token)</code></li>
+              <li>Nettoyage : <code>cleanupExpiredAutoSignInTokens()</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <pre><code class="language-javascript">// lib/auth/autoSignIn.js
+
+export async function createAutoSignInToken(userId) {
+  // Supprimer les anciens tokens
+  await prisma.autoSignInToken.deleteMany({ where: { userId } });
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date();
+  expires.setMinutes(expires.getMinutes() + 5); // Expire dans 5 minutes
+
+  await prisma.autoSignInToken.create({
+    data: { userId, token, expires },
+  });
+
+  return token;
+}
+
+export async function verifyAutoSignInToken(token) {
+  const record = await prisma.autoSignInToken.findUnique({
+    where: { token },
+  });
+
+  if (!record) return { valid: false, error: 'Token invalide' };
+  if (record.expires < new Date()) {
+    await prisma.autoSignInToken.delete({ where: { token } });
+    return { valid: false, error: 'Token expiré' };
+  }
+
+  return { valid: true, userId: record.userId };
+}</code></pre>
+
+        <h3>Page Complete Sign-In</h3>
+
+        <p>La page <code>/auth/complete-signin</code> est un composant client qui reçoit le token
+        auto-signin et appelle NextAuth pour créer la session :</p>
+
+        <pre><code class="language-javascript">// app/auth/complete-signin/page.jsx (extrait)
+'use client';
+
+export default function CompleteSignInPage() {
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (!token) { setError('Token manquant'); return; }
+
+    const autoSignIn = async () => {
+      const result = await signIn('credentials', {
+        autoSignInToken: token,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Token invalide ou expiré');
+        return;
+      }
+
+      // Succès - rediriger vers /
+      setTimeout(() => router.replace('/'), 1000);
+    };
+
+    autoSignIn();
+  }, [searchParams, router]);
+}</code></pre>
+
+        <h2>Renvoi de l'Email de Vérification</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Processus de renvoi</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant F as Frontend
+    participant A as API /resend-verification
+    participant DB as PostgreSQL
+    participant E as Email Service
+
+    U->>F: Clic "Renvoyer l'email"
+    F->>A: POST /api/auth/resend-verification + recaptchaToken
+    A->>A: Vérifier session (user connecté)
+    A->>A: Vérifier reCAPTCHA v3
+    A->>DB: isEmailVerified(userId)
+    alt Déjà vérifié
+        A->>F: 400 { error: 'emailAlreadyVerified' }
+    end
+    A->>DB: Rate limiting (token créé < 1 min ?)
+    alt Rate limit dépassé
+        A->>F: 429 { error: 'rateLimitExceeded' }
+    else OK
+        A->>DB: CREATE EmailVerificationToken
+        A->>E: Envoyer email
+        A->>F: { success: true }
+    end
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Rate Limiting</div>
+          <p>L'endpoint <code>/api/auth/resend-verification</code> vérifie si un token a été créé
+          il y a moins de <strong>60 secondes</strong> pour le même utilisateur. Si c'est le cas,
+          une erreur 429 est retournée. Cette vérification est faite via la colonne <code>createdAt</code>
+          de la table <code>EmailVerificationToken</code>.</p>
+        </div>
+
+        <h2>Changement d'Adresse Email</h2>
+
+        <p>Les utilisateurs credentials peuvent changer leur adresse email depuis la page <code>/account</code>.
+        Le changement n'est pas immédiat : un email de confirmation est envoyé à la nouvelle adresse.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Processus de changement d'email</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant F as Frontend /account
+    participant A1 as API /account/profile
+    participant A2 as API /verify-email-change
+    participant DB as PostgreSQL
+    participant E as Email Service
+
+    U->>F: Saisir nouvelle adresse email
+    F->>A1: PUT /api/account/profile { email: "new@mail.fr" }
+    A1->>A1: Vérifier session
+    A1->>A1: Vérifier n'est PAS un utilisateur OAuth
+    A1->>DB: Vérifier email pas déjà utilisé
+    A1->>DB: Rate limiting (cooldown 60s)
+    A1->>DB: CREATE EmailChangeRequest (userId, newEmail, token)
+    A1->>E: Envoyer email de vérification à new@mail.fr
+    A1->>F: { ok: true, emailChangeRequested: true }
+
+    Note over U,E: L'utilisateur consulte sa nouvelle boîte mail
+
+    U->>E: Clic lien de vérification
+    E->>F: /auth/verify-email-change?token=xxx
+    F->>A2: GET /api/auth/verify-email-change?token=xxx
+    A2->>DB: verifyEmailChangeToken(token)
+    A2->>DB: Vérifier nouvelle adresse pas déjà utilisée
+    A2->>DB: UPDATE User SET email = newEmail, emailVerified = NOW()
+    A2->>DB: DELETE EmailChangeRequest
+    A2->>F: { success: true }
+    F->>U: "Adresse email modifiée avec succès"
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Restriction OAuth</div>
+          <p>Les utilisateurs OAuth (sans <code>passwordHash</code> ou avec des comptes OAuth liés)
+          <strong>ne peuvent pas</strong> changer leur adresse email via cette API. L'endpoint retourne
+          une erreur 403 : "Votre email est lié à votre compte OAuth et ne peut pas être modifié ici."</p>
+        </div>
+
+        <h3>Rate Limiting du Changement d'Email</h3>
+
+        <p>Un cooldown de <strong>60 secondes</strong> est appliqué entre deux demandes de changement d'email.
+        Si une demande existe avec un <code>createdAt</code> de moins de 60 secondes, l'API retourne une
+        erreur 429 avec le temps restant.</p>
+
+        <h2>Vérification Automatique OAuth</h2>
+
+        <p>Les utilisateurs qui s'inscrivent via OAuth (Google, GitHub, Apple) ont leur email
+        automatiquement vérifié :</p>
+
+        <pre><code class="language-javascript">// lib/auth/options.js - JWT callback
+async jwt({ token, user }) {
+  if (token?.id) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: token.id },
+      select: { emailVerified: true, passwordHash: true, role: true },
+    });
+
+    // Si utilisateur OAuth (pas de passwordHash) et pas encore vérifié
+    if (dbUser && !dbUser.passwordHash && !dbUser.emailVerified) {
+      await prisma.user.update({
+        where: { id: token.id },
+        data: { emailVerified: new Date() },
+      });
+      token.emailVerified = new Date();
+    }
+  }
+  return token;
+}
+
+// Et aussi dans l'event createUser
+events: {
+  async createUser({ user }) {
+    const dbUser = await prisma.user.findUnique({ ... });
+    if (!dbUser.passwordHash && !dbUser.emailVerified) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
+    }
+  }
 }</code></pre>
 
         <h2>API Endpoints</h2>
@@ -147,34 +349,120 @@ export function getVerificationEmailTemplate(name, verifyUrl) {
             <tr>
               <th>Endpoint</th>
               <th>Méthode</th>
+              <th>Auth</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>/api/auth/verify</code></td>
+              <td><code>/api/auth/verify-email</code></td>
               <td>GET</td>
-              <td>Vérifie le token et active le compte</td>
+              <td>Non</td>
+              <td>Vérifie le token et active le compte (?token=xxx)</td>
             </tr>
             <tr>
               <td><code>/api/auth/resend-verification</code></td>
               <td>POST</td>
-              <td>Renvoie l'email de verification</td>
+              <td>Session</td>
+              <td>Renvoie l'email de vérification (rate limit: 1/min)</td>
+            </tr>
+            <tr>
+              <td><code>/api/auth/verify-email-change</code></td>
+              <td>GET</td>
+              <td>Non</td>
+              <td>Confirme le changement d'adresse email (?token=xxx)</td>
+            </tr>
+            <tr>
+              <td><code>/api/account/profile</code></td>
+              <td>PUT</td>
+              <td>Session</td>
+              <td>Initier un changement d'email (envoie email de confirmation)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Securite</h2>
+        <h2>Tables de Base de Données</h2>
 
-        <div class="callout callout-info">
-          <div class="callout-title">Mesures de securite</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th>Champs Principaux</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>EmailVerificationToken</code></td>
+              <td>userId, token (unique), expires, createdAt</td>
+              <td>Vérification d'email à l'inscription</td>
+            </tr>
+            <tr>
+              <td><code>AutoSignInToken</code></td>
+              <td>userId, token (unique), expires</td>
+              <td>Connexion automatique post-vérification (5 min, usage unique)</td>
+            </tr>
+            <tr>
+              <td><code>EmailChangeRequest</code></td>
+              <td>userId, newEmail, token, createdAt</td>
+              <td>Demande de changement d'adresse email</td>
+            </tr>
+            <tr>
+              <td><code>User.emailVerified</code></td>
+              <td>DateTime | null</td>
+              <td>null = non vérifié, Date = vérifié (auto pour OAuth)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Sécurité</h2>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Mesures de sécurité</div>
           <ul>
-            <li>Token cryptographiquement securise (32 bytes)</li>
-            <li>Expiration automatique apres 24h</li>
-            <li>Token a usage unique (supprimé apres verification)</li>
-            <li>Rate limiting sur resend (1 par minute)</li>
+            <li><strong>Tokens cryptographiques</strong> : 32 bytes via <code>crypto.randomBytes()</code></li>
+            <li><strong>Expiration stricte</strong> : 24h pour vérification email, 5 min pour auto-signin</li>
+            <li><strong>Usage unique</strong> : tokens supprimés après utilisation</li>
+            <li><strong>Rate limiting</strong> : 1 renvoi par minute (vérification), 60s cooldown (changement email)</li>
+            <li><strong>reCAPTCHA v3</strong> : sur le renvoi de vérification (score &ge; 0.5)</li>
+            <li><strong>Vérification double</strong> : le changement d'email vérifie la nouvelle adresse ET qu'elle n'est pas déjà utilisée</li>
+            <li><strong>Nettoyage</strong> : <code>cleanupExpiredAutoSignInTokens()</code> pour purger les tokens expirés</li>
           </ul>
         </div>
+
+        <h2>Pages Frontend</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Fichier</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/auth/verify-email-required</code></td>
+              <td><code>app/auth/verify-email-required/page.jsx</code></td>
+              <td>Page d'attente après inscription (avec bouton renvoi)</td>
+            </tr>
+            <tr>
+              <td><code>/auth/verify-email</code></td>
+              <td><code>app/auth/verify-email/page.jsx</code></td>
+              <td>Page de traitement du lien de vérification</td>
+            </tr>
+            <tr>
+              <td><code>/auth/verify-email-change</code></td>
+              <td><code>app/auth/verify-email-change/page.jsx</code></td>
+              <td>Page de confirmation du changement d'email</td>
+            </tr>
+            <tr>
+              <td><code>/auth/complete-signin</code></td>
+              <td><code>app/auth/complete-signin/page.jsx</code></td>
+              <td>Auto-connexion après vérification (token 5 min)</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,141 +26,453 @@
           <span>Extraction PDF</span>
         </div>
 
-        <h1>Extraction PDF</h1>
+        <h1>Extraction PDF (Offres d'emploi)</h1>
         <p class="lead">
-          Extraction des informations d'une offre d'emploi a partir d'un fichier PDF télécharge.
+          Extraction des informations d'une offre d'emploi a partir d'un fichier PDF telecharge.
+          Contrairement a l'import PDF de CV (qui utilise GPT-4o Vision), l'extraction d'offres PDF
+          utilise <code>pdf-parse</code> pour extraire le texte puis OpenAI Structured Outputs pour la structuration.
         </p>
 
-        <h2>Flux d'Extraction</h2>
+        <div class="callout callout-warning">
+          <div class="callout-title">Ne pas confondre</div>
+          <p>
+            Ne pas confondre avec l'import PDF de CV (<code>lib/pdf/</code>). Ce module extrait des
+            <strong>OFFRES D'EMPLOI</strong> depuis des PDF, pas des CV.
+          </p>
+        </div>
+
+        <!-- ============================================================ -->
+        <h2>Pipeline d'Extraction</h2>
 
         <div class="diagram">
           <div class="diagram-title">Pipeline d'extraction PDF</div>
           <div class="mermaid">
 flowchart TB
-    Upload[Upload PDF] --> Valid[Validation]
-    Valid --> Convert[Conversion Image]
-    Convert --> Vision[GPT-4o Vision]
-    Vision --> Struct[Donnees Structurees]
-    Struct --> DB[(JobOffer)]
+    Upload["Upload PDF"] --> Validate["Validation<br/>Type MIME + Taille"]
+    Validate --> Hash["computeContentHash()<br/>SHA256"]
+    Hash --> Cache{"Cache?<br/>@@unique userId+contentHash"}
+    Cache -->|Hit| Return["Retour cache"]
+    Cache -->|Miss| Extract["extractTextFromPdf()<br/>pdf-parse"]
+    Extract --> AI["OpenAI Structured Outputs<br/>jobOfferExtractionSchema.json"]
+    AI --> ValidateResult{"isJobOfferValid()?"}
+    ValidateResult -->|Non| Error["Erreur"]
+    ValidateResult -->|Oui| LangDetect["Detection langue"]
+    LangDetect --> Store["storeJobOffer()<br/>Upsert JobOffer"]
           </div>
         </div>
 
-        <h2>Implementation</h2>
+        <!-- ============================================================ -->
+        <h2>Extraction de texte</h2>
 
-        <pre><code>// lib/job-offers/extractFromPdf.js
-import { convertPdfToImages } from './pdfConverter';
-import { callOpenAI } from '@/lib/openai-core/client';
+        <p>
+          La fonction <code>extractTextFromPdf()</code> utilise <code>pdf-parse</code> (base sur
+          <code>pdf.js</code> de Mozilla) pour extraire le texte brut du PDF. Contrairement a
+          l'import CV qui convertit les pages en images, ici on travaille uniquement avec du texte.
+        </p>
 
-export async function extractJobOfferFromPdf(pdfBuffer) {
-  // 1. Convertir PDF en images
-  const images = await convertPdfToImages(pdfBuffer);
+        <ul>
+          <li>Utilise <code>pdf-parse</code> (pas <code>pdf-to-img</code> ni GPT-4o Vision)</li>
+          <li>Extrait le texte brut du PDF</li>
+          <li>Pas de conversion en images (contrairement a l'import CV)</li>
+          <li>Meilleure gestion des polices custom (Type3) par rapport a <code>pdf2json</code></li>
+        </ul>
 
-  // 2. Extraire via GPT-4o Vision
-  const result = await callOpenAI({
-    model: 'gpt-4o',
-    featureName: 'job_extraction_pdf',
-    messages: [
-      {
-        role: 'system',
-        content: JOB_EXTRACTION_PDF_PROMPT
-      },
-      {
-        role: 'user',
-        content: images.map(img => ({
-          type: 'image_url',
-          image_url: { url: \`data:image/png;base64,\${img}\` }
-        }))
-      }
-    ],
-    responseFormat: {
-      type: 'json_schema',
-      json_schema: jobOfferSchema
-    }
-  });
+        <pre><code class="language-javascript">// lib/job-offer/extraction/pdf.js
+import { promises as fs } from 'fs';
+import path from 'path';
+import pdfParse from 'pdf-parse';
 
-  return result;
-}</code></pre>
-
-        <h2>Conversion PDF vers Images</h2>
-
-        <pre><code>// lib/job-offers/pdfConverter.js
-import { pdf } from 'pdf-to-img';
-
-export async function convertPdfToImages(pdfBuffer) {
-  const images = [];
-
-  const document = await pdf(pdfBuffer, { scale: 2.0 });
-
-  for await (const page of document) {
-    images.push(page.toString('base64'));
-  }
-
-  return images;
-}</code></pre>
-
-        <h2>Validation du Fichier</h2>
-
-        <pre><code>// lib/job-offers/validation.js
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_TYPES = ['application/pdf'];
-
-export function validateJobOfferPdf(file) {
-  const errors = [];
-
-  if (file.size > MAX_FILE_SIZE) {
-    errors.push('Fichier trop volumineux (max 10 MB)');
-  }
-
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    errors.push('Type de fichier non supporte');
-  }
+export async function extractTextFromPdf(filePath) {
+  const dataBuffer = await fs.readFile(filePath);
+  const data = await pdfParse(dataBuffer);
 
   return {
-    valid: errors.length === 0,
-    errors
+    name: path.basename(filePath),
+    text: data.text.trim(),
+    source_path: filePath
   };
 }</code></pre>
 
-        <h2>API Endpoint</h2>
+        <!-- ============================================================ -->
+        <h2>Extraction IA</h2>
 
-        <pre><code>// POST /api/job-offers/extract-pdf
-// Content-Type: multipart/form-data
+        <p>
+          Deux fonctions sont disponibles selon le contexte :
+        </p>
 
-// Request: FormData avec fichier PDF
+        <ul>
+          <li>
+            <code>extractJobOfferFromPdf(pdfPath, userId, signal)</code> : extrait le texte du PDF
+            puis lance l'extraction IA. Utilisee pour les appels directs.
+          </li>
+          <li>
+            <code>extractJobOfferFromPdfText(pdfText, userId, signal)</code> : recoit le texte
+            deja extrait. Utilisee par <code>getOrExtractJobOfferFromPdf()</code> pour eviter une
+            double lecture du fichier.
+          </li>
+        </ul>
 
-// Response
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "Developpeur Full Stack",
-    "company": "TechCorp",
-    "location": "Paris",
-    "requirements": {...},
-    // ... autres données extraites
+        <p>Les deux fonctions partagent la meme logique :</p>
+
+        <ul>
+          <li>Meme schema que l'extraction URL : <code>jobOfferExtractionSchema.json</code></li>
+          <li>Memes prompts : <code>system.md</code> + <code>user.md</code></li>
+          <li>Modele configurable via <code>getAiModelSetting('model_extract_job_offer')</code></li>
+          <li>Temperature : <code>0.1</code></li>
+          <li>Track sous <code>featureName: 'extract_job_offer_pdf'</code></li>
+          <li>Support de l'annulation via <code>AbortSignal</code></li>
+        </ul>
+
+        <pre><code class="language-javascript">// lib/job-offer/extraction/pdf.js (simplifie)
+export async function extractJobOfferFromPdf(pdfPath, userId, signal = null) {
+  const client = getOpenAIClient();
+
+  // 1. Extraire le texte du PDF
+  const pdfData = await extractTextFromPdf(pdfPath);
+
+  if (!pdfData.text || pdfData.text.length < 100) {
+    throw new Error(JSON.stringify({
+      translationKey: 'taskQueue.errors.noJobOfferDetected',
+      source: pdfPath
+    }));
   }
+
+  // 2. Charger schema et prompts
+  const schema = await loadJobOfferSchema();
+  const systemPrompt = await loadPrompt('lib/job-offer/prompts/system.md');
+  const userPrompt = await loadPromptWithVars('lib/job-offer/prompts/user.md', {
+    jobTitle: 'Non specifie (a extraire du contenu)',
+    sourceContent: pdfData.text
+  });
+
+  // 3. Appel OpenAI Structured Outputs
+  const extractModel = await getAiModelSetting('model_extract_job_offer');
+
+  let requestOptions = addTemperatureIfSupported({
+    model: extractModel,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    response_format: {
+      type: 'json_schema',
+      json_schema: schema
+    },
+  }, 0.1);
+
+  const response = await client.chat.completions.create(requestOptions);
+  const extraction = JSON.parse(response.choices[0].message.content);
+
+  // 4. Validation + detection langue
+  if (!isJobOfferValid(extraction)) {
+    throw new Error(JSON.stringify({
+      translationKey: 'taskQueue.errors.noJobOfferDetected',
+      source: pdfPath
+    }));
+  }
+
+  extraction.language = await detectJobOfferLanguageWithOpenAI({
+    extraction, signal, userId, featureName: 'extract_job_offer_pdf',
+  });
+
+  return { extraction, tokensUsed, model: extractModel, name: pdfData.name, title: extraction.title };
 }</code></pre>
 
-        <h2>Limites</h2>
+        <!-- ============================================================ -->
+        <h2>Cache par hash</h2>
 
-        <div class="callout callout-info">
-          <div class="callout-title">Contraintes</div>
-          <ul>
-            <li><strong>Taille max</strong> : 10 MB par fichier</li>
-            <li><strong>Pages max</strong> : 5 pages analysees</li>
-            <li><strong>Formats</strong> : PDF uniquement</li>
-            <li><strong>Cout</strong> : Utilise GPT-4o Vision (plus couteux)</li>
-          </ul>
-        </div>
+        <p>
+          La fonction <code>getOrExtractJobOfferFromPdf()</code> est le point d'entree principal.
+          Elle implemente un systeme de cache base sur le hash SHA256 du contenu texte du PDF.
+        </p>
 
-        <h2>Gestion des Erreurs</h2>
+        <ol>
+          <li><code>extractTextFromPdf(pdfPath)</code> : extraire le texte (necessaire pour le hash)</li>
+          <li><code>computeContentHash(pdfData.text)</code> : calculer le SHA256 du contenu texte</li>
+          <li>Chercher un <code>JobOffer</code> existant par <code>userId</code> + <code>contentHash</code></li>
+          <li>Si cache hit : retourner directement (pas d'appel OpenAI)</li>
+          <li>Si miss : extraction IA via <code>extractJobOfferFromPdfText()</code> puis stockage</li>
+        </ol>
+
+        <pre><code class="language-javascript">// lib/job-offer/extraction/helpers.js
+import { createHash } from 'crypto';
+
+export function computeContentHash(text) {
+  return createHash('sha256').update(text).digest('hex');
+}</code></pre>
+
+        <pre><code class="language-javascript">// lib/job-offer/extraction/pdf.js
+export async function getOrExtractJobOfferFromPdf(userId, pdfPath, displayName, signal = null) {
+  // 1. Extraire le texte (necessaire pour le hash)
+  const pdfData = await extractTextFromPdf(pdfPath);
+
+  if (!pdfData.text || pdfData.text.length < 100) {
+    throw new Error(JSON.stringify({
+      translationKey: 'taskQueue.errors.noJobOfferDetected',
+      source: displayName
+    }));
+  }
+
+  // 2. Calculer le hash du contenu
+  const contentHash = computeContentHash(pdfData.text);
+
+  // 3. Verifier le cache
+  const existing = await prisma.jobOffer.findFirst({
+    where: { userId, contentHash }
+  });
+
+  if (existing) {
+    return {
+      extraction: existing.content,
+      jobOfferId: existing.id,
+      title: existing.content?.title || displayName,
+      fromCache: true,
+      usageDetails: null, // Pas d'appel OpenAI
+    };
+  }
+
+  // 4. Extraction IA (texte deja extrait)
+  const { extraction, tokensUsed, model, title, usageDetails } =
+    await extractJobOfferFromPdfText(pdfData.text, userId, signal);
+
+  // 5. Stocker avec le hash
+  const stored = await storeJobOffer(userId, 'pdf', displayName, extraction, model, tokensUsed, contentHash);
+
+  return {
+    extraction,
+    jobOfferId: stored.id,
+    title: title || displayName,
+    fromCache: false,
+    usageDetails,
+  };
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <h2>Validation</h2>
+
+        <p>
+          La fonction <code>isJobOfferValid(extraction)</code> verifie que l'extraction contient
+          suffisamment d'informations pour constituer une offre d'emploi valide.
+        </p>
+
+        <p>Criteres de validation :</p>
+
+        <ul>
+          <li>Doit avoir un <code>title</code> (obligatoire)</li>
+          <li>
+            <strong>ET</strong> au moins un des elements suivants :
+            <ul>
+              <li><code>responsibilities</code> (liste non vide)</li>
+              <li><code>skills</code> : <code>hard_skills</code>, <code>tools</code>, <code>methodologies</code> (required ou nice_to_have) ou <code>soft_skills</code></li>
+              <li>Une <code>description</code> substantielle (> 50 caracteres) avec <code>company</code> ou <code>location</code></li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>
+          Cela empeche d'accepter des pages avec juste un titre comme "Offre expiree" ou "Page non trouvee".
+        </p>
+
+        <pre><code class="language-javascript">// lib/job-offer/extraction/helpers.js
+export function isJobOfferValid(extraction) {
+  if (!extraction) return false;
+
+  const hasTitle = extraction.title && extraction.title.trim().length > 0;
+  if (!hasTitle) return false;
+
+  const hasResponsibilities = extraction.responsibilities?.length > 0;
+
+  const skills = extraction.skills || {};
+  const hasSkills =
+    (skills.hard_skills?.required?.length > 0) ||
+    (skills.hard_skills?.nice_to_have?.length > 0) ||
+    (skills.tools?.required?.length > 0) ||
+    (skills.tools?.nice_to_have?.length > 0) ||
+    (skills.methodologies?.required?.length > 0) ||
+    (skills.methodologies?.nice_to_have?.length > 0) ||
+    (skills.soft_skills?.length > 0);
+
+  const hasCompany = typeof extraction.company === 'string' && extraction.company.trim().length > 0;
+  const hasLocation = typeof extraction.location === 'string' && extraction.location.trim().length > 0;
+  const hasDescription = typeof extraction.description === 'string' && extraction.description.trim().length > 50;
+
+  return hasResponsibilities || hasSkills || (hasDescription && (hasCompany || hasLocation));
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <h2>Stockage</h2>
+
+        <p>
+          La fonction <code>storeJobOffer()</code> persiste l'offre extraite dans la table
+          <code>JobOffer</code> via un upsert Prisma.
+        </p>
+
+        <ul>
+          <li><code>sourceType: 'pdf'</code></li>
+          <li><code>sourceValue</code> : nom du fichier original (<code>displayName</code>)</li>
+          <li><code>contentHash</code> : SHA256 pour deduplication</li>
+          <li><code>extractionModel</code> : modele utilise</li>
+          <li><code>tokensUsed</code> : tokens consommes</li>
+        </ul>
+
+        <pre><code class="language-javascript">// lib/job-offer/extraction/helpers.js
+export async function storeJobOffer(userId, sourceType, sourceValue, extraction, model, tokensUsed, contentHash = null) {
+  return prisma.jobOffer.upsert({
+    where: {
+      userId_sourceValue: { userId, sourceValue }
+    },
+    update: {
+      content: extraction,
+      contentHash,
+      extractedAt: new Date(),
+      extractionModel: model,
+      tokensUsed,
+    },
+    create: {
+      userId,
+      sourceType,
+      sourceValue,
+      contentHash,
+      content: extraction,
+      extractionModel: model,
+      tokensUsed,
+    },
+  });
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <h2>Validation du fichier</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Contrainte</th>
+              <th>Valeur</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Type MIME</td>
+              <td><code>application/pdf</code></td>
+              <td>Rejet 415</td>
+            </tr>
+            <tr>
+              <td>Taille max</td>
+              <td>10 MB</td>
+              <td>Rejet 413</td>
+            </tr>
+            <tr>
+              <td>PDF corrompu</td>
+              <td>Parse echoue</td>
+              <td>Rejet 422</td>
+            </tr>
+            <tr>
+              <td>Texte insuffisant</td>
+              <td>&lt; 100 caracteres</td>
+              <td>Erreur extraction</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================================ -->
+        <h2>Differences avec l'extraction URL</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Extraction URL</th>
+              <th>Extraction PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Source</td>
+              <td>URL web</td>
+              <td>Fichier PDF uploade</td>
+            </tr>
+            <tr>
+              <td>Fetch</td>
+              <td>Puppeteer / HTTP</td>
+              <td><code>pdf-parse</code> (texte)</td>
+            </tr>
+            <tr>
+              <td>Cache key</td>
+              <td>URL normalisee</td>
+              <td>SHA256 du contenu</td>
+            </tr>
+            <tr>
+              <td>Modele IA</td>
+              <td>Configurable (meme)</td>
+              <td>Configurable (meme)</td>
+            </tr>
+            <tr>
+              <td>Schema</td>
+              <td><code>jobOfferExtractionSchema.json</code></td>
+              <td><code>jobOfferExtractionSchema.json</code></td>
+            </tr>
+            <tr>
+              <td>Vision</td>
+              <td>Non</td>
+              <td>Non (texte uniquement)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================================ -->
+        <h2>Differences avec l'import PDF de CV</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Import CV PDF</th>
+              <th>Extraction offre PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>But</td>
+              <td>Extraire un CV</td>
+              <td>Extraire une offre d'emploi</td>
+            </tr>
+            <tr>
+              <td>Library</td>
+              <td><code>pdf-to-img</code> (images)</td>
+              <td><code>pdf-parse</code> (texte)</td>
+            </tr>
+            <tr>
+              <td>Modele</td>
+              <td>GPT-4o Vision</td>
+              <td>OpenAI text (configurable)</td>
+            </tr>
+            <tr>
+              <td>Schema sortie</td>
+              <td><code>data/schema.json</code> (CV)</td>
+              <td><code>jobOfferExtractionSchema.json</code></td>
+            </tr>
+            <tr>
+              <td>Output</td>
+              <td><code>CvFile</code></td>
+              <td><code>JobOffer</code></td>
+            </tr>
+            <tr>
+              <td>Module</td>
+              <td><code>lib/pdf/</code></td>
+              <td><code>lib/job-offer/extraction/pdf.js</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================================ -->
+        <h2>Gestion des erreurs</h2>
 
         <table>
           <thead>
             <tr>
               <th>Erreur</th>
-              <th>Code</th>
+              <th>Code HTTP</th>
               <th>Message</th>
             </tr>
           </thead>
@@ -191,12 +497,17 @@ export function validateJobOfferPdf(file) {
               <td>500</td>
               <td>Extraction failed</td>
             </tr>
+            <tr>
+              <td>Pas d'offre detectee</td>
+              <td>422</td>
+              <td>noJobOfferDetected</td>
+            </tr>
           </tbody>
         </table>
+
       </div>
     </main>
   </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
@@ -207,7 +518,6 @@ export function validateJobOfferPdf(file) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

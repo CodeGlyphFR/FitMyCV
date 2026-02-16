@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -34,189 +28,511 @@
 
         <h1>Versioning CV</h1>
         <p class="lead">
-          Système de gestion des versions permettant de conserver l'historique des modifications et de restaurer des versions anterieures.
+          Systeme de gestion des versions permettant de conserver l'historique des modifications IA et de restaurer des versions anterieures. Les versions sont creees <strong>uniquement</strong> lors des optimisations IA &mdash; les editions manuelles ecrasent directement le contenu sans creer de version.
         </p>
 
-        <h2>Modèle CvVersion</h2>
+        <!-- ============================================================ -->
+        <!-- Diagramme Mermaid : Cycle de vie des versions                -->
+        <!-- ============================================================ -->
+        <h2>Cycle de vie des versions</h2>
 
-        <pre><code>// prisma/schema.prisma
+        <div class="mermaid">
+flowchart TD
+    A["CvFile (contentVersion = N)"] -->|"Optimisation IA"| B["createCvVersion()"]
+    B --> C["Sauvegarde contenu actuel<br>comme CvVersion N"]
+    C --> D["Incremente contentVersion<br>a N+1"]
+    D --> E["Rotation : suppression<br>versions > max"]
+    E --> F["CvFile (contentVersion = N+1)<br>Contenu IA applique"]
+
+    F -->|"Restauration safe"| G["restoreCvVersion()"]
+    G --> G1["Sauvegarde contenu actuel<br>comme nouvelle version"]
+    G1 --> G2["Ecrase contenu avec<br>version cible"]
+    G2 --> G3["Historique conserve"]
+
+    F -->|"Restauration destructive"| H["restoreCvVersionDestructive()"]
+    H --> H1["Ecrase contenu + scores<br>avec version cible"]
+    H1 --> H2["contentVersion = cible<br>pendingChanges = vide"]
+    H2 --> H3["Supprime version cible<br>+ versions plus recentes"]
+
+    style A fill:#e0e7ff,stroke:#4f46e5,color:#1e1b4b
+    style F fill:#dcfce7,stroke:#16a34a,color:#14532d
+    style G3 fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    style H3 fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- Modele Prisma                                                -->
+        <!-- ============================================================ -->
+        <h2>Modele CvVersion (Prisma)</h2>
+
+        <pre><code class="language-javascript">// prisma/schema.prisma
 
 model CvVersion {
-  id            Int      @id @default(autoincrement())
-  cvFileId      Int
-  versionNumber Int
-  content       Json     // Snapshot complet du CV
-  origin        String   // creation, manual_edit, ai_generation, import
-  description   String?  // Description optionnelle
-  createdAt     DateTime @default(now())
+  id         String   @id @default(cuid())
+  cvFileId   String
+  version    Int      // Numero de version (1, 2, 3...)
+  content    Json     // Contenu JSON complet
+  changelog  String?  // "Optimisation IA", "Restauration depuis v2"
+  changeType String?  // 'optimization' | 'adaptation' | 'restore'
+  sourceFile String?  // Pour adaptation: CV source de reference
+  createdAt  DateTime @default(now())
 
-  cvFile        CvFile   @relation(fields: [cvFileId], references: [id])
+  // Score data (copie depuis CvFile au moment de la creation de version)
+  matchScore             Int?
+  scoreBreakdown         String?  @db.Text
+  improvementSuggestions String?  @db.Text
+  missingSkills          String?  @db.Text
+  matchingSkills         String?  @db.Text
 
-  @@unique([cvFileId, versionNumber])
+  cvFile CvFile @relation(fields: [cvFileId], references: [id], onDelete: Cascade)
+
+  @@unique([cvFileId, version])
+  @@index([cvFileId, createdAt(sort: Desc)])
 }</code></pre>
 
-        <h2>Origines des Versions</h2>
+        <!-- ============================================================ -->
+        <!-- Types de changement                                          -->
+        <!-- ============================================================ -->
+        <h2>Types de changement (changeType)</h2>
 
         <table>
           <thead>
             <tr>
-              <th>Origin</th>
+              <th>changeType</th>
               <th>Description</th>
               <th>Declencheur</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>creation</code></td>
-              <td>Version initiale</td>
-              <td>Creation du CV</td>
-            </tr>
-            <tr>
-              <td><code>manual_edit</code></td>
-              <td>Modification manuelle</td>
-              <td>Sauvegarde editeur</td>
-            </tr>
-            <tr>
-              <td><code>ai_generation</code></td>
-              <td>Generation IA</td>
-              <td>Pipeline generation</td>
-            </tr>
-            <tr>
-              <td><code>ai_optimization</code></td>
-              <td>Optimisation IA</td>
+              <td><code>optimization</code></td>
+              <td>Optimisation IA du CV</td>
               <td>Pipeline optimisation</td>
             </tr>
             <tr>
-              <td><code>import</code></td>
-              <td>Import PDF</td>
-              <td>Extraction PDF</td>
+              <td><code>adaptation</code></td>
+              <td>Adaptation depuis un autre CV</td>
+              <td>Pipeline adaptation</td>
             </tr>
             <tr>
               <td><code>restore</code></td>
-              <td>Restauration</td>
-              <td>Rollback version</td>
+              <td>Restauration d'une version</td>
+              <td>Action utilisateur</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Creation de Version</h2>
+        <!-- ============================================================ -->
+        <!-- Creation de version                                          -->
+        <!-- ============================================================ -->
+        <h2>Creation de version</h2>
 
-        <pre><code>// lib/cv-core/versioning.js
+        <p>
+          La fonction <code>createCvVersion()</code> est appelee <strong>avant</strong> chaque optimisation IA.
+          Elle sauvegarde le contenu actuel du CV (contenu + scores) dans un enregistrement <code>CvVersion</code>,
+          puis incremente <code>contentVersion</code> dans <code>CvFile</code>. Le nombre maximum de versions
+          conservees est configurable via le parametre systeme <code>cv_max_versions</code> (defaut : <strong>5</strong>).
+        </p>
 
-export async function createVersion(cvFileId, content, origin, description = null) {
-  // Recuperer le dernier numero de version
-  const lastVersion = await prisma.cvVersion.findFirst({
-    where: { cvFileId },
-    orderBy: { versionNumber: 'desc' }
+        <pre><code class="language-javascript">// lib/cv-core/versioning.js
+
+export async function createCvVersion(userId, filename, changelog = 'Optimisation IA') {
+  const cvFile = await prisma.cvFile.findUnique({
+    where: { userId_filename: { userId, filename } },
+    select: {
+      id: true,
+      content: true,
+      contentVersion: true,
+      // Scores a copier dans la version
+      matchScore: true,
+      scoreBreakdown: true,
+      improvementSuggestions: true,
+      missingSkills: true,
+      matchingSkills: true,
+    },
   });
 
-  const newVersionNumber = (lastVersion?.versionNumber || 0) + 1;
+  if (!cvFile || !cvFile.content) {
+    throw new Error(`CV not found or has no content: ${filename}`);
+  }
 
-  return prisma.cvVersion.create({
-    data: {
-      cvFileId,
-      versionNumber: newVersionNumber,
-      content,
-      origin,
-      description
+  const newVersion = cvFile.contentVersion + 1;
+  const maxVersions = await getNumericSettingValue('cv_max_versions', 5);
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Creer la version (sauvegarde du contenu ET scores AVANT modification)
+    await tx.cvVersion.create({
+      data: {
+        cvFileId: cvFile.id,
+        version: cvFile.contentVersion, // Version actuelle (avant modif)
+        content: cvFile.content,
+        changelog,
+        // Copier les scores actuels dans la version
+        matchScore: cvFile.matchScore,
+        scoreBreakdown: cvFile.scoreBreakdown,
+        improvementSuggestions: cvFile.improvementSuggestions,
+        missingSkills: cvFile.missingSkills,
+        matchingSkills: cvFile.matchingSkills,
+      },
+    });
+
+    // 2. Incrementer le numero de version dans CvFile
+    await tx.cvFile.update({
+      where: { id: cvFile.id },
+      data: { contentVersion: newVersion },
+    });
+
+    // 3. Rotation: supprimer les versions au-dela du max
+    if (newVersion > maxVersions) {
+      await tx.cvVersion.deleteMany({
+        where: {
+          cvFileId: cvFile.id,
+          version: { lte: newVersion - maxVersions },
+        },
+      });
     }
   });
+
+  return newVersion;
 }</code></pre>
 
+        <!-- ============================================================ -->
+        <!-- Creation avec tracking                                       -->
+        <!-- ============================================================ -->
+        <h2>Creation avec tracking</h2>
+
+        <p>
+          La variante <code>createCvVersionWithTracking()</code> ajoute les champs <code>changeType</code>
+          et <code>sourceFile</code> pour tracer l'origine precise de la version. Elle est utilisee
+          notamment lors des adaptations entre CV.
+        </p>
+
+        <pre><code class="language-javascript">// lib/cv-core/versioning.js
+
+export async function createCvVersionWithTracking(
+  userId, filename, changelog, changeType, sourceFile = null
+) {
+  const cvFile = await prisma.cvFile.findUnique({
+    where: { userId_filename: { userId, filename } },
+    select: {
+      id: true,
+      content: true,
+      contentVersion: true,
+      matchScore: true,
+      scoreBreakdown: true,
+      improvementSuggestions: true,
+      missingSkills: true,
+      matchingSkills: true,
+    },
+  });
+
+  if (!cvFile || !cvFile.content) {
+    throw new Error(`CV not found or has no content: ${filename}`);
+  }
+
+  const newVersion = cvFile.contentVersion + 1;
+  const maxVersions = await getNumericSettingValue('cv_max_versions', 5);
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Creer la version avec metadonnees enrichies ET scores
+    await tx.cvVersion.create({
+      data: {
+        cvFileId: cvFile.id,
+        version: cvFile.contentVersion,
+        content: cvFile.content,
+        changelog,
+        changeType,
+        sourceFile,
+        matchScore: cvFile.matchScore,
+        scoreBreakdown: cvFile.scoreBreakdown,
+        improvementSuggestions: cvFile.improvementSuggestions,
+        missingSkills: cvFile.missingSkills,
+        matchingSkills: cvFile.matchingSkills,
+      },
+    });
+
+    // 2. Incrementer le numero de version
+    await tx.cvFile.update({
+      where: { id: cvFile.id },
+      data: { contentVersion: newVersion },
+    });
+
+    // 3. Rotation des anciennes versions
+    if (newVersion > maxVersions) {
+      await tx.cvVersion.deleteMany({
+        where: {
+          cvFileId: cvFile.id,
+          version: { lte: newVersion - maxVersions },
+        },
+      });
+    }
+  });
+
+  return newVersion;
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- Restauration                                                 -->
+        <!-- ============================================================ -->
         <h2>Restauration</h2>
 
-        <pre><code>// lib/cv-core/versioning.js
+        <p>Deux modes de restauration coexistent selon le contexte d'utilisation.</p>
 
-export async function restoreVersion(cvFileId, versionNumber, userId) {
-  // Verifier la propriete
-  const cvFile = await prisma.cvFile.findFirst({
-    where: { id: cvFileId, userId }
+        <h3>Restauration safe (<code>restoreCvVersion</code>)</h3>
+
+        <p>
+          Cree une sauvegarde du contenu actuel <strong>avant</strong> d'ecraser avec le contenu de la
+          version cible. L'historique complet est preserve.
+        </p>
+
+        <pre><code class="language-javascript">// lib/cv-core/versioning.js
+
+export async function restoreCvVersion(userId, filename, targetVersion) {
+  const cvFile = await prisma.cvFile.findUnique({
+    where: { userId_filename: { userId, filename } },
+    include: {
+      versions: {
+        where: { version: targetVersion },
+      },
+    },
   });
 
-  if (!cvFile) throw new Error('CV not found');
+  if (!cvFile?.versions?.[0]) {
+    throw new Error(`Version ${targetVersion} not found for CV: ${filename}`);
+  }
 
-  // Recuperer la version a restaurer
-  const versionToRestore = await prisma.cvVersion.findUnique({
-    where: {
-      cvFileId_versionNumber: { cvFileId, versionNumber }
-    }
+  const restoredContent = cvFile.versions[0].content;
+
+  // Creer une version du contenu actuel avant restauration
+  if (cvFile.content) {
+    await createCvVersion(userId, filename, `Restauration depuis v${targetVersion}`);
+  }
+
+  // Ecraser avec le contenu restaure
+  await prisma.cvFile.update({
+    where: { userId_filename: { userId, filename } },
+    data: { content: restoredContent },
   });
 
-  if (!versionToRestore) throw new Error('Version not found');
-
-  // Sauvegarder l'etat actuel avant restauration
-  await createVersion(
-    cvFileId,
-    cvFile.content,
-    'restore',
-    \`Avant restauration vers v\${versionNumber}\`
-  );
-
-  // Mettre a jour le CV avec le contenu de la version
-  return prisma.cvFile.update({
-    where: { id: cvFileId },
-    data: { content: versionToRestore.content }
-  });
+  return restoredContent;
 }</code></pre>
 
+        <h3>Restauration destructive (<code>restoreCvVersionDestructive</code>)</h3>
+
+        <p>
+          Mode utilise par le selecteur de versions dans l'interface. Ecrase le contenu actuel avec la
+          version cible, restaure les scores depuis la version, puis supprime la version restauree
+          <strong>et toutes les versions plus recentes</strong>. Aucune sauvegarde prealable n'est creee.
+        </p>
+
+        <pre><code class="language-javascript">// lib/cv-core/versioning.js
+
+export async function restoreCvVersionDestructive(userId, filename, targetVersion) {
+  const cvFile = await prisma.cvFile.findUnique({
+    where: { userId_filename: { userId, filename } },
+    include: {
+      versions: {
+        where: { version: targetVersion },
+        select: {
+          content: true,
+          matchScore: true,
+          scoreBreakdown: true,
+          improvementSuggestions: true,
+          missingSkills: true,
+          matchingSkills: true,
+        },
+      },
+    },
+  });
+
+  if (!cvFile) throw new Error(`CV not found: ${filename}`);
+
+  const targetVersionRecord = cvFile.versions?.[0];
+  if (!targetVersionRecord) {
+    throw new Error(`Version ${targetVersion} not found for CV: ${filename}`);
+  }
+
+  const restoredContent = targetVersionRecord.content;
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Remplacer le contenu actuel ET restaurer les scores
+    await tx.cvFile.update({
+      where: { id: cvFile.id },
+      data: {
+        content: restoredContent,
+        contentVersion: targetVersion,
+        pendingChanges: [],
+        pendingSourceVersion: null,
+        scoreBefore: null,
+        matchScore: targetVersionRecord.matchScore,
+        matchScoreUpdatedAt: targetVersionRecord.matchScore ? new Date() : null,
+        scoreBreakdown: targetVersionRecord.scoreBreakdown,
+        improvementSuggestions: targetVersionRecord.improvementSuggestions,
+        missingSkills: targetVersionRecord.missingSkills,
+        matchingSkills: targetVersionRecord.matchingSkills,
+      },
+    });
+
+    // 2. Supprimer la version restauree de l'historique
+    await tx.cvVersion.delete({
+      where: {
+        cvFileId_version: {
+          cvFileId: cvFile.id,
+          version: targetVersion,
+        },
+      },
+    });
+
+    // 3. Supprimer toutes les versions plus recentes
+    await tx.cvVersion.deleteMany({
+      where: {
+        cvFileId: cvFile.id,
+        version: { gt: targetVersion },
+      },
+    });
+  });
+
+  return restoredContent;
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- Rotation des versions                                        -->
+        <!-- ============================================================ -->
+        <h2>Rotation des versions</h2>
+
+        <p>
+          Le nombre maximum de versions conservees est controle par le parametre systeme
+          <code>cv_max_versions</code> (defaut : <strong>5</strong>), recupere via
+          <code>getNumericSettingValue('cv_max_versions', 5)</code>.
+        </p>
+        <p>
+          Lors de la creation d'une nouvelle version, si <code>contentVersion &gt; maxVersions</code>,
+          les versions dont le numero est inferieur ou egal a <code>newVersion - maxVersions</code>
+          sont automatiquement supprimees dans la meme transaction que la creation.
+        </p>
+
+        <pre><code class="language-javascript">// Extrait de createCvVersion() / createCvVersionWithTracking()
+
+const maxVersions = await getNumericSettingValue('cv_max_versions', 5);
+
+await prisma.$transaction(async (tx) => {
+  // ... creation de la version ...
+
+  // Rotation: supprimer les versions au-dela du max
+  if (newVersion > maxVersions) {
+    await tx.cvVersion.deleteMany({
+      where: {
+        cvFileId: cvFile.id,
+        version: { lte: newVersion - maxVersions },
+      },
+    });
+  }
+});</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- API Endpoints                                                -->
+        <!-- ============================================================ -->
         <h2>API Endpoints</h2>
 
         <table>
           <thead>
             <tr>
               <th>Endpoint</th>
-              <th>Méthode</th>
+              <th>Methode</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>/api/cv/[id]/versions</code></td>
+              <td><code>GET /api/cvs/versions?file=xxx.json</code></td>
               <td>GET</td>
-              <td>Lister les versions</td>
+              <td>Lister les versions (filtre v0, inclut matchScore)</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]/versions/[num]</code></td>
+              <td><code>GET /api/cvs/versions?file=xxx.json&amp;version=2</code></td>
               <td>GET</td>
-              <td>Detail d'une version</td>
+              <td>Contenu d'une version specifique</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]/versions/[num]/restore</code></td>
+              <td><code>GET /api/cvs/versions?file=xxx.json&amp;includeContent=true</code></td>
+              <td>GET</td>
+              <td>Versions avec contenu complet</td>
+            </tr>
+            <tr>
+              <td><code>POST /api/cvs/versions</code></td>
               <td>POST</td>
-              <td>Restaurer une version</td>
+              <td>Restaurer (destructif) : <code>{ filename, version, action: "restore" }</code></td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Limite de Versions</h2>
+        <p>Format de reponse pour la liste des versions :</p>
 
-        <div class="callout callout-info">
-          <div class="callout-title">Retention</div>
-          <p>Par defaut, les 20 dernieres versions sont conservees. Les versions plus anciennes sont automatiquement supprimees lors de la creation d'une nouvelle version.</p>
-        </div>
+        <pre><code class="language-json">{
+  "filename": "xxx.json",
+  "versions": [
+    {
+      "version": 3,
+      "changelog": "Optimisation IA",
+      "changeType": "optimization",
+      "sourceFile": null,
+      "createdAt": "2024-01-20T14:22:00.000Z",
+      "matchScore": 78
+    }
+  ]
+}</code></pre>
 
-        <pre><code>// Nettoyage automatique
-const MAX_VERSIONS = 20;
+        <!-- ============================================================ -->
+        <!-- Recuperation des versions                                    -->
+        <!-- ============================================================ -->
+        <h2>Recuperation des versions</h2>
 
-async function cleanupOldVersions(cvFileId) {
-  const versions = await prisma.cvVersion.findMany({
-    where: { cvFileId },
-    orderBy: { versionNumber: 'desc' },
-    skip: MAX_VERSIONS
+        <p>
+          La fonction <code>getCvVersionsWithDetails()</code> recupere les versions avec leurs
+          metadonnees enrichies. Le parametre <code>includeContent</code> permet d'inclure
+          optionnellement le contenu JSON complet de chaque version.
+        </p>
+
+        <pre><code class="language-javascript">// lib/cv-core/versioning.js
+
+export async function getCvVersionsWithDetails(userId, filename, includeContent = false) {
+  const cvFile = await prisma.cvFile.findUnique({
+    where: { userId_filename: { userId, filename } },
+    include: {
+      versions: {
+        orderBy: { version: 'desc' },
+        select: {
+          id: true,
+          version: true,
+          changelog: true,
+          changeType: true,
+          sourceFile: true,
+          createdAt: true,
+          matchScore: true,
+          ...(includeContent && { content: true }),
+        },
+      },
+    },
   });
 
-  if (versions.length > 0) {
-    await prisma.cvVersion.deleteMany({
-      where: {
-        id: { in: versions.map(v => v.id) }
-      }
-    });
-  }
+  return cvFile?.versions || [];
 }</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- Callout info                                                 -->
+        <!-- ============================================================ -->
+        <div class="callout callout-info">
+          <div class="callout-title">Editions manuelles</div>
+          <p>
+            Les editions manuelles de l'utilisateur ecrasent directement <code>CvFile.content</code>
+            sans creer de version. Seules les operations IA (optimisation, adaptation) declenchent
+            la creation de versions.
+          </p>
+        </div>
+
       </div>
     </main>
   </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
@@ -227,7 +543,6 @@ async function cleanupOldVersions(cvFileId) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

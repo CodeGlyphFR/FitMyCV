@@ -3,464 +3,818 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prompts IA - Pipeline Génération | FitMyCV.io</title>
+  <title>Prompts IA - Pipeline G&eacute;n&eacute;ration | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Pipeline Génération</a>
+          <a href="./overview.html">Pipeline G&eacute;n&eacute;ration</a>
           <span>/</span>
           <span>Prompts IA</span>
         </div>
 
         <h1>Prompts IA</h1>
         <p class="lead">
-          Le pipeline de g&eacute;n&eacute;ration utilise 14 fichiers de prompts organis&eacute;s par phase (7 phases &times; 2 fichiers system/user). Chaque prompt suit une structure standardis&eacute;e et respecte la hi&eacute;rarchie de priorit&eacute;s V&Eacute;RIT&Eacute; &gt; LANGUE &gt; ATS &gt; STYLE.
+          Le pipeline de g&eacute;n&eacute;ration CV utilise <strong>20 fichiers prompts</strong> organis&eacute;s en 10 paires (system + user) pour piloter chaque phase du traitement IA. Chaque paire suit une hi&eacute;rarchie de priorit&eacute;s stricte et des r&egrave;gles anti-hallucination syst&eacute;matiques.
         </p>
 
-        <h2>Organisation des Fichiers</h2>
-
-        <p>Les prompts suivent un pattern <code>{phase}-{system|user}.md</code> pour s&eacute;parer les instructions syst&egrave;me des donn&eacute;es utilisateur.</p>
-
-        <pre><code>lib/features/cv-adaptation/prompts/
-├── classify-system.md              # Phase 1 : Classification (system)
-├── classify-user.md                # Phase 1 : Classification (user)
-├── batch-experience-system.md      # Phase 2 : Adaptation exp&eacute;riences (system)
-├── batch-experience-user.md        # Phase 2 : Adaptation exp&eacute;riences (user)
-├── batch-project-system.md         # Phase 3 : Adaptation projets (system)
-├── batch-project-user.md           # Phase 3 : Adaptation projets (user)
-├── batch-skills-system.md          # Phase 4 : Skills - hard/soft/tools (system)
-├── batch-skills-user.md            # Phase 4 : Skills (user)
-├── batch-extras-system.md          # Phase 5 : Extras - hobbies, langues (system)
-├── batch-extras-user.md            # Phase 5 : Extras (user)
-├── batch-summary-system.md         # Phase 6 : R&eacute;sum&eacute; professionnel (system)
-├── batch-summary-user.md           # Phase 6 : R&eacute;sum&eacute; (user)
-├── recompose-languages-system.md   # Phase 7 : Langues - format CECRL (system)
-└── recompose-languages-user.md     # Phase 7 : Langues (user)</code></pre>
-
-        <div class="callout callout-info">
-          <div class="callout-title">Pattern system/user</div>
-          <p>Chaque phase utilise deux fichiers : <code>*-system.md</code> contient les instructions et r&egrave;gles de l'IA, <code>*-user.md</code> structure les donn&eacute;es d'entr&eacute;e (CV source, offre d'emploi).</p>
-        </div>
-
-        <h2>Structure Standard d'un Prompt</h2>
-
-        <p>Chaque prompt suit un template standardisé :</p>
-
-        <pre><code># [Nom de la Mission]
-
-## Contexte
-[Description du contexte et de l'objectif]
-
-## Priorités (STRICTES)
-1. **VÉRITÉ** (P1) : Jamais d'information inventée
-2. **LANGUE** (P2) : Contenu dans la langue cible
-3. **ATS** (P3) : Mots-clés exacts de l'offre
-4. **STYLE** (P4) : Ton professionnel adapté
-
-## Input
-[Description des données en entrée]
-
-## Output
-[Description du format de sortie attendu]
-
-## Règles
-- [Règle 1]
-- [Règle 2]
-- ...
-
-## Exemples
-### Exemple 1 - [Description]
-**Input:**
-```json
-{ ... }
-```
-**Output:**
-```json
-{ ... }
-```
-
-## Anti-Patterns
-❌ Ne JAMAIS faire : [exemple interdit]
-✅ Faire à la place : [exemple correct]</code></pre>
-
-        <h2>Hiérarchie des Priorités</h2>
+        <!-- ==================== HIERARCHIE DES PRIORITES ==================== -->
+        <h2>Hi&eacute;rarchie des Priorit&eacute;s</h2>
 
         <div class="callout callout-error">
-          <div class="callout-title">P1 - VÉRITÉ (Non négociable)</div>
-          <p>Chaque mot du CV généré DOIT pouvoir être tracé vers le CV source. Aucune information inventée, aucune compétence ajoutée, aucune durée modifiée.</p>
-        </div>
-
-        <div class="callout callout-warning">
-          <div class="callout-title">P2 - LANGUE</div>
-          <p>Tout le contenu doit &ecirc;tre dans la langue cible du CV. <strong>4 langues support&eacute;es</strong> : Fran&ccedil;ais (FR), Anglais (EN), Espagnol (ES), Allemand (DE).</p>
-          <p><strong>Exceptions</strong> (restent inchang&eacute;s) :</p>
-          <ul>
-            <li>Noms propres et entreprises</li>
-            <li>Technologies et frameworks (React, Docker, AWS...)</li>
-            <li>Certifications (AWS Certified, ITIL...)</li>
-            <li>URLs et liens</li>
-            <li>Niveaux CECRL pour les langues (A1-C2)</li>
-          </ul>
-        </div>
-
-        <div class="callout callout-info">
-          <div class="callout-title">P3 - ATS (Applicant Tracking System)</div>
-          <p>Intégrer les mots-clés EXACTS de l'offre d'emploi pour maximiser le score ATS. Utiliser la terminologie de l'offre quand elle correspond à une compétence existante.</p>
-        </div>
-
-        <div class="callout callout-success">
-          <div class="callout-title">P4 - STYLE</div>
-          <p>Ton professionnel, phrases d'action, format adapté au secteur. Reformulations autorisées tant que le sens est préservé.</p>
-        </div>
-
-        <h2>Prompts par Phase</h2>
-
-        <h3>Phase Classification</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge">classify-system.md</span>
-            <span class="data-flow-title">Classification des items</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Mission</h5>
-            <p>Analyser chaque expérience et projet du CV source pour décider de son traitement.</p>
-
-            <h5>Décisions possibles</h5>
-            <table>
-              <tr>
-                <td><code>KEEP</code></td>
-                <td>Garder et adapter l'item</td>
-              </tr>
-              <tr>
-                <td><code>REMOVE</code></td>
-                <td>Supprimer (non pertinent)</td>
-              </tr>
-              <tr>
-                <td><code>MOVE_TO_PROJECTS</code></td>
-                <td>Convertir expérience → projet</td>
-              </tr>
-            </table>
-
-            <h5>Critères de décision</h5>
-            <ul>
-              <li>Pertinence par rapport au poste cible</li>
-              <li>Ancienneté (> 10 ans = candidat REMOVE)</li>
-              <li>Durée (< 3 mois = candidat MOVE_TO_PROJECTS)</li>
-              <li>Transferabilité des compétences</li>
-            </ul>
-          </div>
-        </div>
-
-        <h3>Phase Batches - Experiences</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge">batch-experience-system.md</span>
-            <span class="data-flow-title">Adaptation d'exp&eacute;rience</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Mission</h5>
-            <p>Reformuler une expérience professionnelle pour maximiser sa pertinence vis-à-vis de l'offre cible.</p>
-
-            <h5>Règles clés</h5>
-            <ul>
-              <li>Le titre de poste peut être reformulé si une variante existe dans l'offre</li>
-              <li>Les responsabilités sont réordonnées par pertinence</li>
-              <li>Les verbes d'action sont adaptés au secteur</li>
-              <li>Les métriques et chiffres sont CONSERVÉS tels quels</li>
-            </ul>
-
-            <h5>Exemple de reformulation</h5>
-            <pre><code>// AVANT
-"Développer des applications web"
-
-// APRÈS (si l'offre mentionne "APIs REST")
-"Concevoir et développer des APIs REST et applications web"
-
-// INTERDIT (invention)
-"Développer des applications web et mobiles" // mobile non mentionné</code></pre>
-          </div>
-        </div>
-
-        <h3>Phase Batches - Skills</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge">batch-skills-system.md</span>
-            <span class="data-flow-title">Adaptation des comp&eacute;tences</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Mission</h5>
-            <p>Adapter les comp&eacute;tences du CV source pour les aligner avec l'offre d'emploi, en utilisant le pattern <code>before/after</code> pour tra&ccedil;abilit&eacute; et rollback.</p>
-
-            <h5>Cat&eacute;gories de sortie</h5>
-            <table>
-              <tr>
-                <td><code>hard_skills</code></td>
-                <td>Comp&eacute;tences techniques avec niveau (0-5)</td>
-              </tr>
-              <tr>
-                <td><code>soft_skills</code></td>
-                <td>Soft skills (liste de strings)</td>
-              </tr>
-              <tr>
-                <td><code>tools</code></td>
-                <td>Outils et technologies avec niveau (0-5)</td>
-              </tr>
-              <tr>
-                <td><code>methodologies</code></td>
-                <td>M&eacute;thodologies (Agile, Scrum...)</td>
-              </tr>
-            </table>
-
-            <h5>Actions de modification</h5>
-            <p>Chaque modification est trac&eacute;e avec <code>before</code>, <code>after</code>, <code>action</code>, <code>reason</code> et <code>translated</code> :</p>
-            <ul>
-              <li><code>kept</code> - Conserv&eacute; tel quel</li>
-              <li><code>modified</code> - Traduit/reformul&eacute;</li>
-              <li><code>removed</code> - Supprim&eacute; (n&eacute;cessite <code>translated</code> pour rollback)</li>
-              <li><code>added</code> - Ajout&eacute; depuis l'offre</li>
-              <li><code>level_adjusted</code> - Niveau modifi&eacute;</li>
-              <li><code>split</code> - S&eacute;par&eacute; (ex: "React/Vue" &rarr; 2 skills)</li>
-              <li><code>moved</code> - Chang&eacute; de cat&eacute;gorie</li>
-              <li><code>merged</code> - Doublon fusionn&eacute;</li>
-              <li><code>inferred</code> - D&eacute;duit des exp&eacute;riences</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="callout callout-warning">
-          <div class="callout-title">Champ translated (rollback)</div>
-          <p>Pour les skills supprim&eacute;s (<code>action: removed</code>), le champ <code>translated</code> est <strong>obligatoire</strong>. Il contient la traduction du skill dans la langue cible pour permettre un rollback coh&eacute;rent lors de la review.</p>
-        </div>
-
-        <h3>Phase Batches - Summary</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge">batch-summary-system.md</span>
-            <span class="data-flow-title">G&eacute;n&eacute;ration du r&eacute;sum&eacute;</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Mission</h5>
-            <p>Générer un résumé professionnel percutant basé sur les expériences adaptées et l'offre cible.</p>
-
-            <h5>Structure du résumé</h5>
-            <ol>
-              <li><strong>Accroche</strong> : Titre + années d'expérience</li>
-              <li><strong>Expertise</strong> : Domaines clés alignés avec l'offre</li>
-              <li><strong>Réalisations</strong> : 1-2 accomplissements majeurs</li>
-              <li><strong>Valeur</strong> : Ce que le candidat apporte</li>
-            </ol>
-
-            <h5>Contraintes</h5>
-            <ul>
-              <li>3-5 phrases maximum</li>
-              <li>Intégrer 3-5 mots-clés de l'offre</li>
-              <li>Première personne implicite (pas de "Je")</li>
-            </ul>
-          </div>
-        </div>
-
-        <h2>G&eacute;n&eacute;ration URLs pour Projets (Templates)</h2>
-
-        <p>Lors de la g&eacute;n&eacute;ration de CV templates (candidats fictifs), les projets peuvent inclure des URLs coh&eacute;rentes avec le profil g&eacute;n&eacute;r&eacute;.</p>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge">projects</span>
-            <span class="data-flow-title">Champs url et url_label</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>R&egrave;gles de g&eacute;n&eacute;ration</h5>
-            <ul>
-              <li>L'URL doit &ecirc;tre coh&eacute;rente avec le <code>header.full_name</code> du candidat fictif</li>
-              <li>Le <code>url_label</code> d&eacute;crit le type de lien (ex: "GitHub", "Portfolio", "Demo")</li>
-              <li>Les URLs doivent &ecirc;tre plausibles mais fictives (domaines existants, usernames g&eacute;n&eacute;r&eacute;s)</li>
-            </ul>
-
-            <h5>Exemples de sortie</h5>
-            <pre><code>{
-  "projects": [
-    {
-      "name": "E-commerce Platform",
-      "url": "https://github.com/marie-dupont/ecommerce-platform",
-      "url_label": "GitHub"
-    },
-    {
-      "name": "Portfolio Personnel",
-      "url": "https://marie-dupont.dev",
-      "url_label": "Portfolio"
-    },
-    {
-      "name": "Application Mobile Fitness",
-      "url": "https://play.google.com/store/apps/details?id=com.fitness.app",
-      "url_label": "Google Play"
-    }
-  ]
-}</code></pre>
-
-            <h5>Types de liens g&eacute;n&eacute;r&eacute;s</h5>
-            <table>
-              <tr>
-                <td><code>GitHub</code></td>
-                <td>Pour projets open source ou repos priv&eacute;s</td>
-              </tr>
-              <tr>
-                <td><code>Portfolio</code></td>
-                <td>Site personnel du candidat</td>
-              </tr>
-              <tr>
-                <td><code>Demo</code></td>
-                <td>Lien vers une d&eacute;mo live</td>
-              </tr>
-              <tr>
-                <td><code>Google Play</code> / <code>App Store</code></td>
-                <td>Pour applications mobiles</td>
-              </tr>
-            </table>
-          </div>
-        </div>
-
-        <div class="callout callout-info">
-          <div class="callout-title">CV Templates uniquement</div>
-          <p>Cette fonctionnalit&eacute; s'applique aux CV templates (candidats fictifs g&eacute;n&eacute;r&eacute;s pour d&eacute;monstration). Pour les CV r&eacute;els, les URLs proviennent du CV source et ne sont jamais invent&eacute;es.</p>
-        </div>
-
-        <h2>Syst&egrave;me de Cache (CAG)</h2>
-
-        <p>Les prompts utilisent un syst&egrave;me de cache pour optimiser les co&ucirc;ts :</p>
-
-        <div class="card-grid">
-          <div class="card">
-            <h4>Cache A (Job Offer)</h4>
-            <p>Injecté dans : Experiences, Projects, Extras</p>
-            <pre><code>## Offre d'emploi (CACHE A)
-- Titre: {title}
-- Skills requis: {required}
-- Skills souhaitables: {niceToHave}
-- Soft skills: {soft}
-- Méthodologies: {methodologies}
-- Responsabilités: {top5}</code></pre>
-          </div>
-          <div class="card">
-            <h4>Cache B (Enrichi)</h4>
-            <p>Injecté dans : Skills, Summary</p>
-            <pre><code>## Contexte (CACHE B)
-{Cache A}
-
-## Expériences adaptées
-{summaryExperiences}
-
-## Projets adaptés
-{summaryProjects}</code></pre>
-          </div>
-        </div>
-
-        <h2>Anti-Hallucination</h2>
-
-        <div class="callout callout-error">
-          <div class="callout-title">Règle fondamentale</div>
-          <p><strong>"Chaque mot doit pointer vers la source"</strong></p>
+          <div class="callout-title">R&egrave;gle fondamentale appliqu&eacute;e dans TOUS les prompts</div>
+          <p>Chaque prompt system du pipeline int&egrave;gre cette hi&eacute;rarchie de priorit&eacute;s. En cas de conflit entre deux r&egrave;gles, la priorit&eacute; la plus haute l'emporte syst&eacute;matiquement.</p>
         </div>
 
         <table>
           <thead>
             <tr>
-              <th>Type</th>
+              <th>Priorit&eacute;</th>
+              <th>Nom</th>
+              <th>Description</th>
+              <th>Exemple de violation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-error">P1</span></td>
+              <td>V&Eacute;RIT&Eacute;</td>
+              <td>Jamais d'information invent&eacute;e. Chaque mot doit pointer vers la source. Tra&ccedil;abilit&eacute; obligatoire.</td>
+              <td>Ajouter &laquo; Management d'&eacute;quipe &raquo; sans source</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">P2</span></td>
+              <td>LANGUE</td>
+              <td>Contenu dans la langue cible du CV (FR, EN, ES, DE). Exception : technologies, certifications, noms propres.</td>
+              <td>Traduire &laquo; React &raquo; en &laquo; R&eacute;agir &raquo;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">P3</span></td>
+              <td>ATS</td>
+              <td>Int&eacute;grer les mots-cl&eacute;s exacts de l'offre d'emploi pour maximiser le score ATS.</td>
+              <td>Utiliser &laquo; d&eacute;veloppement &raquo; quand l'offre dit &laquo; ing&eacute;nierie logicielle &raquo;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">P4</span></td>
+              <td>STYLE</td>
+              <td>Ton professionnel, verbes d'action, format adapt&eacute; au secteur.</td>
+              <td>Utiliser un ton familier ou des buzzwords vides</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== ANTI-HALLUCINATION ==================== -->
+        <h2>R&egrave;gles Anti-Hallucination</h2>
+
+        <div class="callout callout-error">
+          <div class="callout-title">Z&eacute;ro Hallucination &mdash; Principe universel</div>
+          <p>R&egrave;gle fondamentale : <strong>&laquo; Chaque mot doit pointer vers la source &raquo;</strong>. Les modifications sont des reformulations, jamais des inventions. Cette r&egrave;gle est r&eacute;p&eacute;t&eacute;e dans chaque prompt system sous diff&eacute;rentes formes pour renforcer la conformit&eacute;.</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type de violation</th>
               <th>Exemple INTERDIT</th>
               <th>Raison</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Ajout compétence</td>
-              <td>"Python" → "Python/IA"</td>
-              <td>IA non mentionné dans la source</td>
+              <td>Ajout comp&eacute;tence</td>
+              <td>&laquo; Python &raquo; &rarr; &laquo; Python/IA &raquo;</td>
+              <td>IA non mentionn&eacute; dans la source</td>
             </tr>
             <tr>
-              <td>Modification durée</td>
-              <td>"2 ans" → "3 ans"</td>
+              <td>Modification dur&eacute;e</td>
+              <td>&laquo; 2 ans &raquo; &rarr; &laquo; 3 ans &raquo;</td>
               <td>Falsification</td>
             </tr>
             <tr>
-              <td>Ajout métrique</td>
-              <td>"Amélioration" → "Amélioration de 30%"</td>
-              <td>Chiffre inventé</td>
+              <td>Ajout m&eacute;trique</td>
+              <td>&laquo; Am&eacute;lioration &raquo; &rarr; &laquo; Am&eacute;lioration de 30% &raquo;</td>
+              <td>Chiffre invent&eacute;</td>
             </tr>
             <tr>
-              <td>Invention responsabilité</td>
-              <td>Ajouter "Management d'équipe"</td>
-              <td>Non présent dans la source</td>
+              <td>Invention responsabilit&eacute;</td>
+              <td>Ajouter &laquo; Management d'&eacute;quipe &raquo;</td>
+              <td>Non pr&eacute;sent dans la source</td>
+            </tr>
+            <tr>
+              <td>Copie de l'offre</td>
+              <td>Recopier les responsabilit&eacute;s de l'offre dans le CV</td>
+              <td>ADAPTER le contenu, pas le REMPLACER</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Traçabilité des Modifications</h2>
+        <!-- ==================== STRUCTURE DES FICHIERS ==================== -->
+        <h2>Structure des Fichiers Prompts</h2>
 
-        <p>Chaque prompt demande de documenter les modifications :</p>
+        <pre><code class="language-bash">lib/features/cv-adaptation/prompts/
+├── classify-system.md              # Classification des exp&eacute;riences et projets
+├── classify-user.md                # Donn&eacute;es &agrave; classifier (CV + offre)
+├── batch-experience-system.md      # Adaptation d'une exp&eacute;rience professionnelle
+├── batch-experience-user.md        # Exp&eacute;rience + configuration langues
+├── batch-project-system.md         # Adaptation d'un projet
+├── batch-project-user.md           # Projet + r&egrave;gles de conversion
+├── batch-extras-system.md          # Adaptation des extras (certifications, hobbies...)
+├── batch-extras-user.md            # Extras + langue de sortie
+├── batch-education-system.md       # Traduction des formations
+├── batch-education-user.md         # Formations + langue cible
+├── batch-languages-system.md       # Adaptation des langues parl&eacute;es
+├── batch-languages-user.md         # Langues + exigences de l'offre
+├── batch-skills-system.md          # Adaptation des skills (processus CoT 10 &eacute;tapes)
+├── batch-skills-user.md            # Skills CV + skills offre
+├── batch-summary-system.md         # G&eacute;n&eacute;ration du r&eacute;sum&eacute; professionnel
+├── batch-summary-user.md           # Donn&eacute;es agr&eacute;g&eacute;es (Cache B)
+├── skills-category-system.md       # Correspondance skills par cat&eacute;gorie
+├── skills-category-user.md         # Skills CV vs skills offre (matrice)
+├── recompose-languages-system.md   # Alignement niveaux de langues
+└── recompose-languages-user.md     # Langues + mentions de l'offre</code></pre>
 
-        <pre><code>{
-  "modifications": [
-    {
-      "field": "title",
-      "action": "reformulated",
-      "before": "Développeur Web",
-      "after": "Développeur Full Stack",
-      "reason": "Alignement avec titre de l'offre"
-    },
-    {
-      "field": "responsibilities[0]",
-      "action": "reworded",
-      "before": "Création d'applications",
-      "after": "Développement d'APIs REST",
-      "reason": "Mise en avant skill requis"
-    }
-  ]
-}</code></pre>
+        <!-- ==================== MECANISME DE CHARGEMENT ==================== -->
+        <h2>M&eacute;canisme de Chargement</h2>
 
-        <h2>Chargement des Prompts</h2>
+        <p><strong>Fichier :</strong> <code>lib/openai-core/promptLoader.js</code></p>
 
-        <pre><code>// lib/features/cv-adaptation/utils/promptLoader.js
-import fs from 'fs/promises';
-import path from 'path';
+        <div class="callout callout-info">
+          <div class="callout-title">Fonction loadPromptWithVars()</div>
+          <p>Les prompts sont charg&eacute;s depuis des fichiers <code>.md</code> avec injection de variables via la syntaxe <code>&#123;&#123;variableName&#125;&#125;</code> (double accolades, style Handlebars) ou <code>&#123;variableName&#125;</code> (simple accolades, legacy). Le syst&egrave;me supporte &eacute;galement les directives <code>&#123;INCLUDE:path&#125;</code> pour l'inclusion de fichiers partag&eacute;s depuis <code>lib/prompts-shared/</code>.</p>
+        </div>
 
-const PROMPTS_DIR = path.join(process.cwd(), 'lib/features/cv-adaptation/prompts');
+        <pre><code class="language-javascript">import { loadPromptWithVars } from '@/lib/openai-core/promptLoader';
 
-export async function loadPrompt(promptPath) {
-  const fullPath = path.join(PROMPTS_DIR, `${promptPath}.md`);
-  const content = await fs.readFile(fullPath, 'utf-8');
-  return content;
+// Chargement d'un prompt system (instructions)
+const systemPrompt = await loadPromptWithVars(
+  'lib/features/cv-adaptation/prompts/batch-experience-system.md'
+);
+
+// Chargement d'un prompt user (donn&eacute;es) avec variables
+const userPrompt = await loadPromptWithVars(
+  'lib/features/cv-adaptation/prompts/batch-experience-user.md',
+  {
+    sourceLanguage: 'Fran&ccedil;ais',
+    targetLanguage: 'Anglais',
+    interfaceLanguage: 'Fran&ccedil;ais',
+    jobResponsibilities: JSON.stringify(jobOffer.responsibilities),
+    experienceJson: JSON.stringify(experience)
+  }
+);</code></pre>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Prompt System</h4>
+            <p>Contient les <strong>instructions</strong>, r&egrave;gles et le format de sortie attendu. Charg&eacute; sans variables dans la plupart des cas.</p>
+            <ul>
+              <li>Hi&eacute;rarchie des priorit&eacute;s (P1-P4)</li>
+              <li>R&egrave;gles anti-hallucination</li>
+              <li>Format JSON de sortie</li>
+              <li>Exemples et contre-exemples</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Prompt User</h4>
+            <p>Contient les <strong>donn&eacute;es</strong> &agrave; traiter. Charg&eacute; avec injection de variables dynamiques.</p>
+            <ul>
+              <li>CV source (JSON)</li>
+              <li>Offre d'emploi cible</li>
+              <li>Configuration des langues</li>
+              <li>Instructions sp&eacute;cifiques au contexte</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Cache et Performance</h3>
+
+        <pre><code class="language-javascript">// Cache en m&eacute;moire (actif en production uniquement)
+const cache = {};
+
+// En production : cache hit pour les prompts d&eacute;j&agrave; charg&eacute;s
+// En d&eacute;veloppement : rechargement syst&eacute;matique (hot-reload)
+export async function loadPrompt(
+  promptPath,
+  useCache = process.env.NODE_ENV === 'production'
+) {
+  if (useCache &amp;&amp; cache[promptPath]) return cache[promptPath];
+  // ... chargement fichier + traitement INCLUDE
 }
 
-// Utilisation
-const systemPrompt = await loadPrompt('batch-experience-system');
-const userPrompt = await loadPrompt('batch-experience-user');
-const messages = [
-  { role: 'system', content: systemPrompt },
-  { role: 'user', content: userPrompt.replace('{{DATA}}', JSON.stringify(inputData)) }
-];</code></pre>
+// Support des directives {INCLUDE:_shared/rules.md}
+// R&eacute;solution : _shared/ &rarr; lib/prompts-shared/
+async function processIncludeDirectives(content, useCache) {
+  const includeRegex = /\{INCLUDE:([^}]+)\}/g;
+  // ... remplacement r&eacute;cursif
+}</code></pre>
+
+        <!-- ==================== PAIRE 1 : CLASSIFY ==================== -->
+        <h2>Phase 0.5 : Classification</h2>
+
+        <p><span class="badge badge-primary">classify-system.md</span> + <span class="badge badge-primary">classify-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">CLASSIFY &mdash; Tri des exp&eacute;riences et projets</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">R&ocirc;le du prompt system</div>
+            <p>Expert en recrutement qui classifie chaque exp&eacute;rience et projet pour cr&eacute;er un CV <strong>cibl&eacute; et percutant</strong>. Philosophie : un bon CV est focalis&eacute;, pas exhaustif. Le recruteur passe 30 secondes sur un CV.</p>
+            <table>
+              <tr>
+                <td><code>KEEP</code></td>
+                <td>Conserver dans les exp&eacute;riences</td>
+              </tr>
+              <tr>
+                <td><code>REMOVE</code></td>
+                <td>Supprimer du CV</td>
+              </tr>
+              <tr>
+                <td><code>MOVE_TO_PROJECTS</code></td>
+                <td>D&eacute;placer vers la section projets (exp&eacute;riences uniquement)</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es (user prompt)</div>
+            <ul>
+              <li><code>{currentYear}</code> &mdash; Ann&eacute;e en cours</li>
+              <li><code>{timeWindowYears}</code> &mdash; Fen&ecirc;tre temporelle (ann&eacute;es d'exp&eacute;rience requises par l'offre)</li>
+              <li><code>{cutoffYear}</code> &mdash; Ann&eacute;e limite calcul&eacute;e</li>
+              <li><code>{jobTitle}</code>, <code>{jobSkillsRequired}</code>, <code>{jobSoftSkills}</code></li>
+              <li><code>{experiencesJson}</code>, <code>{projectsJson}</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">R&egrave;gle cl&eacute; : continuit&eacute; obligatoire</div>
+            <p><strong>Le CV doit couvrir les X derni&egrave;res ann&eacute;es SANS TROU.</strong> X = nombre d'ann&eacute;es d'exp&eacute;rience requis par l'offre. M&ecirc;me une exp&eacute;rience non pertinente est conserv&eacute;e si elle est dans la fen&ecirc;tre temporelle. Ordre d'&eacute;valuation strict :</p>
+            <ol>
+              <li>Exp&eacute;rience en cours ? &rarr; KEEP (emploi principal) ou MOVE_TO_PROJECTS (projet perso)</li>
+              <li>Dans la fen&ecirc;tre (fin &ge; cutoffYear) ? &rarr; KEEP (continuit&eacute;)</li>
+              <li>Hors fen&ecirc;tre mais pertinent ? &rarr; KEEP</li>
+              <li>Hors fen&ecirc;tre et non pertinent ? &rarr; REMOVE</li>
+              <li>Projet personnel termin&eacute; ? &rarr; MOVE_TO_PROJECTS (jamais REMOVE)</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- ==================== PAIRE 2 : BATCH EXPERIENCE ==================== -->
+        <h2>Phase 1a : Batch Experience</h2>
+
+        <p><span class="badge badge-warning">batch-experience-system.md</span> + <span class="badge badge-warning">batch-experience-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH EXPERIENCE &mdash; Adaptation d'une exp&eacute;rience professionnelle</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Framework STAR</div>
+            <p>Expert en CV optimis&eacute;s ATS. Adapte UNE exp&eacute;rience en utilisant le framework STAR :</p>
+            <table>
+              <thead><tr><th>Champ</th><th>R&ocirc;le STAR</th><th>R&egrave;gle</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><code>description</code></td>
+                  <td><strong>SITUATION</strong></td>
+                  <td>Contexte (1-2 phrases) &mdash; Z&Eacute;RO chiffre</td>
+                </tr>
+                <tr>
+                  <td><code>responsibilities</code></td>
+                  <td><strong>TASKS</strong></td>
+                  <td>Missions avec verbes d'action (max 5) &mdash; Z&Eacute;RO chiffre</td>
+                </tr>
+                <tr>
+                  <td><code>deliverables</code></td>
+                  <td><strong>RESULTS</strong></td>
+                  <td>R&eacute;sultats &mdash; TOUS avec chiffres (max 4, max 25 chars)</td>
+                </tr>
+              </tbody>
+            </table>
+            <p><strong>Flux chiffres :</strong> SOURCE &rarr; Retirer de responsibilities &rarr; Placer dans deliverables</p>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es (user prompt)</div>
+            <ul>
+              <li><code>{sourceLanguage}</code>, <code>{targetLanguage}</code>, <code>{interfaceLanguage}</code></li>
+              <li><code>{jobResponsibilities}</code> &mdash; Responsabilit&eacute;s de l'offre</li>
+              <li><code>{experienceJson}</code> &mdash; Exp&eacute;rience source compl&egrave;te (avec <code>_calculated_years</code>)</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">R&egrave;gles sp&eacute;cifiques</div>
+            <ul>
+              <li><strong>NULL si identique :</strong> si un champ n'est pas modifi&eacute;, retourner <code>null</code> (pas un objet avec &laquo; aucun changement &raquo;)</li>
+              <li><strong>Skills :</strong> garder les pertinentes, supprimer les non pertinentes, reformuler si &eacute;quivalence (ex: &laquo; Sheets &raquo; &rarr; &laquo; Excel &raquo;), JAMAIS en ajouter</li>
+              <li><strong>Domaine :</strong> d&eacute;termin&eacute; UNIQUEMENT depuis description + responsibilities (ignore l'offre et le titre)</li>
+              <li><strong>years_in_domain :</strong> copier EXACTEMENT la valeur de <code>_calculated_years</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Pi&egrave;ge &agrave; &eacute;viter : contamination du titre par l'offre</div>
+          <p>Le prompt contient un test anti-contamination explicite pour le titre de poste. Le titre doit refl&eacute;ter le <strong>m&eacute;tier r&eacute;el</strong> (ce que la personne FAIT), pas les outils ni l'offre.</p>
+          <pre><code class="language-bash"># Offre: "Data Engineer"
+# Exp&eacute;rience: "Piloter un workpackage de gestion de configuration v&eacute;hicules"
+# INTERDIT : "Chef de projet Data Analytics" (contamin&eacute; par l'offre)
+# CORRECT  : "Chef de projet Configuration V&eacute;hicules"</code></pre>
+        </div>
+
+        <!-- ==================== PAIRE 3 : BATCH PROJECT ==================== -->
+        <h2>Phase 1b : Batch Project</h2>
+
+        <p><span class="badge badge-warning">batch-project-system.md</span> + <span class="badge badge-warning">batch-project-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH PROJECT &mdash; Adaptation d'un projet</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">R&ocirc;le du prompt system</div>
+            <p>Expert en r&eacute;daction de CV pour ATS. Adapte UN projet et g&egrave;re la <strong>conversion d'exp&eacute;riences en projets</strong> (flag <code>_fromExperience: true</code>).</p>
+            <table>
+              <thead><tr><th>Champ modifiable</th><th>R&egrave;gle</th></tr></thead>
+              <tbody>
+                <tr><td><code>name</code></td><td>Garder tel quel ou l&eacute;g&egrave;rement reformuler</td></tr>
+                <tr><td><code>role</code></td><td>Garder ou adapter (NE PAS inventer un r&ocirc;le plus senior)</td></tr>
+                <tr><td><code>summary</code></td><td>Reformuler (2-3 phrases) avec mots-cl&eacute;s pertinents</td></tr>
+                <tr><td><code>tech_stack</code></td><td>R&eacute;ordonner par pertinence (INTERDIT d'ajouter des technologies)</td></tr>
+              </tbody>
+            </table>
+            <p><strong>Champs immutables :</strong> <code>start_date</code>, <code>end_date</code>, <code>url</code></p>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es</div>
+            <ul>
+              <li><code>{projectJson}</code> &mdash; Projet source (ou exp&eacute;rience avec <code>_originalExperience</code>)</li>
+              <li><code>{targetLanguage}</code> &mdash; Langue de sortie</li>
+              <li><code>{movedFromExperienceNote}</code> &mdash; Note si converti depuis MOVE_TO_PROJECTS</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Conversion exp&eacute;rience &rarr; projet</div>
+            <p>Si <code>_fromExperience: true</code>, le mapping est :</p>
+            <table>
+              <tr><td><strong>name</strong></td><td><code>title</code> ou <code>company</code> de l'exp&eacute;rience</td></tr>
+              <tr><td><strong>role</strong></td><td>D&eacute;duit du <code>title</code> (&laquo; Fondateur &raquo; &rarr; &laquo; Fondateur &raquo;, sinon &laquo; Cr&eacute;ateur &raquo;)</td></tr>
+              <tr><td><strong>summary</strong></td><td>Combiner <code>description</code> + <code>responsibilities</code> + <code>deliverables</code></td></tr>
+              <tr><td><strong>tech_stack</strong></td><td><code>skills_used</code> de l'exp&eacute;rience</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== PAIRE 4 : BATCH EXTRAS ==================== -->
+        <h2>Phase 1c : Batch Extras</h2>
+
+        <p><span class="badge badge-warning">batch-extras-system.md</span> + <span class="badge badge-warning">batch-extras-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH EXTRAS &mdash; Adaptation des informations compl&eacute;mentaires</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Classification en 3 cat&eacute;gories</div>
+            <table>
+              <thead>
+                <tr><th>Cat&eacute;gorie</th><th>Types</th><th>R&egrave;gle</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>FAITS</strong> (jamais inventer)</td>
+                  <td>Permis, Certifications, B&eacute;n&eacute;volat</td>
+                  <td>Garder si pertinent pour l'offre, supprimer sinon</td>
+                </tr>
+                <tr>
+                  <td><strong>PR&Eacute;F&Eacute;RENCES</strong> (ajoutables)</td>
+                  <td>Remote, Disponibilit&eacute;, Mobilit&eacute;</td>
+                  <td>Ajouter si l'offre les mentionne et absent du CV</td>
+                </tr>
+                <tr>
+                  <td><strong>PERSONNELS</strong> (toujours garder)</td>
+                  <td>Hobbies</td>
+                  <td>TOUJOURS conserver &mdash; montre la personnalit&eacute;</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es</div>
+            <ul>
+              <li><code>{extrasJson}</code> &mdash; Extras du CV source</li>
+              <li><code>{targetLanguage}</code> &mdash; Langue de sortie</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sp&eacute;cificit&eacute; : correction de structure (SPLIT)</div>
+            <p>Si un extra contient plusieurs informations distinctes (name g&eacute;n&eacute;rique comme &laquo; Divers &raquo;), il est s&eacute;par&eacute; en extras distincts :</p>
+            <table>
+              <thead><tr><th>Si summary parle de...</th><th>Alors name =</th></tr></thead>
+              <tbody>
+                <tr><td>Pr&eacute;avis, disponibilit&eacute;, date de d&eacute;but</td><td>&laquo; Disponibilit&eacute; &raquo;</td></tr>
+                <tr><td>Permis A, B, C</td><td>&laquo; Permis &raquo;</td></tr>
+                <tr><td>D&eacute;placements, mobilit&eacute;</td><td>&laquo; Mobilit&eacute; &raquo;</td></tr>
+                <tr><td>T&eacute;l&eacute;travail, remote, hybride</td><td>&laquo; T&eacute;l&eacute;travail &raquo;</td></tr>
+                <tr><td>Loisirs, sport, musique</td><td>&laquo; Loisirs &raquo; (FR) / &laquo; Hobbies &raquo; (EN)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Mapping extras_modifications obligatoire</div>
+          <p>Pour CHAQUE extra du CV source, le prompt exige une entr&eacute;e dans <code>extras_modifications</code> avec <code>before_name</code>, <code>after_name</code>, <code>action</code> (kept/modified/removed/added) et <code>reason</code>. Cela garantit la tra&ccedil;abilit&eacute; compl&egrave;te.</p>
+        </div>
+
+        <!-- ==================== PAIRE 5 : BATCH EDUCATION ==================== -->
+        <h2>Phase 1d : Batch Education</h2>
+
+        <p><span class="badge badge-warning">batch-education-system.md</span> + <span class="badge badge-warning">batch-education-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH EDUCATION &mdash; Traduction des formations</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">R&ocirc;le du prompt system</div>
+            <p>Expert en CV multilingue. Traduit <strong>uniquement</strong> les champs <code>degree</code> et <code>field_of_study</code> dans la langue cible. Tous les autres champs (<code>institution</code>, <code>start_date</code>, <code>end_date</code>, <code>location</code>) sont conserv&eacute;s tels quels (noms propres).</p>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es</div>
+            <ul>
+              <li><code>{educationJson}</code> &mdash; Formations source</li>
+              <li><code>{targetLanguage}</code> &mdash; Langue cible</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Table d'&eacute;quivalences int&eacute;gr&eacute;e</div>
+            <table>
+              <thead>
+                <tr><th>Fran&ccedil;ais</th><th>Anglais</th><th>Allemand</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Baccalaur&eacute;at</td><td>High School Diploma</td><td>Abitur</td></tr>
+                <tr><td>Licence</td><td>Bachelor's Degree</td><td>Bachelor</td></tr>
+                <tr><td>Master</td><td>Master's Degree</td><td>Master</td></tr>
+                <tr><td>Doctorat</td><td>PhD / Doctorate</td><td>Doktorat</td></tr>
+                <tr><td>BTS / DUT</td><td>Associate Degree</td><td>&mdash;</td></tr>
+                <tr><td>Ing&eacute;nieur</td><td>Engineering Degree</td><td>Diplom-Ingenieur</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== PAIRE 6 : BATCH LANGUAGES ==================== -->
+        <h2>Phase 1e : Batch Languages</h2>
+
+        <p><span class="badge badge-warning">batch-languages-system.md</span> + <span class="badge badge-warning">batch-languages-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH LANGUAGES &mdash; Adaptation des langues parl&eacute;es</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Double mission</div>
+            <p><strong>1. Traduire</strong> les noms et niveaux dans la langue cible. <strong>2. Aligner</strong> les niveaux avec les exigences de l'offre (reformulation du format, JAMAIS augmentation du niveau r&eacute;el).</p>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es</div>
+            <ul>
+              <li><code>{languagesJson}</code> &mdash; Langues du CV source</li>
+              <li><code>{languageRequirementsJson}</code> &mdash; Exigences linguistiques extraites de l'offre</li>
+              <li><code>{sourceLanguage}</code>, <code>{targetLanguage}</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">&Eacute;quivalences de niveaux (CECR)</div>
+            <table>
+              <thead><tr><th>Groupe</th><th>Niveaux &eacute;quivalents</th></tr></thead>
+              <tbody>
+                <tr><td>Natif/Bilingue</td><td>C2, Bilingue, Native, Fluent (natif), Langue maternelle</td></tr>
+                <tr><td>Courant</td><td>C1, Courant, Fluent, Proficient, Avanc&eacute;</td></tr>
+                <tr><td>Interm&eacute;diaire+</td><td>B2, Upper Intermediate, Interm&eacute;diaire avanc&eacute;</td></tr>
+                <tr><td>Interm&eacute;diaire</td><td>B1, Intermediate, Interm&eacute;diaire, Conversational</td></tr>
+                <tr><td>&Eacute;l&eacute;mentaire</td><td>A2, Elementary, &Eacute;l&eacute;mentaire, Scolaire</td></tr>
+                <tr><td>D&eacute;butant</td><td>A1, Beginner, Basic, Notions, D&eacute;butant</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Ne JAMAIS augmenter le niveau r&eacute;el</div>
+          <p>L'alignement est seulement une reformulation, pas une am&eacute;lioration. Si le niveau CV est inf&eacute;rieur &agrave; l'exigence de l'offre, NE PAS aligner vers le haut. Exemple : CV &laquo; B1 &raquo; + Offre &laquo; Anglais courant &raquo; &rarr; conserver &laquo; B1 &raquo;, ne pas mettre &laquo; Courant &raquo;.</p>
+        </div>
+
+        <!-- ==================== PAIRE 7 : BATCH SKILLS ==================== -->
+        <h2>Phase 1f : Batch Skills</h2>
+
+        <p><span class="badge badge-warning">batch-skills-system.md</span> + <span class="badge badge-warning">batch-skills-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH SKILLS &mdash; Adaptation des comp&eacute;tences (processus CoT en 10 &eacute;tapes)</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Processus Chain of Thought (CoT)</div>
+            <ol>
+              <li><strong>&Eacute;tape 1 &mdash; Langues :</strong> Identifier CV.language, JobOffer.content.language, request.user_interface_language</li>
+              <li><strong>&Eacute;tape 2 &mdash; Inventaire :</strong> Lister chaque skill avec index (<code>original_position</code>) et <code>proficiency</code></li>
+              <li><strong>&Eacute;tape 3 &mdash; S&eacute;paration :</strong> Skills compos&eacute;s (s&eacute;parateurs : <code>/</code>, <code>&amp;</code>, <code>,</code>, <code>+</code>, &laquo; et &raquo;, &laquo; and &raquo;)</li>
+              <li><strong>&Eacute;tape 4 &mdash; Skills offre :</strong> Extraire required + nice_to_have par cat&eacute;gorie</li>
+              <li><strong>&Eacute;tape 5 &mdash; Matching :</strong> hard_skills, tools, methodologies (priorit&eacute; required &rarr; nice_to_have)</li>
+              <li><strong>&Eacute;tape 6 &mdash; Soft skills :</strong> Matching s&eacute;mantique direct (max 6 dans le r&eacute;sultat)</li>
+              <li><strong>&Eacute;tape 7 &mdash; D&eacute;cision :</strong> Action + skill_final selon probabilit&eacute;</li>
+              <li><strong>&Eacute;tape 8 &mdash; Anti-doublon :</strong> Si 2+ skills matchent le m&ecirc;me skill offre &ge; 80%</li>
+              <li><strong>&Eacute;tape 9 &mdash; Traduction :</strong> Si langues diff&eacute;rentes (sauf noms propres, frameworks, acronymes)</li>
+              <li><strong>&Eacute;tape 10 &mdash; Reasons :</strong> G&eacute;n&eacute;ration dans la langue de l'interface utilisateur</li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es</div>
+            <ul>
+              <li><code>{hardSkillsJson}</code>, <code>{softSkillsJson}</code>, <code>{toolsJson}</code>, <code>{methodologiesJson}</code></li>
+              <li><code>{hardSkillsRequired}</code>, <code>{hardSkillsNiceToHave}</code>, <code>{toolsRequired}</code>, <code>{toolsNiceToHave}</code>, etc.</li>
+              <li><code>{cvLanguage}</code>, <code>{jobLanguage}</code>, <code>{interfaceLanguage}</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">&Eacute;chelle de probabilit&eacute; et actions</div>
+            <table>
+              <thead><tr><th>Type</th><th>Probabilit&eacute;</th><th>Action</th><th><code>skill_final</code> =</th></tr></thead>
+              <tbody>
+                <tr><td>Exact</td><td>100%</td><td rowspan="3"><code>renamed</code></td><td rowspan="3">Nom EXACT du skill de l'OFFRE</td></tr>
+                <tr><td>Variante tech</td><td>95%</td></tr>
+                <tr><td>Traduction / Synonyme</td><td>80-94%</td></tr>
+                <tr><td>Tech proche</td><td>70%</td><td rowspan="2"><code>kept</code></td><td rowspan="2">Nom du skill CV (traduit si langues &ne;)</td></tr>
+                <tr><td>Partiel</td><td>60%</td></tr>
+                <tr><td>Aucun match</td><td>&lt; 60%</td><td><code>deleted</code></td><td>Nom du skill CV (traduit si langues &ne;)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Exceptions de s&eacute;paration</div>
+          <p>Les skills composites suivants ne sont JAMAIS s&eacute;par&eacute;s : <code>CI/CD</code>, <code>UX/UI</code>, <code>UI/UX</code>, <code>R&amp;D</code>, <code>TCP/IP</code>, <code>B2B</code>, <code>B2C</code>, <code>I/O</code>, <code>OS/2</code>, <code>OS/400</code>.</p>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Compl&eacute;tude obligatoire</div>
+          <p>Chaque skill du CV source DOIT appara&icirc;tre dans la sortie. Ne jamais omettre un skill, m&ecirc;me avec probabilit&eacute; 0%. Cat&eacute;gorie absente (required ET nice_to_have vides) &rarr; tous les skills de cette cat&eacute;gorie sont <code>deleted</code>.</p>
+        </div>
+
+        <!-- ==================== PAIRE 8 : BATCH SUMMARY ==================== -->
+        <h2>Phase 1g : Batch Summary</h2>
+
+        <p><span class="badge badge-warning">batch-summary-system.md</span> + <span class="badge badge-warning">batch-summary-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH SUMMARY &mdash; G&eacute;n&eacute;ration du r&eacute;sum&eacute; professionnel</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Structure DOMAINE + ACCOMPLISSEMENT + VALEUR</div>
+            <table>
+              <thead><tr><th>Partie</th><th>Contenu</th><th>R&egrave;gle</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><strong>Phrase 1 : DOMAINE</strong></td>
+                  <td>&laquo; X ans d'exp&eacute;rience en [domaine principal] &raquo;</td>
+                  <td>Commencer par les ann&eacute;es, PAS par un titre</td>
+                </tr>
+                <tr>
+                  <td><strong>Phrase 2 : ACCOMPLISSEMENT</strong></td>
+                  <td>Verbe d'action + r&eacute;sultat quantifi&eacute; + contexte</td>
+                  <td>S&eacute;lectionner LA meilleure r&eacute;alisation chiffr&eacute;e</td>
+                </tr>
+                <tr>
+                  <td><strong>Phrase 3 : VALEUR</strong></td>
+                  <td>3-4 comp&eacute;tences cl&eacute;s + apport pour l'entreprise</td>
+                  <td>Matcher les requirements de l'offre</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es (donn&eacute;es agr&eacute;g&eacute;es du Cache B)</div>
+            <ul>
+              <li><code>{currentTitles}</code> &mdash; Titres actuels du candidat</li>
+              <li><code>{totalYears}</code> &mdash; Ann&eacute;es d'exp&eacute;rience totales</li>
+              <li><code>{experiencesByDomain}</code> &mdash; R&eacute;partition par domaine (agr&eacute;g&eacute;e depuis les batches)</li>
+              <li><code>{topDeliverables}</code> &mdash; Meilleures r&eacute;alisations chiffr&eacute;es</li>
+              <li><code>{topSkills}</code> &mdash; Skills pertinents pour l'offre (adapt&eacute;s)</li>
+              <li><code>{jobTitle}</code>, <code>{jobKeywords}</code></li>
+              <li><code>{targetLanguage}</code>, <code>{interfaceLanguage}</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Interdictions absolues</div>
+            <ul>
+              <li>NE JAMAIS commencer par un titre de poste</li>
+              <li>NE JAMAIS utiliser de pronoms personnels (je, mon, ma, mes)</li>
+              <li>NE JAMAIS utiliser de buzzwords vides (passionn&eacute;, motiv&eacute;, dynamique, rigoureux)</li>
+              <li>NE JAMAIS inventer de chiffres ou extrapoler des donn&eacute;es</li>
+              <li>Longueur : 2-4 phrases, 50-75 mots maximum</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">S&eacute;quentiel apr&egrave;s les batches</div>
+          <p>Le batch summary est ex&eacute;cut&eacute; <strong>APR&Egrave;S</strong> tous les autres batches (1a-1f) car il exploite le <strong>Cache B</strong> qui contient les r&eacute;sultats agr&eacute;g&eacute;s des exp&eacute;riences, projets et skills adapt&eacute;s.</p>
+        </div>
+
+        <!-- ==================== PAIRE 9 : SKILLS CATEGORY ==================== -->
+        <h2>Skills Category (sous-phase du batch skills)</h2>
+
+        <p><span class="badge badge-primary">skills-category-system.md</span> + <span class="badge badge-primary">skills-category-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">SKILLS CATEGORY &mdash; Correspondance CV &harr; Offre par cat&eacute;gorie</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Processus en 5 &eacute;tapes</div>
+            <ol>
+              <li><strong>Inventaire</strong> des skills de l'offre</li>
+              <li><strong>Matrice de correspondance</strong> : pour chaque skill CV, calcul d'un score avec chaque skill offre</li>
+              <li><strong>S&eacute;lection</strong> du meilleur match (score le plus &eacute;lev&eacute;)</li>
+              <li><strong>Nom adapt&eacute;</strong> : score 70-100 &rarr; nom de l'offre ; score 60-69 &rarr; traduction ou nom CV</li>
+              <li><strong>Reason</strong> dans la langue de l'interface</li>
+            </ol>
+            <p>Retourne uniquement les &eacute;l&eacute;ments avec un score &ge; 60.</p>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es</div>
+            <ul>
+              <li><code>{cvItemsJson}</code> &mdash; Skills du CV &agrave; analyser</li>
+              <li><code>{jobItemsJson}</code> &mdash; Skills de l'offre cible</li>
+              <li><code>{cvLanguage}</code>, <code>{interfaceLanguage}</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">&Eacute;chelle de scores multi-secteurs</div>
+            <table>
+              <thead><tr><th>Score</th><th>Type</th><th>Exemples</th></tr></thead>
+              <tbody>
+                <tr><td>100</td><td>Identique</td><td>&laquo; Excel &raquo; = &laquo; Excel &raquo;, &laquo; Python &raquo; = &laquo; Python &raquo;</td></tr>
+                <tr><td>95-100</td><td>Variante</td><td>&laquo; React.js &raquo; = &laquo; React &raquo;, &laquo; Javascript &raquo; = &laquo; JavaScript &raquo;</td></tr>
+                <tr><td>85-94</td><td>Traduction</td><td>&laquo; Comptabilit&eacute; &raquo; = &laquo; Accounting &raquo;, &laquo; Gestion de projet &raquo; = &laquo; Project Management &raquo;</td></tr>
+                <tr><td>75-84</td><td>Synonyme</td><td>&laquo; N&eacute;gociation &raquo; &harr; &laquo; Sales Skills &raquo;, &laquo; Formation &raquo; &harr; &laquo; Training &raquo;</td></tr>
+                <tr><td>65-74</td><td>Tech proche</td><td>&laquo; Sage &raquo; &harr; &laquo; SAP &raquo;, &laquo; CATIA &raquo; &harr; &laquo; SolidWorks &raquo;</td></tr>
+                <tr><td>60-64</td><td>Partiel</td><td>&laquo; Marketing &raquo; &harr; &laquo; Communication &raquo;, &laquo; Logistique &raquo; &harr; &laquo; Supply Chain &raquo;</td></tr>
+                <tr><td>0-59</td><td>Aucun match</td><td>Non retourn&eacute; (filtr&eacute;)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== PAIRE 10 : RECOMPOSE LANGUAGES ==================== -->
+        <h2>Recompose Languages (post-traitement)</h2>
+
+        <p><span class="badge badge-success">recompose-languages-system.md</span> + <span class="badge badge-success">recompose-languages-user.md</span></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">RECOMPOSE LANGUAGES &mdash; Alignement des niveaux de langues</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">R&ocirc;le du prompt system</div>
+            <p>Expert en r&eacute;daction de CV. Adapte le <strong>format</strong> des niveaux de langue pour correspondre au style de l'offre. Si la langue est mentionn&eacute;e dans l'offre, le format est align&eacute; ; sinon, le niveau est conserv&eacute; tel quel.</p>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Variables inject&eacute;es</div>
+            <ul>
+              <li><code>{languagesJson}</code> &mdash; Langues du CV source</li>
+              <li><code>{jobTitle}</code> &mdash; Titre de l'offre</li>
+              <li><code>{jobDescription}</code> &mdash; Description compl&egrave;te de l'offre</li>
+              <li><code>{languageMentions}</code> &mdash; Mentions de langues extraites de l'offre</li>
+              <li><code>{targetLanguage}</code> &mdash; Langue de sortie</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemples de conversions</div>
+            <pre><code class="language-json">// Offre : "Anglais courant requis"
+// CV : { "name": "Anglais", "level": "C1" }
+// Adapt&eacute; : { "name": "Anglais", "level": "Courant" }
+
+// Offre : "English fluency required"
+// CV : { "name": "English", "level": "Courant" }
+// Adapt&eacute; : { "name": "English", "level": "Fluent" }
+
+// Offre : (pas de mention de l'allemand)
+// CV : { "name": "Allemand", "level": "B1" }
+// Adapt&eacute; : { "name": "Allemand", "level": "B1" } // inchang&eacute;</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== RECAPITULATIF ==================== -->
+        <h2>R&eacute;capitulatif des 10 Paires</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Fichiers</th>
+              <th>R&ocirc;le</th>
+              <th>Variables cl&eacute;s</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">0.5</span></td>
+              <td><code>classify-*</code></td>
+              <td>Tri KEEP / REMOVE / MOVE_TO_PROJECTS</td>
+              <td><code>experiencesJson</code>, <code>timeWindowYears</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1a</span></td>
+              <td><code>batch-experience-*</code></td>
+              <td>Adaptation exp&eacute;rience (framework STAR)</td>
+              <td><code>experienceJson</code>, <code>jobResponsibilities</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1b</span></td>
+              <td><code>batch-project-*</code></td>
+              <td>Adaptation projet + conversion exp&eacute;rience &rarr; projet</td>
+              <td><code>projectJson</code>, <code>movedFromExperienceNote</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1c</span></td>
+              <td><code>batch-extras-*</code></td>
+              <td>Extras (certifs, hobbies, permis) + SPLIT</td>
+              <td><code>extrasJson</code>, <code>targetLanguage</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1d</span></td>
+              <td><code>batch-education-*</code></td>
+              <td>Traduction degree + field_of_study</td>
+              <td><code>educationJson</code>, <code>targetLanguage</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1e</span></td>
+              <td><code>batch-languages-*</code></td>
+              <td>Traduction + alignement niveaux langues</td>
+              <td><code>languagesJson</code>, <code>languageRequirementsJson</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1f</span></td>
+              <td><code>batch-skills-*</code></td>
+              <td>Matching skills (CoT 10 &eacute;tapes)</td>
+              <td><code>hardSkillsJson</code>, <code>softSkillsJson</code>, <code>toolsJson</code>, <code>methodologiesJson</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1g</span></td>
+              <td><code>batch-summary-*</code></td>
+              <td>R&eacute;sum&eacute; (DOMAINE + ACCOMPLISSEMENT + VALEUR)</td>
+              <td><code>experiencesByDomain</code>, <code>topDeliverables</code>, <code>topSkills</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">sub</span></td>
+              <td><code>skills-category-*</code></td>
+              <td>Correspondance par cat&eacute;gorie (matrice de scores)</td>
+              <td><code>cvItemsJson</code>, <code>jobItemsJson</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">post</span></td>
+              <td><code>recompose-languages-*</code></td>
+              <td>Alignement format niveaux de langues</td>
+              <td><code>languageMentions</code>, <code>jobDescription</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== LIENS ==================== -->
+        <h2>Voir aussi</h2>
+
+        <ul>
+          <li><a href="./overview.html">Vue d'ensemble du pipeline</a> &mdash; Workflow global et phases</li>
+          <li><a href="./schemas-io.html">Schemas I/O</a> &mdash; 10 JSON Schemas pour les Structured Outputs</li>
+          <li><a href="./phase-batches.html">Phase Batches</a> &mdash; 7 batches d&eacute;taill&eacute;s avec data-flow</li>
+          <li><a href="./phase-classification.html">Phase Classification</a> &mdash; classifyCore(), applyClassification()</li>
+        </ul>
       </div>
     </main>
   </div>
@@ -475,7 +829,6 @@ const messages = [
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

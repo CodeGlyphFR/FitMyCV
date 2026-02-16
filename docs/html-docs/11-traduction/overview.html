@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Traduction CV | FitMyCV.io</title>
+  <title>Traduction - Vue d'ensemble | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -30,277 +24,249 @@
           <span>Traduction</span>
         </div>
 
-        <h1>Traduction CV</h1>
+        <h1>Traduction de CV</h1>
         <p class="lead">
-          La fonctionnalité de traduction permet de convertir un CV d'une langue à une autre tout en préservant le formatage, le ton professionnel et les conventions locales.
+          Traduction de CV via OpenAI avec le framework <code>createJobRunner</code>. Supporte 4 langues (fr, en, es, de), préserve la structure JSON du CV, et utilise des prompts chargés depuis des fichiers Markdown.
         </p>
 
-        <div class="callout callout-info">
-          <div class="callout-title">Coût</div>
-          <p>Le nombre de crédits par traduction est configurable dans <strong>Administration → Settings</strong>.</p>
+        <h2>Architecture</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de traduction d'un CV</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph API["API (app/api/background-tasks/translate-cv/)"]
+        Request["POST requête"]
+        Auth["Auth + canStartTaskType()"]
+        Credits["incrementFeatureCounter('translate_cv')"]
+        Schedule["scheduleTranslateCvJob()"]
+    end
+
+    subgraph Runner["JOB RUNNER (lib/translation/job.js)"]
+        EnsureDir["ensureUserCvDir()"]
+        ReadCV["readUserCvFile(sourceFile)"]
+        Translate["translateCv() service"]
+        Save["writeUserCvFile(translated)"]
+        DB["Upsert CvFile en DB"]
+        CleanMeta["Nettoyer métadonnées d'amélioration"]
+    end
+
+    subgraph Service["SERVICE (lib/translation/service.js)"]
+        LoadPrompts["loadPrompt() + loadPromptWithVars()"]
+        OpenAI["executeOpenAIService()"]
+        Validate["JSON.parse(content) — validation"]
+    end
+
+    Request --> Auth --> Credits --> Schedule
+    Schedule --> EnsureDir --> ReadCV --> Translate
+    Translate --> LoadPrompts --> OpenAI --> Validate
+    Validate --> CleanMeta --> Save --> DB
+          </div>
         </div>
 
-        <h2>Langues Supportées</h2>
+        <h2>Langues supportées</h2>
 
         <table>
           <thead>
             <tr>
               <th>Code</th>
               <th>Langue</th>
-              <th>Conventions</th>
+              <th>Nom dans le prompt</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><code>fr</code></td>
               <td>Français</td>
-              <td>France, Belgique, Suisse, Canada</td>
+              <td>français</td>
             </tr>
             <tr>
               <td><code>en</code></td>
               <td>Anglais</td>
-              <td>UK, US, Australie</td>
-            </tr>
-            <tr>
-              <td><code>de</code></td>
-              <td>Allemand</td>
-              <td>Allemagne, Autriche, Suisse</td>
+              <td>anglais</td>
             </tr>
             <tr>
               <td><code>es</code></td>
               <td>Espagnol</td>
-              <td>Espagne, Amérique latine</td>
+              <td>español</td>
+            </tr>
+            <tr>
+              <td><code>de</code></td>
+              <td>Allemand</td>
+              <td>deutsch</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Pipeline de Traduction</h2>
+        <h2>Service de traduction</h2>
 
-        <div class="diagram">
-          <div class="diagram-title">Flux de traduction</div>
-          <div class="mermaid">
-flowchart TB
-    subgraph Input["ENTRÉE"]
-        CV["CV Source"]
-        Lang["Langue cible"]
-    end
+        <p>Le service <code>translateCv()</code> dans <code>lib/translation/service.js</code> :</p>
 
-    subgraph Process["TRAITEMENT"]
-        Detect["Détection langue source"]
-        Translate["OpenAI API<br/>Traduction"]
-        Adapt["Adaptation conventions"]
-    end
+        <pre><code class="language-javascript">export async function translateCv({
+  cvContent,
+  targetLanguage,
+  signal,
+  userId = null
+}) {
+  const targetLangName = languageNames[targetLanguage] || targetLanguage;
 
-    subgraph Output["SORTIE"]
-        NewCV["CV Traduit"]
-        Version["Nouvelle version"]
-    end
-
-    CV --> Detect
-    Lang --> Translate
-    Detect --> Translate
-    Translate --> Adapt
-    Adapt --> NewCV
-    NewCV --> Version
-          </div>
-        </div>
-
-        <h2>Data Flow</h2>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge ai">IA</span>
-            <span class="data-flow-title">OpenAI API - Traduction (modèle configurable)</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Input</h5>
-            <pre><code>{
-  "cv": { /* CV JSON complet */ },
-  "sourceLanguage": "fr",
-  "targetLanguage": "en",
-  "targetRegion": "UK"
-}</code></pre>
-
-            <h5>Prompt Structure</h5>
-            <pre><code># Mission
-Traduire ce CV du {sourceLanguage} vers {targetLanguage}.
-
-# Règles
-1. Préserver TOUTES les informations factuelles
-2. Adapter au ton professionnel de la région cible
-3. Conserver les noms propres (entreprises, écoles)
-4. Traduire les titres de poste avec équivalents locaux
-5. Adapter les formats de date selon la convention locale
-
-# Conventions {targetLanguage}-{targetRegion}
-- Dates: {dateFormat}
-- Téléphone: {phoneFormat}
-- Monnaie: {currencyFormat}</code></pre>
-
-            <h5>Output</h5>
-            <pre><code>{
-  "translatedCv": {
-    "header": {
-      "firstName": "Jean",
-      "lastName": "Dupont",
-      // ...
-    },
-    "sections": {
-      "summary": {
-        "content": "Full Stack Developer with 5 years..."
-      },
-      "experiences": [
-        {
-          "title": "Senior Developer", // Traduit
-          "company": "TechCorp", // Conservé
-          "responsibilities": [
-            "Developed REST APIs with Node.js",
-            // ...
-          ]
-        }
-      ]
-    },
-    "metadata": {
-      "language": "en",
-      "translatedFrom": "fr",
-      "translatedAt": "2024-01-15T10:30:00Z"
-    }
-  }
-}</code></pre>
-          </div>
-        </div>
-
-        <h2>Adaptations par Région</h2>
-
-        <div class="card-grid">
-          <div class="card">
-            <h4>France (fr-FR)</h4>
-            <ul>
-              <li>Date: JJ/MM/AAAA</li>
-              <li>Photo: Acceptée</li>
-              <li>Âge/Date naissance: Optionnel</li>
-              <li>Ton: Formel</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>UK (en-GB)</h4>
-            <ul>
-              <li>Date: DD/MM/YYYY</li>
-              <li>Photo: Rare</li>
-              <li>Âge: Non recommandé</li>
-              <li>Ton: Professionnel concis</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>US (en-US)</h4>
-            <ul>
-              <li>Date: MM/DD/YYYY</li>
-              <li>Photo: Déconseillée</li>
-              <li>Âge: Interdit</li>
-              <li>Ton: Accomplissements</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>Allemagne (de-DE)</h4>
-            <ul>
-              <li>Date: TT.MM.JJJJ</li>
-              <li>Photo: Attendue</li>
-              <li>Âge: Standard</li>
-              <li>Ton: Très formel</li>
-            </ul>
-          </div>
-        </div>
-
-        <h2>Éléments Non Traduits</h2>
-
-        <ul>
-          <li><strong>Noms propres</strong> : Jean Dupont, TechCorp, MIT</li>
-          <li><strong>Technologies</strong> : JavaScript, React, PostgreSQL</li>
-          <li><strong>Certifications</strong> : AWS Certified, PMP, TOEIC 950</li>
-          <li><strong>URLs</strong> : LinkedIn, portfolio, GitHub</li>
-        </ul>
-
-        <h2>API Endpoint</h2>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge input">POST</span>
-            <span class="data-flow-title">/api/cv/[id]/translate</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Request</h5>
-            <pre><code>{
-  "targetLanguage": "en",
-  "targetRegion": "UK",  // Optionnel
-  "createNewFile": true  // Créer un nouveau CV ou écraser
-}</code></pre>
-
-            <h5>Response</h5>
-            <pre><code>{
-  "success": true,
-  "data": {
-    "cvFileId": 123,
-    "filename": "cv-dev-fullstack-en.json",
-    "language": "en",
-    "creditsUsed": 1
-  }
-}</code></pre>
-          </div>
-        </div>
-
-        <h2>Implémentation</h2>
-
-        <pre><code>// lib/features/translation/translateCv.js
-import { callOpenAI } from '@/lib/openai-core/client';
-import { loadPrompt } from '@/lib/openai-core/promptLoader';
-
-export async function translateCv(cvData, targetLanguage, options = {}) {
-  const { targetRegion = null } = options;
-
-  // Détecter la langue source
-  const sourceLanguage = cvData.metadata?.language || detectLanguage(cvData);
-
-  // Si même langue, retourner tel quel
-  if (sourceLanguage === targetLanguage) {
-    return cvData;
-  }
-
-  // Charger le prompt
-  const prompt = await loadPrompt('translation/translate-cv');
-
-  // Récupérer les conventions de la région cible
-  const conventions = getRegionConventions(targetLanguage, targetRegion);
-
-  // Appeler l'IA
-  const result = await callOpenAI({
-    featureName: 'translate_cv',
-    messages: [
-      {
-        role: 'system',
-        content: prompt
-          .replace('{sourceLanguage}', sourceLanguage)
-          .replace('{targetLanguage}', targetLanguage)
-          .replace('{conventions}', JSON.stringify(conventions))
-      },
-      {
-        role: 'user',
-        content: JSON.stringify(cvData)
-      }
-    ],
-    responseFormat: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'translated_cv',
-        schema: translationOutputSchema,
-        strict: true
-      }
-    }
+  // Charger les prompts depuis les fichiers .md
+  const systemPrompt = await loadPrompt('lib/translation/prompts/system.md');
+  const userPrompt = await loadPromptWithVars('lib/translation/prompts/user.md', {
+    targetLanguage: targetLangName,
+    cvContent,
   });
 
-  return result.translatedCv;
+  const { content } = await executeOpenAIService({
+    serviceName: 'translateCv',
+    modelSetting: 'model_translate_cv',
+    featureName: 'translate_cv',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0.3,
+    signal,
+    userId,
+  });
+
+  // Valider que c'est du JSON valide
+  JSON.parse(content);
+  return content;
 }</code></pre>
 
-        <h2>Fichiers Clés</h2>
+        <h3>Configuration OpenAI</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Paramètre</th>
+              <th>Valeur</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>modelSetting</code></td>
+              <td><code>model_translate_cv</code></td>
+              <td>Clé de configuration du modèle dans les settings admin</td>
+            </tr>
+            <tr>
+              <td><code>featureName</code></td>
+              <td><code>translate_cv</code></td>
+              <td>Identifiant pour le tracking télémétrie</td>
+            </tr>
+            <tr>
+              <td><code>temperature</code></td>
+              <td><code>0.3</code></td>
+              <td>Basse température pour des traductions fidèles</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Règles de traduction (prompts)</h2>
+
+        <p>Le prompt système (<code>lib/translation/prompts/system.md</code>) définit les règles suivantes :</p>
+
+        <ul>
+          <li><strong>Préserver la structure JSON</strong> — Traduire uniquement les valeurs, jamais les clés</li>
+          <li><strong>Niveaux de compétences</strong> — Utiliser les tables de correspondance par langue (ex : Débutant → Beginner / Principiante / Anfänger)</li>
+          <li><strong>Niveaux de langues CECRL</strong> — Les codes (A1, B2, C1...) restent inchangés, seuls les libellés sont traduits</li>
+          <li><strong>Métadonnées</strong> — Le champ <code>meta.language</code> est mis à jour avec le code de la langue cible</li>
+        </ul>
+
+        <h2>Job Runner</h2>
+
+        <p>Le job <code>translateCv</code> dans <code>lib/translation/job.js</code> utilise le framework <code>createJobRunner</code> avec les hooks suivants :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Hook</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>beforeRun</code></td>
+              <td><code>ensureUserCvDir(userId)</code> — Vérifie que le dossier CV de l'utilisateur existe</td>
+            </tr>
+            <tr>
+              <td><code>prepareInput</code></td>
+              <td>Lit le contenu JSON du CV source via <code>readUserCvFile()</code></td>
+            </tr>
+            <tr>
+              <td><code>handleResult</code></td>
+              <td>Sauvegarde le CV traduit, nettoie les métadonnées d'amélioration, crée/met à jour l'entrée <code>CvFile</code> en DB</td>
+            </tr>
+            <tr>
+              <td><code>trackSuccess</code></td>
+              <td>Événement <code>CV_TRANSLATED</code> avec <code>targetLanguage</code> et <code>sourceFile</code></td>
+            </tr>
+            <tr>
+              <td><code>trackError</code></td>
+              <td>Événement <code>CV_TRANSLATED</code> avec status <code>error</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Nettoyage des métadonnées</h3>
+
+        <p>Lors de la traduction, les métadonnées d'amélioration du CV source sont supprimées du CV traduit :</p>
+
+        <pre><code class="language-javascript">// Métadonnées supprimées dans handleResult
+delete cvData.meta.improved_from;
+delete cvData.meta.improved_at;
+delete cvData.meta.score_before;
+delete cvData.meta.score_estimate;
+delete cvData.meta.changes_count;
+delete cvData.meta.changes_made;
+delete cvData.meta.modified_sections;</code></pre>
+
+        <div class="callout callout-warning">
+          <strong>Réinitialisation des scores</strong> — Le CV traduit est créé avec <code>matchScore: null</code>, <code>matchScoreStatus: null</code>, <code>optimiseStatus: null</code>. L'utilisateur devra recalculer le score de correspondance après traduction.
+        </div>
+
+        <h2>Entrée CvFile en DB</h2>
+
+        <p>Le CV traduit est enregistré avec les métadonnées suivantes :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Valeur</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>createdBy</code></td>
+              <td><code>'translate-cv'</code></td>
+            </tr>
+            <tr>
+              <td><code>originalCreatedBy</code></td>
+              <td>Le <code>createdBy</code> du CV source</td>
+            </tr>
+            <tr>
+              <td><code>isTranslated</code></td>
+              <td><code>true</code></td>
+            </tr>
+            <tr>
+              <td><code>language</code></td>
+              <td>Code de la langue cible (fr, en, es, de)</td>
+            </tr>
+            <tr>
+              <td><code>sourceType</code> / <code>sourceValue</code></td>
+              <td>Hérités du CV source</td>
+            </tr>
+            <tr>
+              <td><code>jobOfferId</code></td>
+              <td>Hérité du CV source</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers clés</h2>
 
         <table>
           <thead>
@@ -311,23 +277,32 @@ export async function translateCv(cvData, targetLanguage, options = {}) {
           </thead>
           <tbody>
             <tr>
-              <td><code>lib/features/translation/translateCv.js</code></td>
-              <td>Logique de traduction</td>
+              <td><code>lib/translation/service.js</code></td>
+              <td>Service de traduction via OpenAI (<code>translateCv()</code>)</td>
             </tr>
             <tr>
-              <td><code>lib/features/translation/conventions.js</code></td>
-              <td>Conventions par région</td>
+              <td><code>lib/translation/job.js</code></td>
+              <td>Job runner avec <code>createJobRunner</code></td>
             </tr>
             <tr>
-              <td><code>lib/features/translation/prompts/</code></td>
-              <td>Prompts de traduction</td>
+              <td><code>lib/translation/prompts/system.md</code></td>
+              <td>Prompt système avec règles de traduction</td>
             </tr>
             <tr>
-              <td><code>app/api/cv/[id]/translate/route.js</code></td>
-              <td>Endpoint API</td>
+              <td><code>lib/translation/prompts/user.md</code></td>
+              <td>Prompt utilisateur avec variables (<code>targetLanguage</code>, <code>cvContent</code>)</td>
+            </tr>
+            <tr>
+              <td><code>lib/i18n/cvLabels.js</code></td>
+              <td>Libellés i18n pour les niveaux de compétences et langues</td>
+            </tr>
+            <tr>
+              <td><code>app/api/background-tasks/translate-cv/route.js</code></td>
+              <td>Route API de déclenchement de la traduction</td>
             </tr>
           </tbody>
         </table>
+
       </div>
     </main>
   </div>
@@ -342,7 +317,6 @@ export async function translateCv(cvData, targetLanguage, options = {}) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

@@ -3,24 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parametres Système | FitMyCV.io</title>
+  <title>Param&egrave;tres Syst&egrave;me | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -29,46 +26,408 @@
           <span>/</span>
           <a href="./overview.html">Administration</a>
           <span>/</span>
-          <span>Parametres</span>
+          <span>Param&egrave;tres</span>
         </div>
 
-
-        <h1>Parametres Système</h1>
+        <h1>Param&egrave;tres Syst&egrave;me</h1>
         <p class="lead">
-          Configuration globale de l'application.
+          Configuration globale de l'application via la table <code>Setting</code>. Chaque param&egrave;tre est un couple <code>settingName</code>/<code>value</code> organis&eacute; par cat&eacute;gorie. Les modifications sont <strong>propag&eacute;es en temps r&eacute;el</strong> via SSE (<code>dbEmitter</code>) et peuvent d&eacute;clencher des <strong>effets de bord</strong> (invalidation de caches IA, PDF).
         </p>
 
-        <h2>Categories de Parametres</h2>
+        <h2>Architecture des Param&egrave;tres</h2>
 
-        <h3>General</h3>
-        <ul>
-          <li>Nom de l'application</li>
-          <li>Mode maintenance</li>
-          <li>Langue par defaut</li>
-        </ul>
+        <div class="diagram">
+          <div class="diagram-title">Flux de mise &agrave; jour avec broadcast SSE</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant Admin as Admin UI
+    participant API as API /settings
+    participant DB as Base de Donn&eacute;es
+    participant Cache as Caches internes
+    participant SSE as dbEmitter (SSE)
+    participant Clients as Clients connect&eacute;s
 
-        <h3>Abonnements</h3>
-        <ul>
-          <li>Mode (subscription/credits/hybrid)</li>
-          <li>Credits de bienvenue</li>
-          <li>Autoriser depassement credits</li>
-        </ul>
+    Admin->>API: PUT /api/admin/settings/[id]
+    API->>DB: UPDATE Setting SET value = ...
 
-        <h3>OpenAI</h3>
-        <ul>
-          <li>Modèle par defaut</li>
-          <li>Budget mensuel max</li>
-          <li>Alertes de cout</li>
-        </ul>
+    alt category = ai_models
+        API->>Cache: Vider cache mod&egrave;les IA
+    else category = pdf_import
+        API->>Cache: Vider cache import PDF
+    end
 
-        <h2>Modèle Settings</h2>
+    API->>SSE: emit('settings:updated')
+    SSE-->>Clients: Broadcast SSE &agrave; tous les clients
+    Note over Clients: Refresh automatique<br/>des providers React
 
-        <pre><code>model Settings {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     Json
-  updatedAt DateTime @updatedAt
+    API-->>Admin: 200 OK (setting mis &agrave; jour)
+          </div>
+        </div>
+
+        <h2>Endpoints API</h2>
+
+        <h3>GET /api/admin/settings</h3>
+
+        <p>Retourne tous les param&egrave;tres, ordonn&eacute;s par cat&eacute;gorie. Filtre optionnel par cat&eacute;gorie.</p>
+
+        <pre><code class="language-bash"># Tous les param&egrave;tres
+GET /api/admin/settings
+
+# Filtr&eacute; par cat&eacute;gorie
+GET /api/admin/settings?category=credits</code></pre>
+
+        <pre><code class="language-json">// R&eacute;ponse
+{
+  "settings": [
+    {
+      "id": "clx...",
+      "settingName": "subscription_mode_enabled",
+      "value": "true",
+      "category": "subscription",
+      "description": "Active le mode abonnement (Stripe)"
+    },
+    {
+      "id": "clx...",
+      "settingName": "credits_gpt_cv_generation",
+      "value": "2",
+      "category": "credits",
+      "description": "Co&ucirc;t en cr&eacute;dits pour la g&eacute;n&eacute;ration IA d'un CV"
+    }
+  ]
 }</code></pre>
+
+        <h3>POST /api/admin/settings</h3>
+
+        <p>Cr&eacute;er un nouveau param&egrave;tre. &Eacute;met un broadcast SSE <code>settings:updated</code> apr&egrave;s cr&eacute;ation.</p>
+
+        <pre><code class="language-json">// Body
+{
+  "settingName": "maintenance_mode",
+  "value": "false",
+  "category": "app",
+  "description": "Active le mode maintenance (bloque les utilisateurs non-admin)"
+}</code></pre>
+
+        <h3>PUT /api/admin/settings/[id]</h3>
+
+        <p>Mettre &agrave; jour un param&egrave;tre existant. Tous les champs du body sont optionnels.</p>
+
+        <pre><code class="language-json">// Body
+{
+  "value": "3",
+  "category": "credits",
+  "description": "Nouveau co&ucirc;t pour la g&eacute;n&eacute;ration CV"
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Effets de bord automatiques</div>
+          <p>La mise &agrave; jour d'un param&egrave;tre d&eacute;clenche des effets de bord selon sa cat&eacute;gorie :</p>
+          <ul>
+            <li><strong><code>ai_models</code></strong> : vide le cache des mod&egrave;les IA (force le rechargement de la configuration au prochain appel)</li>
+            <li><strong><code>pdf_import</code></strong> : vide le cache d'import PDF (r&eacute;initialise les param&egrave;tres de parsing)</li>
+          </ul>
+          <p>Dans tous les cas, un broadcast SSE <code>settings:updated</code> est &eacute;mis pour notifier les clients connect&eacute;s.</p>
+        </div>
+
+        <h3>DELETE /api/admin/settings/[id]</h3>
+
+        <p>Supprimer un param&egrave;tre. &Eacute;met un broadcast SSE.</p>
+
+        <h3>GET /api/admin/settings/history</h3>
+
+        <p>Historique des modifications via les &eacute;v&eacute;nements de t&eacute;l&eacute;m&eacute;trie (<code>SETTING_CREATED</code>, <code>SETTING_UPDATED</code>, <code>SETTING_DELETED</code>).</p>
+
+        <pre><code class="language-bash"># Query params
+GET /api/admin/settings/history?limit=50</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Param&egrave;tre</th>
+              <th>D&eacute;faut</th>
+              <th>Max</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>limit</code></td>
+              <td>50</td>
+              <td>200</td>
+              <td>Nombre maximum d'entr&eacute;es retourn&eacute;es</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Mod&egrave;le Prisma</h2>
+
+        <pre><code class="language-javascript">model Setting {
+  id          String   @id @default(cuid())
+  settingName String   @unique       // Cl&eacute; unique du param&egrave;tre
+  value       String                 // Valeur stock&eacute;e en String (pars&eacute;e c&ocirc;t&eacute; code)
+  category    String                 // Cat&eacute;gorie pour le regroupement
+  description String?                // Description optionnelle
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([settingName])
+}</code></pre>
+
+        <h2>Cat&eacute;gories de Param&egrave;tres</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Cat&eacute;gorie</th>
+              <th>Description</th>
+              <th>Exemples de cl&eacute;s</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app</code></td>
+              <td>Param&egrave;tres g&eacute;n&eacute;raux de l'application</td>
+              <td><code>maintenance_mode</code>, <code>default_language</code>, <code>app_name</code></td>
+            </tr>
+            <tr>
+              <td><code>subscription</code></td>
+              <td>Configuration du mode d'abonnement</td>
+              <td><code>subscription_mode_enabled</code>, <code>trial_days</code></td>
+            </tr>
+            <tr>
+              <td><code>credits</code></td>
+              <td>Co&ucirc;ts en cr&eacute;dits par feature</td>
+              <td><code>credits_gpt_cv_generation</code>, <code>credits_import_pdf</code>, <code>credits_export_cv</code></td>
+            </tr>
+            <tr>
+              <td><code>openai</code></td>
+              <td>Configuration de l'API OpenAI</td>
+              <td><code>openai_monthly_budget</code>, <code>openai_default_model</code></td>
+            </tr>
+            <tr>
+              <td><code>cv</code></td>
+              <td>Param&egrave;tres li&eacute;s aux CV</td>
+              <td><code>cv_max_versions</code>, <code>cv_default_template</code></td>
+            </tr>
+            <tr>
+              <td><code>ai_models</code></td>
+              <td>Mod&egrave;les IA par feature (vide le cache &agrave; la MAJ)</td>
+              <td><code>ai_model_generation</code>, <code>ai_model_optimization</code>, <code>ai_model_scoring</code></td>
+            </tr>
+            <tr>
+              <td><code>pdf_import</code></td>
+              <td>Param&egrave;tres d'import PDF (vide le cache &agrave; la MAJ)</td>
+              <td><code>pdf_max_pages</code>, <code>pdf_ocr_enabled</code>, <code>pdf_extraction_model</code></td>
+            </tr>
+            <tr>
+              <td><code>export</code></td>
+              <td>Param&egrave;tres d'export de CV</td>
+              <td><code>export_default_format</code>, <code>export_watermark</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Typage des valeurs</div>
+          <p>Toutes les valeurs sont stock&eacute;es en <code>String</code> dans la base de donn&eacute;es. Le parsing est effectu&eacute; c&ocirc;t&eacute; code selon le contexte :</p>
+          <ul>
+            <li><strong>Bool&eacute;ens</strong> : <code>"true"</code> / <code>"false"</code></li>
+            <li><strong>Nombres</strong> : <code>"2"</code>, <code>"0.5"</code></li>
+            <li><strong>JSON</strong> : <code>"{\"key\": \"value\"}"</code></li>
+            <li><strong>Texte</strong> : valeur brute</li>
+          </ul>
+        </div>
+
+        <h2>R&eacute;capitulatif des Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>M&eacute;thode</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+              <th>SSE Broadcast</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/settings</code></td>
+              <td>Liste des param&egrave;tres (filtre: category)</td>
+              <td>Non</td>
+            </tr>
+            <tr>
+              <td>POST</td>
+              <td><code>/api/admin/settings</code></td>
+              <td>Cr&eacute;er un param&egrave;tre</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td>PUT</td>
+              <td><code>/api/admin/settings/[id]</code></td>
+              <td>Mettre &agrave; jour un param&egrave;tre + side effects</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td>DELETE</td>
+              <td><code>/api/admin/settings/[id]</code></td>
+              <td>Supprimer un param&egrave;tre</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/settings/history</code></td>
+              <td>Historique des modifications (t&eacute;l&eacute;m&eacute;trie)</td>
+              <td>Non</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Composants React</h2>
+
+        <p>L'interface d'administration des param&egrave;tres est construite autour de l'onglet <code>SettingsTab</code> et d'une navigation par cat&eacute;gorie.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Hi&eacute;rarchie des composants Settings</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Tab["ONGLET SETTINGS"]
+        ST["SettingsTab"]
+        SH["SettingsHeader<br/>(titre, actions)"]
+        SN["SettingsNav<br/>(navigation cat&eacute;gories)"]
+    end
+
+    subgraph Sections["SECTIONS"]
+        Sub["SettingsSubscriptionMode<br/>(mode abonnement/cr&eacute;dits)"]
+        PDF["PdfImportSettings<br/>(OCR, pages max, mod&egrave;le)"]
+        Order["SectionOrderSettings<br/>(ordre sections CV)"]
+        Danger["SettingsDangerZone<br/>(maintenance, reset)"]
+    end
+
+    subgraph Modals["MODALES"]
+        Maint["MaintenanceConfirmModal<br/>(confirmation mode maintenance)"]
+    end
+
+    ST --> SH
+    ST --> SN
+    SN --> Sub
+    SN --> PDF
+    SN --> Order
+    SN --> Danger
+    Danger --> Maint
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>SettingsTab</code></td>
+              <td>Conteneur principal de l'onglet param&egrave;tres dans le dashboard admin</td>
+            </tr>
+            <tr>
+              <td><code>SettingsHeader</code></td>
+              <td>En-t&ecirc;te avec titre et actions globales</td>
+            </tr>
+            <tr>
+              <td><code>SettingsNav</code></td>
+              <td>Navigation lat&eacute;rale entre les cat&eacute;gories de param&egrave;tres</td>
+            </tr>
+            <tr>
+              <td><code>SettingsSubscriptionMode</code></td>
+              <td>Bascule entre mode abonnement Stripe et mode cr&eacute;dits-only</td>
+            </tr>
+            <tr>
+              <td><code>PdfImportSettings</code></td>
+              <td>Configuration de l'import PDF (OCR, nombre de pages, mod&egrave;le IA)</td>
+            </tr>
+            <tr>
+              <td><code>SectionOrderSettings</code></td>
+              <td>Personnalisation de l'ordre des sections dans les CV g&eacute;n&eacute;r&eacute;s</td>
+            </tr>
+            <tr>
+              <td><code>SettingsDangerZone</code></td>
+              <td>Actions critiques : mode maintenance, r&eacute;initialisation</td>
+            </tr>
+            <tr>
+              <td><code>MaintenanceConfirmModal</code></td>
+              <td>Modale de confirmation avant activation du mode maintenance</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Propagation SSE</h2>
+
+        <p>Le m&eacute;canisme de propagation en temps r&eacute;el garantit que tous les clients connect&eacute;s re&ccedil;oivent instantan&eacute;ment les modifications de param&egrave;tres :</p>
+
+        <pre><code class="language-javascript">// Serveur : &eacute;mission apr&egrave;s modification
+import { dbEmitter } from '@/lib/events/dbEmitter';
+
+// Apr&egrave;s chaque POST/PUT/DELETE sur un Setting
+dbEmitter.emit('settings:updated', {
+  settingName: setting.settingName,
+  category: setting.category,
+  value: setting.value
+});
+
+// Client : r&eacute;ception via SettingsProvider
+useEffect(() =&gt; {
+  const eventSource = new EventSource('/api/events');
+  eventSource.addEventListener('settings:updated', (event) =&gt; {
+    const data = JSON.parse(event.data);
+    // Refresh automatique des param&egrave;tres
+    refreshSettings();
+  });
+  return () =&gt; eventSource.close();
+}, []);</code></pre>
+
+        <div class="callout callout-success">
+          <div class="callout-title">R&eacute;activit&eacute; garantie</div>
+          <p>Gr&acirc;ce au broadcast SSE, une modification dans l'onglet Settings est <strong>imm&eacute;diatement visible</strong> pour tous les administrateurs connect&eacute;s, et les providers React c&ocirc;t&eacute; client (comme <code>CreditCostsProvider</code> et <code>SettingsProvider</code>) se mettent &agrave; jour automatiquement sans rechargement de page.</p>
+        </div>
+
+        <h2>Fichiers Cl&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/api/admin/settings/route.js</code></td>
+              <td>GET (liste) et POST (cr&eacute;ation) des param&egrave;tres</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/settings/[id]/route.js</code></td>
+              <td>PUT (MAJ + side effects) et DELETE</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/settings/history/route.js</code></td>
+              <td>Historique via t&eacute;l&eacute;m&eacute;trie</td>
+            </tr>
+            <tr>
+              <td><code>lib/events/dbEmitter.js</code></td>
+              <td>&Eacute;metteur SSE &mdash; broadcast <code>settings:updated</code></td>
+            </tr>
+            <tr>
+              <td><code>components/admin/SettingsTab.jsx</code></td>
+              <td>Onglet admin &mdash; conteneur principal</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/settings/</code></td>
+              <td>Sous-composants : SettingsNav, PdfImportSettings, SectionOrderSettings, etc.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

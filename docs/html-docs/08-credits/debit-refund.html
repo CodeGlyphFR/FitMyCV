@@ -3,106 +3,358 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Debit et Remboursement | FitMyCV.io</title>
+  <title>D&eacute;bit et Remboursement | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Credits</a>
+          <a href="./overview.html">Cr&eacute;dits</a>
           <span>/</span>
-          <span>Debit / Remboursement</span>
+          <span>D&eacute;bit / Remboursement</span>
         </div>
 
-
-        <h1>Debit et Remboursement</h1>
+        <h1>D&eacute;bit et Remboursement</h1>
         <p class="lead">
-          Gestion du debit et remboursement des credits lors des operations.
+          Toutes les op&eacute;rations sur le solde de cr&eacute;dits sont d&eacute;finies dans <code>lib/subscription/credits.js</code>. Chaque op&eacute;ration est <strong>atomique</strong> (transaction Prisma), &eacute;met un &eacute;v&eacute;nement SSE via <code>dbEmitter</code>, et cr&eacute;e une <code>CreditTransaction</code> pour tra&ccedil;abilit&eacute;.
         </p>
 
-        <h2>Operations et Couts</h2>
+        <h2>Vue d'Ensemble des Fonctions</h2>
 
         <table>
           <thead>
             <tr>
-              <th>Operation</th>
-              <th>Cout</th>
-              <th>Remboursable</th>
+              <th>Fonction</th>
+              <th>Op&eacute;ration</th>
+              <th>V&eacute;rifie la balance</th>
+              <th>Balance n&eacute;gative possible</th>
+              <th>&Eacute;v&eacute;nement SSE</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Generation CV</td>
-              <td>1 credit</td>
-              <td>Oui (si echec)</td>
+              <td><code>debitCredit()</code></td>
+              <td>D&eacute;bit usage</td>
+              <td>Oui</td>
+              <td>Non</td>
+              <td><code>debit</code></td>
             </tr>
             <tr>
-              <td>Import PDF</td>
-              <td>5 credits</td>
-              <td>Oui (si echec)</td>
+              <td><code>debitCredits()</code></td>
+              <td>D&eacute;bit forc&eacute; (chargeback)</td>
+              <td>Non</td>
+              <td>Oui</td>
+              <td><code>debit_forced</code></td>
             </tr>
             <tr>
-              <td>Traduction</td>
-              <td>2 credits</td>
-              <td>Oui (si echec)</td>
+              <td><code>refundCredit()</code></td>
+              <td>Remboursement</td>
+              <td>N/A</td>
+              <td>N/A</td>
+              <td><code>refund</code></td>
+            </tr>
+            <tr>
+              <td><code>grantCredits()</code></td>
+              <td>Attribution (achat, gift)</td>
+              <td>N/A</td>
+              <td>N/A</td>
+              <td><code>grant</code></td>
+            </tr>
+            <tr>
+              <td><code>getCreditBalance()</code></td>
+              <td>Lecture solde</td>
+              <td>N/A</td>
+              <td>N/A</td>
+              <td>Aucun</td>
+            </tr>
+            <tr>
+              <td><code>getCreditTransactions()</code></td>
+              <td>Historique</td>
+              <td>N/A</td>
+              <td>N/A</td>
+              <td>Aucun</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Implementation</h2>
+        <h2>getCreditBalance(userId)</h2>
 
-        <pre><code>// lib/subscription/credits.js
-export async function debitCredit(userId, amount, reason) {
-  return prisma.$transaction(async (tx) => {
-    const balance = await tx.creditBalance.findUnique({
-      where: { userId }
-    });
+        <p>R&eacute;cup&egrave;re le solde complet d'un utilisateur. <strong>Auto-cr&eacute;e</strong> la balance si elle n'existe pas (balance = 0).</p>
 
-    if (balance.balance < amount) {
-      throw new Error('Insufficient credits');
-    }
+        <pre><code class="language-javascript">// lib/subscription/credits.js
 
-    await tx.creditBalance.update({
-      where: { userId },
-      data: { balance: { decrement: amount } }
-    });
-
-    return tx.creditTransaction.create({
-      data: { userId, amount: -amount, type: 'debit', reason }
-    });
+export async function getCreditBalance(userId) {
+  let creditBalance = await prisma.creditBalance.findUnique({
+    where: { userId },
   });
+
+  // Cr&eacute;er la balance si elle n'existe pas
+  if (!creditBalance) {
+    creditBalance = await prisma.creditBalance.create({
+      data: {
+        userId,
+        balance: 0,
+        totalPurchased: 0,
+        totalUsed: 0,
+        totalRefunded: 0,
+        totalGifted: 0,
+        balanceAfterLastPurchase: 0,
+      },
+    });
+  }
+
+  return creditBalance;
 }
 
-export async function refundCredit(userId, amount, reason) {
-  return prisma.$transaction(async (tx) => {
-    await tx.creditBalance.update({
-      where: { userId },
-      data: { balance: { increment: amount } }
-    });
+// Retourne: { balance, totalPurchased, totalUsed, totalRefunded,
+//             totalGifted, balanceAfterLastPurchase }</code></pre>
 
-    return tx.creditTransaction.create({
-      data: { userId, amount, type: 'refund', reason }
-    });
-  });
-}</code></pre>
+        <h2>debitCredit(userId, amount, type, metadata)</h2>
+
+        <p>D&eacute;bit <strong>atomique</strong> avec v&eacute;rification de la balance. Utilis&eacute; pour les usages normaux de features.</p>
+
+        <pre><code class="language-javascript">// Signature
+debitCredit(userId, amount, type = 'usage', metadata = {})
+
+// metadata accept&eacute;es:
+// { featureName, taskId, cvFileId, extra: {...} }
+
+// Flux interne (transaction Prisma):
+// 1. V&eacute;rifier balance >= amount (sinon erreur "Cr&eacute;dits insuffisants")
+// 2. Cr&eacute;er CreditTransaction (amount: -N, type)
+// 3. D&eacute;cr&eacute;menter CreditBalance.balance, incr&eacute;menter totalUsed
+// 4. &Eacute;mettre SSE: dbEmitter.emitCreditsUpdate(userId, {action: 'debit', ...})
+
+// Retour:
+// { success: true, transaction, balance: newBalance }
+// { success: false, error: "Cr&eacute;dits insuffisants" }</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Transaction atomique</div>
+          <p>La v&eacute;rification de la balance et le d&eacute;bit sont effectu&eacute;s dans une <strong>m&ecirc;me transaction Prisma</strong> (<code>prisma.$transaction()</code>), ce qui garantit qu'aucune race condition ne peut cr&eacute;er un solde n&eacute;gatif lors d'usages concurrents.</p>
+        </div>
+
+        <h2>debitCredits(userId, amount, type, metadata)</h2>
+
+        <p>D&eacute;bit <strong>forc&eacute;</strong> sans v&eacute;rification de balance. Utilis&eacute; exclusivement pour les <strong>chargebacks</strong>. Peut rendre la balance n&eacute;gative.</p>
+
+        <pre><code class="language-javascript">// Signature
+debitCredits(userId, amount, type = 'chargeback', metadata = {})
+
+// metadata accept&eacute;es:
+// { relatedTransactionId, ... } (s&eacute;rialis&eacute; en JSON)
+
+// Diff&eacute;rences avec debitCredit():
+// - PAS de v&eacute;rification de balance
+// - Utilise upsert (cr&eacute;e la balance si n'existe pas)
+// - La balance PEUT devenir n&eacute;gative
+// - &Eacute;met SSE: dbEmitter.emitCreditsUpdate(userId, {action: 'debit_forced', ...})</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Balance n&eacute;gative = utilisateur bloqu&eacute;</div>
+          <p>Quand la balance devient n&eacute;gative suite &agrave; un chargeback, <code>canUseFeature()</code> bloque <strong>toutes les fonctionnalit&eacute;s</strong> de l'utilisateur (c'est la toute premi&egrave;re v&eacute;rification de l'algorithme). L'utilisateur doit recharger des cr&eacute;dits pour r&eacute;gulariser.</p>
+        </div>
+
+        <h2>refundCredit(userId, originalTransactionId, reason)</h2>
+
+        <p>Rembourse une transaction de d&eacute;bit sp&eacute;cifique. Utilis&eacute; automatiquement lors de l'&eacute;chec d'une <code>BackgroundTask</code>.</p>
+
+        <pre><code class="language-javascript">// Signature
+refundCredit(userId, originalTransactionId, reason = 'Remboursement automatique')
+
+// Flux interne (transaction Prisma):
+// 1. V&eacute;rifier que la transaction d'origine existe et n'est pas d&eacute;j&agrave; rembours&eacute;e
+//    (double-check hors transaction + dans transaction pour race condition)
+// 2. V&eacute;rifier que amount < 0 (seul un d&eacute;bit peut &ecirc;tre rembours&eacute;)
+// 3. Cr&eacute;er CreditTransaction (type: 'refund', relatedTransactionId)
+// 4. Marquer la transaction d'origine: refunded = true
+// 5. Incr&eacute;menter CreditBalance.balance + totalRefunded
+// 6. &Eacute;mettre SSE: dbEmitter.emitCreditsUpdate(userId, {action: 'refund', ...})</code></pre>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de remboursement avec idempotence</div>
+          <div class="mermaid">
+flowchart TD
+    Start["refundCredit(userId, txId)"] --> PreCheck{"Transaction d&eacute;j&agrave;<br/>rembours&eacute;e ?<br/>(hors transaction)"}
+    PreCheck -->|"Oui"| AlreadyDone["Retourner success + alreadyRefunded"]
+    PreCheck -->|"Non"| StartTx["D&eacute;marrer $transaction"]
+    StartTx --> FindTx["R&eacute;cup&eacute;rer transaction originale"]
+    FindTx --> Validate{"Validations:<br/>- Existe ?<br/>- M&ecirc;me userId ?<br/>- refunded = false ?<br/>- amount < 0 ?"}
+    Validate -->|"&Eacute;chec"| Error["Retourner erreur"]
+    Validate -->|"OK"| CreateRefund["Cr&eacute;er CreditTransaction<br/>(type: refund, amount: +N)"]
+    CreateRefund --> MarkRefunded["Marquer originale:<br/>refunded = true"]
+    MarkRefunded --> UpdateBal["Incr&eacute;menter balance<br/>+ totalRefunded"]
+    UpdateBal --> EmitSSE["dbEmitter.emitCreditsUpdate()"]
+    EmitSSE --> Done["Retourner success"]
+          </div>
+        </div>
+
+        <h2>grantCredits(userId, amount, type, metadata)</h2>
+
+        <p>Attribue des cr&eacute;dits (achat ou cadeau). Inclut une <strong>triple idempotence</strong> pour les achats Stripe.</p>
+
+        <pre><code class="language-javascript">// Signature
+grantCredits(userId, amount, type = 'purchase', metadata = {})
+
+// metadata accept&eacute;es:
+// { stripePaymentIntentId, source, pricePaid }
+
+// Flux interne:
+// 1. V&eacute;rifier que l'utilisateur existe (FK check)
+// 2. Si stripePaymentIntentId fourni: v&eacute;rifier qu'il n'existe pas d&eacute;j&agrave;
+//    (SELECT sur CreditTransaction.stripePaymentIntentId)
+// 3. Transaction atomique:
+//    - Cr&eacute;er CreditTransaction (amount: +N, stripePaymentIntentId)
+//    - Upsert CreditBalance (incr&eacute;menter balance + totalPurchased/totalGifted)
+//    - Si purchase: calculer balanceAfterLastPurchase
+// 4. &Eacute;mettre SSE: dbEmitter.emitCreditsUpdate(userId, {action: 'grant', ...})
+
+// Gestion race condition:
+// Si erreur P2002 (unique constraint sur stripePaymentIntentId):
+// → Retourner { success: true, alreadyProcessed: true }</code></pre>
+
+        <h3>Idempotence &agrave; 3 niveaux (achats Stripe)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Niveau</th>
+              <th>M&eacute;canisme</th>
+              <th>Quand</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Webhook</strong></td>
+              <td><code>StripeWebhookLog.eventId</code> (unique)</td>
+              <td>Avant dispatch vers le handler</td>
+            </tr>
+            <tr>
+              <td><strong>2. Application</strong></td>
+              <td><code>SELECT</code> sur <code>CreditTransaction.stripePaymentIntentId</code></td>
+              <td>Avant la transaction Prisma dans grantCredits()</td>
+            </tr>
+            <tr>
+              <td><strong>3. Database</strong></td>
+              <td>Catch erreur <code>P2002</code> (unique constraint)</td>
+              <td>Race condition entre 2 webhooks simultan&eacute;s</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>getCreditTransactions(userId, options)</h2>
+
+        <pre><code class="language-javascript">// Signature
+getCreditTransactions(userId, options = {})
+
+// Options: { limit: 50, offset: 0, type: null }
+// Retour: Array<CreditTransaction> tri&eacute;es par createdAt DESC
+
+// Exemple d'appel
+const transactions = await getCreditTransactions(userId, {
+  limit: 20,
+  offset: 0,
+  type: 'usage',  // Filtrer par type (optionnel)
+});</code></pre>
+
+        <h2>&Eacute;v&eacute;nements SSE (Temps R&eacute;el)</h2>
+
+        <p>Chaque op&eacute;ration de cr&eacute;dit &eacute;met un &eacute;v&eacute;nement via <code>dbEmitter.emitCreditsUpdate()</code>, permettant la mise &agrave; jour en temps r&eacute;el de l'UI sans rechargement de page.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Action SSE</th>
+              <th>Fonction source</th>
+              <th>Payload</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>debit</code></td>
+              <td>debitCredit()</td>
+              <td>amount, newBalance, type</td>
+            </tr>
+            <tr>
+              <td><code>debit_forced</code></td>
+              <td>debitCredits()</td>
+              <td>amount, newBalance, type</td>
+            </tr>
+            <tr>
+              <td><code>refund</code></td>
+              <td>refundCredit()</td>
+              <td>amount, newBalance</td>
+            </tr>
+            <tr>
+              <td><code>grant</code></td>
+              <td>grantCredits()</td>
+              <td>amount, newBalance, type</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><code>incrementFeatureCounter()</code> &eacute;met &eacute;galement des &eacute;v&eacute;nements <code>db:change</code> sur les entit&eacute;s <code>CreditBalance</code> et <code>FeatureUsageCounter</code> pour rafra&icirc;chir les compteurs dans l'UI.</p>
+
+        <h2>Statistiques de la Balance</h2>
+
+        <p>Le mod&egrave;le <code>CreditBalance</code> maintient des compteurs agr&eacute;g&eacute;s pour chaque utilisateur :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Mis &agrave; jour par</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>balance</code></td>
+              <td>Toutes les op&eacute;rations</td>
+              <td>Solde courant (peut &ecirc;tre n&eacute;gatif apr&egrave;s chargeback)</td>
+            </tr>
+            <tr>
+              <td><code>totalPurchased</code></td>
+              <td>grantCredits(type='purchase')</td>
+              <td>Total cr&eacute;dits achet&eacute;s depuis le d&eacute;but</td>
+            </tr>
+            <tr>
+              <td><code>totalUsed</code></td>
+              <td>debitCredit(), debitCredits()</td>
+              <td>Total cr&eacute;dits consomm&eacute;s (incr&eacute;ment&eacute;, jamais d&eacute;cr&eacute;ment&eacute;)</td>
+            </tr>
+            <tr>
+              <td><code>totalRefunded</code></td>
+              <td>refundCredit()</td>
+              <td>Total cr&eacute;dits rembours&eacute;s</td>
+            </tr>
+            <tr>
+              <td><code>totalGifted</code></td>
+              <td>grantCredits(type='gift')</td>
+              <td>Total cr&eacute;dits offerts (bienvenue, admin)</td>
+            </tr>
+            <tr>
+              <td><code>balanceAfterLastPurchase</code></td>
+              <td>grantCredits(type='purchase')</td>
+              <td>Balance imm&eacute;diatement apr&egrave;s le dernier achat</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

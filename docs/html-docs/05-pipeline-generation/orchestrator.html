@@ -3,72 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orchestrateur - Pipeline Génération | FitMyCV.io</title>
+  <title>Orchestrateur - Pipeline G&eacute;n&eacute;ration | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Pipeline Génération</a>
+          <a href="./overview.html">Pipeline G&eacute;n&eacute;ration</a>
           <span>/</span>
           <span>Orchestrateur</span>
         </div>
 
         <h1>Orchestrateur</h1>
         <p class="lead">
-          L'orchestrateur coordonne l'exécution des différentes phases du pipeline de génération CV, gère les crédits, les erreurs et la progression.
+          L'orchestrateur coordonne le cycle de vie complet d'une t&acirc;che de g&eacute;n&eacute;ration CV : cr&eacute;ation d'<code>AbortController</code>, r&eacute;cup&eacute;ration des donn&eacute;es depuis Prisma, ex&eacute;cution s&eacute;quentielle des phases (Extraction &rarr; Classification &rarr; Batches &rarr; Recomposition), gestion des cr&eacute;dits, retry avec backoff exponentiel et &eacute;v&eacute;nements SSE temps r&eacute;el.
         </p>
 
-        <h2>Architecture</h2>
+        <!-- ==================== ARCHITECTURE ==================== -->
+        <h2>Architecture des Modules</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Modules de l'orchestrateur</div>
+          <div class="diagram-title">Modules de l'orchestrateur et leurs relations</div>
           <div class="mermaid">
 flowchart TB
     subgraph Orchestrator["ORCHESTRATOR"]
-        TaskRunner["taskRunner.js<br/>Lifecycle management"]
-        OfferProcessor["offerProcessor.js<br/>Coordination phases"]
-        CreditManager["creditManager.js<br/>Débit/Refund"]
-        ProgressEmitter["progressEmitter.js<br/>SSE events"]
-        RetryHandler["retryHandler.js<br/>Error recovery"]
+        TaskRunner["taskRunner.js<br/>startSingleOfferGeneration()<br/>startMultiOfferGeneration()"]
+        OfferProcessor["offerProcessor.js<br/>processOffer()<br/>runBatchesPhase()"]
+        CreditManager["creditManager.js<br/>refundCreditForOffer()"]
+        ProgressEmitter["progressEmitter.js<br/>emitProgress()"]
+        RetryHandler["retryHandler.js<br/>withRetry()"]
     end
 
     subgraph Phases["PHASES"]
-        P0["Extract"]
-        P05["Classify"]
-        P1["Batches"]
-        P2["Recompose"]
+        P0["extract.js"]
+        P05["classify.js"]
+        P1["batch-*.js (x7)"]
+        P2["recompose.js"]
     end
 
-    subgraph State["STATE"]
+    subgraph DB["PRISMA"]
         Task[(CvGenerationTask)]
         Offer[(CvGenerationOffer)]
         Subtask[(CvGenerationSubtask)]
     end
 
-    TaskRunner --> OfferProcessor
-    OfferProcessor --> Phases
-    TaskRunner --> CreditManager
-    TaskRunner --> ProgressEmitter
-    OfferProcessor --> RetryHandler
+    TaskRunner -->|"offerId"| OfferProcessor
+    OfferProcessor -->|"chaque phase"| Phases
+    OfferProcessor -->|"wrap fn"| RetryHandler
+    TaskRunner -->|"refund on fail"| CreditManager
+    OfferProcessor -->|"phase, step, status"| ProgressEmitter
 
     Phases --> Subtask
     TaskRunner --> Task
@@ -76,265 +71,332 @@ flowchart TB
           </div>
         </div>
 
-        <h2>Modules</h2>
+        <!-- ==================== TASKRUNNER ==================== -->
+        <h2>taskRunner.js &mdash; Point d'Entr&eacute;e</h2>
 
-        <h3>taskRunner.js</h3>
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/orchestrator/taskRunner.js</code></p>
 
-        <p>Point d'entrée principal, gère le cycle de vie complet d'une tâche de génération.</p>
+        <div class="data-flow">
+          <div class="data-flow-header">startSingleOfferGeneration(taskId, offerId)</div>
 
-        <pre><code>// lib/features/cv-adaptation/orchestrator/taskRunner.js
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Lifecycle</div>
+            <ol>
+              <li>Cr&eacute;ation d'un <code>AbortController</code> &mdash; stock&eacute; dans <code>activeControllers</code> pour annulation externe</li>
+              <li>R&eacute;cup&eacute;ration <code>CvGenerationTask</code> (+ <code>sourceCvFile</code>, <code>user</code>) et <code>CvGenerationOffer</code> depuis Prisma</li>
+              <li>Mise &agrave; jour du statut : <code>offer.status = 'running'</code></li>
+              <li>Emission SSE : <code>emitProgress(userId, context, 'extraction', 'start', 'running')</code></li>
+              <li>Appel <code>executeExtraction()</code> &rarr; r&eacute;cup&eacute;ration <code>jobOffer</code></li>
+              <li>Appel <code>processOffer()</code> &rarr; classification + batches + recomposition</li>
+              <li>Mise &agrave; jour des statuts finaux : <code>offer.status = 'completed'</code>, <code>task.status = 'completed'</code></li>
+              <li>Emission SSE : <code>emitProgress(..., 'complete', 'done', 'completed')</code></li>
+            </ol>
+          </div>
 
-export async function startSingleOfferGeneration(taskId, offerInput) {
-  const task = await prisma.cvGenerationTask.findUnique({
-    where: { id: taskId },
-    include: { sourceCvFile: true }
-  });
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Gestion des erreurs</div>
+            <pre><code class="language-javascript">// En cas d'erreur :
+// 1. offer.status = 'failed', task.status = 'failed'
+// 2. Remboursement automatique via refundCreditForOffer()
+// 3. Emission SSE erreur
+// 4. Si error.name === 'AbortError' || signal.aborted → 'Task cancelled'
 
-  try {
-    // 1. Marquer la tâche comme running
-    await updateTaskStatus(taskId, 'running');
-    emitProgress(taskId, { phase: 'starting', progress: 0 });
+// AbortController nettoyé dans le bloc finally
+activeControllers.delete(taskId);</code></pre>
+          </div>
+        </div>
 
-    // 2. Débiter le crédit
-    await debitCredit(task.userId, CREDIT_COST, 'gpt_cv_generation');
+        <div class="callout callout-info">
+          <div class="callout-title">startMultiOfferGeneration(taskId)</div>
+          <p>Variante pour traiter <strong>plusieurs offres</strong> s&eacute;quentiellement. Boucle sur chaque <code>CvGenerationOffer</code> du task et appelle <code>executeExtraction() + processOffer()</code> pour chacune. Le statut global passe en <code>'completed'</code> une fois toutes les offres trait&eacute;es.</p>
+        </div>
 
-    // 3. Traiter l'offre
-    const result = await processOffer(task, offerInput);
+        <!-- ==================== OFFERPROCESSOR ==================== -->
+        <h2>offerProcessor.js &mdash; Coordination des Phases</h2>
 
-    // 4. Sauvegarder le CV généré
-    const cvFile = await saveCvFile(task.userId, result.cv, result.jobOffer);
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/orchestrator/offerProcessor.js</code></p>
 
-    // 5. Marquer comme completed
-    await updateTaskStatus(taskId, 'completed', { cvFileId: cvFile.id });
-    emitProgress(taskId, { phase: 'complete', progress: 100 });
+        <h3>processOffer()</h3>
 
-    return cvFile;
+        <div class="data-flow">
+          <div class="data-flow-header">processOffer(offer, sourceCv, jobOffer, userId, signal, context)</div>
 
-  } catch (error) {
-    // 6. Gérer l'échec
-    await handleTaskFailure(taskId, task.userId, error);
-    throw error;
-  }
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">S&eacute;quence d'ex&eacute;cution</div>
+            <ol>
+              <li><strong>Classification</strong> &mdash; <code>executeClassification(offer.id, sourceCv, jobOffer, userId, signal)</code></li>
+              <li><strong>Batches</strong> &mdash; <code>runBatchesPhase(offer, sourceCv, classificationResult, jobOffer, userId, signal, context)</code></li>
+              <li><strong>Recomposition</strong> &mdash; <code>runRecompositionPhase(offer, sourceCv, batchResults, classificationResult, jobOffer, userId, signal, context)</code></li>
+            </ol>
+          </div>
+        </div>
+
+        <h3>runBatchesPhase()</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Ex&eacute;cution parall&egrave;le des 7 batches</div>
+          <div class="mermaid">
+flowchart TB
+    Apply["applyClassification()<br/>Filtrage KEEP / MOVE_TO_PROJECTS"]
+
+    subgraph Parallel["Promise.all &mdash; 6 Batches"]
+        Exp["executeBatchExperiences"]
+        Proj["executeBatchProjects"]
+        Extras["executeBatchExtras"]
+        Edu["executeBatchEducation"]
+        Lang["executeBatchLanguages"]
+        Skills["executeBatchSkills"]
+    end
+
+    Summary["executeBatchSummary<br/>(sequentiel apres Promise.all)"]
+    PostSkills["processSkillsResponse()<br/>Post-traitement skills"]
+
+    Apply --> Parallel
+    Parallel --> PostSkills
+    Parallel --> Summary
+          </div>
+        </div>
+
+        <div class="data-flow">
+          <div class="data-flow-header">runBatchesPhase() &mdash; D&eacute;tail</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Ordre d'ex&eacute;cution</div>
+            <pre><code class="language-javascript">// 1. Appliquer la classification
+const { experiences, projects } = applyClassification(sourceCv, classification);
+
+// 2. 6 batches en parallèle (Promise.all)
+const [expResults, projResults, extrasResults,
+       eduResults, langResults, skillsResults] = await Promise.all([
+  executeBatchExperiences(offerId, experiences, jobOffer, userId, signal),
+  executeBatchProjects(offerId, projects, jobOffer, userId, signal),
+  executeBatchExtras(offerId, sourceCv.extras, jobOffer, userId, signal),
+  executeBatchEducation(offerId, sourceCv.education, jobOffer, userId, signal),
+  executeBatchLanguages(offerId, sourceCv.languages, jobOffer, userId, signal),
+  executeBatchSkills(offerId, sourceCv.skills, jobOffer, userId, signal)
+]);
+
+// 3. Post-traitement skills
+const processedSkills = processSkillsResponse(skillsResults);
+
+// 4. Summary séquentiel (nécessite résultats précédents → Cache B)
+const summaryResult = await executeBatchSummary(
+  offerId, sourceCv, expResults, projResults,
+  processedSkills, jobOffer, userId, signal
+);</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== CREDITMANAGER ==================== -->
+        <h2>creditManager.js &mdash; Gestion des Cr&eacute;dits</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/orchestrator/creditManager.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">refundCreditForOffer(taskId, offerId, userId, reason)</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Processus de remboursement</div>
+            <ol>
+              <li>V&eacute;rifie si l'offre n'a pas d&eacute;j&agrave; &eacute;t&eacute; rembours&eacute;e (<code>offer.creditRefunded !== true</code>)</li>
+              <li>R&eacute;cup&egrave;re le co&ucirc;t via <code>getCreditCostForFeature('gpt_cv_generation')</code></li>
+              <li>Appelle <code>grantCredits(userId, cost, 'refund')</code></li>
+              <li>Met &agrave; jour le flag <code>offer.creditRefunded = true</code></li>
+              <li>Incr&eacute;mente <code>task.creditsRefunded</code></li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">S&eacute;curit&eacute;</div>
+            <pre><code class="language-javascript">// Protection contre le double remboursement
+const offer = await prisma.cvGenerationOffer.findUnique({ where: { id: offerId } });
+if (offer.creditRefunded) {
+  console.log('[creditManager] Already refunded, skipping');
+  return;
 }
 
-async function handleTaskFailure(taskId, userId, error) {
-  // Rembourser le crédit
-  await refundCredit(userId, CREDIT_COST, 'gpt_cv_generation', 'Task failed');
+// Remboursement
+const cost = await getCreditCostForFeature('gpt_cv_generation');
+await grantCredits(userId, cost, 'refund');
 
-  // Mettre à jour le statut
-  await updateTaskStatus(taskId, 'failed', {
-    error: error.message
+// Mise à jour DB
+await prisma.cvGenerationOffer.update({
+  where: { id: offerId },
+  data: { creditRefunded: true }
+});
+await prisma.cvGenerationTask.update({
+  where: { id: taskId },
+  data: { creditsRefunded: { increment: 1 } }
+});</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== PROGRESSEMITTER ==================== -->
+        <h2>progressEmitter.js &mdash; &Eacute;v&eacute;nements SSE</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/orchestrator/progressEmitter.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">emitProgress(userId, context, phase, step, status, extra)</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Wrapper autour de dbEmitter</div>
+            <pre><code class="language-javascript">// Signature
+export function emitProgress(userId, context, phase, step, status, extra = {}) {
+  dbEmitter.emitCvGenerationProgress(userId, {
+    taskId: context.taskId,
+    offerId: context.offerId,
+    phase,    // 'extraction', 'classification', 'batches', 'recomposition', 'complete'
+    step,     // 'start', 'progress', 'done', 'error'
+    status,   // 'running', 'completed', 'failed'
+    ...extra  // { batchName, itemIndex, totalItems, ... }
   });
-
-  emitProgress(taskId, {
-    phase: 'error',
-    progress: 0,
-    error: error.message
-  });
 }</code></pre>
+          </div>
 
-        <h3>offerProcessor.js</h3>
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">&Eacute;v&eacute;nements &eacute;mis par phase</div>
+            <table>
+              <thead>
+                <tr><th>Phase</th><th>Step</th><th>Extra</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>extraction</code></td><td>start / done</td><td><code>{ title }</code></td></tr>
+                <tr><td><code>classification</code></td><td>start / done</td><td><code>{ stats }</code></td></tr>
+                <tr><td><code>batches</code></td><td>start / progress / done</td><td><code>{ batchName, itemIndex, totalItems }</code></td></tr>
+                <tr><td><code>recomposition</code></td><td>start / done</td><td>&mdash;</td></tr>
+                <tr><td><code>complete</code></td><td>done</td><td><code>{ cvFileId }</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-        <p>Coordonne l'exécution séquentielle et parallèle des phases.</p>
+        <!-- ==================== RETRYHANDLER ==================== -->
+        <h2>retryHandler.js &mdash; Retry avec Backoff Exponentiel</h2>
 
-        <pre><code>// lib/features/cv-adaptation/orchestrator/offerProcessor.js
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/orchestrator/retryHandler.js</code></p>
 
-export async function processOffer(task, offerInput) {
-  const sourceCv = task.sourceCvFile.content;
+        <div class="card-grid">
+          <div class="card">
+            <h4>Constantes</h4>
+            <table>
+              <tr><td><code>MAX_RETRIES</code></td><td><strong>3</strong></td></tr>
+              <tr><td><code>BACKOFF_BASE_MS</code></td><td><strong>1000</strong> ms</td></tr>
+            </table>
+            <p><strong>D&eacute;lais :</strong> 1s &rarr; 2s &rarr; 4s (exponentiel &times;2)</p>
+          </div>
+          <div class="card">
+            <h4>Signature</h4>
+            <pre><code class="language-javascript">withRetry(fn, maxRetries, context, onRetry)</code></pre>
+            <ul>
+              <li><code>fn</code> &mdash; Fonction async &agrave; ex&eacute;cuter</li>
+              <li><code>maxRetries</code> &mdash; Par d&eacute;faut <code>MAX_RETRIES</code></li>
+              <li><code>context</code> &mdash; Label pour les logs</li>
+              <li><code>onRetry</code> &mdash; Callback <code>(attempt, delay, error)</code></li>
+            </ul>
+          </div>
+        </div>
 
-  // Phase 0: Extraction de l'offre
-  emitProgress(task.id, { phase: 'extraction', progress: 10 });
-  const jobOffer = await extractJobOffer(offerInput);
+        <div class="data-flow">
+          <div class="data-flow-header">Logique de retry</div>
 
-  // Phase 0.5: Classification
-  emitProgress(task.id, { phase: 'classification', progress: 20 });
-  const classification = await classifyItems(sourceCv, jobOffer);
-
-  // Construire le Cache A (pour phases parallèles)
-  const cacheA = buildCacheA(jobOffer);
-
-  // Phase 1: Batches en parallèle
-  emitProgress(task.id, { phase: 'adaptation', progress: 30 });
-  const [
-    adaptedExperiences,
-    adaptedProjects,
-    adaptedExtras
-  ] = await Promise.all([
-    batchExperiences(sourceCv, classification, cacheA),
-    batchProjects(sourceCv, classification, cacheA),
-    batchExtras(sourceCv, cacheA)
-  ]);
-
-  // Construire le Cache B (avec résultats)
-  const cacheB = buildCacheB(cacheA, adaptedExperiences, adaptedProjects);
-
-  // Phase 1 suite: Skills et Summary (dépendent de B)
-  emitProgress(task.id, { phase: 'skills', progress: 60 });
-  const [adaptedSkills, summary] = await Promise.all([
-    batchSkills(sourceCv, jobOffer, cacheB),
-    batchSummary(sourceCv, jobOffer, cacheB)
-  ]);
-
-  // Phase 2: Recomposition
-  emitProgress(task.id, { phase: 'recomposition', progress: 80 });
-  const finalCv = await recompose({
-    header: sourceCv.header,
-    experiences: adaptedExperiences,
-    projects: adaptedProjects,
-    skills: adaptedSkills,
-    summary,
-    extras: adaptedExtras,
-    education: sourceCv.sections.education
-  });
-
-  emitProgress(task.id, { phase: 'finalizing', progress: 95 });
-
-  return { cv: finalCv, jobOffer };
-}</code></pre>
-
-        <h3>creditManager.js</h3>
-
-        <pre><code>// lib/features/cv-adaptation/orchestrator/creditManager.js
-
-import { debitCredit as debit, refundCredit as refund } from '@/lib/subscription/credits';
-
-const CREDIT_COST = 2; // Configurable via Setting
-
-export async function debitGenerationCredit(userId) {
-  return debit(userId, CREDIT_COST, 'gpt_cv_generation');
-}
-
-export async function refundGenerationCredit(userId, reason) {
-  return refund(userId, CREDIT_COST, 'gpt_cv_generation', reason);
-}</code></pre>
-
-        <h3>progressEmitter.js</h3>
-
-        <pre><code>// lib/features/cv-adaptation/orchestrator/progressEmitter.js
-
-const listeners = new Map();
-
-export function emitProgress(taskId, data) {
-  const taskListeners = listeners.get(taskId) || [];
-  taskListeners.forEach(callback => callback(data));
-
-  // Aussi mettre à jour en DB pour persistance
-  prisma.cvGenerationTask.update({
-    where: { id: taskId },
-    data: {
-      progress: data.progress,
-      currentPhase: data.phase
-    }
-  }).catch(console.error);
-}
-
-export function onProgress(taskId, callback) {
-  if (!listeners.has(taskId)) {
-    listeners.set(taskId, []);
-  }
-  listeners.get(taskId).push(callback);
-
-  // Retourner fonction de cleanup
-  return () => {
-    const taskListeners = listeners.get(taskId);
-    const index = taskListeners.indexOf(callback);
-    if (index > -1) taskListeners.splice(index, 1);
-  };
-}</code></pre>
-
-        <h3>retryHandler.js</h3>
-
-        <pre><code>// lib/features/cv-adaptation/orchestrator/retryHandler.js
-
-const MAX_RETRIES = 3;
-const BASE_DELAY = 1000;
-
-export async function withRetry(fn, options = {}) {
-  const { maxRetries = MAX_RETRIES, onRetry } = options;
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Algorithme</div>
+            <pre><code class="language-javascript">export async function withRetry(fn, maxRetries = MAX_RETRIES, context = '', onRetry) {
   let lastError;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  for (let attempt = 0; attempt &lt;= maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error;
 
-      // Erreurs non-retryables
-      if (isNonRetryable(error)) {
+      // Erreurs non-retryables → throw immédiat
+      if (error.name === 'AbortError' || error.message === 'Task cancelled') {
         throw error;
       }
 
-      if (attempt < maxRetries) {
-        const delay = BASE_DELAY * Math.pow(2, attempt);
+      if (attempt &lt; maxRetries) {
+        const delay = BACKOFF_BASE_MS * Math.pow(2, attempt); // 1s, 2s, 4s
+        console.warn(`[withRetry] ${context} attempt ${attempt + 1} failed, retry in ${delay}ms`);
         onRetry?.(attempt + 1, delay, error);
-        await sleep(delay);
+        await new Promise(r =&gt; setTimeout(r, delay));
       }
     }
   }
-
   throw lastError;
-}
-
-function isNonRetryable(error) {
-  // Erreurs de validation, auth, etc.
-  return error.code === 'VALIDATION_ERROR'
-    || error.code === 'AUTH_ERROR'
-    || error.status === 400
-    || error.status === 401;
 }</code></pre>
-
-        <h2>Cycle de Vie</h2>
-
-        <div class="diagram">
-          <div class="diagram-title">États d'une tâche de génération</div>
-          <div class="mermaid">
-stateDiagram-v2
-    [*] --> pending: Création tâche
-    pending --> running: Job démarré
-    running --> extraction: Phase 0
-    extraction --> classification: Phase 0.5
-    classification --> adaptation: Phase 1 (parallèle)
-    adaptation --> recomposition: Phase 2
-    recomposition --> completed: Succès
-    running --> failed: Erreur
-    extraction --> failed: Erreur extraction
-    classification --> failed: Erreur classification
-    adaptation --> failed: Erreur batch
-    completed --> [*]
-    failed --> [*]
           </div>
         </div>
 
-        <h2>Traçabilité</h2>
+        <div class="callout callout-warning">
+          <div class="callout-title">Erreurs non-retryables</div>
+          <p>Les erreurs <code>AbortError</code> et <code>'Task cancelled'</code> ne sont <strong>jamais</strong> retry&eacute;es &mdash; elles sont propag&eacute;es imm&eacute;diatement pour permettre l'annulation rapide de la t&acirc;che.</p>
+        </div>
 
-        <p>Chaque appel IA est enregistré dans <code>CvGenerationSubtask</code> :</p>
+        <!-- ==================== CYCLE DE VIE ==================== -->
+        <h2>Cycle de Vie d'une T&acirc;che</h2>
 
-        <pre><code>await prisma.cvGenerationSubtask.create({
-  data: {
-    offerId: offer.id,
-    type: 'batch_experience',
-    phase: 1,
-    input: JSON.stringify(inputData),
-    output: JSON.stringify(result),
-    promptTokens: usage.prompt_tokens,
-    completionTokens: usage.completion_tokens,
-    cachedTokens: usage.cached_tokens,
-    totalTokens: usage.total_tokens,
-    estimatedCost: calculateCost(usage),
-    duration: endTime - startTime,
-    model: 'gpt-4o'
-  }
-});</code></pre>
+        <div class="diagram">
+          <div class="diagram-title">&Eacute;tats d'une CvGenerationTask / CvGenerationOffer</div>
+          <div class="mermaid">
+stateDiagram-v2
+    [*] --> queued: API Route cr&eacute;e la t&acirc;che
+    queued --> running: enqueueJob() d&eacute;marre
+    running --> extraction: Phase 0
+    extraction --> classification: Phase 0.5
+    classification --> batches: Phase 1 (6 parall&egrave;les + 1 s&eacute;quentiel)
+    batches --> recomposition: Phase 2
+    recomposition --> completed: Succ&egrave;s
+    running --> failed: Erreur + refund
+    extraction --> failed: Erreur extraction
+    classification --> failed: Erreur classification
+    batches --> failed: Erreur batch
+    recomposition --> failed: Erreur recomposition
+    running --> cancelled: AbortController.abort()
+    completed --> [*]
+    failed --> [*]
+    cancelled --> [*]
+          </div>
+        </div>
 
-        <h2>Fichiers</h2>
+        <!-- ==================== TRACABILITE ==================== -->
+        <h2>Tra&ccedil;abilit&eacute; &mdash; CvGenerationSubtask</h2>
 
-        <pre><code>lib/features/cv-adaptation/orchestrator/
-├── index.js              # Exports publics
-├── taskRunner.js         # Lifecycle management
-├── offerProcessor.js     # Coordination phases
-├── creditManager.js      # Gestion crédits
-├── progressEmitter.js    # SSE events
-└── retryHandler.js       # Error recovery</code></pre>
+        <p>Chaque appel IA est enregistr&eacute; dans <code>CvGenerationSubtask</code> pour le monitoring et le d&eacute;bogage :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>offerId</code></td><td>String</td><td>ID de l'offre parente</td></tr>
+            <tr><td><code>type</code></td><td>String</td><td><code>'extraction'</code>, <code>'classification'</code>, <code>'batch_experience'</code>, <code>'batch_project'</code>, <code>'batch_extras'</code>, <code>'batch_education'</code>, <code>'batch_languages'</code>, <code>'batch_skills'</code>, <code>'batch_summary'</code></td></tr>
+            <tr><td><code>itemIndex</code></td><td>Int?</td><td>Index de l'item (0, 1, 2... pour exp&eacute;riences)</td></tr>
+            <tr><td><code>status</code></td><td>String</td><td><code>'pending'</code> &rarr; <code>'running'</code> &rarr; <code>'completed'</code> / <code>'failed'</code></td></tr>
+            <tr><td><code>modelUsed</code></td><td>String</td><td>Mod&egrave;le OpenAI utilis&eacute;</td></tr>
+            <tr><td><code>promptTokens</code></td><td>Int</td><td>Tokens prompt envoy&eacute;s</td></tr>
+            <tr><td><code>cachedTokens</code></td><td>Int</td><td>Tokens depuis le cache OpenAI</td></tr>
+            <tr><td><code>completionTokens</code></td><td>Int</td><td>Tokens g&eacute;n&eacute;r&eacute;s</td></tr>
+            <tr><td><code>estimatedCost</code></td><td>Float</td><td>Co&ucirc;t estim&eacute; USD via <code>calculateCost()</code></td></tr>
+            <tr><td><code>durationMs</code></td><td>Int</td><td>Dur&eacute;e d'ex&eacute;cution en ms</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== FICHIERS ==================== -->
+        <h2>Structure des Fichiers</h2>
+
+        <pre><code class="language-bash">lib/features/cv-adaptation/orchestrator/
+├── index.js              # Re-exports publics
+├── taskRunner.js         # startSingleOfferGeneration, startMultiOfferGeneration
+├── offerProcessor.js     # processOffer, runBatchesPhase, runRecompositionPhase
+├── creditManager.js      # refundCreditForOffer
+├── progressEmitter.js    # emitProgress → dbEmitter.emitCvGenerationProgress
+└── retryHandler.js       # withRetry, MAX_RETRIES=3, BACKOFF_BASE_MS=1000</code></pre>
+
       </div>
     </main>
   </div>
@@ -349,7 +411,6 @@ stateDiagram-v2
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

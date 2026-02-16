@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -32,59 +29,238 @@
           <span>Plans Stripe</span>
         </div>
 
-
         <h1>Plans Stripe</h1>
         <p class="lead">
-          Configuration et gestion des plans d'abonnement via Stripe.
+          Configuration des plans d'abonnement, synchronisation avec Stripe et syst&egrave;me de tiers.
         </p>
 
-        <h2>Plans Disponibles</h2>
+        <h2>Mod&egrave;le SubscriptionPlan</h2>
+
+        <pre><code class="language-javascript">model SubscriptionPlan {
+  id                    Int       @id @default(autoincrement())
+  name                  String    @unique    // "Gratuit", "Pro", "Premium"
+  description           String?
+  isFree                Boolean   @default(false)
+  tier                  Int       @default(0) // 0=Gratuit, 1=Pro, 2=Premium
+  isPopular             Boolean   @default(false)
+  priceMonthly          Float     @default(0)
+  priceYearly           Float     @default(0)
+  yearlyDiscountPercent Float     @default(0)
+  priceCurrency         String    @default("EUR")
+  stripeProductId       String?   @unique
+  stripePriceIdMonthly  String?   @unique  // Stripe Price ID mensuel
+  stripePriceIdYearly   String?   @unique  // Stripe Price ID annuel
+
+  subscriptions         Subscription[]
+  featureLimits         SubscriptionPlanFeatureLimit[]
+}</code></pre>
+
+        <h2>Syst&egrave;me de Tiers</h2>
+
+        <p>Chaque plan a un <code>tier</code> num&eacute;rique utilis&eacute; pour d&eacute;terminer les upgrades/downgrades :</p>
+
+        <pre><code class="language-javascript">// lib/subscription/planUtils.js
+
+export function getPlanTier(plan) {
+  if (typeof plan.tier === 'number') return plan.tier;
+
+  // Fallback par prix
+  if (plan.priceMonthly === 0 &amp;&amp; plan.priceYearly === 0) return 0; // Gratuit
+  if (plan.priceMonthly > 20) return 2; // Premium
+  return 1; // Pro
+}
+
+export function comparePlans(currentPlan, targetPlan) {
+  const currentTier = getPlanTier(currentPlan);
+  const targetTier = getPlanTier(targetPlan);
+
+  if (targetTier > currentTier) return 'upgrade';
+  if (targetTier < currentTier) return 'downgrade';
+  return 'same';
+}</code></pre>
+
+        <h2>Mod&egrave;le CreditPack</h2>
+
+        <pre><code class="language-javascript">model CreditPack {
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String?
+  creditAmount    Int      @unique   // Nombre de cr&eacute;dits
+  price           Float              // Prix en euros
+  priceCurrency   String   @default("EUR")
+  isActive        Boolean  @default(true)
+  stripeProductId String?  @unique
+  stripePriceId   String?  @unique   // Prix unique (pas d'intervalle)
+}</code></pre>
+
+        <h2>Synchronisation Stripe</h2>
+
+        <p>La synchronisation bidirectionnelle est g&eacute;r&eacute;e par <code>lib/subscription/stripeSync.js</code> :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de synchronisation</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph DB["BASE DE DONN&Eacute;ES"]
+        Plans["SubscriptionPlan"]
+        Packs["CreditPack"]
+    end
+
+    subgraph Sync["syncStripeProductsInternal()"]
+        PlanSync["Pour chaque plan payant :<br/>1. Cr&eacute;er/r&eacute;cup&eacute;rer Product<br/>2. Cr&eacute;er/v&eacute;rifier Price mensuel<br/>3. Cr&eacute;er/v&eacute;rifier Price annuel<br/>4. Archiver anciens prix"]
+        PackSync["Pour chaque pack actif :<br/>1. Cr&eacute;er/r&eacute;cup&eacute;rer Product<br/>2. Cr&eacute;er/v&eacute;rifier Price<br/>3. D&eacute;finir default_price<br/>4. Archiver ancien prix"]
+    end
+
+    subgraph Stripe["STRIPE"]
+        Products["Products"]
+        Prices["Prices"]
+    end
+
+    Plans --> PlanSync
+    Packs --> PackSync
+    PlanSync --> Products
+    PlanSync --> Prices
+    PackSync --> Products
+    PackSync --> Prices
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Plans gratuits exclus</div>
+          <p>Les plans avec <code>isFree = true</code> sont <strong>syst&eacute;matiquement ignor&eacute;s</strong> par la synchronisation. Ils n'existent que localement en base de donn&eacute;es.</p>
+        </div>
+
+        <h3>Gestion des prix</h3>
+
+        <ul>
+          <li><strong>Plans</strong> : 2 prices par plan (monthly + yearly), devises en <code>priceCurrency</code> (d&eacute;faut EUR)</li>
+          <li><strong>Packs</strong> : 1 price par pack (paiement unique)</li>
+          <li>Si le montant change : ancien prix <strong>archiv&eacute;</strong> (d&eacute;sactiv&eacute;), nouveau prix cr&eacute;&eacute;</li>
+          <li>Pour les packs, le nouveau prix est d&eacute;fini comme <code>default_price</code> avant d'archiver l'ancien</li>
+        </ul>
+
+        <h2>Feature Limits par Plan</h2>
+
+        <pre><code class="language-javascript">model SubscriptionPlanFeatureLimit {
+  id          String  @id @default(cuid())
+  planId      Int
+  featureName String  // "gpt_cv_generation", "export_cv", etc.
+  isEnabled   Boolean @default(true)
+  usageLimit  Int     @default(-1)  // -1 = illimit&eacute;
+
+  plan        SubscriptionPlan @relation(...)
+
+  @@unique([planId, featureName])
+}</code></pre>
+
+        <h3>Macro-Features</h3>
+
+        <p>Les features sont regroup&eacute;es en <strong>macro-features</strong> dans <code>lib/subscription/macroFeatures.js</code> :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Plan</th>
-              <th>Prix</th>
-              <th>Generations/mois</th>
-              <th>Features</th>
+              <th>Macro-Feature</th>
+              <th>Micro-Features</th>
+              <th>IA</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Free</strong></td>
-              <td>0 EUR</td>
-              <td>3</td>
-              <td>Export PDF</td>
+              <td><strong>gpt_cv_generation</strong></td>
+              <td>generate_cv_url, generate_cv_pdf, extract_job_offer_url, extract_job_offer_pdf, create_template_cv_url, create_template_cv_pdf</td>
+              <td>Oui</td>
             </tr>
             <tr>
-              <td><strong>Pro</strong></td>
-              <td>9.99 EUR/mois</td>
-              <td>50</td>
-              <td>+ Export DOCX, Optimisation</td>
+              <td><strong>import_pdf</strong></td>
+              <td>import_pdf, first_import_pdf, import_cv</td>
+              <td>Oui</td>
             </tr>
             <tr>
-              <td><strong>Premium</strong></td>
-              <td>19.99 EUR/mois</td>
-              <td>Illimite</td>
-              <td>+ Multi-langue, Support prioritaire</td>
+              <td><strong>translate_cv</strong></td>
+              <td>translate_cv</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td><strong>match_score</strong></td>
+              <td>match_score</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td><strong>optimize_cv</strong></td>
+              <td>optimize_cv</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td><strong>generate_from_job_title</strong></td>
+              <td>generate_from_job_title</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td><strong>export_cv</strong></td>
+              <td>export_cv</td>
+              <td>Non</td>
+            </tr>
+            <tr>
+              <td><strong>edit_cv</strong></td>
+              <td>edit_cv</td>
+              <td>Non</td>
+            </tr>
+            <tr>
+              <td><strong>create_cv_manual</strong></td>
+              <td>create_cv_manual</td>
+              <td>Non</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Configuration Stripe</h2>
+        <h2>Traduction des Noms de Plans</h2>
 
-        <pre><code>// Modèle SubscriptionPlan
-model SubscriptionPlan {
-  id                String   @id @default(cuid())
-  name              String
-  stripePriceId     String   @unique
-  stripeProductId   String
-  price             Decimal
-  interval          String   // monthly, yearly
-  features          Json
-  limits            Json
-  isActive          Boolean  @default(true)
-}</code></pre>
+        <p><code>lib/subscription/planTranslations.js</code> traduit les noms de plans stock&eacute;s en fran&ccedil;ais :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Plan (DB)</th>
+              <th>FR</th>
+              <th>EN</th>
+              <th>ES</th>
+              <th>DE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Gratuit</td>
+              <td>Gratuit</td>
+              <td>Free</td>
+              <td>Gratuito</td>
+              <td>Kostenlos</td>
+            </tr>
+            <tr>
+              <td>Pro</td>
+              <td>Pro</td>
+              <td>Pro</td>
+              <td>Pro</td>
+              <td>Pro</td>
+            </tr>
+            <tr>
+              <td>Premium</td>
+              <td>Premium</td>
+              <td>Premium</td>
+              <td>Premium</td>
+              <td>Premium</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Utilitaires d'Affichage</h2>
+
+        <pre><code class="language-javascript">// lib/subscription/planUtils.js
+
+getPlanIcon(plan)       // "🎯" (Free), "⚡" (Pro), "👑" (Premium)
+getPlanColorClass(plan) // Classes Tailwind gradient par tier
+formatPlanPrice(plan, 'monthly')  // "9.99€/mois" ou "Gratuit"
+getYearlyDiscount(plan) // Pourcentage d'&eacute;conomie annuelle</code></pre>
       </div>
     </main>
   </div>

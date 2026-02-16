@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -34,180 +28,682 @@
 
         <h1>Extraction URL</h1>
         <p class="lead">
-          Extraction automatique des informations d'une offre d'emploi a partir de son URL.
+          Extraction automatique des informations d'une offre d'emploi a partir de son URL. Le systeme utilise une strategie de fetch intelligente (simple HTTP &rarr; Puppeteer fallback) puis convertit le HTML en Markdown via Readability + Turndown avant l'extraction IA.
         </p>
 
-        <h2>Flux d'Extraction</h2>
+        <!-- ===== Pipeline complet ===== -->
+        <h2>Pipeline Complet</h2>
 
         <div class="diagram">
           <div class="diagram-title">Pipeline d'extraction URL</div>
           <div class="mermaid">
 flowchart TB
-    URL[URL Offre] --> Fetch[Fetch Page]
-    Fetch --> Parse[Parser HTML]
-    Parse --> Clean[Nettoyer Contenu]
-    Clean --> AI[OpenAI Extraction]
-    AI --> Struct[Donnees Structurees]
-    Struct --> DB[(JobOffer)]
+    URL["URL Offre"] --> Normalize["normalizeJobUrl()&lt;br/&gt;Supprime tracking params"]
+    Normalize --> Cache{"Cache?&lt;br/&gt;@@unique userId+sourceValue"}
+    Cache -->|Hit| Return["Retour cache"]
+    Cache -->|Miss| Strategy{"shouldUsePuppeteerFirst()?"}
+    Strategy -->|Sites proteges/SPA| PuppeteerFirst["Puppeteer + Stealth&lt;br/&gt;waitForContent + autoScroll"]
+    Strategy -->|Autres| SimpleFetch["Simple HTTP Fetch"]
+    SimpleFetch -->|Antibot detecte| PuppeteerFallback["Puppeteer fallback"]
+    SimpleFetch -->|OK| Convert
+    PuppeteerFirst --> Convert
+    PuppeteerFallback --> Convert
+    Convert["HTML &rarr; Markdown&lt;br/&gt;Readability + Turndown"]
+    Convert --> Expired{"Page expiree?&lt;br/&gt;detectExpiredOrDeletedPage()"}
+    Expired -->|Oui| Error["Erreur: offre expiree"]
+    Expired -->|Non| Extract["OpenAI Structured Outputs&lt;br/&gt;jobOfferExtractionSchema.json"]
+    Extract --> Validate{"isJobOfferValid()?"}
+    Validate -->|Non| ErrorNoJob["Erreur: pas d'offre detectee"]
+    Validate -->|Oui| LangDetect["detectJobOfferLanguageWithOpenAI()"]
+    LangDetect --> Store["storeJobOffer()&lt;br/&gt;Upsert dans JobOffer"]
           </div>
         </div>
 
+        <!-- ===== Strategie de Fetch Intelligente ===== -->
+        <h2>Strategie de Fetch Intelligente</h2>
+
+        <p>
+          Le module <code>lib/job-offer/extraction/url.js</code> orchestre trois niveaux de fetch via la fonction
+          <code>fetchHtmlWithFallback(url)</code>.
+        </p>
+
+        <h3>1. <code>trySimpleFetch(url)</code> &mdash; Premier essai HTTP simple</h3>
+
+        <p>Tente un <code>fetch()</code> classique avec des headers realistes :</p>
+
+        <pre><code class="language-javascript">async function trySimpleFetch(url) {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ...',
+      'Accept': 'text/html,application/xhtml+xml,...',
+      'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+    },
+    redirect: 'follow',
+  });
+
+  // Statuts bloquants : 403, 401, 503 → retourne null
+  if (response.status === 403 || response.status === 401 || response.status === 503) {
+    return null;
+  }
+
+  const html = await response.text();
+
+  // Detection de patterns antibot
+  const antibotPatterns = [
+    /cloudflare/i,        /captcha/i,
+    /recaptcha/i,         /ddos-guard/i,
+    /checking your browser/i,
+    /just a moment/i,     /bot protection/i,
+    /access denied/i,
+    /please complete the security check/i,
+    /enable javascript and cookies to continue/i,
+  ];
+
+  const hasAntibot = antibotPatterns.some(p => p.test(html));
+  return hasAntibot ? null : html;
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Retour null = fallback Puppeteer</div>
+          <p>
+            Si le simple fetch retourne <code>null</code> (antibot detecte, status HTTP bloquant, ou erreur reseau),
+            le systeme bascule automatiquement sur Puppeteer.
+          </p>
+        </div>
+
+        <h3>2. <code>fetchWithPuppeteer(url, options)</code> &mdash; Fallback Puppeteer</h3>
+
+        <p>Utilise <code>puppeteer-extra</code> avec <code>StealthPlugin</code> pour eviter la detection bot :</p>
+
+        <pre><code class="language-javascript">import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+puppeteer.use(StealthPlugin());
+
+async function fetchWithPuppeteer(url, options = {}) {
+  const { waitForContent = false, autoScroll: shouldScroll = false } = options;
+
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
+           '--disable-accelerated-2d-canvas', '--no-first-run', '--no-zygote', '--disable-gpu'],
+    timeout: 60000,
+  });
+
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1920, height: 1080 });
+  await page.setUserAgent('Mozilla/5.0 ...');
+
+  // networkidle2 pour SPA, domcontentloaded sinon
+  const waitUntil = waitForContent ? 'networkidle2' : 'domcontentloaded';
+  await page.goto(url, { waitUntil, timeout: 30000 });
+
+  // Attente selecteurs CSS specifiques au site
+  if (waitForContent) {
+    const selectors = getSelectorsForUrl(url);
+    for (const selector of selectors.slice(0, 3)) {
+      try {
+        await page.waitForSelector(selector, { timeout: 3000 });
+        break; // Premier selecteur trouve → on continue
+      } catch (e) { /* suivant */ }
+    }
+  }
+
+  // Auto-scroll pour charger le contenu lazy
+  if (shouldScroll) {
+    await autoScroll(page); // Scroll 300px par 300px, max 3000px
+  }
+
+  const html = await page.content();
+  await browser.close();
+  return html;
+}</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>waitForContent</code></td>
+              <td><code>boolean</code></td>
+              <td>Utilise <code>networkidle2</code> au lieu de <code>domcontentloaded</code> + attend les selecteurs CSS du site</td>
+            </tr>
+            <tr>
+              <td><code>autoScroll</code></td>
+              <td><code>boolean</code></td>
+              <td>Scroll automatique pour charger le contenu lazy-loaded (300px/tick, max 3000px)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Timeouts</div>
+          <ul>
+            <li><strong>Global</strong> : 60s (lancement browser + navigation)</li>
+            <li><strong>Navigation</strong> : 30s (<code>page.goto()</code>)</li>
+            <li><strong>Selecteurs</strong> : 3s par selecteur (3 essais max)</li>
+            <li><strong>Body</strong> : 5s (attente initiale)</li>
+          </ul>
+        </div>
+
+        <h3>3. <code>fetchHtmlWithFallback(url)</code> &mdash; Orchestrateur</h3>
+
+        <pre><code class="language-javascript">export async function fetchHtmlWithFallback(url) {
+  // Sites proteges/SPA → Puppeteer direct
+  if (shouldUsePuppeteerFirst(url)) {
+    return fetchWithPuppeteer(url, { waitForContent: true, autoScroll: true });
+  }
+
+  // Autres sites → simple fetch d'abord
+  let html = await trySimpleFetch(url);
+  if (html) return html;
+
+  // Fallback Puppeteer (sans waitForContent ni autoScroll)
+  return fetchWithPuppeteer(url, { waitForContent: false, autoScroll: false });
+}</code></pre>
+
+        <p>
+          La fonction <code>shouldUsePuppeteerFirst(url)</code> verifie si le domaine figure dans
+          <code>PUPPETEER_FIRST_DOMAINS</code> (defini dans <code>lib/utils/siteSelectors.js</code>) :
+        </p>
+
+        <pre><code class="language-javascript">// lib/utils/siteSelectors.js
+export const PUPPETEER_FIRST_DOMAINS = [
+  'indeed.com',
+  'indeed.fr',
+  'glassdoor.',
+  'welcometothejungle.com'
+];</code></pre>
+
+        <!-- ===== Conversion HTML → Markdown ===== -->
+        <h2>Conversion HTML &rarr; Markdown</h2>
+
+        <p>
+          La fonction <code>extractJobOfferContent(html, url)</code> (via <code>lib/utils/htmlToMarkdown.js</code>)
+          convertit le HTML brut en Markdown exploitable par l'IA :
+        </p>
+
+        <ul>
+          <li><strong><code>@mozilla/readability</code></strong> &mdash; Extrait le contenu principal de la page (supprime navigation, pubs, footers)</li>
+          <li><strong><code>turndown</code></strong> &mdash; Convertit le HTML nettoye en Markdown structure</li>
+          <li><strong>Minimum 200 caracteres</strong> requis &mdash; en dessous, l'extraction est rejetee avec l'erreur <code>noJobOfferDetected</code></li>
+        </ul>
+
+        <pre><code class="language-javascript">// Dans extractJobOfferFromUrl()
+const { content: markdown, title } = extractJobOfferContent(html, url);
+
+if (!markdown || markdown.length < 200) {
+  throw new Error(JSON.stringify({
+    translationKey: 'taskQueue.errors.noJobOfferDetected',
+    source: url
+  }));
+}</code></pre>
+
+        <!-- ===== Detection pages expirees ===== -->
+        <h2>Detection des Pages Expirees</h2>
+
+        <p>
+          <strong>Avant</strong> l'appel OpenAI (pour eviter un cout inutile), le systeme verifie si la page est une offre expiree ou supprimee
+          via <code>detectExpiredOrDeletedPage(markdown, html, url)</code> :
+        </p>
+
+        <pre><code class="language-javascript">// lib/utils/htmlToMarkdown/detection.js
+const expiredCheck = detectExpiredOrDeletedPage(markdown, html, url);
+// Retourne : { isExpiredPage: boolean, confidence: number, reason: string }
+
+if (expiredCheck.isExpiredPage) {
+  throw new Error(JSON.stringify({
+    translationKey: 'taskQueue.errors.jobOfferExpired'
+  }));
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Economie de tokens</div>
+          <p>
+            Cette verification est executee <strong>avant</strong> l'appel a OpenAI. Si l'offre est expiree,
+            le pipeline s'arrete immediatement sans consommer de tokens IA.
+          </p>
+        </div>
+
+        <!-- ===== Extraction IA ===== -->
+        <h2>Extraction IA &mdash; <code>extractJobOfferFromUrl()</code></h2>
+
+        <p>
+          Fonction principale d'extraction. Utilise les <strong>Structured Outputs</strong> d'OpenAI pour obtenir
+          un JSON conforme au schema <code>jobOfferExtractionSchema.json</code>.
+        </p>
+
+        <pre><code class="language-javascript">// lib/job-offer/extraction/url.js
+export async function extractJobOfferFromUrl(url, userId, signal = null) {
+  const client = getOpenAIClient();
+  const normalizedUrl = normalizeJobUrl(url);
+
+  // 1. Fetch HTML (strategie intelligente)
+  const html = await fetchHtmlWithFallback(normalizedUrl);
+
+  // 2. Conversion HTML → Markdown
+  const { content: markdown, title } = extractJobOfferContent(html, url);
+
+  // 3. Detection page expiree (avant appel IA)
+  const expiredCheck = detectExpiredOrDeletedPage(markdown, html, url);
+
+  // 4. Chargement schema + prompts
+  const schema = await loadSchema('lib/job-offer/schemas/jobOfferExtractionSchema.json');
+  const systemPrompt = await loadPrompt('lib/job-offer/prompts/system.md');
+  const userPrompt = await loadPromptWithVars('lib/job-offer/prompts/user.md', {
+    jobTitle: title || 'Non specifie (a extraire du contenu)',
+    sourceContent: markdown
+  });
+
+  // 5. Appel OpenAI
+  const extractModel = await getAiModelSetting('model_extract_job_offer');
+  let requestOptions = addTemperatureIfSupported({
+    model: extractModel,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    response_format: { type: 'json_schema', json_schema: schema },
+  }, 0.1);
+  requestOptions = adjustTokensForReasoningModel(requestOptions, 2000, 16000);
+
+  const fetchOptions = signal ? { signal } : {};
+  const response = await client.chat.completions.create(requestOptions, fetchOptions);
+
+  // 6. Validation + detection de langue
+  const extraction = JSON.parse(response.choices[0].message.content);
+  if (!isJobOfferValid(extraction)) { /* erreur */ }
+
+  const detectedLanguage = await detectJobOfferLanguageWithOpenAI({
+    extraction, signal, userId, featureName: 'extract_job_offer_url',
+  });
+  extraction.language = detectedLanguage;
+
+  // 7. Track usage
+  await trackOpenAIUsage({
+    userId, featureName: 'extract_job_offer_url',
+    model: extractModel,
+    promptTokens: response.usage.prompt_tokens,
+    completionTokens: response.usage.completion_tokens,
+    duration,
+  });
+}</code></pre>
+
+        <h3>Configuration OpenAI</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Parametre</th>
+              <th>Valeur</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>model</code></td>
+              <td>Configurable</td>
+              <td>Via <code>getAiModelSetting('model_extract_job_offer')</code></td>
+            </tr>
+            <tr>
+              <td><code>temperature</code></td>
+              <td><code>0.1</code></td>
+              <td>Basse pour maximiser la precision</td>
+            </tr>
+            <tr>
+              <td><code>response_format</code></td>
+              <td><code>json_schema</code></td>
+              <td>Structured Outputs &mdash; garantit un JSON conforme au schema</td>
+            </tr>
+            <tr>
+              <td>System prompt</td>
+              <td><code>lib/job-offer/prompts/system.md</code></td>
+              <td>Instructions d'extraction</td>
+            </tr>
+            <tr>
+              <td>User prompt</td>
+              <td><code>lib/job-offer/prompts/user.md</code></td>
+              <td>Variables <code>{jobTitle}</code> et <code>{sourceContent}</code></td>
+            </tr>
+            <tr>
+              <td><code>AbortSignal</code></td>
+              <td>Optionnel</td>
+              <td>Permet l'annulation de la tache en cours</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Valeur de retour</h3>
+
+        <pre><code class="language-javascript">return {
+  extraction,          // JSON structure extraite (conforme au schema)
+  tokensUsed,          // promptTokens + completionTokens
+  model,               // modele utilise (ex: gpt-4o)
+  title,               // titre de l'offre
+  usageDetails: {
+    modelUsed,         // nom du modele
+    promptTokens,      // tokens du prompt
+    completionTokens,  // tokens de la reponse
+    cachedTokens,      // tokens en cache OpenAI (prompt_tokens_details.cached_tokens)
+    durationMs,        // duree de l'appel en ms
+  },
+};</code></pre>
+
+        <!-- ===== Extraction depuis Markdown (Extension) ===== -->
+        <h2>Extraction depuis Markdown (Extension)</h2>
+
+        <p>
+          La fonction <code>extractJobOfferFromMarkdown()</code> offre le meme pipeline que
+          <code>extractJobOfferFromUrl()</code> mais <strong>sans le fetch HTML</strong>.
+          L'extension navigateur envoie du Markdown pre-extrait directement.
+        </p>
+
+        <pre><code class="language-javascript">// lib/job-offer/extraction/url.js
+export async function extractJobOfferFromMarkdown(markdown, title, sourceUrl, userId, signal = null) {
+  // Pas de fetch HTML — le Markdown est fourni par l'extension
+
+  // Meme validation minimum 200 caracteres
+  if (!markdown || markdown.length < 200) { /* erreur noJobOfferDetected */ }
+
+  // Meme detection page expiree
+  const expiredCheck = detectExpiredOrDeletedPage(markdown, '', sourceUrl);
+
+  // Meme schema, memes prompts, meme modele
+  const schema = await loadJobOfferSchema();
+  const systemPrompt = await loadPrompt('lib/job-offer/prompts/system.md');
+  const userPrompt = await loadPromptWithVars('lib/job-offer/prompts/user.md', { ... });
+
+  // Track sous featureName different
+  await trackOpenAIUsage({
+    userId, featureName: 'extract_job_offer_extension', ...
+  });
+
+  // Meme validation et detection de langue
+  return { extraction, tokensUsed, model, title, usageDetails };
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Difference avec extractJobOfferFromUrl()</div>
+          <ul>
+            <li>Pas d'appel <code>fetchHtmlWithFallback()</code> &mdash; le Markdown est deja fourni</li>
+            <li>Tracking sous <code>featureName: 'extract_job_offer_extension'</code> (au lieu de <code>'extract_job_offer_url'</code>)</li>
+            <li>Le deuxieme argument de <code>detectExpiredOrDeletedPage()</code> est une chaine vide (pas de HTML brut disponible)</li>
+          </ul>
+        </div>
+
+        <!-- ===== Cache et Deduplication ===== -->
+        <h2>Cache et Deduplication</h2>
+
+        <p>
+          Les fonctions <code>getOrExtractJobOfferFromUrl()</code> et <code>getOrExtractJobOfferFromMarkdown()</code>
+          ajoutent une couche de cache par-dessus les fonctions d'extraction.
+        </p>
+
+        <h3><code>getOrExtractJobOfferFromUrl(userId, url, signal)</code></h3>
+
+        <pre><code class="language-javascript">export async function getOrExtractJobOfferFromUrl(userId, url, signal = null) {
+  // 1. Normaliser l'URL (supprime UTM, fbclid, trk, etc.)
+  const normalizedUrl = normalizeJobUrl(url);
+
+  // 2. Chercher en cache (contrainte @@unique([userId, sourceValue]))
+  const existing = await prisma.jobOffer.findUnique({
+    where: { userId_sourceValue: { userId, sourceValue: normalizedUrl } }
+  });
+
+  if (existing) {
+    return {
+      extraction: existing.content,
+      jobOfferId: existing.id,
+      title: existing.content?.title || 'Job Offer',
+      fromCache: true,
+      usageDetails: null, // Pas d'appel OpenAI
+    };
+  }
+
+  // 3. Extraire via OpenAI
+  const { extraction, tokensUsed, model, title, usageDetails } =
+    await extractJobOfferFromUrl(normalizedUrl, userId, signal);
+
+  // 4. Stocker en DB (upsert par userId + sourceValue)
+  const stored = await storeJobOffer(userId, 'url', normalizedUrl, extraction, model, tokensUsed);
+
+  return { extraction, jobOfferId: stored.id, title, fromCache: false, usageDetails };
+}</code></pre>
+
+        <h3><code>normalizeJobUrl(url)</code></h3>
+
+        <p>
+          Supprime les parametres de tracking specifiques a chaque job board pour garantir la deduplication du cache :
+        </p>
+
+        <pre><code class="language-javascript">// lib/utils/normalizeJobUrl.js
+export function normalizeJobUrl(url) {
+  const urlObj = new URL(url);
+
+  // Parametres communs supprimes sur tous les sites
+  const commonTrackingParams = [
+    'utm_source', 'utm_medium', 'utm_campaign',
+    'utm_content', 'utm_term', 'fbclid', 'gclid'
+  ];
+
+  // Parametres specifiques par site
+  // Indeed: 'from', 'advn', 'vjk', 'cf-turnstile-response'
+  // LinkedIn: 'trk', 'trackingId', 'refId'
+  // APEC: 'xtor', 'context'
+  // France Travail: 'at_medium', 'at_campaign'
+  // Glassdoor: 'clickSource', 'src'
+  // Welcome to the Jungle: 'q', 'refinementList'
+  // Monster: 'stpage', 'from'
+  // CadreEmploi: 'xtor'
+  // HelloWork: 'source'
+  // LesJeudis: 'source'
+
+  return urlObj.toString();
+}</code></pre>
+
+        <!-- ===== Sites Supportes ===== -->
         <h2>Sites Supportes</h2>
 
         <table>
           <thead>
             <tr>
               <th>Plateforme</th>
-              <th>Méthode</th>
-              <th>Statut</th>
+              <th>Strategie</th>
+              <th>Notes</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>LinkedIn</td>
-              <td>Scraping + IA</td>
-              <td>Supporte</td>
+              <td><strong>Simple &rarr; Puppeteer fallback</strong></td>
+              <td>Site protege, SPA. Non present dans <code>PUPPETEER_FIRST_DOMAINS</code> mais souvent fallback Puppeteer.</td>
             </tr>
             <tr>
               <td>Indeed</td>
-              <td>Scraping + IA</td>
-              <td>Supporte</td>
+              <td><strong>Puppeteer first</strong></td>
+              <td>Protection antibot (Cloudflare Turnstile). <code>indeed.com</code> et <code>indeed.fr</code> dans <code>PUPPETEER_FIRST_DOMAINS</code>.</td>
+            </tr>
+            <tr>
+              <td>APEC</td>
+              <td>Simple fetch</td>
+              <td>Contenu statique, parametres <code>xtor</code> et <code>context</code> supprimes.</td>
+            </tr>
+            <tr>
+              <td>France Travail</td>
+              <td>Simple fetch</td>
+              <td>Anciennement Pole Emploi. Selecteurs CSS specifiques pour les deux domaines.</td>
+            </tr>
+            <tr>
+              <td>Glassdoor</td>
+              <td><strong>Puppeteer first</strong></td>
+              <td>Protection Cloudflare. <code>glassdoor.</code> dans <code>PUPPETEER_FIRST_DOMAINS</code>.</td>
             </tr>
             <tr>
               <td>Welcome to the Jungle</td>
-              <td>Scraping + IA</td>
-              <td>Supporte</td>
+              <td><strong>Puppeteer first</strong></td>
+              <td>SPA React. <code>welcometothejungle.com</code> dans <code>PUPPETEER_FIRST_DOMAINS</code>.</td>
             </tr>
             <tr>
-              <td>Autres sites</td>
-              <td>IA generique</td>
-              <td>Supporte</td>
+              <td>Monster</td>
+              <td>Simple fetch</td>
+              <td>Selecteurs CSS specifiques : <code>.job-description</code>, <code>#JobDescription</code>.</td>
+            </tr>
+            <tr>
+              <td>CadreEmploi</td>
+              <td>Simple fetch</td>
+              <td>Parametre <code>xtor</code> supprime.</td>
+            </tr>
+            <tr>
+              <td>HelloWork</td>
+              <td>Simple fetch</td>
+              <td>Parametre <code>source</code> supprime.</td>
+            </tr>
+            <tr>
+              <td>LesJeudis</td>
+              <td>Simple fetch</td>
+              <td>Parametre <code>source</code> supprime.</td>
+            </tr>
+            <tr>
+              <td>Autres</td>
+              <td>Simple &rarr; Puppeteer fallback</td>
+              <td>Strategie generique : simple fetch d'abord, Puppeteer si antibot detecte.</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Implementation</h2>
+        <!-- ===== Validation isJobOfferValid ===== -->
+        <h2>Validation &mdash; <code>isJobOfferValid()</code></h2>
 
-        <pre><code>// lib/job-offers/extractFromUrl.js
-import { fetchPageContent } from './scraper';
-import { callOpenAI } from '@/lib/openai-core/client';
+        <p>
+          Apres l'extraction IA, le resultat est valide via <code>isJobOfferValid(extraction)</code>
+          (defini dans <code>lib/job-offer/extraction/helpers.js</code>) :
+        </p>
 
-export async function extractJobOfferFromUrl(url) {
-  // 1. Recuperer le contenu de la page
-  const htmlContent = await fetchPageContent(url);
+        <pre><code class="language-javascript">export function isJobOfferValid(extraction) {
+  if (!extraction) return false;
 
-  // 2. Nettoyer le HTML
-  const cleanText = cleanHtmlContent(htmlContent);
+  // Titre obligatoire
+  const hasTitle = extraction.title?.trim().length > 0;
+  if (!hasTitle) return false;
 
-  // 3. Extraire via IA
-  const result = await callOpenAI({
-    featureName: 'job_extraction',
-    messages: [
-      {
-        role: 'system',
-        content: JOB_EXTRACTION_PROMPT
-      },
-      {
-        role: 'user',
-        content: cleanText
-      }
-    ],
-    responseFormat: {
-      type: 'json_schema',
-      json_schema: jobOfferSchema
-    }
-  });
+  // Au moins un de ces criteres :
+  const hasResponsibilities = extraction.responsibilities?.length > 0;
+  const hasSkills = /* hard_skills, tools, methodologies, soft_skills */;
+  const hasDescription = extraction.description?.trim().length > 50;
+  const hasCompany = extraction.company?.trim().length > 0;
+  const hasLocation = extraction.location?.trim().length > 0;
 
-  return result;
+  // Accept si : titre + (responsabilites OU competences OU description+entreprise/lieu)
+  return hasResponsibilities || hasSkills || (hasDescription && (hasCompany || hasLocation));
 }</code></pre>
 
-        <h2>Scraping avec Puppeteer</h2>
-
-        <pre><code>// lib/job-offers/scraper.js
-import puppeteer from 'puppeteer';
-
-export async function fetchPageContent(url) {
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox']
-  });
-
-  try {
-    const page = await browser.newPage();
-
-    // User-Agent realiste
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    );
-
-    await page.goto(url, { waitUntil: 'networkidle0' });
-
-    // Attendre le contenu principal
-    await page.waitForSelector('body', { timeout: 10000 });
-
-    return await page.content();
-  } finally {
-    await browser.close();
-  }
-}</code></pre>
-
-        <h2>Schema de Sortie</h2>
-
-        <pre><code>// Structure extraite
-{
-  "title": "Developpeur Full Stack",
-  "company": "TechCorp",
-  "location": "Paris, France",
-  "contractType": "CDI",
-  "salaryRange": "50-60K EUR",
-  "remote": "hybrid",
-  "description": "...",
-  "requirements": {
-    "required": ["React", "Node.js", "5 ans exp"],
-    "preferred": ["TypeScript", "AWS"]
-  },
-  "responsibilities": [
-    "Developper des features",
-    "Code review"
-  ],
-  "benefits": [
-    "Teletravail 3j/semaine",
-    "Tickets restaurant"
-  ]
-}</code></pre>
-
-        <h2>Gestion des Erreurs</h2>
-
-        <div class="callout callout-warning">
-          <div class="callout-title">Cas d'erreur</div>
-          <ul>
-            <li><strong>Page inaccessible</strong> : Retour erreur avec message</li>
-            <li><strong>Contenu bloque</strong> : Fallback vers extraction manuelle</li>
-            <li><strong>Format non reconnu</strong> : Extraction IA generique</li>
-          </ul>
+        <div class="callout callout-info">
+          <div class="callout-title">Pourquoi cette validation ?</div>
+          <p>
+            Empeche d'accepter des pages avec juste un titre comme "Offre expiree" ou "Page non trouvee".
+            Le JSON structure doit contenir du contenu substantiel pour etre considere comme une offre valide.
+          </p>
         </div>
 
-        <h2>API Endpoint</h2>
+        <!-- ===== Gestion des Erreurs ===== -->
+        <h2>Gestion des Erreurs</h2>
 
-        <pre><code>// POST /api/job-offers/extract
-{
-  "url": "https://linkedin.com/jobs/view/123456"
-}
+        <table>
+          <thead>
+            <tr>
+              <th>Erreur</th>
+              <th>Translation Key</th>
+              <th>Condition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Pas d'offre detectee</td>
+              <td><code>taskQueue.errors.noJobOfferDetected</code></td>
+              <td>Contenu &lt; 200 caracteres ou <code>isJobOfferValid()</code> retourne <code>false</code></td>
+            </tr>
+            <tr>
+              <td>Offre expiree</td>
+              <td><code>taskQueue.errors.jobOfferExpired</code></td>
+              <td><code>detectExpiredOrDeletedPage()</code> detecte une page supprimee/expiree</td>
+            </tr>
+            <tr>
+              <td>Reponse OpenAI vide</td>
+              <td><code>errors.api.openai.gptNoContent</code></td>
+              <td><code>response.choices[0].message.content</code> est <code>null</code> ou absent</td>
+            </tr>
+            <tr>
+              <td>Tache annulee</td>
+              <td><code>'Task cancelled'</code></td>
+              <td><code>AbortSignal</code> declenche pendant ou apres l'appel OpenAI</td>
+            </tr>
+          </tbody>
+        </table>
 
-// Response
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "...",
-    "company": "...",
-    // ... données extraites
-  }
-}</code></pre>
+        <!-- ===== Fichiers cles ===== -->
+        <h2>Fichiers Cles</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/job-offer/extraction/url.js</code></td>
+              <td>Fonctions principales : fetch, extraction URL et Markdown, cache</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/extraction/helpers.js</code></td>
+              <td><code>isJobOfferValid()</code>, <code>storeJobOffer()</code>, <code>computeContentHash()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/extraction/languageDetection.js</code></td>
+              <td><code>detectJobOfferLanguageWithOpenAI()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/utils/htmlToMarkdown.js</code></td>
+              <td>Re-export : <code>extractJobOfferContent()</code>, <code>shouldUsePuppeteerFirst()</code>, <code>getSelectorsForUrl()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/utils/htmlToMarkdown/detection.js</code></td>
+              <td><code>detectExpiredOrDeletedPage()</code>, <code>detectLoginPage()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/utils/siteSelectors.js</code></td>
+              <td>Selecteurs CSS par site, <code>PUPPETEER_FIRST_DOMAINS</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/utils/normalizeJobUrl.js</code></td>
+              <td>Normalisation URL (suppression tracking params)</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/schemas/jobOfferExtractionSchema.json</code></td>
+              <td>Schema JSON pour Structured Outputs OpenAI</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/prompts/system.md</code></td>
+              <td>System prompt d'extraction</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/prompts/user.md</code></td>
+              <td>User prompt avec variables <code>{jobTitle}</code> et <code>{sourceContent}</code></td>
+            </tr>
+          </tbody>
+        </table>
+
       </div>
     </main>
   </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
@@ -218,7 +714,6 @@ export async function fetchPageContent(url) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

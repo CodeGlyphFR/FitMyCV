@@ -3,101 +3,330 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Limites Features | FitMyCV.io</title>
+  <title>Limites par Feature | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Credits</a>
+          <a href="./overview.html">Cr&eacute;dits</a>
           <span>/</span>
-          <span>Limites Features</span>
+          <span>Limites par Feature</span>
         </div>
 
-
-        <h1>Limites Features</h1>
+        <h1>Limites par Feature</h1>
         <p class="lead">
-          Système de compteurs mensuels pour limiter l'utilisation des features selon le plan.
+          Le syst&egrave;me de limites utilise des <strong>macro-features</strong>, des <strong>compteurs p&eacute;riodiques</strong> (align&eacute;s sur la date anniversaire de l'abonnement), et un algorithme central <code>canUseFeature()</code> avec fallback vers les cr&eacute;dits. Tout est d&eacute;fini dans <code>lib/subscription/featureUsage.js</code>.
         </p>
 
-        <h2>Limites par Plan</h2>
+        <h2>Macro-Features</h2>
+
+        <p>Les 9 macro-features sont d&eacute;finies dans <code>lib/subscription/macroFeatures.js</code>. Chaque macro-feature regroupe une ou plusieurs micro-features (noms internes OpenAI tracking) :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Feature</th>
-              <th>Free</th>
-              <th>Pro</th>
-              <th>Premium</th>
+              <th>Macro-Feature</th>
+              <th>Micro-Features</th>
+              <th>IA</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Generations CV</td>
-              <td>3/mois</td>
-              <td>50/mois</td>
-              <td>Illimite</td>
+              <td><code>gpt_cv_generation</code></td>
+              <td>generate_cv_url, generate_cv_pdf, extract_job_offer_url, extract_job_offer_pdf, create_template_cv_url, create_template_cv_pdf</td>
+              <td>Oui</td>
+              <td>Bouton GPT &mdash; Adaptation CV, Analyse offre, Mod&egrave;le CV</td>
             </tr>
             <tr>
-              <td>Exports PDF</td>
-              <td>5/mois</td>
-              <td>Illimite</td>
-              <td>Illimite</td>
+              <td><code>import_pdf</code></td>
+              <td>import_pdf, first_import_pdf, import_cv</td>
+              <td>Oui</td>
+              <td>Import de CV depuis PDF</td>
             </tr>
             <tr>
-              <td>Traductions</td>
-              <td>0</td>
-              <td>10/mois</td>
-              <td>Illimite</td>
+              <td><code>translate_cv</code></td>
+              <td>translate_cv</td>
+              <td>Oui</td>
+              <td>Traduction de CV</td>
+            </tr>
+            <tr>
+              <td><code>match_score</code></td>
+              <td>match_score</td>
+              <td>Oui</td>
+              <td>Score de match CV &harr; offre</td>
+            </tr>
+            <tr>
+              <td><code>optimize_cv</code></td>
+              <td>optimize_cv</td>
+              <td>Oui</td>
+              <td>Optimisation automatique (skills + suggestions)</td>
+            </tr>
+            <tr>
+              <td><code>generate_from_job_title</code></td>
+              <td>generate_from_job_title</td>
+              <td>Oui</td>
+              <td>G&eacute;n&eacute;ration CV fictif depuis un titre de poste</td>
+            </tr>
+            <tr>
+              <td><code>export_cv</code></td>
+              <td>export_cv</td>
+              <td>Non</td>
+              <td>Export CV en PDF</td>
+            </tr>
+            <tr>
+              <td><code>edit_cv</code></td>
+              <td>edit_cv</td>
+              <td>Non</td>
+              <td>Mode &eacute;dition du CV</td>
+            </tr>
+            <tr>
+              <td><code>create_cv_manual</code></td>
+              <td>create_cv_manual</td>
+              <td>Non</td>
+              <td>Cr&eacute;ation manuelle de CV (bouton +)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Implementation</h2>
+        <h2>Mod&egrave;les de Donn&eacute;es</h2>
 
-        <pre><code>// lib/subscription/featureUsage.js
-export async function canUseFeature(userId, featureName) {
-  const plan = await getUserPlan(userId);
-  const limit = plan.limits[featureName];
+        <h3>SubscriptionPlanFeatureLimit</h3>
 
-  if (limit === -1) return { allowed: true }; // Illimite
+        <pre><code class="language-javascript">model SubscriptionPlanFeatureLimit {
+  id          String  @id @default(cuid())
+  planId      Int
+  featureName String  // "gpt_cv_generation", "export_cv", etc.
+  isEnabled   Boolean @default(true)   // Feature activ&eacute;e dans ce plan ?
+  usageLimit  Int     @default(-1)     // -1 = illimit&eacute;
 
-  const counter = await prisma.featureUsageCounter.findFirst({
-    where: {
-      userId,
-      featureName,
-      month: getCurrentMonth()
-    }
-  });
-
-  const used = counter?.count || 0;
-  const allowed = used < limit;
-
-  return {
-    allowed,
-    used,
-    limit,
-    needsCredit: !allowed && plan.allowCreditOverage
-  };
+  plan        SubscriptionPlan @relation(...)
+  @@unique([planId, featureName])
 }</code></pre>
+
+        <h3>FeatureUsageCounter</h3>
+
+        <pre><code class="language-javascript">model FeatureUsageCounter {
+  id          String   @id @default(cuid())
+  userId      String
+  featureName String
+  count       Int      @default(0)
+  periodStart DateTime // D&eacute;but de la p&eacute;riode de comptage
+  periodEnd   DateTime // Fin de la p&eacute;riode
+  user        User     @relation(...)
+
+  @@unique([userId, featureName]) // 1 compteur par feature par user
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Reset automatique des compteurs</div>
+          <p>Il n'y a qu'<strong>un seul enregistrement</strong> par feature par utilisateur. Quand la p&eacute;riode change (v&eacute;rifi&eacute;e via <code>periodStart</code>), le <code>count</code> est remis &agrave; 0 automatiquement dans <code>getOrCreateFeatureCounter()</code>. Le <code>deleteMany</code> dans <code>resetFeatureCounters()</code> est utilis&eacute; lors du renouvellement d'abonnement (webhook <code>invoice.paid</code>).</p>
+        </div>
+
+        <h2>P&eacute;riode de Comptage</h2>
+
+        <p>La p&eacute;riode de comptage est <strong>mensuelle</strong>, align&eacute;e sur la <strong>date anniversaire</strong> de l'abonnement :</p>
+
+        <pre><code class="language-javascript">// lib/subscription/featureUsage.js - getCurrentPeriod()
+
+function getCurrentPeriod(subscription) {
+  if (!subscription) {
+    // Sans abonnement : mois calendaire (1er au dernier jour)
+    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return { periodStart, periodEnd };
+  }
+
+  // Avec abonnement : date anniversaire
+  const dayOfMonth = subscription.currentPeriodStart.getDate();
+  let periodStart = new Date(now.getFullYear(), now.getMonth(), dayOfMonth);
+
+  // Si date anniversaire dans le futur ce mois, prendre le mois pr&eacute;c&eacute;dent
+  if (periodStart > now) {
+    periodStart = new Date(now.getFullYear(), now.getMonth() - 1, dayOfMonth);
+  }
+
+  let periodEnd = new Date(periodStart);
+  periodEnd.setMonth(periodEnd.getMonth() + 1);
+  return { periodStart, periodEnd };
+}</code></pre>
+
+        <h2>Algorithme canUseFeature()</h2>
+
+        <p>Algorithme central de contr&ocirc;le d'acc&egrave;s dans <code>lib/subscription/featureUsage.js</code> :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Algorithme canUseFeature(userId, featureName)</div>
+          <div class="mermaid">
+flowchart TD
+    Start["canUseFeature(userId, featureName)"] --> BalCheck{"balance < 0 ?"}
+    BalCheck -->|"Oui"| Blocked["BLOQU&Eacute; : balance n&eacute;gative<br/>(chargeback)"]
+    BalCheck -->|"Non"| ModeCheck{"subscription_mode_enabled ?"}
+
+    ModeCheck -->|"Non"| CreditsOnly["MODE CR&Eacute;DITS-ONLY"]
+    CreditsOnly --> CostCheck{"co&ucirc;t = 0 ?"}
+    CostCheck -->|"Oui"| FreeOK["AUTORIS&Eacute; : gratuit<br/>(useCredit: false)"]
+    CostCheck -->|"Non"| CredCheck{"balance >= co&ucirc;t ?"}
+    CredCheck -->|"Oui"| UseCredit["AUTORIS&Eacute;<br/>(useCredit: true)"]
+    CredCheck -->|"Non"| NoCred["BLOQU&Eacute; : cr&eacute;dits insuffisants"]
+
+    ModeCheck -->|"Oui"| SubCheck{"Abonnement actif ?"}
+    SubCheck -->|"Non"| NoSub["BLOQU&Eacute; : pas d'abonnement"]
+    SubCheck -->|"Oui"| PremCheck{"premiumRequired ?<br/>(co&ucirc;t = 0)"}
+
+    PremCheck -->|"Oui"| IsPrem{"Plan Premium ?"}
+    IsPrem -->|"Oui"| PremOK["AUTORIS&Eacute; : Premium inclus"]
+    IsPrem -->|"Non"| PremBlock["BLOQU&Eacute; : Premium requis"]
+
+    PremCheck -->|"Non"| EnabledCheck{"Feature isEnabled ?"}
+    EnabledCheck -->|"Non"| CredFallback1{"balance >= co&ucirc;t ?"}
+    CredFallback1 -->|"Oui"| UseCredit2["AUTORIS&Eacute;<br/>(useCredit: true)"]
+    CredFallback1 -->|"Non"| BlockedFeat["BLOQU&Eacute; : d&eacute;sactiv&eacute;e<br/>+ cr&eacute;dits insuffisants"]
+
+    EnabledCheck -->|"Oui"| LimitCheck{"usageLimit = -1 ?"}
+    LimitCheck -->|"Oui"| Unlimited["AUTORIS&Eacute; : illimit&eacute;"]
+    LimitCheck -->|"Non"| CounterCheck{"compteur < limite ?"}
+    CounterCheck -->|"Oui"| UnderLimit["AUTORIS&Eacute; : sous la limite"]
+    CounterCheck -->|"Non"| OverLimit{"balance >= co&ucirc;t ?"}
+    OverLimit -->|"Oui"| UseCredit3["AUTORIS&Eacute;<br/>(useCredit: true)"]
+    OverLimit -->|"Non"| LimitReached["BLOQU&Eacute; : limite atteinte<br/>+ cr&eacute;dits insuffisants"]
+          </div>
+        </div>
+
+        <h3>Retour de canUseFeature()</h3>
+
+        <pre><code class="language-javascript">// Structure de retour
+{
+  canUse: boolean,         // Autoris&eacute; ou bloqu&eacute;
+  reason: string,          // Message explicatif
+  useCredit: boolean,      // true = cr&eacute;dits seront d&eacute;bit&eacute;s
+  creditBalance?: number,  // Solde actuel (si useCredit)
+  creditCost?: number,     // Co&ucirc;t de la feature
+  creditsOnlyMode?: boolean, // true en mode cr&eacute;dits-only
+  actionRequired?: boolean,  // true = action utilisateur n&eacute;cessaire
+  redirectUrl?: string,      // URL de redirection (achat cr&eacute;dits, upgrade)
+}</code></pre>
+
+        <h2>incrementFeatureCounter()</h2>
+
+        <p>Fonction orchestratrice appel&eacute;e par les API routes. V&eacute;rifie les droits puis d&eacute;bite ou incr&eacute;mente selon le cas :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux incrementFeatureCounter(userId, featureName, metadata)</div>
+          <div class="mermaid">
+flowchart TD
+    Start["incrementFeatureCounter()"] --> Check["canUseFeature()"]
+    Check --> CanUse{"canUse ?"}
+    CanUse -->|"Non"| Error["Retourner erreur<br/>(actionRequired, redirectUrl)"]
+
+    CanUse -->|"Oui"| UseCredit{"useCredit ?"}
+    UseCredit -->|"Oui"| Debit["debitCredit(userId, creditCost,<br/>'usage', {featureName, taskId})"]
+    Debit --> DebitOK{"D&eacute;bit OK ?"}
+    DebitOK -->|"Non"| DebitError["Retourner erreur"]
+    DebitOK -->|"Oui"| SSECredit["&Eacute;mettre SSE: credit_used"]
+    SSECredit --> SuccessCredit["Retourner {success, usedCredit: true,<br/>transactionId, creditCost}"]
+
+    UseCredit -->|"Non"| CredOnlyFree{"creditsOnlyMode<br/>+ gratuit ?"}
+    CredOnlyFree -->|"Oui"| SkipCounter["Retourner {success,<br/>usedCredit: false}"]
+    CredOnlyFree -->|"Non"| IncrCounter["Incr&eacute;menter<br/>FeatureUsageCounter"]
+    IncrCounter --> SSECounter["&Eacute;mettre SSE:<br/>counter_incremented"]
+    SSECounter --> SuccessCounter["Retourner {success,<br/>usedCredit: false}"]
+          </div>
+        </div>
+
+        <h2>refundFeatureUsage(taskId)</h2>
+
+        <p>Rembourse automatiquement un usage suite &agrave; l'&eacute;chec d'une <code>BackgroundTask</code>. D&eacute;termine le type de remboursement :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Cas</th>
+              <th>D&eacute;tection</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Cr&eacute;dit utilis&eacute;</strong></td>
+              <td><code>task.creditUsed = true</code> + <code>task.creditTransactionId</code></td>
+              <td><code>refundCredit(userId, creditTransactionId)</code></td>
+            </tr>
+            <tr>
+              <td><strong>Compteur utilis&eacute;</strong></td>
+              <td><code>task.featureName</code> + <code>task.featureCounterPeriodStart</code></td>
+              <td><code>FeatureUsageCounter.count</code> d&eacute;cr&eacute;ment&eacute; de 1</td>
+            </tr>
+            <tr>
+              <td><strong>Aucun usage</strong></td>
+              <td>Ni cr&eacute;dit ni compteur</td>
+              <td>Rien &agrave; rembourser</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>resetFeatureCounters(userId)</h2>
+
+        <p>Supprime tous les compteurs d'un utilisateur. Appel&eacute; par le webhook <code>invoice.paid</code> lors du renouvellement d'abonnement :</p>
+
+        <pre><code class="language-javascript">// lib/subscription/featureUsage.js
+
+export async function resetFeatureCounters(userId) {
+  const result = await prisma.featureUsageCounter.deleteMany({
+    where: { userId },
+  });
+  return { deleted: result.count };
+}
+
+// Appel&eacute; par: app/api/webhooks/stripe/handlers/invoices.js
+// → handleInvoicePaid()</code></pre>
+
+        <h2>getUserFeatureCounters(userId)</h2>
+
+        <p>R&eacute;cup&egrave;re l'&eacute;tat complet des compteurs pour l'UI (utilis&eacute; par <code>getSubscriptionSummary()</code>) :</p>
+
+        <pre><code class="language-javascript">// Retour: Array de {
+//   featureName: "gpt_cv_generation",
+//   count: 3,          // Utilisations cette p&eacute;riode
+//   limit: 10,         // Limite du plan (-1 = illimit&eacute;)
+//   isEnabled: true,   // Feature activ&eacute;e dans le plan
+//   periodEnd: Date,   // Fin de la p&eacute;riode actuelle
+// }
+
+// Note: Si le compteur existe mais date d'une ancienne p&eacute;riode,
+// count est retourn&eacute; &agrave; 0 (reset logique sans &eacute;criture DB)</code></pre>
+
+        <h2>Utilitaires macroFeatures.js</h2>
+
+        <pre><code class="language-javascript">// Filtrer les features IA
+import { AI_FEATURES } from '@/lib/subscription/macroFeatures';
+// AI_FEATURES = ['gpt_cv_generation', 'import_pdf', 'translate_cv',
+//                'match_score', 'optimize_cv', 'generate_from_job_title']
+
+// Limites par d&eacute;faut pour un nouveau plan
+import { getDefaultFeatureLimits } from '@/lib/subscription/macroFeatures';
+// Retourne: { gpt_cv_generation: {isEnabled: true, usageLimit: -1}, ... }
+
+// Charger les limites d'un plan (avec defaults pour features manquantes)
+import { loadFeatureLimitsFromPlan } from '@/lib/subscription/macroFeatures';
+const limits = loadFeatureLimitsFromPlan(plan);
+// Fusionne plan.featureLimits existantes + defaults pour features absentes</code></pre>
       </div>
     </main>
   </div>

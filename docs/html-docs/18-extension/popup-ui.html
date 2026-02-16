@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interface Popup | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Extension Navigateur</a>
+          <span>/</span>
+          <span>Interface Popup</span>
+        </div>
+
+        <h1>Interface Popup</h1>
+        <p class="lead">
+          Le popup de l'extension est une interface compacte (380&times;480px) en dark mode qui permet de se connecter, sélectionner un CV source, gérer les offres extraites et suivre la progression de la génération en temps réel.
+        </p>
+
+        <!-- ─── Architecture ─── -->
+
+        <h2>Architecture des Vues</h2>
+
+        <p>Le popup utilise un système de vues simples sans framework — du JavaScript vanilla avec manipulation directe du DOM.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Structure des vues et composants du popup</div>
+          <div class="mermaid">
+graph TB
+    subgraph Popup["popup.html"]
+        HEADER["Header<br/>Logo + Crédits + User + Logout"]
+        LOGIN["view-login<br/>(login.js)"]
+        MAIN["view-main"]
+        LANG["Language Selector<br/>FR | EN | ES | DE"]
+    end
+
+    subgraph MainView["view-main composants"]
+        CV["cv-selector<br/>(cv-selector.js)"]
+        PROG["progress-inline<br/>(progress.js)"]
+        OFFERS["offer-list<br/>(offer-list.js)"]
+        CREDITS["credits-container"]
+        GEN["generate-container<br/>(pinned bottom)"]
+    end
+
+    subgraph Libs["Librairies"]
+        API["api-client.js"]
+        I18N["i18n.js"]
+    end
+
+    HEADER --> LOGIN
+    HEADER --> MAIN
+    MAIN --> CV
+    MAIN --> PROG
+    MAIN --> OFFERS
+    MAIN --> CREDITS
+    MAIN --> GEN
+    MAIN --> LANG
+
+    CV --> API
+    OFFERS --> API
+    PROG --> API
+    LOGIN --> API
+    LOGIN --> I18N
+    CV --> I18N
+    OFFERS --> I18N
+    PROG --> I18N
+          </div>
+        </div>
+
+        <h3>Routing des vues</h3>
+
+        <pre><code class="language-javascript">// popup.js — Système de vues simple
+const views = {
+  login: document.getElementById('view-login'),
+  main:  document.getElementById('view-main'),
+};
+
+function showView(name) {
+  Object.entries(views).forEach(([key, el]) => {
+    el.style.display = key === name ? '' : 'none';
+  });
+
+  // Bouton générer visible uniquement sur la vue main
+  const genContainer = document.getElementById('generate-container');
+  if (genContainer) genContainer.style.display = name === 'main' ? '' : 'none';
+
+  // Stop polling quand on quitte la vue main
+  if (name !== 'main') stopProgressRefresh();
+}</code></pre>
+
+        <!-- ─── Design System ─── -->
+
+        <h2>Design System</h2>
+
+        <h3>Dimensions</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Propriété</th>
+              <th>Valeur</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Largeur</td><td><code>380px</code></td></tr>
+            <tr><td>Hauteur min</td><td><code>480px</code></td></tr>
+            <tr><td>Hauteur max</td><td><code>580px</code></td></tr>
+            <tr><td>Font size base</td><td><code>13px</code></td></tr>
+            <tr><td>Font family</td><td>System UI (<code>-apple-system, BlinkMacSystemFont, Segoe UI, Roboto</code>)</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Tokens CSS (Dark Mode)</h3>
+
+        <pre><code class="language-css">:root {
+  /* Backgrounds */
+  --app-bg:        rgb(2, 6, 23);            /* Fond principal (slate-950) */
+  --surface:       rgba(255, 255, 255, 0.05); /* Cartes, inputs */
+  --surface-hover: rgba(255, 255, 255, 0.1);  /* Hover */
+
+  /* Borders */
+  --border:        rgba(255, 255, 255, 0.15);
+  --border-focus:  rgba(255, 255, 255, 0.3);
+
+  /* Couleurs d'accent */
+  --emerald-500:   #10b981;                  /* Principal (boutons, badges) */
+  --emerald-400:   #34d399;                  /* Hover */
+  --emerald-300:   #6ee7b7;                  /* Texte accent */
+  --red-400:       #f87171;                  /* Erreurs */
+  --amber-400:     #fbbf24;                  /* Warnings */
+
+  /* Texte */
+  --text-primary:   rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-tertiary:  rgba(255, 255, 255, 0.4);
+
+  /* Radius */
+  --radius:    8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+}</code></pre>
+
+        <!-- ─── Vue Login ─── -->
+
+        <h2>Vue Login</h2>
+
+        <p>La vue login offre deux méthodes d'authentification :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Email / Password</h3>
+            <ul>
+              <li>Formulaire avec validation client</li>
+              <li>Appel <code>POST /api/auth/extension-token</code></li>
+              <li>Messages d'erreur traduits (i18n)</li>
+              <li>État loading sur le bouton</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>OAuth (Google / GitHub)</h3>
+            <ul>
+              <li>Ouvre <code>/extension-auth</code> dans un nouvel onglet</li>
+              <li>Le SaaS gère l'OAuth classique</li>
+              <li>Le token est transmis via <code>postMessage</code></li>
+              <li>Le popup détecte le token au prochain ouverture</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Liens supplémentaires</h3>
+        <ul>
+          <li><strong>Mot de passe oublié</strong> &rarr; ouvre <code>{API_BASE}/auth/forgot-password</code></li>
+          <li><strong>Créer un compte</strong> &rarr; ouvre <code>{API_BASE}/auth?mode=register</code></li>
+        </ul>
+
+        <!-- ─── Vue CV Selector ─── -->
+
+        <h2>Sélecteur de CV</h2>
+
+        <p>Dropdown personnalisé qui charge la liste des CVs depuis l'API et filtre uniquement les CVs sources (importés, manuels ou traduits — pas les CVs générés).</p>
+
+        <h3>Flow d'initialisation</h3>
+
+        <pre><code class="language-javascript">export async function initCvSelector(container, onChange) {
+  container.innerHTML = '&lt;div class="loading-shimmer"&gt;&lt;/div&gt;';
+
+  const { items: allItems, current } = await fetchCvList();
+
+  // Filtre : uniquement les CVs de base (pas les générés)
+  const items = allItems.filter(i => i.isImported || i.isManual || i.isTranslated);
+
+  // Pré-sélection : stocké → API current → premier
+  const storedCv = (await browser.storage.local.get('fitmycv_selected_cv'))
+    .fitmycv_selected_cv;
+  const defaultItem = items.find(i => i.file === storedCv)
+    || items.find(i => i.file === current)
+    || items[0];
+}</code></pre>
+
+        <h3>Éléments affichés par CV</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Élément</th>
+              <th>Source</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Icône</td>
+              <td><code>createdBy</code></td>
+              <td>
+                <code>import.svg</code> (importé PDF) /
+                <code>translate.png</code> (traduit) /
+                <code>add.svg</code> (manuel)
+              </td>
+            </tr>
+            <tr>
+              <td>Label</td>
+              <td><code>item.label</code></td>
+              <td>Format <code>DD/MM/YYYY - Titre du poste</code></td>
+            </tr>
+            <tr>
+              <td>Drapeau</td>
+              <td><code>item.language</code></td>
+              <td>Drapeau SVG correspondant (FR, EN, ES, DE)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Vue Offer List ─── -->
+
+        <h2>Liste des Offres (Picklist)</h2>
+
+        <p>La picklist est le c&oelig;ur fonctionnel du popup. Elle accumule les offres extraites depuis les job boards et permet de lancer la génération groupée.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flow d'ajout et de génération des offres</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant OL as offer-list.js
+    participant SW as Service Worker
+    participant DET as detector.js (onglet)
+    participant EXT as extractor.js
+    participant API as SaaS API
+
+    U->>OL: Clic "Ajouter l'offre de cette page"
+    OL->>SW: sendMessage({ type: 'EXTRACT_OFFER' })
+    SW->>DET: tabs.sendMessage({ type: 'EXTRACT_OFFER' })
+    DET->>EXT: import('./extractor.js')
+    EXT->>EXT: extractJobOffer()
+    EXT-->>DET: { title, content, sourceUrl, score, isValid }
+    DET-->>SW: résultat extraction
+    SW-->>OL: résultat extraction
+
+    alt Contenu valide + non dupliqué
+        OL->>OL: picklist.push(offer)
+        OL->>OL: storage.local.set(picklist)
+        OL->>OL: Re-render liste
+    else Dupliqué
+        OL->>OL: Affiche "Déjà ajouté" (1.5s)
+    else Pas de contenu
+        OL->>OL: Affiche erreur (2s)
+    end
+          </div>
+        </div>
+
+        <h3>Structure d'une offre dans le picklist</h3>
+
+        <pre><code class="language-javascript">{
+  title: "Développeur React Senior",          // Titre extrait
+  content: "# Dev React Senior\n\n## Missions...", // Markdown complet
+  sourceUrl: "https://linkedin.com/jobs/view/123/", // URL canonique
+  score: 67,                                  // Score qualité (0-100)
+  isValid: true,                              // score ≥ 25 && len ≥ 200
+  hostname: "linkedin.com",                   // Domaine (sans www.)
+  addedAt: 1707123456789,                     // Timestamp d'ajout
+}</code></pre>
+
+        <h3>Affichage des offres</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Élément</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Titre</strong></td>
+              <td>Titre de l'offre (tronqué avec ellipsis)</td>
+            </tr>
+            <tr>
+              <td><strong>Hostname</strong></td>
+              <td>Domaine source en texte tertiaire (10px)</td>
+            </tr>
+            <tr>
+              <td><strong>Score badge</strong></td>
+              <td>Pastille colorée : <span style="color:#10b981">vert (&ge;50)</span>, <span style="color:#fbbf24">jaune (&ge;25)</span>, <span style="color:#f87171">rouge (&lt;25)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Bouton &times;</strong></td>
+              <td>Suppression de l'offre du picklist</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Barre de crédits</h3>
+
+        <pre><code class="language-javascript">// Calcul du coût
+const totalCost = offers.length * costPerOffer;  // costPerOffer = 2 (défaut)
+const availableCredits = creditBalance?.credits;
+const hasEnough = availableCredits >= totalCost;
+
+// Affichage conditionnel
+if (!hasEnough) {
+  // Message warning : "Il manque X crédits"
+}</code></pre>
+
+        <!-- ─── Bouton Générer ─── -->
+
+        <h2>Bouton &laquo; Générer &raquo;</h2>
+
+        <p>Le bouton est <strong>épinglé en bas</strong> du popup (au-dessus du sélecteur de langue) et reste visible indépendamment du scroll.</p>
+
+        <h3>Conditions d'activation</h3>
+
+        <pre><code class="language-javascript">const canGenerate = offers.length > 0       // Au moins une offre
+  && selectedCv                              // CV source sélectionné
+  && hasEnough                               // Crédits suffisants
+  && !isSubmitting;                          // Pas de soumission en cours</code></pre>
+
+        <h3>Flow de soumission</h3>
+
+        <ol>
+          <li><strong>Snapshot</strong> : copie les offres à soumettre</li>
+          <li><strong>Tâches temporaires</strong> : crée des tâches avec IDs <code>temp-{timestamp}-{index}</code> (status <code>analyzing</code>) pour feedback instantané</li>
+          <li><strong>Retire du picklist</strong> : les offres soumises disparaissent immédiatement</li>
+          <li><strong>Appel API</strong> : <code>POST /api/ext/background-tasks/generate-cv-from-content</code></li>
+          <li><strong>Remplacement IDs</strong> : les IDs temporaires sont remplacés par les vrais IDs serveur</li>
+          <li><strong>Polling</strong> : déclenche <code>START_POLLING</code> sur le service worker</li>
+        </ol>
+
+        <div class="callout callout-info">
+          <strong>Gestion d'erreur :</strong> En cas d'échec de la soumission, les offres sont restaurées dans le picklist et les tâches temporaires sont supprimées. L'utilisateur peut réessayer.
+        </div>
+
+        <!-- ─── Vue Progress ─── -->
+
+        <h2>Vue Progression</h2>
+
+        <p>Le composant de progression s'affiche inline entre le sélecteur CV et la liste d'offres, uniquement quand des tâches sont en cours pour cette session.</p>
+
+        <h3>Double polling</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Intervalle</th>
+              <th>Condition d'arrêt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Popup</strong> (<code>progress.js</code>)</td>
+              <td>5 secondes</td>
+              <td>Toutes les tâches session terminées, ou 12h max</td>
+            </tr>
+            <tr>
+              <td><strong>Service Worker</strong></td>
+              <td>30 secondes (alarm MV3)</td>
+              <td>Plus de tâches <code>queued</code>/<code>running</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>États des tâches</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Indicateur</th>
+              <th>Label</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>analyzing</code></td>
+              <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fbbf24"></span> pulse</td>
+              <td>Analyse en cours</td>
+              <td>Tâche temporaire créée localement avant confirmation serveur</td>
+            </tr>
+            <tr>
+              <td><code>queued</code></td>
+              <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#fbbf24"></span> pulse</td>
+              <td>En file d'attente</td>
+              <td>Confirmée par le serveur, attend son tour dans la job queue</td>
+            </tr>
+            <tr>
+              <td><code>running</code></td>
+              <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#34d399"></span> pulse</td>
+              <td>En cours / étape</td>
+              <td>Pipeline en cours, avec info d'étape (<code>currentStep</code>)</td>
+            </tr>
+            <tr>
+              <td><code>completed</code></td>
+              <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981"></span></td>
+              <td>Terminé</td>
+              <td>CV généré — carte cliquable pour ouvrir dans le SaaS</td>
+            </tr>
+            <tr>
+              <td><code>failed</code></td>
+              <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f87171"></span></td>
+              <td>Échoué</td>
+              <td>Erreur durant le pipeline</td>
+            </tr>
+            <tr>
+              <td><code>cancelled</code></td>
+              <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.4)"></span></td>
+              <td>Annulé</td>
+              <td>Annulé par l'utilisateur (crédits remboursés)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Étapes de génération (<code>currentStep</code>)</h3>
+
+        <p>Quand une tâche est en status <code>running</code>, le serveur envoie l'étape en cours via <code>currentStep</code> (provenant des subtasks de <code>CvGenerationOffer</code>) :</p>
+
+        <pre><code class="language-javascript">// Mapping des étapes vers les labels i18n
+'progress.steps.extraction'     → "Extraction de l'offre"
+'progress.steps.analysis'       → "Analyse de l'offre"
+'progress.steps.generation'     → "Génération du CV"
+'progress.steps.validation'     → "Validation"
+'progress.steps.finalization'   → "Finalisation"</code></pre>
+
+        <h3>Actions sur les tâches</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Condition</th>
+              <th>Effet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Clic sur tâche complétée</strong></td>
+              <td><code>status === 'completed'</code></td>
+              <td>Set cookie <code>cvFile</code> + ouvre le SaaS dans un nouvel onglet</td>
+            </tr>
+            <tr>
+              <td><strong>Bouton &times;</strong></td>
+              <td><code>queued</code> / <code>running</code> / <code>analyzing</code></td>
+              <td>Appel <code>DELETE /api/ext/background-tasks/sync?action=cancel</code> + remboursement crédits</td>
+            </tr>
+            <tr>
+              <td><strong>Bouton &laquo; Effacer &raquo;</strong></td>
+              <td>Tâches terminées présentes</td>
+              <td>Retire les tâches terminées de la liste session (ne supprime pas du storage global)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Ouverture du CV dans le SaaS</h3>
+
+        <pre><code class="language-javascript">// Quand l'utilisateur clique sur une tâche completed
+if (task.status === 'completed' && task.cvFile) {
+  // Set un cookie cvFile pour que le SaaS ouvre le bon CV
+  await browser.cookies.set({
+    url: apiBase,
+    name: 'cvFile',
+    value: task.cvFile,
+    path: '/',
+    domain: url.hostname,
+    expirationDate: Math.floor(Date.now() / 1000) + 31536000, // 1 an
+  });
+  browser.tabs.create({ url: apiBase });
+}</code></pre>
+
+        <!-- ─── i18n ─── -->
+
+        <h2>Internationalisation (i18n)</h2>
+
+        <p>Le popup est entièrement traduit en 4 langues via un système i18n léger.</p>
+
+        <h3>Architecture</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/i18n.js</code></td>
+              <td>Module principal : <code>initI18n()</code>, <code>t()</code>, <code>getLang()</code>, <code>setLang()</code></td>
+            </tr>
+            <tr>
+              <td><code>locales/fr.json</code></td>
+              <td>Traductions français</td>
+            </tr>
+            <tr>
+              <td><code>locales/en.json</code></td>
+              <td>Traductions anglais</td>
+            </tr>
+            <tr>
+              <td><code>locales/es.json</code></td>
+              <td>Traductions espagnol</td>
+            </tr>
+            <tr>
+              <td><code>locales/de.json</code></td>
+              <td>Traductions allemand</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Fonctionnement</h3>
+
+        <pre><code class="language-javascript">// Initialisation : détection automatique
+async function initI18n() {
+  const stored = await browser.storage.local.get('fitmycv_language');
+  if (stored && SUPPORTED_LANGS.includes(stored)) {
+    currentLang = stored;                  // Langue sauvegardée
+  } else {
+    const browserLang = navigator.language.slice(0, 2);
+    currentLang = SUPPORTED_LANGS.includes(browserLang)
+      ? browserLang                         // Langue du navigateur
+      : 'en';                               // Fallback anglais
+  }
+  await loadTranslations(currentLang);
+}
+
+// Usage : dot-notation avec placeholders
+t('offers.creditsCost', { total: 4, count: 2, cost: 2 });
+// → "Coût : 4 crédits (2 offres × 2)"
+
+// Traduction du HTML statique via data attributes
+// data-i18n="login.title"           → textContent
+// data-i18n-placeholder="login.emailPlaceholder" → placeholder
+// data-i18n-title="header.logout"   → title attribute</code></pre>
+
+        <h3>Sélecteur de langue</h3>
+
+        <p>Le footer du popup affiche 4 drapeaux cliquables. Le changement de langue :</p>
+
+        <ol>
+          <li>Sauvegarde le choix dans <code>storage.local</code></li>
+          <li>Recharge les traductions JSON</li>
+          <li>Notifie tous les listeners (<code>onLangChange</code>)</li>
+          <li>Re-traduit les éléments statiques (<code>[data-i18n]</code>)</li>
+          <li>Re-render les vues dynamiques (CV selector, offres, progression)</li>
+          <li>Met à jour <code>&lt;html lang="..."&gt;</code></li>
+        </ol>
+
+        <!-- ─── Communication inter-composants ─── -->
+
+        <h2>Communication Inter-composants</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de messages entre les composants de l'extension</div>
+          <div class="mermaid">
+graph LR
+    subgraph ContentScripts["Content Scripts"]
+        DET["detector.js"]
+        EXT["extractor.js"]
+        AR["auth-receiver.js"]
+    end
+
+    subgraph Background["Service Worker"]
+        SW["service-worker.js"]
+    end
+
+    subgraph PopupUI["Popup"]
+        PJS["popup.js"]
+        LV["login.js"]
+        CV["cv-selector.js"]
+        OL["offer-list.js"]
+        PR["progress.js"]
+    end
+
+    subgraph Storage["browser.storage.local"]
+        ST["Données partagées"]
+    end
+
+    DET -->|"JOB_OFFER_DETECTED"| SW
+    DET -->|"JOB_OFFER_NOT_DETECTED"| SW
+    DET -->|"import dynamique"| EXT
+    AR -->|"OAUTH_LOGIN_SUCCESS"| SW
+
+    OL -->|"EXTRACT_OFFER"| SW
+    SW -->|"forward EXTRACT_OFFER"| DET
+    OL -->|"START_POLLING"| SW
+    PJS -->|"AUTH_EXPIRED listener"| SW
+
+    SW -->|"alarms polling"| SW
+    SW -->|"read/write"| ST
+    OL -->|"read/write picklist"| ST
+    CV -->|"read/write selected_cv"| ST
+    PR -->|"read tasks"| ST
+    LV -->|"write token"| ST
+    AR -->|"write token"| ST
+          </div>
+        </div>
+
+        <h3>Types de communication</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Canal</th>
+              <th>Usage</th>
+              <th>Exemple</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>browser.runtime.sendMessage()</code></td>
+              <td>Content script &rarr; Service Worker<br/>Popup &rarr; Service Worker</td>
+              <td><code>{ type: 'JOB_OFFER_DETECTED' }</code></td>
+            </tr>
+            <tr>
+              <td><code>browser.tabs.sendMessage()</code></td>
+              <td>Service Worker &rarr; Content script d'un onglet spécifique</td>
+              <td><code>{ type: 'EXTRACT_OFFER' }</code> vers l'onglet actif</td>
+            </tr>
+            <tr>
+              <td><code>browser.runtime.onMessage</code></td>
+              <td>Écoute bidirectionnelle</td>
+              <td>Popup écoute <code>AUTH_EXPIRED</code> du SW</td>
+            </tr>
+            <tr>
+              <td><code>browser.storage.local</code></td>
+              <td>Données partagées persistantes</td>
+              <td>Token, picklist, tâches, préférences</td>
+            </tr>
+            <tr>
+              <td><code>browser.storage.onChanged</code></td>
+              <td>Réaction aux changements de storage</td>
+              <td>SW met à jour le badge quand le picklist change</td>
+            </tr>
+            <tr>
+              <td><code>window.postMessage()</code></td>
+              <td>Page web &rarr; Content script (même origin)</td>
+              <td>Page <code>/extension-auth</code> envoie le token à <code>auth-receiver.js</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Header ─── -->
+
+        <h2>Header</h2>
+
+        <p>Le header persistant affiche :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Zone</th>
+              <th>Contenu</th>
+              <th>Visibilité</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Gauche</strong></td>
+              <td>Logo FitMyCV (lien vers le SaaS)</td>
+              <td>Toujours</td>
+            </tr>
+            <tr>
+              <td><strong>Centre</strong></td>
+              <td>Solde de crédits (<code>fetchCreditBalance()</code>)</td>
+              <td>Authentifié uniquement</td>
+            </tr>
+            <tr>
+              <td><strong>Droite</strong></td>
+              <td>Nom utilisateur + bouton logout (icône SVG)</td>
+              <td>Authentifié uniquement</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Chargement dev ─── -->
+
+        <h2>Chargement en Développement</h2>
+
+        <div class="callout callout-info">
+          <strong>Chrome :</strong>
+          <ol>
+            <li>Ouvrir <code>chrome://extensions</code></li>
+            <li>Activer le &laquo; Mode développeur &raquo;</li>
+            <li>Cliquer &laquo; Charger l'extension non empaquetée &raquo;</li>
+            <li>Sélectionner <code>extension/dist/chrome/</code></li>
+          </ol>
+        </div>
+
+        <div class="callout callout-info">
+          <strong>Firefox :</strong>
+          <ol>
+            <li>Ouvrir <code>about:debugging#/runtime/this-firefox</code></li>
+            <li>Cliquer &laquo; Charger un module complémentaire temporaire &raquo;</li>
+            <li>Sélectionner <code>extension/dist/firefox/manifest.json</code></li>
+          </ol>
+        </div>
+
+        <p>En mode <code>npm run dev</code>, Vite rebuild automatiquement à chaque modification. L'extension se recharge automatiquement dans Chrome (hot-reload du service worker et des content scripts).</p>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

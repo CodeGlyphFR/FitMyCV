@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suggestions IA | FitMyCV.io</title>
+  <title>Suggestions - Pipeline Optimisation | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,65 +26,329 @@
           <span>Suggestions</span>
         </div>
 
-
-        <h1>Suggestions IA</h1>
+        <h1>Syst&egrave;me de Suggestions</h1>
         <p class="lead">
-          Système de generation de suggestions d'amelioration pour optimiser le CV en fonction de l'offre d'emploi.
+          Les suggestions d'am&eacute;lioration sont g&eacute;n&eacute;r&eacute;es lors du <strong>scoring</strong> (calcul du match score) et stock&eacute;es dans le <code>CvFile</code>. L'utilisateur s&eacute;lectionne les suggestions qu'il souhaite appliquer, ajoute optionnellement du contexte personnel, et lance le pipeline d'optimisation. Le syst&egrave;me supporte &eacute;galement l'ajout de <strong>comp&eacute;tences manquantes</strong> (<code>missingSkills</code>).
         </p>
 
-        <h2>Types de Suggestions</h2>
+        <!-- ==================== CYCLE DE VIE ==================== -->
+        <h2>Cycle de Vie des Suggestions</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">De la g&eacute;n&eacute;ration &agrave; l'application</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Scoring["SCORING"]
+        Calc["calculateMatchScoreWithAnalysis()"]
+        Store["Stockage en DB<br/>(CvFile.improvementSuggestions)"]
+    end
+
+    subgraph UI["INTERFACE UTILISATEUR"]
+        Display["Affichage des suggestions"]
+        Select["Selection par l'utilisateur"]
+        Context["Ajout de contexte (optionnel)"]
+        Skills["Selection des missingSkills"]
+    end
+
+    subgraph API["API IMPROVE"]
+        Parse["Parse suggestions<br/>(legacy ou nouveau format)"]
+        Improve["POST /api/cv/improve"]
+    end
+
+    subgraph Pipeline["PIPELINE"]
+        Run["runImprovementPipeline()"]
+    end
+
+    Calc --> Store --> Display
+    Display --> Select --> Context --> Improve
+    Display --> Skills --> Improve
+    Improve --> Parse --> Run
+          </div>
+        </div>
+
+        <!-- ==================== GENERATION ==================== -->
+        <h2>G&eacute;n&eacute;ration des Suggestions</h2>
+
+        <p>Les suggestions sont produites par l'appel <code>calculateMatchScoreWithAnalysis()</code> dans <code>lib/scoring/service.js</code>. L'IA retourne en m&ecirc;me temps que le score :</p>
+
+        <ul>
+          <li><strong><code>suggestions</code></strong> &mdash; Tableau de suggestions d'am&eacute;lioration prioris&eacute;es</li>
+          <li><strong><code>missingSkills</code></strong> &mdash; Comp&eacute;tences requises par l'offre absentes du CV</li>
+          <li><strong><code>matchingSkills</code></strong> &mdash; Comp&eacute;tences d&eacute;j&agrave; pr&eacute;sentes et correspondantes</li>
+        </ul>
+
+        <h3>Structure d'une Suggestion</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">Format d'une suggestion (sortie scoring)</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple JSON</div>
+            <pre><code class="language-json">{
+  "title": "Ajouter experience Kubernetes",
+  "suggestion": "Mentionner votre utilisation de Kubernetes pour l'orchestration des conteneurs dans le projet de migration cloud chez Acme Corp",
+  "priority": "high",
+  "impact": 8
+}</code></pre>
+          </div>
+        </div>
 
         <table>
           <thead>
             <tr>
+              <th>Champ</th>
               <th>Type</th>
               <th>Description</th>
-              <th>Impact</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>add_keyword</code></td>
-              <td>Ajouter un mot-clé manquant</td>
-              <td>+2-5% score</td>
+              <td><code>title</code></td>
+              <td><code>string</code></td>
+              <td>Titre court de la suggestion</td>
             </tr>
             <tr>
-              <td><code>rephrase</code></td>
-              <td>Reformuler pour mieux matcher</td>
-              <td>+1-3% score</td>
+              <td><code>suggestion</code></td>
+              <td><code>string</code></td>
+              <td>Description d&eacute;taill&eacute;e de l'am&eacute;lioration propos&eacute;e</td>
             </tr>
             <tr>
-              <td><code>add_metric</code></td>
-              <td>Ajouter des chiffres/metriques</td>
-              <td>+3-5% score</td>
+              <td><code>priority</code></td>
+              <td><code>string</code></td>
+              <td>Niveau de priorit&eacute; (<code>high</code>, <code>medium</code>, <code>low</code>)</td>
             </tr>
             <tr>
-              <td><code>reorder</code></td>
-              <td>Reorganiser les elements</td>
-              <td>+1-2% score</td>
+              <td><code>impact</code></td>
+              <td><code>number</code></td>
+              <td>Estimation d'impact sur le score (1-10)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Implementation</h2>
+        <!-- ==================== MISSING SKILLS ==================== -->
+        <h2>Comp&eacute;tences Manquantes (missingSkills)</h2>
 
-        <pre><code>// lib/cv-optimisation/suggestions.js
-export async function generateSuggestions(cv, jobOffer, currentScore) {
-  const suggestions = await callOpenAI({
-    featureName: 'suggestions',
-    messages: [
-      { role: 'system', content: SUGGESTIONS_PROMPT },
-      { role: 'user', content: JSON.stringify({ cv, jobOffer, currentScore }) }
-    ],
-    responseFormat: { type: 'json_schema', json_schema: suggestionsSchema }
-  });
+        <p>En plus des suggestions textuelles, le scoring identifie les <strong>comp&eacute;tences requises par l'offre mais absentes du CV</strong>. L'utilisateur peut s&eacute;lectionner lesquelles ajouter et indiquer un niveau de ma&icirc;trise.</p>
 
-  return suggestions.map(s => ({
-    ...s,
-    id: generateId(),
-    status: 'pending'
-  }));
+        <div class="data-flow">
+          <div class="data-flow-header">Format des comp&eacute;tences manquantes</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Sortie du scoring (stockage DB)</div>
+            <pre><code class="language-json">{
+  "missingSkills": ["Kubernetes", "CI/CD", "Terraform", "Prometheus"]
 }</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Entr&eacute;e du pipeline (s&eacute;lection utilisateur)</div>
+            <pre><code class="language-json">{
+  "missingSkillsToAdd": [
+    { "skill": "Kubernetes", "level": "intermediate" },
+    { "skill": "CI/CD", "level": "advanced" },
+    { "skill": "Terraform", "level": "beginner" }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Classification des skills ajout&eacute;s</div>
+          <p>Les <code>missingSkillsToAdd</code> sont trait&eacute;s par le <strong>Stage 1</strong> du pipeline : <code>classifySkills()</code> utilise <code>gpt-4o-mini</code> pour classer chaque comp&eacute;tence dans la bonne cat&eacute;gorie (<code>hard_skills</code>, <code>soft_skills</code>, <code>tools</code>, <code>methodologies</code>). Le niveau est normalis&eacute; vers un entier (1-5) via <code>normalizeToNumber()</code>.</p>
+        </div>
+
+        <!-- ==================== FORMATS SELECTION ==================== -->
+        <h2>Formats de S&eacute;lection des Suggestions</h2>
+
+        <p>L'API <code>POST /api/cv/improve</code> accepte <strong>deux formats</strong> pour la s&eacute;lection des suggestions :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Format Legacy</h4>
+            <p><code>selectedSuggestionIndices</code></p>
+            <p>Tableau simple d'indices (sans contexte utilisateur) :</p>
+            <pre><code class="language-json">{
+  "selectedSuggestionIndices": [0, 2, 5]
+}</code></pre>
+            <p>Les suggestions sont filtr&eacute;es par indice depuis <code>CvFile.improvementSuggestions</code> :</p>
+            <pre><code class="language-javascript">suggestions = selectedSuggestionIndices
+  .filter(i => i >= 0 && i < allSuggestions.length)
+  .map(i => allSuggestions[i]);</code></pre>
+          </div>
+          <div class="card">
+            <h4>Format Nouveau</h4>
+            <p><code>suggestionsWithContext</code></p>
+            <p>Tableau enrichi avec contexte libre par suggestion :</p>
+            <pre><code class="language-json">{
+  "suggestionsWithContext": [
+    { "index": 0, "context": "J'ai 3 ans d'exp en React" },
+    { "index": 2, "context": "" },
+    { "index": 5, "context": "Certifie AWS depuis 2024" }
+  ]
+}</code></pre>
+            <p>Le contexte est inject&eacute; dans la suggestion :</p>
+            <pre><code class="language-javascript">suggestions = suggestionsWithContext
+  .filter(s => s.index >= 0 && s.index < allSuggestions.length)
+  .map(s => ({
+    ...allSuggestions[s.index],
+    userContext: s.context || ''
+  }));</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Priorit&eacute; des formats</div>
+          <p>Si <code>suggestionsWithContext</code> est fourni (non <code>null</code>), il a priorit&eacute; sur <code>selectedSuggestionIndices</code>. Si aucun des deux n'est fourni (<code>null</code>), <strong>toutes</strong> les suggestions sont utilis&eacute;es.</p>
+        </div>
+
+        <!-- ==================== STOCKAGE ==================== -->
+        <h2>Stockage en Base de Donn&eacute;es</h2>
+
+        <p>Les donn&eacute;es du scoring sont stock&eacute;es dans les champs du mod&egrave;le <code>CvFile</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Contenu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>improvementSuggestions</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Tableau de suggestions (title, suggestion, priority, impact)</td>
+            </tr>
+            <tr>
+              <td><code>missingSkills</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Tableau de noms de comp&eacute;tences manquantes</td>
+            </tr>
+            <tr>
+              <td><code>matchingSkills</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Tableau de noms de comp&eacute;tences correspondantes</td>
+            </tr>
+            <tr>
+              <td><code>scoreBreakdown</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>4 sous-scores pond&eacute;r&eacute;s</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Pr&eacute;requis pour l'optimisation</div>
+          <p>Un CV ne peut &ecirc;tre optimis&eacute; que s'il poss&egrave;de &agrave; la fois un <code>scoreBreakdown</code> et des <code>improvementSuggestions</code>. Sans ces donn&eacute;es, l'API retourne une erreur 400 : <em>"Seuls les CV avec un score calcul&eacute; peuvent &ecirc;tre optimis&eacute;s"</em>.</p>
+        </div>
+
+        <!-- ==================== ENRICHISSEMENT PREPROCESSING ==================== -->
+        <h2>Enrichissement par le Pr&eacute;traitement (Stage 2)</h2>
+
+        <p>Apr&egrave;s la s&eacute;lection utilisateur, les suggestions passent par le <strong>Stage 2 : <code>preprocessSuggestions()</code></strong> qui utilise l'IA (Chain-of-Thought) pour les analyser et les router vers les bonnes cibles.</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">PR&Eacute;TRAITEMENT - Enrichissement des suggestions</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;e : suggestion brute</div>
+            <pre><code class="language-json">{
+  "title": "Ajouter experience Kubernetes",
+  "suggestion": "Mentionner Kubernetes dans le projet de migration",
+  "priority": "high",
+  "impact": 8,
+  "userContext": "J'ai utilise K8s chez Acme Corp pour migrer 50 microservices"
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Analyse Chain-of-Thought de l'IA</div>
+            <pre><code class="language-json">{
+  "classifications": [
+    {
+      "suggestionIndex": 0,
+      "analysis": "La suggestion mentionne Kubernetes et le contexte precise une migration de 50 microservices chez Acme Corp. Cible: experience[2] (poste chez Acme Corp).",
+      "actions": [
+        {
+          "targetType": "experience",
+          "targetIndex": 2,
+          "actionDescription": "Ajouter Kubernetes aux skills_used et mentionner la migration de 50 microservices dans les responsibilities",
+          "confidence": 0.95,
+          "extractedInfo": {
+            "numbers": ["50"],
+            "skills": ["Kubernetes"],
+            "context": "migration microservices"
+          }
+        }
+      ]
+    }
+  ]
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie : suggestions enrichies et rout&eacute;es</div>
+            <pre><code class="language-json">{
+  "experienceImprovements": [
+    { "index": 2, "improvements": [{ "...suggestion enrichie..." }] }
+  ],
+  "projectImprovements": [],
+  "newProjects": [],
+  "languageImprovements": [],
+  "extrasImprovements": [],
+  "unmatchedSuggestions": []
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== TYPES DE CIBLES ==================== -->
+        <h2>Types de Cibles</h2>
+
+        <p>Le pr&eacute;traitement route chaque suggestion vers l'une des cibles suivantes :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>targetType</th>
+              <th>Description</th>
+              <th>Traitement Stage 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>experience</code></td>
+              <td>Modifier une exp&eacute;rience existante (par index)</td>
+              <td><code>improveExperience()</code></td>
+            </tr>
+            <tr>
+              <td><code>project</code></td>
+              <td>Modifier un projet existant (par index)</td>
+              <td><code>improveProject()</code></td>
+            </tr>
+            <tr>
+              <td><code>new_project</code></td>
+              <td>Cr&eacute;er un nouveau projet</td>
+              <td><code>improveProject()</code> avec <code>project: null</code></td>
+            </tr>
+            <tr>
+              <td><code>language</code></td>
+              <td>Modifier une langue ou en ajouter une nouvelle</td>
+              <td><code>improveLanguages()</code></td>
+            </tr>
+            <tr>
+              <td><code>extras</code></td>
+              <td>Modifier un extra ou en ajouter un nouveau</td>
+              <td><code>improveExtras()</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Fallback en cas d'erreur IA</div>
+          <p>Si l'appel de pr&eacute;traitement IA &eacute;choue, un <strong>fallback</strong> est appliqu&eacute; : toutes les suggestions sont rout&eacute;es vers la premi&egrave;re exp&eacute;rience (<code>experience[0]</code>). Le champ <code>success</code> dans le r&eacute;sultat est mis &agrave; <code>false</code> pour indiquer l'utilisation du fallback.</p>
+        </div>
+
       </div>
     </main>
   </div>
@@ -105,7 +363,6 @@ export async function generateSuggestions(cv, jobOffer, currentScore) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

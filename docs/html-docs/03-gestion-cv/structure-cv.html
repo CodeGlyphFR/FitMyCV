@@ -9,20 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -34,173 +29,1090 @@
 
         <h1>Structure JSON du CV</h1>
         <p class="lead">
-          Format JSON standardise utilise pour stocker et manipuler les données des CV dans l'application.
+          Format JSON standardise base sur le schema <code>data/schema.json</code>, valide par AJV.
+          Le CV contient 8 sections principales, avec des metadonnees (langue, scores) stockees
+          dans les colonnes <code>CvFile</code> en DB.
         </p>
 
-        <h2>Schema Global</h2>
+        <!-- ============================================================ -->
+        <!-- DIAGRAMME MERMAID : Hierarchie des sections                  -->
+        <!-- ============================================================ -->
+        <h2>Hierarchie des sections</h2>
+        <p>Vue d'ensemble de l'arborescence du JSON CV :</p>
+        <div class="mermaid">
+graph TD
+    CV["CV JSON"]
+    CV --> H["header *"]
+    CV --> S["summary *"]
+    CV --> SK["skills *"]
+    CV --> EX["experience *"]
+    CV --> ED["education"]
+    CV --> LA["languages"]
+    CV --> XT["extras"]
+    CV --> PR["projects"]
+    CV --> OH["order_hint"]
+    CV --> ST["section_titles"]
+    CV --> LG["language"]
 
-        <pre><code>{
+    H --> FN["full_name"]
+    H --> CT["current_title"]
+    H --> CO["contact"]
+    CO --> EM["email"]
+    CO --> PH["phone"]
+    CO --> LI["links[]"]
+    CO --> LO["location"]
+
+    SK --> HS["hard_skills[]"]
+    SK --> TO["tools[]"]
+    SK --> ME["methodologies[]"]
+    SK --> SS["soft_skills[]"]
+
+    EX --> EXI["experience item"]
+    EXI --> TI["title, company, dates..."]
+    EXI --> RE["responsibilities[]"]
+    EXI --> DE["deliverables[]"]
+    EXI --> SU["skills_used[]"]
+
+    style H fill:#4f46e5,color:#fff
+    style S fill:#4f46e5,color:#fff
+    style SK fill:#4f46e5,color:#fff
+    style EX fill:#4f46e5,color:#fff
+    style ED fill:#6366f1,color:#fff
+    style LA fill:#6366f1,color:#fff
+    style XT fill:#6366f1,color:#fff
+    style PR fill:#6366f1,color:#fff
+        </div>
+        <p><em>Les sections marquees <strong>*</strong> sont obligatoires (<code>required</code> dans le schema).</em></p>
+
+        <!-- ============================================================ -->
+        <!-- SCHEMA GLOBAL                                                -->
+        <!-- ============================================================ -->
+        <h2>Schema Global</h2>
+        <p>
+          Voici la structure complete du JSON CV telle que definie dans <code>data/schema.json</code>.
+          Les 4 sections obligatoires au niveau racine sont : <code>header</code>, <code>summary</code>,
+          <code>skills</code> et <code>experience</code>.
+        </p>
+
+        <pre><code class="language-json">{
+  "language": "fr",
   "header": {
-    "firstName": "Jean",
-    "lastName": "Dupont",
-    "title": "Developpeur Full Stack",
-    "email": "jean.dupont@email.com",
-    "phone": "+33 6 12 34 56 78",
-    "location": "Paris, France",
-    "linkedin": "linkedin.com/in/jeandupont",
-    "portfolio": "jeandupont.dev"
+    "full_name": "Marie Dupont",
+    "current_title": "Chef de Projet Digital",
+    "contact": {
+      "email": "marie.dupont@email.com",
+      "phone": "+33 6 12 34 56 78",
+      "links": [
+        { "label": "LinkedIn", "url": "https://linkedin.com/in/mariedupont" },
+        { "label": "Portfolio", "url": "https://mariedupont.dev" }
+      ],
+      "location": {
+        "city": "Paris",
+        "region": "Ile-de-France",
+        "country_code": "FR"
+      }
+    }
   },
-  "summary": "Developpeur Full Stack avec 5 ans d'experience...",
-  "experiences": [...],
-  "skills": [...],
-  "education": [...],
-  "projects": [...],
-  "certifications": [...],
-  "languages": [...],
-  "interests": [...]
+  "summary": {
+    "description": "Chef de Projet Digital avec 8 ans d'experience..."
+  },
+  "skills": {
+    "hard_skills": [
+      { "name": "Gestion de projet", "proficiency": 5 },
+      { "name": "Product Management", "proficiency": 4 }
+    ],
+    "tools": [
+      { "name": "Jira", "proficiency": 5 },
+      { "name": "Figma", "proficiency": 3 }
+    ],
+    "methodologies": ["Agile Scrum", "SAFe", "Design Thinking"],
+    "soft_skills": ["Leadership", "Communication", "Negociation"]
+  },
+  "experience": [
+    {
+      "title": "Chef de Projet Digital",
+      "company": "TechCorp",
+      "department_or_client": "Direction Innovation",
+      "start_date": "2021-03",
+      "end_date": "",
+      "location": { "city": "Paris", "region": "IDF", "country_code": "FR" },
+      "description": "Pilotage de la transformation digitale...",
+      "responsibilities": [
+        "Coordination de 3 equipes produit (12 personnes)",
+        "Definition de la roadmap trimestrielle"
+      ],
+      "deliverables": [
+        "Migration cloud terminee en 6 mois",
+        "Lancement de 2 nouveaux produits"
+      ],
+      "skills_used": ["Agile", "Jira", "Product Management"]
+    }
+  ],
+  "education": [
+    {
+      "institution": "HEC Paris",
+      "degree": "Master",
+      "field_of_study": "Management Digital",
+      "start_date": "2013-09",
+      "end_date": "2015-06",
+      "location": { "city": "Jouy-en-Josas", "country_code": "FR" }
+    }
+  ],
+  "languages": [
+    { "name": "Francais", "level": "Natif" },
+    { "name": "Anglais", "level": "Courant (C1)" }
+  ],
+  "extras": [
+    { "name": "Certifications", "summary": "PMP, PSM I" },
+    { "name": "Benevolat", "summary": "Mentorat chez Simplon.co" }
+  ],
+  "projects": [
+    {
+      "name": "Refonte Plateforme E-commerce",
+      "role": "Chef de Projet",
+      "start_date": "2022-01",
+      "end_date": "2022-09",
+      "summary": "Migration vers une architecture headless...",
+      "tech_stack": ["Next.js", "Strapi", "Algolia"],
+      "url": "https://example.com",
+      "url_label": "Voir le projet"
+    }
+  ],
+  "order_hint": [
+    "summary", "skills", "experience",
+    "education", "projects", "languages", "extras"
+  ],
+  "section_titles": {
+    "summary": "Profil",
+    "skills": "Competences",
+    "experience": "Experience Professionnelle",
+    "education": "Formation",
+    "languages": "Langues",
+    "extras": "Informations Complementaires",
+    "projects": "Projets"
+  }
 }</code></pre>
 
-        <h2>Section Experiences</h2>
+        <h3>Champs racine</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>language</code></td>
+              <td><code>string</code> enum</td>
+              <td>Non</td>
+              <td>Langue du contenu : <code>"fr"</code>, <code>"en"</code>, <code>"es"</code>, <code>"de"</code>. Detectee automatiquement depuis le summary.</td>
+            </tr>
+            <tr>
+              <td><code>generated_at</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Timestamp de generation (ajoute par le pipeline).</td>
+            </tr>
+            <tr>
+              <td><code>header</code></td>
+              <td><code>object</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Informations d'identite et de contact.</td>
+            </tr>
+            <tr>
+              <td><code>summary</code></td>
+              <td><code>object</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Resume / profil professionnel.</td>
+            </tr>
+            <tr>
+              <td><code>skills</code></td>
+              <td><code>object</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Competences techniques, outils, methodologies et soft skills.</td>
+            </tr>
+            <tr>
+              <td><code>experience</code></td>
+              <td><code>array</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Experiences professionnelles.</td>
+            </tr>
+            <tr>
+              <td><code>education</code></td>
+              <td><code>array</code></td>
+              <td>Non</td>
+              <td>Formations et diplomes.</td>
+            </tr>
+            <tr>
+              <td><code>languages</code></td>
+              <td><code>array</code></td>
+              <td>Non</td>
+              <td>Langues parlees.</td>
+            </tr>
+            <tr>
+              <td><code>extras</code></td>
+              <td><code>array</code></td>
+              <td>Non</td>
+              <td>Informations complementaires (certifications, benevolat, loisirs...).</td>
+            </tr>
+            <tr>
+              <td><code>projects</code></td>
+              <td><code>array</code></td>
+              <td>Non</td>
+              <td>Projets personnels ou professionnels notables.</td>
+            </tr>
+            <tr>
+              <td><code>order_hint</code></td>
+              <td><code>array&lt;string&gt;</code></td>
+              <td>Non</td>
+              <td>Ordre d'affichage des sections dans le rendu.</td>
+            </tr>
+            <tr>
+              <td><code>section_titles</code></td>
+              <td><code>object</code></td>
+              <td>Non</td>
+              <td>Titres personnalises pour chaque section.</td>
+            </tr>
+          </tbody>
+        </table>
 
-        <pre><code>"experiences": [
-  {
-    "id": "exp-1",
-    "company": "TechCorp",
-    "title": "Lead Developer",
-    "location": "Paris",
-    "startDate": "2021-03",
-    "endDate": null,  // null = poste actuel
-    "responsibilities": [
-      "Direction technique d'une equipe de 5 developpeurs",
-      "Conception et implementation d'une architecture microservices",
-      "Mise en place de CI/CD avec GitHub Actions"
-    ],
-    "technologies": ["Node.js", "React", "PostgreSQL", "Docker"]
+        <!-- ============================================================ -->
+        <!-- SECTION: header                                              -->
+        <!-- ============================================================ -->
+        <h2>header</h2>
+        <p>
+          Contient l'identite du candidat et ses coordonnees. Les 3 champs de premier niveau
+          sont tous requis par le schema.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>full_name</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Nom complet du candidat.</td>
+            </tr>
+            <tr>
+              <td><code>current_title</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Intitule du poste actuel ou vise.</td>
+            </tr>
+            <tr>
+              <td><code>contact</code></td>
+              <td><code>object</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Coordonnees de contact (voir sous-champs ci-dessous).</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>contact (sous-objet de header)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>email</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Adresse e-mail.</td>
+            </tr>
+            <tr>
+              <td><code>phone</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Numero de telephone.</td>
+            </tr>
+            <tr>
+              <td><code>links</code></td>
+              <td><code>array</code></td>
+              <td>Non</td>
+              <td>Liens web (LinkedIn, portfolio, GitHub...). Chaque item : <code>{ label?: string, url: string }</code>. Seul <code>url</code> est requis (<code>format: "uri"</code>).</td>
+            </tr>
+            <tr>
+              <td><code>location</code></td>
+              <td><code>object</code></td>
+              <td>Non</td>
+              <td>Localisation : <code>{ city?: string, region?: string, country_code?: string }</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-json">{
+  "header": {
+    "full_name": "Marie Dupont",
+    "current_title": "Chef de Projet Digital",
+    "contact": {
+      "email": "marie.dupont@email.com",
+      "phone": "+33 6 12 34 56 78",
+      "links": [
+        { "label": "LinkedIn", "url": "https://linkedin.com/in/mariedupont" },
+        { "url": "https://github.com/mariedupont" }
+      ],
+      "location": {
+        "city": "Paris",
+        "region": "Ile-de-France",
+        "country_code": "FR"
+      }
+    }
   }
-]</code></pre>
+}</code></pre>
 
-        <h2>Section Skills</h2>
+        <!-- ============================================================ -->
+        <!-- SECTION: summary                                             -->
+        <!-- ============================================================ -->
+        <h2>summary</h2>
+        <p>
+          Resume professionnel du candidat. Contient un seul champ <code>description</code>.
+          Cette section est <strong>requise</strong> au niveau racine du CV.
+        </p>
 
-        <pre><code>"skills": {
-  "technical": [
-    { "name": "JavaScript", "level": "expert" },
-    { "name": "TypeScript", "level": "advanced" },
-    { "name": "React", "level": "expert" },
-    { "name": "Node.js", "level": "advanced" }
-  ],
-  "soft": [
-    "Leadership",
-    "Communication",
-    "Gestion de projet"
-  ],
-  "tools": [
-    "Git", "Docker", "AWS", "Figma"
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>description</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Texte libre du resume professionnel. Utilise pour la detection de langue.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-json">{
+  "summary": {
+    "description": "Chef de Projet Digital avec 8 ans d'experience dans le pilotage de projets de transformation numerique. Certifie PMP et PSM I."
+  }
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION: skills                                              -->
+        <!-- ============================================================ -->
+        <h2>skills</h2>
+        <p>
+          Bloc de competences structure en 4 categories. La section est <strong>requise</strong>
+          au niveau racine. Aucune des sous-categories n'est individuellement requise.
+        </p>
+
+        <h3>hard_skills et tools</h3>
+        <p>
+          Ces deux categories partagent le meme format : un tableau d'objets avec <code>name</code>
+          (requis) et <code>proficiency</code> (optionnel).
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>name</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Nom de la competence ou de l'outil.</td>
+            </tr>
+            <tr>
+              <td><code>proficiency</code></td>
+              <td><code>integer | null</code></td>
+              <td>Non</td>
+              <td>Niveau de maitrise de 0 a 5. <code>null</code> = non renseigne.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Echelle proficiency (0-5)</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Valeur</th>
+              <th>Niveau</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>0</code></td><td>Awareness</td><td>Connaissance theorique, pas de pratique.</td></tr>
+            <tr><td><code>1</code></td><td>Beginner</td><td>Debut de pratique, besoin d'accompagnement.</td></tr>
+            <tr><td><code>2</code></td><td>Intermediate</td><td>Utilisation autonome sur des taches courantes.</td></tr>
+            <tr><td><code>3</code></td><td>Proficient</td><td>Maitrise solide, capable de former d'autres.</td></tr>
+            <tr><td><code>4</code></td><td>Advanced</td><td>Expertise approfondie, gestion de cas complexes.</td></tr>
+            <tr><td><code>5</code></td><td>Expert</td><td>Reference dans le domaine, conception et innovation.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>methodologies et soft_skills</h3>
+        <p>
+          Ces deux categories sont de simples tableaux de chaines de caracteres (pas d'objet, pas de proficiency).
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Categorie</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>methodologies</code></td>
+              <td><code>array&lt;string&gt;</code></td>
+              <td>Methodologies et frameworks de travail (Agile, SAFe, Design Thinking...).</td>
+            </tr>
+            <tr>
+              <td><code>soft_skills</code></td>
+              <td><code>array&lt;string&gt;</code></td>
+              <td>Competences comportementales et interpersonnelles.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-json">{
+  "skills": {
+    "hard_skills": [
+      { "name": "Gestion de projet", "proficiency": 5 },
+      { "name": "Analyse de donnees", "proficiency": 3 },
+      { "name": "UX Design", "proficiency": null }
+    ],
+    "tools": [
+      { "name": "Jira", "proficiency": 5 },
+      { "name": "Figma", "proficiency": 3 },
+      { "name": "Notion", "proficiency": 4 }
+    ],
+    "methodologies": ["Agile Scrum", "SAFe", "Design Thinking", "Lean"],
+    "soft_skills": ["Leadership", "Communication", "Negociation", "Esprit d'equipe"]
+  }
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION: experience                                          -->
+        <!-- ============================================================ -->
+        <h2>experience</h2>
+        <p>
+          Tableau d'experiences professionnelles. Chaque item represente un poste occupe.
+          La section est <strong>requise</strong> au niveau racine.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>title</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Intitule du poste.</td>
+            </tr>
+            <tr>
+              <td><code>company</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Nom de l'entreprise.</td>
+            </tr>
+            <tr>
+              <td><code>department_or_client</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Departement interne ou client (utile pour les consultants).</td>
+            </tr>
+            <tr>
+              <td><code>start_date</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Date de debut au format <code>YYYY-MM</code>.</td>
+            </tr>
+            <tr>
+              <td><code>end_date</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Date de fin au format <code>YYYY-MM</code>. Chaine vide <code>""</code> = poste actuel.</td>
+            </tr>
+            <tr>
+              <td><code>location</code></td>
+              <td><code>object</code></td>
+              <td>Non</td>
+              <td><code>{ city?, region?, country_code? }</code></td>
+            </tr>
+            <tr>
+              <td><code>description</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Description libre du poste.</td>
+            </tr>
+            <tr>
+              <td><code>responsibilities</code></td>
+              <td><code>array&lt;string&gt;</code></td>
+              <td>Non</td>
+              <td>Liste des responsabilites principales.</td>
+            </tr>
+            <tr>
+              <td><code>deliverables</code></td>
+              <td><code>array&lt;string&gt;</code></td>
+              <td>Non</td>
+              <td>Resultats concrets et livrables.</td>
+            </tr>
+            <tr>
+              <td><code>skills_used</code></td>
+              <td><code>array&lt;string&gt;</code></td>
+              <td>Non</td>
+              <td>Competences mobilisees sur ce poste.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-json">{
+  "experience": [
+    {
+      "title": "Chef de Projet Digital",
+      "company": "TechCorp",
+      "department_or_client": "Direction Innovation",
+      "start_date": "2021-03",
+      "end_date": "",
+      "location": {
+        "city": "Paris",
+        "region": "Ile-de-France",
+        "country_code": "FR"
+      },
+      "description": "Pilotage de la transformation digitale du groupe.",
+      "responsibilities": [
+        "Coordination de 3 equipes produit (12 personnes)",
+        "Definition de la roadmap trimestrielle",
+        "Suivi budgetaire et reporting C-Level"
+      ],
+      "deliverables": [
+        "Migration cloud terminee en 6 mois (-30% couts infra)",
+        "Lancement de 2 nouveaux produits SaaS"
+      ],
+      "skills_used": ["Agile", "Jira", "Product Management", "AWS"]
+    }
   ]
 }</code></pre>
 
-        <h2>Section Education</h2>
+        <!-- ============================================================ -->
+        <!-- SECTION: education                                           -->
+        <!-- ============================================================ -->
+        <h2>education</h2>
+        <p>
+          Tableau de formations et diplomes. Chaque item represente un cursus.
+        </p>
 
-        <pre><code>"education": [
-  {
-    "id": "edu-1",
-    "institution": "Ecole Polytechnique",
-    "degree": "Master",
-    "field": "Informatique",
-    "location": "Palaiseau",
-    "startDate": "2014-09",
-    "endDate": "2019-06",
-    "description": "Specialisation en Intelligence Artificielle"
-  }
-]</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>institution</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Nom de l'etablissement.</td>
+            </tr>
+            <tr>
+              <td><code>degree</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Type de diplome (Master, Licence, BTS...).</td>
+            </tr>
+            <tr>
+              <td><code>field_of_study</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Domaine d'etude / specialite.</td>
+            </tr>
+            <tr>
+              <td><code>start_date</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Date de debut au format <code>YYYY-MM</code>.</td>
+            </tr>
+            <tr>
+              <td><code>end_date</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Date de fin / d'obtention au format <code>YYYY-MM</code>.</td>
+            </tr>
+            <tr>
+              <td><code>location</code></td>
+              <td><code>object</code></td>
+              <td>Non</td>
+              <td><code>{ city?, region?, country_code? }</code></td>
+            </tr>
+          </tbody>
+        </table>
 
-        <h2>Section Projects</h2>
-
-        <pre><code>"projects": [
-  {
-    "id": "proj-1",
-    "name": "E-commerce Platform",
-    "description": "Plateforme e-commerce complete avec paiement Stripe",
-    "technologies": ["Next.js", "Prisma", "Stripe"],
-    "url": "https://github.com/user/project",
-    "highlights": [
-      "10K utilisateurs actifs",
-      "Integration paiement multi-devises"
-    ]
-  }
-]</code></pre>
-
-        <h2>Section Languages</h2>
-
-        <pre><code>"languages": [
-  { "name": "Francais", "level": "native" },
-  { "name": "Anglais", "level": "fluent", "certification": "TOEIC 950" },
-  { "name": "Espagnol", "level": "intermediate" }
-]</code></pre>
-
-        <h2>Validation Schema (Zod)</h2>
-
-        <pre><code>// lib/cv-core/validation.js
-import { z } from 'zod';
-
-export const cvSchema = z.object({
-  header: z.object({
-    firstName: z.string().min(1),
-    lastName: z.string().min(1),
-    title: z.string().optional(),
-    email: z.string().email(),
-    phone: z.string().optional(),
-    location: z.string().optional(),
-    linkedin: z.string().optional(),
-    portfolio: z.string().optional()
-  }),
-  summary: z.string().optional(),
-  experiences: z.array(experienceSchema),
-  skills: skillsSchema,
-  education: z.array(educationSchema),
-  projects: z.array(projectSchema).optional(),
-  certifications: z.array(certificationSchema).optional(),
-  languages: z.array(languageSchema).optional(),
-  interests: z.array(z.string()).optional()
-});
-
-export function validateCv(data) {
-  const result = cvSchema.safeParse(data);
-  return {
-    valid: result.success,
-    errors: result.error?.errors || []
-  };
+        <pre><code class="language-json">{
+  "education": [
+    {
+      "institution": "HEC Paris",
+      "degree": "Master",
+      "field_of_study": "Management Digital",
+      "start_date": "2013-09",
+      "end_date": "2015-06",
+      "location": {
+        "city": "Jouy-en-Josas",
+        "region": "Ile-de-France",
+        "country_code": "FR"
+      }
+    },
+    {
+      "institution": "Universite Paris-Saclay",
+      "degree": "Licence",
+      "field_of_study": "Economie-Gestion",
+      "end_date": "2013-06"
+    }
+  ]
 }</code></pre>
 
-        <h2>Helpers</h2>
+        <!-- ============================================================ -->
+        <!-- SECTION: languages                                           -->
+        <!-- ============================================================ -->
+        <h2>languages</h2>
+        <p>
+          Tableau des langues maitrisees. Les deux champs sont <strong>requis</strong> pour chaque item.
+        </p>
 
-        <pre><code>// lib/cv-core/helpers.js
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>name</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Nom de la langue.</td>
+            </tr>
+            <tr>
+              <td><code>level</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Niveau (texte libre : "Natif", "Courant (C1)", "Intermediaire (B2)", etc.).</td>
+            </tr>
+          </tbody>
+        </table>
 
-export function getSectionItems(cv, section) {
-  return cv[section] || [];
-}
-
-export function updateSectionItem(cv, section, itemId, updates) {
-  return {
-    ...cv,
-    [section]: cv[section].map(item =>
-      item.id === itemId ? { ...item, ...updates } : item
-    )
-  };
-}
-
-export function addSectionItem(cv, section, item) {
-  return {
-    ...cv,
-    [section]: [...(cv[section] || []), {
-      ...item,
-      id: generateId(section)
-    }]
-  };
+        <pre><code class="language-json">{
+  "languages": [
+    { "name": "Francais", "level": "Natif" },
+    { "name": "Anglais", "level": "Courant (C1)" },
+    { "name": "Espagnol", "level": "Intermediaire (B1)" }
+  ]
 }</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION: extras                                              -->
+        <!-- ============================================================ -->
+        <h2>extras</h2>
+        <p>
+          Informations complementaires : certifications, benevolat, centres d'interet, etc.
+          Chaque item necessite au minimum un <code>name</code>.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>name</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Intitule de l'element.</td>
+            </tr>
+            <tr>
+              <td><code>summary</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Description ou details supplementaires.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-json">{
+  "extras": [
+    { "name": "Certifications", "summary": "PMP (2022), PSM I (2021), ITIL v4 (2020)" },
+    { "name": "Benevolat", "summary": "Mentorat chez Simplon.co depuis 2019" },
+    { "name": "Centres d'interet", "summary": "Trail running, photographie urbaine" }
+  ]
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION: projects                                            -->
+        <!-- ============================================================ -->
+        <h2>projects</h2>
+        <p>
+          Projets personnels, open source ou professionnels notables.
+          Seul <code>name</code> est requis par item.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>name</code></td>
+              <td><code>string</code></td>
+              <td><strong>Oui</strong></td>
+              <td>Nom du projet.</td>
+            </tr>
+            <tr>
+              <td><code>role</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Role tenu dans le projet.</td>
+            </tr>
+            <tr>
+              <td><code>start_date</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Date de debut (<code>YYYY-MM</code>).</td>
+            </tr>
+            <tr>
+              <td><code>end_date</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Date de fin (<code>YYYY-MM</code>).</td>
+            </tr>
+            <tr>
+              <td><code>summary</code></td>
+              <td><code>string</code></td>
+              <td>Non</td>
+              <td>Description du projet.</td>
+            </tr>
+            <tr>
+              <td><code>tech_stack</code></td>
+              <td><code>array&lt;string&gt;</code></td>
+              <td>Non</td>
+              <td>Technologies utilisees.</td>
+            </tr>
+            <tr>
+              <td><code>url</code></td>
+              <td><code>string | null</code></td>
+              <td>Non</td>
+              <td>Lien vers le projet.</td>
+            </tr>
+            <tr>
+              <td><code>url_label</code></td>
+              <td><code>string | null</code></td>
+              <td>Non</td>
+              <td>Libelle du lien (ex: "Voir le projet", "GitHub").</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-json">{
+  "projects": [
+    {
+      "name": "Refonte Plateforme E-commerce",
+      "role": "Chef de Projet",
+      "start_date": "2022-01",
+      "end_date": "2022-09",
+      "summary": "Migration vers architecture headless avec CMS decouple.",
+      "tech_stack": ["Next.js", "Strapi", "Algolia", "Vercel"],
+      "url": "https://example.com",
+      "url_label": "Voir le projet"
+    },
+    {
+      "name": "Bot Slack RH",
+      "role": "Initiateur",
+      "summary": "Chatbot interne pour automatiser les demandes RH.",
+      "tech_stack": ["Python", "Slack API", "PostgreSQL"],
+      "url": null,
+      "url_label": null
+    }
+  ]
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION: order_hint & section_titles                         -->
+        <!-- ============================================================ -->
+        <h2>order_hint &amp; section_titles</h2>
+
+        <h3>order_hint</h3>
+        <p>
+          Tableau de chaines qui controle l'<strong>ordre de rendu</strong> des sections dans le CV
+          exporte (PDF, DOCX). Le moteur d'export itere sur ce tableau pour determiner
+          l'ordre d'affichage. Les sections absentes du tableau sont placees a la fin dans
+          leur ordre par defaut.
+        </p>
+
+        <pre><code class="language-json">{
+  "order_hint": [
+    "summary",
+    "skills",
+    "experience",
+    "education",
+    "projects",
+    "languages",
+    "extras"
+  ]
+}</code></pre>
+
+        <h3>section_titles</h3>
+        <p>
+          Permet de personnaliser les titres de section affiches dans le CV.
+          Utile pour adapter les intitules selon la langue ou le contexte du poste vise.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Cle</th>
+              <th>Type</th>
+              <th>Valeur par defaut (FR)</th>
+              <th>Exemple EN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>summary</code></td>
+              <td><code>string</code></td>
+              <td>Profil</td>
+              <td>Summary</td>
+            </tr>
+            <tr>
+              <td><code>skills</code></td>
+              <td><code>string</code></td>
+              <td>Competences</td>
+              <td>Skills</td>
+            </tr>
+            <tr>
+              <td><code>experience</code></td>
+              <td><code>string</code></td>
+              <td>Experience Professionnelle</td>
+              <td>Work Experience</td>
+            </tr>
+            <tr>
+              <td><code>education</code></td>
+              <td><code>string</code></td>
+              <td>Formation</td>
+              <td>Education</td>
+            </tr>
+            <tr>
+              <td><code>languages</code></td>
+              <td><code>string</code></td>
+              <td>Langues</td>
+              <td>Languages</td>
+            </tr>
+            <tr>
+              <td><code>extras</code></td>
+              <td><code>string</code></td>
+              <td>Informations Complementaires</td>
+              <td>Additional Information</td>
+            </tr>
+            <tr>
+              <td><code>projects</code></td>
+              <td><code>string</code></td>
+              <td>Projets</td>
+              <td>Projects</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-json">{
+  "section_titles": {
+    "summary": "Profil",
+    "skills": "Competences",
+    "experience": "Experience Professionnelle",
+    "education": "Formation",
+    "languages": "Langues",
+    "extras": "Informations Complementaires",
+    "projects": "Projets"
+  }
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION: Validation                                          -->
+        <!-- ============================================================ -->
+        <h2>Validation</h2>
+        <p>
+          La validation du JSON CV est effectuee par <strong>AJV</strong> (Ajv JSON Schema Validator)
+          a partir du schema <code>data/schema.json</code> (JSON Schema draft-07).
+          Le projet n'utilise <strong>pas</strong> Zod pour la validation du CV.
+        </p>
+
+        <h3>Schema source</h3>
+        <p>
+          Le fichier <code>data/schema.json</code> definit le contrat. Les 4 champs requis au
+          niveau racine sont :
+        </p>
+        <pre><code class="language-json">{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CV Schema",
+  "type": "object",
+  "required": ["header", "summary", "skills", "experience"],
+  "properties": {
+    "language": {
+      "type": "string",
+      "enum": ["fr", "en", "es", "de"]
+    },
+    "header": { "..." : "voir section header ci-dessus" },
+    "summary": { "..." : "voir section summary ci-dessus" },
+    "skills": { "..." : "voir section skills ci-dessus" },
+    "experience": { "..." : "voir section experience ci-dessus" },
+    "education": { "..." : "..." },
+    "languages": { "..." : "..." },
+    "extras": { "..." : "..." },
+    "projects": { "..." : "..." },
+    "order_hint": { "type": "array", "items": { "type": "string" } },
+    "section_titles": { "..." : "..." }
+  }
+}</code></pre>
+
+        <h3>Fonction validateCv</h3>
+        <p>
+          Le point d'entree de validation est <code>lib/cv-core/validation.js</code>.
+          Le schema est charge une seule fois (cache en memoire) et compile via AJV
+          avec le mode <code>allErrors: true</code> et le support du format <code>uri</code>
+          via <code>ajv-formats</code>.
+        </p>
+
+        <pre><code class="language-javascript">// lib/cv-core/validation.js
+import fs from "fs/promises";
+import path from "path";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
+
+let schemaCache = null;
+let validatorCache = null;
+
+async function loadSchema() {
+  if (schemaCache) return schemaCache;
+  const schemaPath = path.join(process.cwd(), "data", "schema.json");
+  const schemaRaw = await fs.readFile(schemaPath, "utf-8");
+  schemaCache = JSON.parse(schemaRaw);
+  return schemaCache;
+}
+
+async function getValidator() {
+  if (validatorCache) return validatorCache;
+
+  const schema = await loadSchema();
+  const ajv = new Ajv({ allErrors: true, allowUnionTypes: true });
+  addFormats(ajv);
+
+  validatorCache = ajv.compile(schema);
+  return validatorCache;
+}
+
+export async function validateCv(cv) {
+  const validate = await getValidator();
+  const valid = !!validate(cv);
+  const errors = valid ? [] : (validate.errors || []);
+
+  return { valid, errors };
+}</code></pre>
+
+        <h3>Utilisation</h3>
+        <pre><code class="language-javascript">import { validateCv } from "@/lib/cv-core/validation";
+
+const result = await validateCv(cvJsonData);
+
+if (!result.valid) {
+  console.error("Erreurs de validation :", result.errors);
+  // result.errors est un tableau d'objets AJV :
+  // [{ instancePath: "/header/full_name", message: "must be string", ... }]
+}
+</code></pre>
+
+        <h3>Points cles de la validation</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Librairie</td>
+              <td><code>ajv</code> + <code>ajv-formats</code></td>
+            </tr>
+            <tr>
+              <td>Schema</td>
+              <td>JSON Schema draft-07 (<code>data/schema.json</code>)</td>
+            </tr>
+            <tr>
+              <td>Options AJV</td>
+              <td><code>allErrors: true</code> (retourne toutes les erreurs, pas seulement la premiere), <code>allowUnionTypes: true</code> (supporte <code>type: ["integer", "null"]</code>)</td>
+            </tr>
+            <tr>
+              <td>Formats</td>
+              <td><code>"uri"</code> (valide les URLs dans <code>links[].url</code>)</td>
+            </tr>
+            <tr>
+              <td>Cache</td>
+              <td>Schema charge et compile une seule fois (singleton en memoire)</td>
+            </tr>
+            <tr>
+              <td>Retour</td>
+              <td><code>{ valid: boolean, errors: AjvError[] }</code></td>
+            </tr>
+          </tbody>
+        </table>
+
       </div>
     </main>
   </div>
 
+  <!-- Prism scripts for: javascript, typescript, jsx, tsx, json, bash, sql, python, yaml -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
@@ -211,7 +1123,6 @@ export function addSectionItem(cv, section, item) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

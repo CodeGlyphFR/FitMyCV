@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,48 +26,202 @@
           <span>Export PDF</span>
         </div>
 
-
         <h1>Export PDF</h1>
         <p class="lead">
-          Generation de fichiers PDF a partir des CV au format JSON.
+          Export de CV en PDF via Puppeteer (headless Chrome), format A4 avec marges configurées, pipeline HTML partagé avec la prévisualisation, et gestion des crédits avec remboursement automatique.
         </p>
 
-        <h2>Technologies</h2>
+        <h2>Pipeline d'export</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'export PDF</div>
+          <div class="mermaid">
+flowchart LR
+    Request["POST /api/export-pdf"]
+    Auth["Authentification"]
+    Credits["incrementFeatureCounter()"]
+    Prepare["prepareCvData()"]
+    HTML["Génération HTML + CSS"]
+    Puppeteer["Puppeteer setContent()"]
+    PDF["page.pdf() → Buffer"]
+    Response["Response (application/pdf)"]
+    Refund["refundFeatureUsage()"]
+
+    Request --> Auth --> Credits --> Prepare --> HTML --> Puppeteer --> PDF --> Response
+    PDF -->|Erreur| Refund
+          </div>
+        </div>
+
+        <h2>Configuration Puppeteer</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Paramètre</th>
+              <th>Valeur</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Format</td>
+              <td><code>A4</code></td>
+              <td>Format papier standard européen (210 × 297 mm)</td>
+            </tr>
+            <tr>
+              <td>Marge haut/bas</td>
+              <td><code>15mm</code></td>
+              <td>Marge verticale</td>
+            </tr>
+            <tr>
+              <td>Marge gauche/droite</td>
+              <td><code>12mm</code></td>
+              <td>Marge horizontale</td>
+            </tr>
+            <tr>
+              <td>Print background</td>
+              <td><code>true</code></td>
+              <td>Inclut les couleurs et images de fond</td>
+            </tr>
+            <tr>
+              <td>Prefer CSS page size</td>
+              <td><code>true</code></td>
+              <td>Préfère les dimensions CSS définies dans la page</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Génération HTML</h2>
+
+        <p>Le HTML envoyé à Puppeteer est construit par le pipeline partagé <code>lib/pdf/</code> :</p>
+
+        <pre><code class="language-javascript">// 1. Préparer les données du CV
+const cvData = prepareCvData(cv, selections, sectionOrder);
+
+// 2. Créer le traducteur pour la langue du CV
+const translator = createTranslator(cv.meta?.language || 'fr');
+
+// 3. Générer les styles (export = avec page-break)
+const styles = getBaseStyles() + getExportStyles();
+
+// 4. Générer le HTML des sections
+const sectionsHtml = generateSectionsHtml(cvData, translator, selections);
+
+// 5. Assembler le document complet
+const html = `&lt;html&gt;&lt;head&gt;&lt;style&gt;${styles}&lt;/style&gt;&lt;/head&gt;
+  &lt;body&gt;${sectionsHtml}&lt;/body&gt;&lt;/html&gt;`;</code></pre>
+
+        <h3>Styles spécifiques à l'export</h3>
+
+        <p>La fonction <code>getExportStyles()</code> ajoute des règles CSS de contrôle de pagination :</p>
+
         <ul>
-          <li><strong>Puppeteer</strong> : Rendu HTML vers PDF</li>
-          <li><strong>Templates HTML</strong> : Mise en page du CV</li>
-          <li><strong>Sharp</strong> : Optimisation des images</li>
+          <li><code>page-break-inside: avoid</code> sur les blocs d'expérience et de formation</li>
+          <li><code>page-break-before: auto</code> pour les sections principales</li>
+          <li>Ajustements de marges pour compenser les marges Puppeteer</li>
         </ul>
 
-        <h2>Implementation</h2>
+        <div class="callout callout-info">
+          <strong>Prévisualisation vs Export</strong> — La prévisualisation utilise <code>getPreviewStyles()</code> (sans page-break), tandis que l'export PDF utilise <code>getExportStyles()</code> (avec page-break). Les deux partagent <code>getBaseStyles()</code>.
+        </div>
 
-        <pre><code>// lib/export/pdf.js
-import puppeteer from 'puppeteer';
+        <h2>Endpoint API</h2>
 
-export async function exportToPdf(cvData, templateId) {
+        <pre><code class="language-javascript">// app/api/export-pdf/route.js
+export async function POST(request) {
+  // 1. Authentification
+  const session = await auth();
+
+  // 2. Débit du crédit
+  const featureResult = await incrementFeatureCounter(
+    session.user.id,
+    'export_cv'
+  );
+
+  // 3. Lancer Puppeteer
   const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
-
-  // Generer le HTML du CV
-  const html = await renderCvTemplate(cvData, templateId);
-
   await page.setContent(html, { waitUntil: 'networkidle0' });
 
-  const pdf = await page.pdf({
+  // 4. Générer le PDF
+  const pdfBuffer = await page.pdf({
     format: 'A4',
+    margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' },
     printBackground: true,
-    margin: { top: '10mm', bottom: '10mm', left: '10mm', right: '10mm' }
+    preferCSSPageSize: true,
   });
 
   await browser.close();
 
-  return pdf;
+  // 5. Retourner le buffer PDF
+  return new Response(pdfBuffer, {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    },
+  });
 }</code></pre>
 
-        <h2>API Endpoint</h2>
+        <h2>Gestion des erreurs</h2>
 
-        <pre><code>// POST /api/cv/[id]/export/pdf
-// Response: application/pdf</code></pre>
+        <p>En cas d'erreur durant la génération PDF :</p>
+        <ul>
+          <li>Le browser Puppeteer est toujours fermé via un bloc <code>finally</code></li>
+          <li>Le crédit est remboursé via <code>refundFeatureUsage(usageId)</code></li>
+          <li>L'erreur est loguée et une réponse 500 est retournée</li>
+        </ul>
+
+        <h2>Sections générées</h2>
+
+        <p>Le module <code>sectionGenerators.js</code> produit le HTML pour chaque section :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Générateur</th>
+              <th>Section</th>
+              <th>Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>generateHeaderSection()</code></td>
+              <td>En-tête</td>
+              <td>Nom, titre professionnel, informations de contact (email, téléphone, localisation, liens)</td>
+            </tr>
+            <tr>
+              <td><code>summary</code></td>
+              <td>Résumé</td>
+              <td>Résumé professionnel si activé</td>
+            </tr>
+            <tr>
+              <td><code>experience</code></td>
+              <td>Expériences</td>
+              <td>Triées par date (plus récentes en premier), avec descriptions en bullet points</td>
+            </tr>
+            <tr>
+              <td><code>education</code></td>
+              <td>Formation</td>
+              <td>Triée par date, diplôme + établissement</td>
+            </tr>
+            <tr>
+              <td><code>projects</code></td>
+              <td>Projets</td>
+              <td>Projets personnels avec description et technologies</td>
+            </tr>
+            <tr>
+              <td><code>skills</code></td>
+              <td>Compétences</td>
+              <td>Groupées par catégorie avec niveaux traduits</td>
+            </tr>
+            <tr>
+              <td><code>languages</code></td>
+              <td>Langues</td>
+              <td>Avec niveaux CECRL traduits</td>
+            </tr>
+          </tbody>
+        </table>
+
       </div>
     </main>
   </div>
@@ -88,7 +236,6 @@ export async function exportToPdf(cvData, templateId) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

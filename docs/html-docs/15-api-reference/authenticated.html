@@ -3,141 +3,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Endpoints Authentifies | FitMyCV.io</title>
+  <title>Endpoints Authentifi&eacute;s | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
           <a href="./overview.html">API Reference</a>
           <span>/</span>
-          <span>Authentifies</span>
+          <span>Authentifi&eacute;s</span>
         </div>
 
-
-        <h1>Endpoints Authentifies</h1>
+        <h1>Endpoints Authentifi&eacute;s</h1>
         <p class="lead">
-          Endpoints necessitant une session utilisateur valide.
+          Endpoints n&eacute;cessitant une session utilisateur valide via cookie NextAuth.js. Couvrent la gestion des CV, les t&acirc;ches background, les abonnements, les cr&eacute;dits, l'export et le compte utilisateur.
         </p>
 
-        <h2>CV</h2>
+        <div class="callout callout-info">
+          <div class="callout-title">Authentification requise</div>
+          <p>Tous les endpoints ci-dessous v&eacute;rifient la session via <code>auth()</code> (NextAuth.js). Sans session valide : <code>401 Unauthorized</code>.</p>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- ACCOUNT -->
+        <!-- ============================================= -->
+        <h2>Account (6 endpoints)</h2>
 
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/cv</code></td>
-              <td>GET</td>
-              <td>Liste des CV</td>
-            </tr>
-            <tr>
-              <td><code>/api/cv</code></td>
-              <td>POST</td>
-              <td>Creer un CV</td>
-            </tr>
-            <tr>
-              <td><code>/api/cv/[id]</code></td>
-              <td>GET/PUT/DELETE</td>
-              <td>CRUD CV</td>
-            </tr>
-            <tr>
-              <td><code>/api/cv/[id]/generate</code></td>
-              <td>POST</td>
-              <td>Generer CV optimise</td>
-            </tr>
-            <tr>
-              <td><code>/api/cv/[id]/export/pdf</code></td>
-              <td>POST</td>
-              <td>Export PDF</td>
-            </tr>
+            <tr><td><span class="badge badge-primary">PUT</span></td><td><code>/api/account/profile</code></td><td>Modifier le profil (nom, pr&eacute;nom, email)</td></tr>
+            <tr><td><span class="badge badge-primary">PUT</span></td><td><code>/api/account/password</code></td><td>Modifier le mot de passe</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/account/linked-accounts</code></td><td>Liste des comptes OAuth li&eacute;s</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/account/link-oauth</code></td><td>Lier un compte OAuth (Google/GitHub)</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/account/unlink-oauth</code></td><td>D&eacute;lier un compte OAuth</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/account/delete</code></td><td>Supprimer le compte utilisateur</td></tr>
           </tbody>
         </table>
 
-        <h2>Job Offers</h2>
+        <!-- ============================================= -->
+        <!-- CV & CVs -->
+        <!-- ============================================= -->
+        <h2>CV &amp; CVs (17 endpoints)</h2>
 
+        <h3>Gestion des fichiers CV</h3>
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/job-offers</code></td>
-              <td>GET/POST</td>
-              <td>Liste/Creer offres</td>
-            </tr>
-            <tr>
-              <td><code>/api/job-offers/extract</code></td>
-              <td>POST</td>
-              <td>Extraire depuis URL</td>
-            </tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/cvs</code></td><td>Lister tous les CV de l'utilisateur</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cvs/create</code></td><td>Cr&eacute;er un CV vide</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/cvs/read</code></td><td>Lire le contenu d'un CV (query param <code>id</code>)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cvs/delete</code></td><td>Supprimer un CV (soft delete)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cvs/delete-bulk</code></td><td>Supprimer plusieurs CV en lot</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cvs/restore</code></td><td>Restaurer un CV supprim&eacute;</td></tr>
           </tbody>
         </table>
 
-        <h2>G&eacute;n&eacute;ration CV Mod&egrave;le</h2>
+        <h3>Versioning &amp; Historique</h3>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/cvs/versions</code></td><td>Lister les versions d'un CV</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cvs/versions</code></td><td>Restaurer une version sp&eacute;cifique</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/cvs/changes</code></td><td>Historique des modifications</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cvs/changes</code></td><td>Enregistrer une modification</td></tr>
+          </tbody>
+        </table>
+
+        <h3>&Eacute;dition &amp; Optimisation CV</h3>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/cv/can-edit</code></td><td>V&eacute;rifier si l'utilisateur peut &eacute;diter (cr&eacute;dits suffisants)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cv/debit-edit</code></td><td>D&eacute;biter un cr&eacute;dit d'&eacute;dition</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cv/improve</code></td><td>Am&eacute;liorer un CV via IA (pipeline optimisation)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cv/apply-review</code></td><td>Appliquer les suggestions de review IA</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cv/match-score</code></td><td>Calculer le score de correspondance CV/offre</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/cv/match-score</code></td><td>R&eacute;cup&eacute;rer un score calcul&eacute;</td></tr>
+          </tbody>
+        </table>
+
+        <h3>M&eacute;tadonn&eacute;es &amp; Source</h3>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/cv/metadata</code></td><td>M&eacute;tadonn&eacute;es d'un CV (date, taille, offre li&eacute;e)</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/cv/source</code></td><td>Donn&eacute;es source de l'offre d'emploi li&eacute;e au CV</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- BACKGROUND TASKS -->
+        <!-- ============================================= -->
+        <h2>Background Tasks (9 endpoints)</h2>
 
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>M&eacute;thode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/background-tasks/create-template-cv</code></td>
-              <td>POST</td>
-              <td>Cr&eacute;er CV mod&egrave;le depuis offre (URL/PDF)</td>
-            </tr>
-            <tr>
-              <td><code>/api/background-tasks/generate-cv-from-job-title</code></td>
-              <td>POST</td>
-              <td>G&eacute;n&eacute;rer CV mod&egrave;le depuis titre de poste</td>
-            </tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/background-tasks/generate-cv</code></td><td>G&eacute;n&eacute;rer un CV adapt&eacute; &agrave; une offre d'emploi</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/background-tasks/create-template-cv</code></td><td>Cr&eacute;er un CV mod&egrave;le depuis offre (URL/PDF)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/background-tasks/generate-cv-from-job-title</code></td><td>G&eacute;n&eacute;rer un CV mod&egrave;le depuis un titre de poste</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/background-tasks/import-pdf</code></td><td>Importer un CV depuis un fichier PDF</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/background-tasks/translate-cv</code></td><td>Traduire un CV dans une autre langue</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/background-tasks/calculate-match-score</code></td><td>Calculer le match score en t&acirc;che de fond</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/background-tasks/sync</code></td><td>Polling : r&eacute;cup&eacute;rer le statut des t&acirc;ches en cours</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/background-tasks/sync</code></td><td>Marquer des t&acirc;ches comme vues/acquitt&eacute;es</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/background-tasks/sync</code></td><td>Nettoyer les t&acirc;ches termin&eacute;es</td></tr>
           </tbody>
         </table>
 
         <h3>POST /api/background-tasks/create-template-cv</h3>
-
         <p>G&eacute;n&egrave;re un ou plusieurs CV mod&egrave;les (fictifs professionnels) &agrave; partir d'offres d'emploi.</p>
-
         <h4>Request (FormData)</h4>
         <pre><code class="language-javascript">{
-  links: JSON.stringify(["https://example.com/offre"]), // Array d'URLs
-  files: [File],                                         // PDFs d'offres
-  model: "gpt-4o",                                       // Optionnel
-  deviceId: "device_xxx",                                // Requis
-  recaptchaToken: "..."                                  // Optionnel
+  links: JSON.stringify(["https://example.com/offre"]),
+  files: [File],                    // PDFs d'offres
+  model: "gpt-4o",                  // Optionnel
+  deviceId: "device_xxx",           // Requis
+  recaptchaToken: "..."             // Optionnel
 }</code></pre>
-
         <h4>Response (202 Accepted)</h4>
         <pre><code class="language-json">{
   "success": true,
@@ -146,22 +142,16 @@
   "tasksCount": 1
 }</code></pre>
 
-        <h4>Feature</h4>
-        <p><code>gpt_cv_generation</code> - 1 cr&eacute;dit par g&eacute;n&eacute;ration</p>
-
         <h3>POST /api/background-tasks/generate-cv-from-job-title</h3>
-
         <p>G&eacute;n&egrave;re un CV mod&egrave;le &agrave; partir d'un titre de poste.</p>
-
         <h4>Request (FormData)</h4>
         <pre><code class="language-javascript">{
-  jobTitle: "Chef de projet IT",  // Requis
-  language: "fran&ccedil;ais",          // D&eacute;faut: fran&ccedil;ais
-  model: "gpt-4o",                // Optionnel
-  deviceId: "device_xxx",         // Requis
-  recaptchaToken: "..."           // Optionnel
+  jobTitle: "Chef de projet IT",
+  language: "français",       // D&eacute;faut: français
+  model: "gpt-4o",            // Optionnel
+  deviceId: "device_xxx",     // Requis
+  recaptchaToken: "..."       // Optionnel
 }</code></pre>
-
         <h4>Response (202 Accepted)</h4>
         <pre><code class="language-json">{
   "success": true,
@@ -169,110 +159,58 @@
   "taskId": "task_job_title_xxx"
 }</code></pre>
 
-        <h4>Feature</h4>
-        <p><code>generate_from_job_title</code> - 1 cr&eacute;dit par g&eacute;n&eacute;ration</p>
-
-        <h2>Abonnements &amp; Cr&eacute;dits</h2>
+        <!-- ============================================= -->
+        <!-- SUBSCRIPTION -->
+        <!-- ============================================= -->
+        <h2>Abonnements (10 endpoints)</h2>
 
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>M&eacute;thode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/checkout/subscription</code></td>
-              <td>POST</td>
-              <td>Cr&eacute;er session Checkout abonnement</td>
-            </tr>
-            <tr>
-              <td><code>/api/checkout/credits</code></td>
-              <td>POST</td>
-              <td>Cr&eacute;er session Checkout cr&eacute;dits</td>
-            </tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/subscription/current</code></td><td>Abonnement actif de l'utilisateur</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/subscription/plans</code></td><td>Plans disponibles</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/subscription/credit-packs</code></td><td>Packs de cr&eacute;dits disponibles</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/subscription/invoices</code></td><td>Historique des factures Stripe</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/subscription/change</code></td><td>Changer de plan (upgrade/downgrade)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/subscription/cancel</code></td><td>Annuler l'abonnement</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/subscription/reactivate</code></td><td>R&eacute;activer un abonnement annul&eacute;</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/subscription/cancel-downgrade</code></td><td>Annuler un downgrade programm&eacute;</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/subscription/preview-upgrade</code></td><td>Pr&eacute;visualiser le prorata d'un upgrade</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/subscription/billing-portal</code></td><td>Ouvrir le portail de facturation Stripe</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- CHECKOUT -->
+        <!-- ============================================= -->
+        <h2>Checkout (2 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/checkout/subscription</code></td><td>Cr&eacute;er session Checkout Stripe pour abonnement</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/checkout/credits</code></td><td>Cr&eacute;er session Checkout Stripe pour pack cr&eacute;dits</td></tr>
           </tbody>
         </table>
 
         <h3>POST /api/checkout/subscription</h3>
-
-        <p>Cr&eacute;e une session Stripe Checkout pour souscrire &agrave; un plan.</p>
-
         <h4>Request</h4>
         <pre><code class="language-json">{
   "planId": 2,
   "billingPeriod": "monthly",
   "locale": "fr"
 }</code></pre>
-
-        <h4>Param&egrave;tres</h4>
-        <table>
-          <thead>
-            <tr>
-              <th>Param&egrave;tre</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>planId</code></td>
-              <td>number</td>
-              <td>ID du plan (requis)</td>
-            </tr>
-            <tr>
-              <td><code>billingPeriod</code></td>
-              <td>string</td>
-              <td><code>monthly</code> ou <code>yearly</code></td>
-            </tr>
-            <tr>
-              <td><code>locale</code></td>
-              <td>string</td>
-              <td>Langue pour CGV : <code>fr</code>, <code>en</code>, <code>es</code>, <code>de</code> (d&eacute;faut: <code>en</code>)</td>
-            </tr>
-          </tbody>
-        </table>
-
         <h4>Response (200)</h4>
         <pre><code class="language-json">{
   "checkoutUrl": "https://checkout.stripe.com/xxx"
 }</code></pre>
 
         <h3>POST /api/checkout/credits</h3>
-
-        <p>Cr&eacute;e une session Stripe Checkout pour acheter un pack de cr&eacute;dits.</p>
-
         <h4>Request</h4>
         <pre><code class="language-json">{
   "packId": 2,
   "locale": "fr"
 }</code></pre>
-
-        <h4>Param&egrave;tres</h4>
-        <table>
-          <thead>
-            <tr>
-              <th>Param&egrave;tre</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>packId</code></td>
-              <td>number</td>
-              <td>ID du pack de cr&eacute;dits (requis)</td>
-            </tr>
-            <tr>
-              <td><code>locale</code></td>
-              <td>string</td>
-              <td>Langue pour CGV : <code>fr</code>, <code>en</code>, <code>es</code>, <code>de</code> (d&eacute;faut: <code>en</code>)</td>
-            </tr>
-          </tbody>
-        </table>
-
         <h4>Response (200)</h4>
         <pre><code class="language-json">{
   "checkoutUrl": "https://checkout.stripe.com/xxx"
@@ -280,8 +218,137 @@
 
         <div class="callout callout-info">
           <div class="callout-title">Localisation CGV</div>
-          <p>Le param&egrave;tre <code>locale</code> permet d'afficher le message d'acceptation des CGV dans la langue de l'utilisateur lors du checkout Stripe. Le module <code>lib/stripe/checkoutLocale.js</code> g&egrave;re cette localisation.</p>
+          <p>Le param&egrave;tre <code>locale</code> (<code>fr</code>, <code>en</code>, <code>es</code>, <code>de</code>) affiche le message d'acceptation des CGV dans la langue de l'utilisateur lors du checkout Stripe.</p>
         </div>
+
+        <!-- ============================================= -->
+        <!-- CREDITS -->
+        <!-- ============================================= -->
+        <h2>Cr&eacute;dits (3 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/credits/balance</code></td><td>Solde de cr&eacute;dits</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/credits/costs</code></td><td>Co&ucirc;ts en cr&eacute;dits par feature</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/credits/transactions</code></td><td>Historique des transactions de cr&eacute;dits</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- EXPORT -->
+        <!-- ============================================= -->
+        <h2>Export (6 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/export-pdf</code></td><td>Exporter un CV en PDF</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/export-word</code></td><td>Exporter un CV en DOCX</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/preview-pdf</code></td><td>Pr&eacute;visualiser un CV en PDF (sans t&eacute;l&eacute;chargement)</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/export-templates</code></td><td>Lister les templates d'export</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/export-templates</code></td><td>Cr&eacute;er un template d'export</td></tr>
+            <tr><td><span class="badge badge-primary">PUT</span></td><td><code>/api/export-templates/[id]</code></td><td>Modifier un template d'export</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/export-templates/[id]</code></td><td>Supprimer un template d'export</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- EVENTS -->
+        <!-- ============================================= -->
+        <h2>Events SSE (1 endpoint)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/events/stream</code></td><td>Flux SSE (Server-Sent Events) pour les notifications temps r&eacute;el</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Server-Sent Events</div>
+          <p>L'endpoint <code>/api/events/stream</code> maintient une connexion ouverte et envoie des &eacute;v&eacute;nements au format SSE. Utilis&eacute; pour la progression des t&acirc;ches background (g&eacute;n&eacute;ration CV, import PDF, traduction, etc.).</p>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- CONSENT -->
+        <!-- ============================================= -->
+        <h2>Consentement RGPD (2 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/consent/history</code></td><td>Historique des consentements de l'utilisateur</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/consent/log</code></td><td>Enregistrer un consentement (cookies, CGV, etc.)</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- LINK HISTORY -->
+        <!-- ============================================= -->
+        <h2>Historique Liens (3 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/link-history</code></td><td>Lister les URLs d'offres d&eacute;j&agrave; utilis&eacute;es</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/link-history</code></td><td>Ajouter une URL &agrave; l'historique</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/link-history</code></td><td>Supprimer une URL de l'historique</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- FEEDBACK -->
+        <!-- ============================================= -->
+        <h2>Feedback (1 endpoint)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/feedback</code></td><td>Envoyer un feedback utilisateur</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- SETTINGS -->
+        <!-- ============================================= -->
+        <h2>Settings Publics (1 endpoint)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/settings</code></td><td>Param&egrave;tres publics de l'app (mode abonnement, features activ&eacute;es)</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- TELEMETRY -->
+        <!-- ============================================= -->
+        <h2>T&eacute;l&eacute;m&eacute;trie (3 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/telemetry/track</code></td><td>Envoyer un &eacute;v&eacute;nement de t&eacute;l&eacute;m&eacute;trie</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/telemetry/average-task-duration</code></td><td>Dur&eacute;e moyenne des t&acirc;ches par type</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/telemetry/first-import-duration</code></td><td>Dur&eacute;e du premier import PDF</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- ONBOARDING -->
+        <!-- ============================================= -->
+        <h2>Onboarding (4 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/user/onboarding</code></td><td>Progression onboarding de l'utilisateur</td></tr>
+            <tr><td><span class="badge badge-primary">PUT</span></td><td><code>/api/user/onboarding</code></td><td>Mettre &agrave; jour la progression</td></tr>
+            <tr><td><span class="badge badge-primary">PATCH</span></td><td><code>/api/user/onboarding</code></td><td>Mettre &agrave; jour un step sp&eacute;cifique</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/user/onboarding</code></td><td>Marquer l'onboarding comme termin&eacute;</td></tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>
@@ -296,7 +363,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

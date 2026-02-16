@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Application des Modifications | FitMyCV.io</title>
+  <title>Application des Am&eacute;liorations | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,56 +26,435 @@
           <span>Application</span>
         </div>
 
-
-        <h1>Application des Modifications</h1>
+        <h1>Application des Am&eacute;liorations</h1>
         <p class="lead">
-          Processus d'application des suggestions acceptees au CV.
+          Le pipeline d'am&eacute;lioration est orchestr&eacute; par <code>runImprovementPipeline()</code> dans <code>lib/features/cv-improvement/orchestrator.js</code>. Il ex&eacute;cute 4 stages avec des <strong>imports dynamiques</strong> pour le chargement diff&eacute;r&eacute; et un contr&ocirc;le de concurrence via <code>pLimit(5)</code>. Chaque stage &eacute;met des &eacute;v&eacute;nements SSE pour la progression en temps r&eacute;el.
         </p>
 
-        <h2>Flux d'Application</h2>
+        <!-- ==================== DIAGRAMME DETAILLE ==================== -->
+        <h2>D&eacute;tail des 4 Stages</h2>
 
         <div class="diagram">
+          <div class="diagram-title">Ex&eacute;cution d&eacute;taill&eacute;e du pipeline d'am&eacute;lioration</div>
           <div class="mermaid">
 flowchart TB
-    Suggestion[Suggestion acceptee] --> Validate[Validation]
-    Validate --> Apply[Application]
-    Apply --> Recalc[Recalcul score]
-    Recalc --> Version[Nouvelle version]
+    subgraph Stage12["STAGE 1 &amp; 2 - Promise.all()"]
+        direction LR
+        S1["Stage 1: classifySkills()<br/>gpt-4o-mini<br/>Classification des missingSkills"]
+        S2["Stage 2: preprocessSuggestions()<br/>Chain-of-Thought<br/>Routing des suggestions"]
+    end
+
+    subgraph Apply1["APPLICATION STAGE 1"]
+        ClassResult["Classification result"]
+        AddSkills["Ajouter skills au workingCv<br/>par categorie + niveau"]
+        TrackSkills["Tracker changements<br/>allChangesMade[]"]
+    end
+
+    subgraph Stage3["STAGE 3 - Promise.all + pLimit(5)"]
+        direction TB
+        ExpTasks["experienceTasks[]<br/>improveExperience() par exp"]
+        ProjTasks["projectTasks[]<br/>improveProject() par projet"]
+        NewProjTasks["newProjectTasks[]<br/>improveProject(null)"]
+        LangTask["languageTask<br/>improveLanguages()"]
+        ExtrasTasks["extrasTasks[]<br/>improveExtras() par extra"]
+    end
+
+    subgraph Apply3["APPLICATION STAGE 3"]
+        ApplyExp["applyExperienceModifications()"]
+        ApplyProj["applyProjectModifications()"]
+        ApplyLang["applyLanguageModifications()"]
+        ApplyExtras["applyExtrasModifications()"]
+    end
+
+    subgraph Stage4["STAGE 4 - CONDITIONNEL"]
+        Check{"improvedExperiences &gt; 0<br/>OU<br/>improvedProjects &gt; 0 ?"}
+        Summary["improveSummary()<br/>applySummaryDiff()"]
+        Skip["Skip summary"]
+    end
+
+    subgraph Output["SORTIE"]
+        Result["workingCv + allChangesMade<br/>+ stageMetrics"]
+    end
+
+    S1 --> ClassResult --> AddSkills --> TrackSkills
+    S2 --> Stage3
+
+    ExpTasks --> ApplyExp
+    ProjTasks --> ApplyProj
+    NewProjTasks --> ApplyProj
+    LangTask --> ApplyLang
+    ExtrasTasks --> ApplyExtras
+
+    ApplyExp --> Check
+    ApplyProj --> Check
+    Check -->|Oui| Summary
+    Check -->|Non| Skip
+    Summary --> Result
+    Skip --> Result
+    ApplyLang --> Result
+    ApplyExtras --> Result
           </div>
         </div>
 
-        <h2>Implementation</h2>
+        <!-- ==================== STAGE 1 ==================== -->
+        <h2>Stage 1 : Classification des Skills</h2>
 
-        <pre><code>// lib/cv-optimisation/apply.js
-export async function applySuggestion(cvFileId, suggestionId, userId) {
-  const suggestion = await prisma.cvSuggestion.findUnique({
-    where: { id: suggestionId }
-  });
+        <p><strong>Fichier :</strong> <code>lib/features/cv-improvement/stages/stage1-classify-skills.js</code></p>
+        <p><strong>Fonction :</strong> <code>classifySkills({ skills, signal, userId })</code></p>
+        <p><strong>Mod&egrave;le :</strong> <code>gpt-4o-mini</code></p>
 
-  const cvFile = await prisma.cvFile.findFirst({
-    where: { id: cvFileId, userId }
-  });
+        <div class="data-flow">
+          <div class="data-flow-header">STAGE 1 - Classification des comp&eacute;tences manquantes</div>
 
-  // Appliquer la modification selon le type
-  const updatedContent = applyModification(
-    cvFile.content,
-    suggestion.type,
-    suggestion.path,
-    suggestion.newValue
-  );
-
-  // Sauvegarder avec nouvelle version
-  await writeUserCvFile(userId, cvFile.filename, updatedContent, {
-    origin: 'ai_optimization',
-    description: suggestion.description
-  });
-
-  // Marquer la suggestion comme appliquee
-  await prisma.cvSuggestion.update({
-    where: { id: suggestionId },
-    data: { status: 'applied' }
-  });
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;e</div>
+            <pre><code class="language-json">{
+  "skills": [
+    { "skill": "Kubernetes", "level": "intermediate" },
+    { "skill": "Leadership", "level": "advanced" },
+    { "skill": "Jira", "level": "beginner" },
+    { "skill": "Scrum", "level": "intermediate" }
+  ]
 }</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Prompt inline (pas de fichier .md)</div>
+            <p>Le prompt est int&eacute;gr&eacute; directement dans le fichier. Il demande &agrave; l'IA de classer chaque comp&eacute;tence dans <strong>une seule cat&eacute;gorie</strong> parmi :</p>
+            <ul>
+              <li><code>hard_skills</code> &mdash; Technologies, langages, domaines d'expertise</li>
+              <li><code>soft_skills</code> &mdash; Comp&eacute;tences comportementales</li>
+              <li><code>tools</code> &mdash; Logiciels et plateformes sp&eacute;cifiques</li>
+              <li><code>methodologies</code> &mdash; M&eacute;thodes et frameworks de travail</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-json">{
+  "hard_skills": ["Kubernetes"],
+  "soft_skills": ["Leadership"],
+  "tools": ["Jira"],
+  "methodologies": ["Scrum"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Application des r&eacute;sultats (Stage 1)</h3>
+
+        <p>Apr&egrave;s la classification, chaque skill est ajout&eacute; au <code>workingCv.skills</code> :</p>
+
+        <pre><code class="language-javascript">// Pour hard_skills et tools : objet avec proficiency
+workingCv.skills[category].push({ name: skillName, proficiency: level });
+
+// Pour soft_skills et methodologies : string simple
+workingCv.skills[category].push(skillName);
+
+// Niveau normalise via normalizeToNumber()
+// "beginner" -> 1, "intermediate" -> 2, "advanced" -> 3, etc.</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Skip si pas de skills &agrave; ajouter</div>
+          <p>Si <code>missingSkillsToAdd</code> est vide ou <code>null</code>, le Stage 1 retourne imm&eacute;diatement <code>{ success: true, data: null }</code> sans appel IA.</p>
+        </div>
+
+        <!-- ==================== STAGE 2 ==================== -->
+        <h2>Stage 2 : Pr&eacute;traitement des Suggestions</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-improvement/stages/stage2-preprocess.js</code></p>
+        <p><strong>Fonction :</strong> <code>preprocessSuggestions({ suggestions, experiences, projects, languages, extras, jobOffer, signal, userId })</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">STAGE 2 - Analyse Chain-of-Thought et routage</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Donn&eacute;es d'entr&eacute;e</div>
+            <ul>
+              <li><strong>suggestions</strong> &mdash; Suggestions s&eacute;lectionn&eacute;es (avec <code>userContext</code> le cas &eacute;ch&eacute;ant)</li>
+              <li><strong>experiences</strong> &mdash; Exp&eacute;riences du CV (format&eacute;es : <code>[index] Titre @ Entreprise (dates)</code>)</li>
+              <li><strong>projects</strong> &mdash; Projets du CV (format&eacute;s : <code>[index] Nom - R&eacute;sum&eacute;</code>)</li>
+              <li><strong>languages</strong> &mdash; Langues du CV (format&eacute;es : <code>[index] Nom - Niveau</code>)</li>
+              <li><strong>extras</strong> &mdash; Extras du CV (format&eacute;s : <code>[index] Nom - R&eacute;sum&eacute;</code>)</li>
+              <li><strong>jobOffer</strong> &mdash; Offre d'emploi pour le contexte</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Prompts utilis&eacute;s</div>
+            <ul>
+              <li><code>prompts/preprocess-system.md</code></li>
+              <li><code>prompts/preprocess-user.md</code> &mdash; Variables : counts, listes format&eacute;es, suggestions</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie structur&eacute;e</div>
+            <pre><code class="language-javascript">// Retour de preprocessSuggestions()
+{
+  success: true,
+  experienceImprovements: [
+    { index: 0, improvements: [enrichedSuggestion1, ...] },
+    { index: 2, improvements: [enrichedSuggestion2] }
+  ],
+  projectImprovements: [
+    { index: 1, improvements: [enrichedSuggestion3] }
+  ],
+  newProjects: [
+    { suggestion: enrichedSuggestion4, actionDescription: "..." }
+  ],
+  languageImprovements: [
+    { index: 0, improvements: [enrichedSuggestion5] },
+    { index: null, improvements: [enrichedSuggestion6] } // nouvelle langue
+  ],
+  extrasImprovements: [
+    { index: null, improvements: [enrichedSuggestion7] } // nouveau extra
+  ],
+  unmatchedSuggestions: []
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Actions multiples par suggestion</div>
+          <p>Une suggestion peut g&eacute;n&eacute;rer <strong>plusieurs actions</strong> ciblant des sections diff&eacute;rentes. Par exemple, <em>"Ajouter Kubernetes"</em> peut cibler &agrave; la fois <code>experience[2].skills_used</code> et <code>experience[2].responsibilities</code>. L'IA retourne un tableau <code>actions[]</code> pour chaque classification.</p>
+        </div>
+
+        <!-- ==================== STAGE 3 ==================== -->
+        <h2>Stage 3 : Am&eacute;liorations Parall&egrave;les</h2>
+
+        <p><strong>Orchestration :</strong> <code>Promise.all()</code> avec <code>pLimit(5)</code> pour limiter &agrave; 5 appels OpenAI simultan&eacute;s.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>improveExperience()</h4>
+            <p><code>stages/stage3-improve/improveExperience.js</code></p>
+            <p><strong>Entr&eacute;e :</strong> <code>experience</code>, <code>suggestion</code>, <code>jobOffer</code>, <code>cvLanguage</code></p>
+            <p><strong>Sortie :</strong> <code>{ modifications, reasoning }</code></p>
+            <p>Modifications possibles :</p>
+            <ul>
+              <li><code>responsibilities.add[]</code> &mdash; Nouvelles responsabilit&eacute;s</li>
+              <li><code>deliverables.add[]</code> &mdash; Nouveaux r&eacute;sultats</li>
+              <li><code>skills_used.add[]</code> &mdash; Nouvelles comp&eacute;tences</li>
+            </ul>
+            <p>Application via <code>applyExperienceModifications()</code></p>
+          </div>
+          <div class="card">
+            <h4>improveProject()</h4>
+            <p><code>stages/stage3-improve/improveProject.js</code></p>
+            <p><strong>Entr&eacute;e :</strong> <code>project</code> (ou <code>null</code> pour cr&eacute;ation), <code>suggestion</code>, <code>jobOffer</code>, <code>cvLanguage</code></p>
+            <p><strong>Sortie :</strong> <code>{ modifications, reasoning, isNew }</code></p>
+            <p>Modes :</p>
+            <ul>
+              <li><strong>Modification :</strong> Am&eacute;liorer un projet existant</li>
+              <li><strong>Cr&eacute;ation :</strong> <code>project: null</code> + <code>isNew: true</code></li>
+            </ul>
+            <p>Application via <code>applyProjectModifications()</code></p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>improveLanguages()</h4>
+            <p><code>stages/stage3-improve/improveLanguages.js</code></p>
+            <p><strong>Entr&eacute;e :</strong> <code>languages[]</code>, <code>suggestions[]</code>, <code>jobOffer</code>, <code>cvLanguage</code></p>
+            <p><strong>Sortie :</strong> <code>{ modifications, reasoning, hasChanges }</code></p>
+            <p>Types de modifications :</p>
+            <ul>
+              <li><code>levelChanges[]</code> &mdash; Changement de niveau</li>
+              <li><code>certificationChanges[]</code> &mdash; Ajout de certification</li>
+              <li><code>newLanguages[]</code> &mdash; Nouvelles langues</li>
+              <li><code>reorder[]</code> &mdash; R&eacute;ordonnancement par pertinence</li>
+            </ul>
+            <p>Application via <code>applyLanguageModifications()</code></p>
+          </div>
+          <div class="card">
+            <h4>improveExtras()</h4>
+            <p><code>stages/stage3-improve/improveExtras.js</code></p>
+            <p><strong>Entr&eacute;e :</strong> <code>extras[]</code>, <code>suggestion</code>, <code>targetIndex</code>, <code>jobOffer</code>, <code>cvLanguage</code></p>
+            <p><strong>Sortie :</strong> <code>{ action, modifications, newExtra, reasoning, hasChanges }</code></p>
+            <p>Actions possibles :</p>
+            <ul>
+              <li><code>add</code> &mdash; Cr&eacute;er un nouvel extra (certification, etc.)</li>
+              <li><code>update</code> &mdash; Modifier un extra existant</li>
+            </ul>
+            <p>Application via <code>applyExtrasModifications()</code></p>
+          </div>
+        </div>
+
+        <!-- ==================== PROGRESSION SSE ==================== -->
+        <h3>Progression SSE (Stage 3)</h3>
+
+        <p>Le Stage 3 &eacute;met des &eacute;v&eacute;nements SSE via <code>dbEmitter.emitCvImprovementProgress()</code> pour chaque t&acirc;che termin&eacute;e :</p>
+
+        <pre><code class="language-javascript">// Progression experiences
+dbEmitter.emitCvImprovementProgress(userId, {
+  taskId,
+  stage: 'experiences',
+  step: 'experiences',
+  status: completedExperiences === totalExperiences ? 'completed' : 'running',
+  current: completedExperiences,
+  total: totalExperiences,
+  itemType: 'experience',
+});</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Stage SSE</th>
+              <th>Status</th>
+              <th>D&eacute;tail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>preprocess</code></td>
+              <td><code>running</code> &rarr; <code>completed</code></td>
+              <td>Stage 1 &amp; 2 termin&eacute;s</td>
+            </tr>
+            <tr>
+              <td><code>classify</code></td>
+              <td><code>completed</code></td>
+              <td>Classification des skills termin&eacute;e</td>
+            </tr>
+            <tr>
+              <td><code>experiences</code></td>
+              <td><code>running</code> (N/M) &rarr; <code>completed</code></td>
+              <td>Progression par exp&eacute;rience trait&eacute;e</td>
+            </tr>
+            <tr>
+              <td><code>projects</code></td>
+              <td><code>running</code> (N/M) &rarr; <code>completed</code></td>
+              <td>Progression par projet trait&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>summary</code></td>
+              <td><code>running</code> &rarr; <code>completed</code></td>
+              <td>Stage 4 termin&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>finalize</code></td>
+              <td><code>completed</code></td>
+              <td>Pipeline termin&eacute;</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== STAGE 4 ==================== -->
+        <h2>Stage 4 : Am&eacute;lioration du Summary</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-improvement/stages/stage4-summary/improveSummary.js</code></p>
+        <p><strong>Fonction :</strong> <code>improveSummary({ summary, improvedExperiences, improvedProjects, jobOffer, cvLanguage, signal, userId })</code></p>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Ex&eacute;cution conditionnelle</div>
+          <p>Le Stage 4 ne s'ex&eacute;cute <strong>que si</strong> des exp&eacute;riences ou des projets ont &eacute;t&eacute; modifi&eacute;s au Stage 3. La condition est : <code>improvedExperiences.length &gt; 0 || improvedProjects.length &gt; 0</code>. Si aucune modification n'a &eacute;t&eacute; apport&eacute;e (uniquement des skills ou langues), le summary reste inchang&eacute;.</p>
+        </div>
+
+        <div class="data-flow">
+          <div class="data-flow-header">STAGE 4 - Mise &agrave; jour du summary</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es</div>
+            <ul>
+              <li><code>summary</code> &mdash; Summary actuel du CV</li>
+              <li><code>improvedExperiences</code> &mdash; D&eacute;tail des modifications apport&eacute;es aux exp&eacute;riences</li>
+              <li><code>improvedProjects</code> &mdash; D&eacute;tail des modifications apport&eacute;es aux projets</li>
+              <li><code>jobOffer</code> &mdash; Offre d'emploi pour l'alignement vocabulaire</li>
+              <li><code>cvLanguage</code> &mdash; Code langue du CV (converti via <code>getLanguageName()</code>)</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Prompts utilis&eacute;s</div>
+            <ul>
+              <li><code>prompts/summary-system.md</code> &mdash; Variable : <code>{{cvLanguage}}</code></li>
+              <li><code>prompts/summary-user.md</code> &mdash; Variables : <code>{{summaryContent}}</code>, <code>{{jobOfferContent}}</code>, <code>{{improvedExperiences}}</code>, <code>{{improvedProjects}}</code>, <code>{{cvLanguage}}</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie et application</div>
+            <pre><code class="language-javascript">// Retour de improveSummary()
+{
+  modifications: {
+    description: "Nouveau texte de description du profil...",
+    // ... autres champs du summary
+  },
+  reasoning: "Le summary a ete mis a jour pour refleter..."
+}
+
+// Application via applySummaryDiff()
+workingCv.summary = applySummaryDiff(workingCv.summary, summaryResult.modifications);</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== IMPORTS DYNAMIQUES ==================== -->
+        <h2>Imports Dynamiques</h2>
+
+        <p>Le pipeline utilise des <strong>imports dynamiques</strong> (<code>await import()</code>) pour &eacute;viter de charger les modules lourds au d&eacute;marrage du serveur :</p>
+
+        <pre><code class="language-javascript">// lib/features/cv-improvement/orchestrator.js
+async function getClassifySkills() {
+  const module = await import('./stages/stage1-classify-skills.js');
+  return module.classifySkills;
+}
+
+async function getPreprocessSuggestions() {
+  const module = await import('./stages/stage2-preprocess.js');
+  return module.preprocessSuggestions;
+}
+
+async function getImproveExperience() {
+  const module = await import('./stages/stage3-improve/improveExperience.js');
+  return module.improveExperience;
+}
+
+// ... idem pour getImproveProject, getImproveSummary,
+// getImproveLanguages, getImproveExtras</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Pourquoi des imports dynamiques ?</div>
+          <p>Chaque module de stage importe des d&eacute;pendances lourdes (client OpenAI, prompt loader, sch&eacute;mas). Les imports dynamiques permettent de ne charger ces modules <strong>qu'au moment de leur utilisation</strong>, r&eacute;duisant le temps de d&eacute;marrage du serveur et la consommation m&eacute;moire au repos.</p>
+        </div>
+
+        <!-- ==================== GESTION ERREURS ==================== -->
+        <h2>Gestion des Erreurs et Annulation</h2>
+
+        <p>Chaque t&acirc;che du pipeline v&eacute;rifie le signal d'annulation avant de lancer un appel IA :</p>
+
+        <pre><code class="language-javascript">// Verification d'annulation dans chaque tache
+if (abortController.signal.aborted) throw new Error('Task cancelled');
+
+// Les erreurs non-annulation sont capturees et n'arretent pas le pipeline
+try {
+  const result = await improveExperience({ ... });
+  return { success: true, type: 'experience', index, data: result };
+} catch (error) {
+  if (error.message === 'Task cancelled') throw error; // Propagation
+  return { success: false, type: 'experience', index, error }; // Continue
+}</code></pre>
+
+        <div class="callout callout-error">
+          <div class="callout-title">R&eacute;silience du pipeline</div>
+          <p>Si une t&acirc;che individuelle du Stage 3 &eacute;choue (erreur IA, timeout), elle retourne <code>{ success: false }</code> mais <strong>n'arr&ecirc;te pas</strong> les autres t&acirc;ches en cours. Seule l'<strong>annulation utilisateur</strong> (<code>Task cancelled</code>) propage l'erreur et arr&ecirc;te tout le pipeline. Le Stage 4 (summary) est &eacute;galement r&eacute;silient : une erreur lors de la mise &agrave; jour du summary est ignor&eacute;e sans bloquer le pipeline.</p>
+        </div>
+
+        <!-- ==================== RESULTAT FINAL ==================== -->
+        <h2>R&eacute;sultat Final du Pipeline</h2>
+
+        <pre><code class="language-javascript">// Retour de runImprovementPipeline()
+{
+  workingCv,           // CV modifie (en place)
+  allChangesMade,      // Tableau de tous les changements effectues
+  stageMetrics: {
+    stage1_2: 1250,    // Duree en ms (Stage 1 & 2 paralleles)
+    stage3: 3400,      // Duree en ms (Stage 3)
+    stage4: 800,       // Duree en ms (Stage 4)
+  },
+  improvedExperiences, // Detail des modifications d'experiences
+  improvedProjects,    // Detail des modifications de projets
+}</code></pre>
+
       </div>
     </main>
   </div>
@@ -96,7 +469,6 @@ export async function applySuggestion(cvFileId, suggestionId, userId) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

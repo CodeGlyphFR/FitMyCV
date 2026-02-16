@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -32,54 +29,476 @@
           <span>Templates Email</span>
         </div>
 
-
         <h1>Templates Email</h1>
         <p class="lead">
-          Gestion des templates d'emails transactionnels.
+          Syst&egrave;me complet de gestion des emails transactionnels. L'architecture repose sur un mod&egrave;le <strong>Trigger &rarr; Template &rarr; Envoi</strong> : chaque &eacute;v&eacute;nement applicatif (trigger) peut avoir <strong>plusieurs templates</strong> dont un seul est actif &agrave; la fois. Les templates sont &eacute;dit&eacute;s via un &eacute;diteur visuel (Maily/TipTap) qui produit du <code>designJson</code> et du <code>htmlContent</code>.
         </p>
 
-        <h2>Templates Disponibles</h2>
+        <h2>Architecture Trigger &rarr; Template &rarr; Envoi</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'envoi d'un email transactionnel</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Event["&Eacute;V&Eacute;NEMENT"]
+        Action["Action utilisateur<br/>(inscription, g&eacute;n&eacute;ration CV,<br/>reset password...)"]
+    end
+
+    subgraph Trigger["TRIGGER"]
+        ET[(EmailTrigger<br/>name, variables,<br/>category, isSystem)]
+    end
+
+    subgraph Template["TEMPLATE"]
+        Active["Template Actif<br/>(isActive: true)"]
+        Inactive1["Template v2<br/>(inactif)"]
+        Inactive2["Template v3<br/>(inactif)"]
+    end
+
+    subgraph Send["ENVOI"]
+        Variables["Injection variables<br/>(user.name, app.url...)"]
+        Provider{{"SMTP ou Resend"}}
+        Log[(EmailLog<br/>status, provider,<br/>recipientEmail)]
+    end
+
+    Action --> ET
+    ET --> Active
+    ET -.-> Inactive1
+    ET -.-> Inactive2
+    Active --> Variables
+    Variables --> Provider
+    Provider --> Log
+          </div>
+        </div>
+
+        <h2>Endpoints API</h2>
+
+        <h3>Triggers &mdash; D&eacute;clencheurs d'Emails</h3>
+
+        <h4>GET /api/admin/email-triggers</h4>
+
+        <p>Retourne tous les triggers avec leur template actif, le flag <code>hasActiveTemplate</code> et les variables pars&eacute;es.</p>
+
+        <pre><code class="language-json">// R&eacute;ponse
+{
+  "triggers": [
+    {
+      "name": "welcome",
+      "label": "Email de bienvenue",
+      "description": "Envoy&eacute; apr&egrave;s inscription r&eacute;ussie",
+      "variables": ["user.name", "user.email", "app.name", "app.url"],
+      "category": "auth",
+      "icon": "UserPlus",
+      "isSystem": true,
+      "hasActiveTemplate": true,
+      "activeTemplate": {
+        "id": "clx...",
+        "name": "Welcome v2",
+        "subject": "Bienvenue sur FitMyCV.io, {{user.name}} !"
+      }
+    }
+  ]
+}</code></pre>
+
+        <h4>POST /api/admin/email-triggers</h4>
+
+        <p>Cr&eacute;er un trigger personnalis&eacute; (non-syst&egrave;me). Les triggers syst&egrave;me sont cr&eacute;&eacute;s automatiquement par le code.</p>
+
+        <pre><code class="language-json">// Body
+{
+  "name": "custom_notification",
+  "label": "Notification personnalis&eacute;e",
+  "description": "Email custom pour campagnes",
+  "variables": ["user.name", "custom.message"],
+  "category": "marketing",
+  "icon": "Bell"
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Triggers syst&egrave;me</div>
+          <p>Les triggers avec <code>isSystem: true</code> (welcome, verify_email, reset_password, etc.) sont <strong>cr&eacute;&eacute;s automatiquement</strong> par le code applicatif et ne peuvent pas &ecirc;tre supprim&eacute;s. Seuls les triggers personnalis&eacute;s (<code>isSystem: false</code>) peuvent &ecirc;tre cr&eacute;&eacute;s via POST.</p>
+        </div>
+
+        <h3>Templates par Trigger</h3>
+
+        <h4>GET /api/admin/email-triggers/[name]/templates</h4>
+
+        <p>Retourne tous les templates associ&eacute;s &agrave; un trigger sp&eacute;cifique.</p>
+
+        <h4>POST /api/admin/email-triggers/[name]/templates</h4>
+
+        <p>Cr&eacute;er un nouveau template pour un trigger. Possibilit&eacute; de copier depuis un template existant ou depuis le template par d&eacute;faut.</p>
+
+        <pre><code class="language-json">// Body
+{
+  "name": "Welcome Email v3",
+  "subject": "Bienvenue {{user.name}} !",
+  "copyFromTemplateId": "clx...",
+  "designJson": { /* JSON Maily/TipTap */ },
+  "htmlContent": "&lt;html&gt;...&lt;/html&gt;"
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Copie de template</div>
+          <p>Le param&egrave;tre <code>copyFromTemplateId</code> permet de dupliquer un template existant. Utiliser la valeur <code>"default"</code> pour copier le template par d&eacute;faut du syst&egrave;me. Si omis, un template vierge est cr&eacute;&eacute;.</p>
+        </div>
+
+        <h3>Templates CRUD</h3>
+
+        <h4>GET /api/admin/email-templates</h4>
+
+        <p>Liste tous les templates avec leur association trigger.</p>
+
+        <h4>POST /api/admin/email-templates</h4>
+
+        <p>Cr&eacute;er un template avec association &agrave; un trigger.</p>
+
+        <pre><code class="language-json">// Body
+{
+  "name": "Notification CV g&eacute;n&eacute;r&eacute;",
+  "subject": "Votre CV est pr&ecirc;t, {{user.name}} !",
+  "triggerId": "clx...",
+  "designJson": {
+    "type": "doc",
+    "content": [
+      { "type": "paragraph", "content": [{ "type": "text", "text": "Bonjour {{user.name}}," }] }
+    ]
+  },
+  "htmlContent": "&lt;p&gt;Bonjour {{user.name}},&lt;/p&gt;",
+  "variables": ["user.name", "cv.filename", "app.url"]
+}</code></pre>
+
+        <h4>GET /api/admin/email-templates/[id]</h4>
+
+        <p>D&eacute;tail d'un template sp&eacute;cifique.</p>
+
+        <h4>PUT /api/admin/email-templates/[id]</h4>
+
+        <p>Mettre &agrave; jour un template existant. Tous les champs sont optionnels.</p>
+
+        <h4>DELETE /api/admin/email-templates/[id]</h4>
+
+        <p>Supprimer un template.</p>
+
+        <h3>Activation de Template</h3>
+
+        <h4>POST /api/admin/email-templates/[id]/activate</h4>
+
+        <p>Active un template pour son trigger. <strong>Op&eacute;ration atomique</strong> : d&eacute;sactive automatiquement tous les autres templates du m&ecirc;me trigger dans une transaction Prisma.</p>
+
+        <h4>DELETE /api/admin/email-templates/[id]/activate</h4>
+
+        <p>D&eacute;sactive un template (aucun template actif pour ce trigger).</p>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Un seul template actif par trigger</div>
+          <p>Chaque trigger ne peut avoir qu'un seul template actif &agrave; la fois. L'activation d'un nouveau template d&eacute;sactive automatiquement l'ancien dans une <strong>transaction atomique</strong> pour &eacute;viter les &eacute;tats incoh&eacute;rents.</p>
+        </div>
+
+        <h3>Template par D&eacute;faut</h3>
+
+        <h4>POST /api/admin/email-templates/[id]/set-default</h4>
+
+        <p>D&eacute;finir un template comme template par d&eacute;faut global (retire le statut des autres).</p>
+
+        <h4>DELETE /api/admin/email-templates/[id]/set-default</h4>
+
+        <p>Retirer le statut de template par d&eacute;faut.</p>
+
+        <h3>Logs d'Envoi</h3>
+
+        <h4>GET /api/admin/email-logs</h4>
+
+        <p>Historique des emails envoy&eacute;s, avec pagination et filtres.</p>
+
+        <pre><code class="language-bash"># Query params
+?page=1&amp;limit=25&amp;template=welcome&amp;status=sent</code></pre>
 
         <table>
           <thead>
             <tr>
-              <th>Template</th>
-              <th>Declencheur</th>
+              <th>Param&egrave;tre</th>
+              <th>D&eacute;faut</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>welcome</td>
-              <td>Inscription</td>
+              <td><code>page</code></td>
+              <td>1</td>
+              <td>Num&eacute;ro de page</td>
             </tr>
             <tr>
-              <td>verify_email</td>
-              <td>Verification email</td>
+              <td><code>limit</code></td>
+              <td>25</td>
+              <td>Nombre de r&eacute;sultats par page</td>
             </tr>
             <tr>
-              <td>reset_password</td>
-              <td>Mot de passe oublie</td>
+              <td><code>template</code></td>
+              <td>&mdash;</td>
+              <td>Filtrer par nom de template</td>
             </tr>
             <tr>
-              <td>subscription_created</td>
-              <td>Nouvel abonnement</td>
-            </tr>
-            <tr>
-              <td>generation_complete</td>
-              <td>CV génère</td>
+              <td><code>status</code></td>
+              <td>&mdash;</td>
+              <td>Filtrer par statut (sent, failed, pending)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Variables Disponibles</h2>
+        <h3>Statistiques d'Envoi</h3>
 
-        <pre><code>// Variables communes
+        <h4>GET /api/admin/email-stats</h4>
+
+        <p>Statistiques des derni&egrave;res 24 heures avec d&eacute;tail par heure et suivi du quota SMTP.</p>
+
+        <pre><code class="language-json">// R&eacute;ponse
 {
-  "user.name": "Jean Dupont",
-  "user.email": "jean@example.com",
-  "app.name": "FitMyCV.io",
-  "app.url": "https://fitmycv.io"
+  "currentHour": {
+    "smtpCount": 42,
+    "smtpLimit": 200,
+    "percentage": 21.0,
+    "resendCount": 3,
+    "failedCount": 1
+  },
+  "timeline": [
+    { "hour": "2026-02-16T14:00:00Z", "smtpCount": 38, "resendCount": 2, "failedCount": 0 },
+    { "hour": "2026-02-16T15:00:00Z", "smtpCount": 42, "resendCount": 3, "failedCount": 1 }
+  ],
+  "summary": {
+    "totalSent": 847,
+    "totalFailed": 12,
+    "failureRate": 1.4
+  }
 }</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Quota SMTP</div>
+          <p>Le serveur SMTP a une limite de <strong>200 emails par heure</strong>. Le champ <code>currentHour.percentage</code> permet de surveiller l'utilisation en temps r&eacute;el. Au-del&agrave; de 80%, le syst&egrave;me peut basculer vers le provider Resend comme fallback.</p>
+        </div>
+
+        <h3>Email de Test</h3>
+
+        <h4>POST /api/admin/email-test</h4>
+
+        <p>Envoyer un email de test. Cr&eacute;e un <code>EmailLog</code> avec <code>isTestEmail: true</code>.</p>
+
+        <pre><code class="language-json">// Body
+{
+  "to": "admin@fitmycv.io",
+  "templateId": "clx...",
+  "subject": "[TEST] Bienvenue",
+  "html": "&lt;p&gt;Ceci est un test&lt;/p&gt;"
+}</code></pre>
+
+        <h2>Mod&egrave;les Prisma</h2>
+
+        <h3>EmailTrigger</h3>
+
+        <pre><code class="language-javascript">model EmailTrigger {
+  id          String          @id @default(cuid())
+  name        String          @unique  // Identifiant unique (welcome, verify_email, etc.)
+  label       String                   // Libell&eacute; affich&eacute; dans l'admin
+  description String?                  // Description du d&eacute;clencheur
+  variables   Json            @default("[]") // Variables disponibles (JSON array)
+  category    String                   // auth, notification, subscription, marketing
+  icon        String?                  // Nom de l'ic&ocirc;ne Lucide
+  isSystem    Boolean         @default(false) // Triggers cr&eacute;&eacute;s par le code
+  templates   EmailTemplate[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}</code></pre>
+
+        <h3>EmailTemplate</h3>
+
+        <pre><code class="language-javascript">model EmailTemplate {
+  id          String        @id @default(cuid())
+  name        String                   // Nom du template
+  triggerId   String?                  // FK vers EmailTrigger
+  trigger     EmailTrigger? @relation(...)
+  subject     String                   // Sujet de l'email (supporte variables {{...}})
+  designJson  Json?                    // JSON Maily/TipTap pour l'&eacute;diteur visuel
+  htmlContent String?       @db.Text   // HTML rendu final
+  variables   Json          @default("[]") // Variables utilis&eacute;es
+  isActive    Boolean       @default(false) // Un seul actif par trigger
+  isDefault   Boolean       @default(false) // Template par d&eacute;faut global
+  logs        EmailLog[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}</code></pre>
+
+        <h3>EmailLog</h3>
+
+        <pre><code class="language-javascript">model EmailLog {
+  id               String         @id @default(cuid())
+  templateId       String?                  // FK vers EmailTemplate
+  template         EmailTemplate? @relation(...)
+  templateName     String?                  // Nom du template (d&eacute;normalis&eacute;)
+  recipientEmail   String                   // Destinataire
+  recipientUserId  String?                  // FK vers User (optionnel)
+  subject          String                   // Sujet envoy&eacute;
+  status           String                   // sent, failed, pending
+  error            String?                  // Message d'erreur si &eacute;chec
+  provider         String         @default("smtp") // "smtp" ou "resend"
+  providerId       String?                  // ID du provider (pour tra&ccedil;abilit&eacute;)
+  isTestEmail      Boolean        @default(false) // Emails de test admin
+  createdAt        DateTime       @default(now())
+}</code></pre>
+
+        <h2>R&eacute;capitulatif des 16 Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>M&eacute;thode</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/email-triggers</code></td>
+              <td>Liste des triggers avec template actif</td>
+            </tr>
+            <tr>
+              <td>POST</td>
+              <td><code>/api/admin/email-triggers</code></td>
+              <td>Cr&eacute;er un trigger personnalis&eacute;</td>
+            </tr>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/email-triggers/[name]/templates</code></td>
+              <td>Templates d'un trigger sp&eacute;cifique</td>
+            </tr>
+            <tr>
+              <td>POST</td>
+              <td><code>/api/admin/email-triggers/[name]/templates</code></td>
+              <td>Cr&eacute;er un template pour un trigger</td>
+            </tr>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/email-templates</code></td>
+              <td>Liste de tous les templates</td>
+            </tr>
+            <tr>
+              <td>POST</td>
+              <td><code>/api/admin/email-templates</code></td>
+              <td>Cr&eacute;er un template avec trigger</td>
+            </tr>
+            <tr>
+              <td>GET/PUT/DELETE</td>
+              <td><code>/api/admin/email-templates/[id]</code></td>
+              <td>CRUD template individuel</td>
+            </tr>
+            <tr>
+              <td>POST/DELETE</td>
+              <td><code>/api/admin/email-templates/[id]/activate</code></td>
+              <td>Activer/d&eacute;sactiver un template</td>
+            </tr>
+            <tr>
+              <td>POST/DELETE</td>
+              <td><code>/api/admin/email-templates/[id]/set-default</code></td>
+              <td>D&eacute;finir/retirer le template par d&eacute;faut</td>
+            </tr>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/email-logs</code></td>
+              <td>Historique pagin&eacute; des envois</td>
+            </tr>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/email-stats</code></td>
+              <td>Statistiques 24h + quota SMTP</td>
+            </tr>
+            <tr>
+              <td>POST</td>
+              <td><code>/api/admin/email-test</code></td>
+              <td>Envoyer un email de test</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Flux d'Activation Atomique</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Transaction atomique d'activation de template</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant Admin as Admin UI
+    participant API as POST /activate
+    participant Prisma as Prisma Transaction
+    participant DB as Base de Donn&eacute;es
+
+    Admin->>API: POST /email-templates/[id]/activate
+    API->>Prisma: D&eacute;marrer transaction
+
+    Prisma->>DB: UPDATE EmailTemplate<br/>SET isActive = false<br/>WHERE triggerId = X
+    Note over DB: D&eacute;sactive TOUS les templates<br/>du m&ecirc;me trigger
+
+    Prisma->>DB: UPDATE EmailTemplate<br/>SET isActive = true<br/>WHERE id = [id]
+    Note over DB: Active le template demand&eacute;
+
+    Prisma-->>API: Transaction commit
+    API-->>Admin: 200 OK (template activ&eacute;)
+          </div>
+        </div>
+
+        <h2>Fichiers Cl&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/api/admin/email-triggers/route.js</code></td>
+              <td>CRUD triggers (GET, POST)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-triggers/[name]/templates/route.js</code></td>
+              <td>Templates par trigger</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-templates/route.js</code></td>
+              <td>CRUD templates (GET, POST)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-templates/[id]/route.js</code></td>
+              <td>GET/PUT/DELETE template individuel</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-templates/[id]/activate/route.js</code></td>
+              <td>Activation/d&eacute;sactivation atomique</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-templates/[id]/set-default/route.js</code></td>
+              <td>Gestion du template par d&eacute;faut</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-logs/route.js</code></td>
+              <td>Historique des envois pagin&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-stats/route.js</code></td>
+              <td>Statistiques 24h et quota SMTP</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/email-test/route.js</code></td>
+              <td>Envoi d'emails de test</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/EmailManagementTab.jsx</code></td>
+              <td>Onglet admin &mdash; gestion des emails</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/email/</code></td>
+              <td>Sous-composants : &eacute;diteur, liste, pr&eacute;visualisation</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

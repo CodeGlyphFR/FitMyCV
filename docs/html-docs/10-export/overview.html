@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Export CV | FitMyCV.io</title>
+  <title>Export - Vue d'ensemble | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -30,296 +24,238 @@
           <span>Export</span>
         </div>
 
-        <h1>Export CV</h1>
+        <h1>Export</h1>
         <p class="lead">
-          Le système d'export permet de générer des fichiers PDF et DOCX à partir des CV JSON stockés. L'export utilise des templates HTML/CSS rendus via Puppeteer.
+          Système d'export de CV en PDF (Puppeteer) et DOCX (bibliothèque <code>docx</code>), avec un pipeline de génération HTML partagé, des templates de sélection persistés côté serveur, et un mécanisme de remboursement automatique des crédits en cas d'erreur.
         </p>
-
-        <div class="callout callout-info">
-          <div class="callout-title">Coût</div>
-          <p><strong>1 crédit</strong> par export (PDF ou DOCX).</p>
-        </div>
 
         <h2>Architecture</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Flux d'export</div>
+          <div class="diagram-title">Flux d'export PDF et DOCX</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTRÉE"]
-        CV["CV JSON"]
-        Template["Template HTML"]
+    subgraph Client["CLIENT (React)"]
+        Preview["Prévisualisation CV"]
+        SelectSections["Sélection sections/items"]
+        ExportBtn["Bouton Export PDF / DOCX"]
     end
 
-    subgraph Render["RENDU"]
-        Inject["Injection données"]
-        HTML["HTML complet"]
-        CSS["Styles CSS"]
+    subgraph Shared["PIPELINE HTML PARTAGÉ (lib/pdf/)"]
+        PrepareData["prepareCvData()"]
+        Styles["getExportStyles() / getPreviewStyles()"]
+        Sections["generateSectionsHtml()"]
+        HTML["HTML complet généré"]
     end
 
-    subgraph Export["EXPORT"]
-        Puppeteer["Puppeteer<br/>(Headless Chrome)"]
-        PDF["PDF"]
-        DOCX["DOCX<br/>(via HTML)"]
+    subgraph PDF["EXPORT PDF (app/api/export-pdf/)"]
+        Puppeteer["Puppeteer (headless Chrome)"]
+        PdfBuffer["Buffer PDF (A4, marges 15mm/12mm)"]
     end
 
-    CV --> Inject
-    Template --> Inject
-    Inject --> HTML
-    HTML --> CSS
-    CSS --> Puppeteer
-    Puppeteer --> PDF
-    Puppeteer --> DOCX
+    subgraph DOCX["EXPORT DOCX (app/api/export-word/)"]
+        DocxLib["Bibliothèque docx (Packer)"]
+        DocxBuffer["Buffer DOCX"]
+    end
+
+    subgraph Credits["CRÉDITS"]
+        Debit["incrementFeatureCounter()"]
+        Refund["refundFeatureUsage()"]
+    end
+
+    Client --> ExportBtn
+    ExportBtn --> Debit
+    Debit --> PrepareData --> Styles --> Sections --> HTML
+    HTML --> Puppeteer --> PdfBuffer
+    HTML --> DocxLib --> DocxBuffer
+    PdfBuffer -->|Erreur| Refund
+    DocxBuffer -->|Erreur| Refund
           </div>
         </div>
 
-        <h2>Formats Supportés</h2>
+        <h2>Composants principaux</h2>
 
         <div class="card-grid">
           <div class="card">
-            <h4>PDF</h4>
-            <ul>
-              <li>Rendu haute qualité</li>
-              <li>Polices embarquées</li>
-              <li>Format A4</li>
-              <li>Multi-pages automatique</li>
-            </ul>
+            <h3>lib/pdf/cvUtils.js</h3>
+            <p>Fonctions de préparation des données CV : <code>prepareCvData()</code>, <code>formatDate()</code>, <code>formatLocation()</code>, <code>filterItems()</code>, <code>sortExperiences()</code>, <code>sortEducation()</code>. Définit aussi <code>DEFAULT_SECTION_ORDER</code> (7 sections).</p>
           </div>
           <div class="card">
-            <h4>DOCX</h4>
-            <ul>
-              <li>Éditable dans Word</li>
-              <li>Conversion depuis HTML</li>
-              <li>Styles préservés</li>
-              <li>Compatible ATS</li>
-            </ul>
+            <h3>lib/pdf/cvStyles.js</h3>
+            <p>Styles CSS pour l'export : <code>getBaseStyles()</code> (partagés), <code>getExportStyles()</code> (avec <code>page-break</code> CSS pour PDF), <code>getPreviewStyles()</code> (pour la prévisualisation en ligne).</p>
+          </div>
+          <div class="card">
+            <h3>lib/pdf/sectionGenerators.js</h3>
+            <p>Génération HTML des sections : <code>generateHeaderSection()</code> pour l'en-tête, <code>createSectionGenerators()</code> retourne des générateurs pour 7 sections, <code>generateSectionsHtml()</code> assemble le tout.</p>
+          </div>
+          <div class="card">
+            <h3>lib/pdf/cvTranslations.js</h3>
+            <p>Traductions des libellés CV en 4 langues (fr, en, es, de) : <code>getTranslation()</code>, <code>translateLevel()</code>, <code>getSectionTitle()</code>, <code>createTranslator()</code>.</p>
           </div>
         </div>
 
-        <h2>Templates Disponibles</h2>
+        <h2>Sections du CV</h2>
+
+        <p>L'ordre par défaut est défini dans <code>DEFAULT_SECTION_ORDER</code> :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Template</th>
-              <th>Description</th>
-              <th>Colonnes</th>
+              <th>#</th>
+              <th>Section</th>
+              <th>Clé</th>
+              <th>Filtrage</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>modern</code></td>
-              <td>Design moderne avec sidebar</td>
-              <td>2 colonnes</td>
+              <td>1</td>
+              <td>En-tête (nom, titre, contact)</td>
+              <td><code>header</code></td>
+              <td>Toujours présent</td>
             </tr>
             <tr>
-              <td><code>classic</code></td>
-              <td>Style traditionnel</td>
-              <td>1 colonne</td>
+              <td>2</td>
+              <td>Résumé professionnel</td>
+              <td><code>summary</code></td>
+              <td><code>isSectionEnabled()</code></td>
             </tr>
             <tr>
-              <td><code>minimal</code></td>
-              <td>Épuré, focus contenu</td>
-              <td>1 colonne</td>
+              <td>3</td>
+              <td>Expériences professionnelles</td>
+              <td><code>experience</code></td>
+              <td><code>filterItems()</code> + <code>sortExperiences()</code></td>
             </tr>
             <tr>
-              <td><code>creative</code></td>
-              <td>Design créatif coloré</td>
-              <td>2 colonnes</td>
+              <td>4</td>
+              <td>Formation</td>
+              <td><code>education</code></td>
+              <td><code>filterItems()</code> + <code>sortEducation()</code></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Projets</td>
+              <td><code>projects</code></td>
+              <td><code>filterItems()</code></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Compétences</td>
+              <td><code>skills</code></td>
+              <td><code>filterItems()</code></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Langues</td>
+              <td><code>languages</code></td>
+              <td><code>filterItems()</code></td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Export PDF</h2>
+        <h2>Sélection et préférences</h2>
 
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge process">PROCESS</span>
-            <span class="data-flow-title">Génération PDF via Puppeteer</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Pipeline</h5>
-            <pre><code>// lib/features/export/pdfExporter.js
-import puppeteer from 'puppeteer';
+        <h3>Export Templates (serveur)</h3>
 
-export async function exportToPdf(cvData, templateId) {
-  // 1. Charger le template
-  const template = await loadTemplate(templateId);
-
-  // 2. Injecter les données
-  const html = renderTemplate(template, cvData);
-
-  // 3. Lancer Puppeteer
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
-
-  const page = await browser.newPage();
-
-  // 4. Charger le HTML
-  await page.setContent(html, { waitUntil: 'networkidle0' });
-
-  // 5. Générer le PDF
-  const pdfBuffer = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '20mm',
-      bottom: '20mm',
-      left: '15mm',
-      right: '15mm'
-    }
-  });
-
-  await browser.close();
-
-  return pdfBuffer;
-}</code></pre>
-
-            <h5>Options PDF</h5>
-            <table>
-              <tr>
-                <td><code>format</code></td>
-                <td>A4 (210mm x 297mm)</td>
-              </tr>
-              <tr>
-                <td><code>printBackground</code></td>
-                <td>true (couleurs de fond)</td>
-              </tr>
-              <tr>
-                <td><code>margins</code></td>
-                <td>20mm haut/bas, 15mm gauche/droite</td>
-              </tr>
-            </table>
-          </div>
-        </div>
-
-        <h2>Export DOCX</h2>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge process">PROCESS</span>
-            <span class="data-flow-title">Génération DOCX</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Pipeline</h5>
-            <pre><code>// lib/features/export/docxExporter.js
-import { Document, Packer, Paragraph, TextRun } from 'docx';
-
-export async function exportToDocx(cvData) {
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children: [
-        // Header
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${cvData.header.firstName} ${cvData.header.lastName}`,
-              bold: true,
-              size: 32
-            })
-          ]
-        }),
-
-        // Contact info
-        new Paragraph({
-          children: [
-            new TextRun({ text: cvData.header.email }),
-            new TextRun({ text: ' | ' }),
-            new TextRun({ text: cvData.header.phone || '' })
-          ]
-        }),
-
-        // Summary
-        new Paragraph({
-          heading: 'Heading2',
-          children: [new TextRun({ text: 'Résumé Professionnel', bold: true })]
-        }),
-        new Paragraph({
-          children: [new TextRun({ text: cvData.sections.summary?.content || '' })]
-        }),
-
-        // Experiences
-        ...renderExperiences(cvData.sections.experiences),
-
-        // Skills
-        ...renderSkills(cvData.sections.skills),
-
-        // Education
-        ...renderEducation(cvData.sections.education)
-      ]
-    }]
-  });
-
-  return await Packer.toBuffer(doc);
-}</code></pre>
-          </div>
-        </div>
-
-        <h2>API Endpoints</h2>
+        <p>Le endpoint <code>/api/export-templates</code> gère les templates de sélection sauvegardés par l'utilisateur :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Endpoint</th>
               <th>Méthode</th>
-              <th>Description</th>
+              <th>Action</th>
+              <th>Détails</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>/api/cv/[id]/export/pdf</code></td>
-              <td>GET</td>
-              <td>Exporter en PDF</td>
+              <td><code>GET</code></td>
+              <td>Lister les templates</td>
+              <td>Tous les <code>ExportTemplate</code> de l'utilisateur</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]/export/docx</code></td>
-              <td>GET</td>
-              <td>Exporter en DOCX</td>
+              <td><code>POST</code></td>
+              <td>Créer un template</td>
+              <td>Vérifie les noms dupliqués, stocke les sélections en JSON</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Exemple d'utilisation</h3>
+        <h3>Export Storage (client)</h3>
 
-        <pre><code>// Client-side
-const downloadPdf = async (cvId) => {
-  const response = await fetch(`/api/cv/${cvId}/export/pdf?template=modern`);
+        <p>Le module <code>lib/export/exportStorage.js</code> gère la persistance locale des préférences d'export par CV via <code>localStorage</code>.</p>
 
-  if (!response.ok) {
-    throw new Error('Export failed');
-  }
+        <h3>Selection Helpers</h3>
 
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  // Déclencher le téléchargement
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `cv-${cvId}.pdf`;
-  a.click();
-
-  URL.revokeObjectURL(url);
-};</code></pre>
-
-        <h2>Optimisations ATS</h2>
-
-        <div class="callout callout-warning">
-          <div class="callout-title">Compatibilité ATS</div>
-          <p>Les exports sont optimisés pour les systèmes de suivi des candidatures (ATS).</p>
-        </div>
-
+        <p>Le module <code>lib/export/selectionHelpers.js</code> fournit :</p>
         <ul>
-          <li><strong>Structure sémantique</strong> : Balises HTML5 appropriées (h1, h2, section)</li>
-          <li><strong>Texte sélectionnable</strong> : Pas d'images pour le texte</li>
-          <li><strong>Polices standards</strong> : Arial, Helvetica, sans-serif</li>
-          <li><strong>Pas de tableaux complexes</strong> : Layout CSS Grid/Flexbox</li>
-          <li><strong>Ordre logique</strong> : Contenu dans l'ordre de lecture</li>
+          <li><code>getDefaultSelections()</code> — Sélections par défaut (toutes les sections activées)</li>
+          <li><code>migrateSelections()</code> — Migration des anciennes sélections vers le nouveau format</li>
+          <li><code>calculateCounters()</code> — Calcul des compteurs d'éléments sélectionnés</li>
+          <li><code>extractMacroSelections()</code> — Extraction des sélections au niveau macro (section)</li>
         </ul>
 
-        <h2>Fichiers Clés</h2>
+        <h2>Gestion des crédits</h2>
+
+        <p>Les deux endpoints d'export (PDF et DOCX) suivent le même pattern de gestion des crédits :</p>
+
+        <pre><code class="language-javascript">// 1. Débit avant l'export
+const featureResult = await incrementFeatureCounter(userId, featureName);
+const { usageId } = featureResult;
+
+try {
+  // 2. Génération du fichier (PDF ou DOCX)
+  const buffer = await generateExport(html);
+  return new Response(buffer, { headers: { ... } });
+} catch (error) {
+  // 3. Remboursement automatique en cas d'erreur
+  if (usageId) {
+    await refundFeatureUsage(usageId);
+  }
+  throw error;
+}</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Remboursement automatique</strong> — Si l'export échoue après le débit des crédits, la fonction <code>refundFeatureUsage(usageId)</code> rembourse automatiquement le crédit consommé.
+        </div>
+
+        <h2>Traductions des libellés</h2>
+
+        <p>Le module <code>cvTranslations.js</code> supporte 4 langues pour les libellés du CV exporté :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Langue</th>
+              <th>Code</th>
+              <th>Exemples de libellés</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Français</td>
+              <td><code>fr</code></td>
+              <td>Expérience professionnelle, Formation, Compétences</td>
+            </tr>
+            <tr>
+              <td>Anglais</td>
+              <td><code>en</code></td>
+              <td>Work Experience, Education, Skills</td>
+            </tr>
+            <tr>
+              <td>Espagnol</td>
+              <td><code>es</code></td>
+              <td>Experiencia Profesional, Educación, Habilidades</td>
+            </tr>
+            <tr>
+              <td>Allemand</td>
+              <td><code>de</code></td>
+              <td>Berufserfahrung, Ausbildung, Fähigkeiten</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers clés</h2>
 
         <table>
           <thead>
@@ -330,29 +266,52 @@ const downloadPdf = async (cvId) => {
           </thead>
           <tbody>
             <tr>
-              <td><code>lib/features/export/pdfExporter.js</code></td>
-              <td>Export PDF via Puppeteer</td>
+              <td><code>lib/pdf/index.js</code></td>
+              <td>Point d'entrée — ré-exporte tous les modules du pipeline HTML</td>
             </tr>
             <tr>
-              <td><code>lib/features/export/docxExporter.js</code></td>
-              <td>Export DOCX via docx.js</td>
+              <td><code>lib/pdf/cvUtils.js</code></td>
+              <td>Préparation des données CV, tri, filtrage, ordre des sections</td>
             </tr>
             <tr>
-              <td><code>lib/features/export/templates/</code></td>
-              <td>Templates HTML/CSS</td>
+              <td><code>lib/pdf/cvStyles.js</code></td>
+              <td>Styles CSS pour export et prévisualisation</td>
             </tr>
             <tr>
-              <td><code>app/api/cv/[id]/export/</code></td>
-              <td>Endpoints API</td>
+              <td><code>lib/pdf/sectionGenerators.js</code></td>
+              <td>Génération HTML des 7 sections du CV</td>
+            </tr>
+            <tr>
+              <td><code>lib/pdf/cvTranslations.js</code></td>
+              <td>Traductions des libellés en 4 langues</td>
+            </tr>
+            <tr>
+              <td><code>lib/export/exportStorage.js</code></td>
+              <td>Persistance localStorage des préférences d'export</td>
+            </tr>
+            <tr>
+              <td><code>lib/export/selectionHelpers.js</code></td>
+              <td>Helpers de sélection, compteurs, migration</td>
+            </tr>
+            <tr>
+              <td><code>app/api/export-pdf/route.js</code></td>
+              <td>Endpoint export PDF (Puppeteer)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/export-word/route.js</code></td>
+              <td>Endpoint export DOCX (bibliothèque docx)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/export-templates/route.js</code></td>
+              <td>CRUD des templates de sélection</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Prochaines Sections</h2>
-
+        <h2>Prochaines sections</h2>
         <ul>
-          <li><a href="./pdf.html">Export PDF</a> - Génération PDF via Puppeteer</li>
-          <li><a href="./docx.html">Export DOCX</a> - Génération Word</li>
+          <li><a href="./pdf.html">Export PDF</a> — Détails du pipeline Puppeteer</li>
+          <li><a href="./docx.html">Export DOCX</a> — Détails de la génération Word</li>
         </ul>
       </div>
     </main>
@@ -368,7 +327,6 @@ const downloadPdf = async (cvId) => {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

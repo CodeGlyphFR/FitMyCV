@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CV Mod&egrave;le depuis Titre | FitMyCV.io</title>
+  <title>CV Mod&egrave;le depuis Titre - G&eacute;n&eacute;ration | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -34,320 +28,351 @@
 
         <h1>CV Mod&egrave;le depuis Titre de Poste</h1>
         <p class="lead">
-          G&eacute;n&eacute;ration d'un CV mod&egrave;le (fictif professionnel) &agrave; partir d'un simple titre de poste. L'IA g&eacute;n&egrave;re un CV complet bas&eacute; sur les exigences typiques du march&eacute; pour ce m&eacute;tier.
+          La fonction <code>generateCvFromJobTitle()</code> g&eacute;n&egrave;re un CV professionnel fictif complet &agrave; partir d'un simple titre de poste et d'une langue cible. Contrairement au pipeline "depuis offre", aucune extraction pr&eacute;alable n'est n&eacute;cessaire : l'IA invente directement un profil coh&eacute;rent pour le m&eacute;tier demand&eacute;.
         </p>
 
         <div class="callout callout-info">
-          <div class="callout-title">Co&ucirc;t</div>
-          <p><strong>Feature</strong> : <code>generate_from_job_title</code> - Utilise les limites mensuelles ou d&eacute;bite 1 cr&eacute;dit. Le cr&eacute;dit est d&eacute;bit&eacute; au lancement et rembours&eacute; en cas d'&eacute;chec.</p>
+          <div class="callout-title">Fichier source</div>
+          <p><code>lib/features/job-title-generation/service.js</code></p>
         </div>
 
-        <div class="callout callout-warning">
-          <div class="callout-title">Diff&eacute;rence avec "Depuis Offre"</div>
-          <p>Cette m&eacute;thode g&eacute;n&egrave;re un CV <strong>g&eacute;n&eacute;rique</strong> bas&eacute; sur le titre seul. Pour un CV plus pr&eacute;cis et adapt&eacute; aux exigences sp&eacute;cifiques d'un employeur, utilisez la <a href="./template-from-offer.html">g&eacute;n&eacute;ration depuis offre</a>.</p>
-        </div>
+        <!-- ==================== SIGNATURE ==================== -->
+        <h2>Signature de la Fonction</h2>
 
-        <h2>Pipeline de G&eacute;n&eacute;ration</h2>
+        <pre><code class="language-javascript">export async function generateCvFromJobTitle({
+  jobTitle,              // Titre du poste (ex: "D&eacute;veloppeur Full Stack Senior")
+  language = 'fran&ccedil;ais',  // Langue cible du CV
+  signal = null,         // AbortSignal pour annulation
+  userId = null          // ID utilisateur pour le tracking
+})</code></pre>
 
-        <div class="diagram">
-          <div class="diagram-title">Flux de g&eacute;n&eacute;ration depuis titre</div>
-          <div class="mermaid">
-flowchart TB
-    subgraph Input["ENTR&Eacute;E"]
-        Title["Titre de poste"]
-        Lang["Langue du CV"]
-    end
+        <p>La fonction retourne un objet contenant le CV g&eacute;n&eacute;r&eacute; :</p>
 
-    subgraph Generate["G&Eacute;N&Eacute;RATION"]
-        Schema["Chargement<br/>template.json"]
-        Prompt["Construction<br/>prompt"]
-        GPT["GPT G&eacute;n&eacute;ration CV"]
-        Validate["Validation JSON"]
-    end
-
-    subgraph Output["SORTIE"]
-        CvFile["CvFile cr&eacute;&eacute;"]
-        Task["BackgroundTask<br/>compl&eacute;t&eacute;e"]
-    end
-
-    Title --> Prompt
-    Lang --> Prompt
-    Schema --> Prompt
-    Prompt --> GPT
-    GPT --> Validate
-    Validate --> CvFile
-    Validate --> Task
-          </div>
-        </div>
-
-        <h2>Data Flow D&eacute;taill&eacute;</h2>
-
-        <h3>&Eacute;tape 1 : R&eacute;ception de la Requ&ecirc;te</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge input">INPUT</span>
-            <span class="data-flow-title">Requ&ecirc;te FormData</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Endpoint</h5>
-            <p><code>POST /api/background-tasks/generate-cv-from-job-title</code></p>
-
-            <h5>Param&egrave;tres</h5>
-            <pre><code class="language-javascript">// FormData
+        <pre><code class="language-javascript">// Retour de generateCvFromJobTitle()
 {
-  jobTitle: "Chef de projet IT",      // Titre de poste (requis)
-  language: "fran&ccedil;ais",              // Langue du CV (d&eacute;faut: fran&ccedil;ais)
-  model: "gpt-4o",                    // Optionnel
-  deviceId: "device_xxx",             // Identification appareil
-  recaptchaToken: "..."               // Optionnel
+  cvContent,    // JSON string du CV g&eacute;n&eacute;r&eacute;
+  jobTitle,     // Titre du poste utilis&eacute;
+  language,     // Langue du CV g&eacute;n&eacute;r&eacute;
 }</code></pre>
 
-            <h5>Validation</h5>
-            <ul>
-              <li><code>jobTitle</code> requis et non vide</li>
-              <li>V&eacute;rification reCAPTCHA si token fourni</li>
-              <li>Feature check via <code>incrementFeatureCounter</code></li>
-            </ul>
-          </div>
-        </div>
-
-        <h3>&Eacute;tape 2 : Cr&eacute;ation de la T&acirc;che</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge process">PROCESS</span>
-            <span class="data-flow-title">BackgroundTask</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Enregistrement</h5>
-            <pre><code class="language-javascript">// app/api/background-tasks/generate-cv-from-job-title/route.js
-const taskId = `task_job_title_${timestamp}_${random}`;
-
-await prisma.backgroundTask.create({
-  data: {
-    id: taskId,
-    userId,
-    title: `G&eacute;n&eacute;ration de CV pour "${jobTitle}"`,
-    successMessage: `CV pour "${jobTitle}" cr&eacute;&eacute; avec succ&egrave;s`,
-    type: 'job-title-generation',
-    status: 'queued',
-    shouldUpdateCvList: true,
-    payload: JSON.stringify({
-      jobTitle: trimmedJobTitle,
-      language: language,
-      model: requestedModel
-    }),
-    creditUsed: usageResult.usedCredit,
-    creditTransactionId: usageResult.transactionId
-  }
-});</code></pre>
-
-            <h5>Lancement du Job</h5>
-            <pre><code class="language-javascript">scheduleGenerateCvFromJobTitleJob({
-  taskId,
-  user: { id: userId, name: session.user?.name },
-  payload: taskPayload,
-  deviceId
-});</code></pre>
-          </div>
-        </div>
-
-        <h3>&Eacute;tape 3 : G&eacute;n&eacute;ration IA</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge ai">IA</span>
-            <span class="data-flow-title">GPT - G&eacute;n&eacute;ration CV</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Mod&egrave;le utilis&eacute;</h5>
-            <p>R&eacute;cup&eacute;r&eacute; depuis les settings : <code>model_generate_from_job_title</code></p>
-            <pre><code class="language-javascript">const model = await getAiModelSetting('model_generate_from_job_title');</code></pre>
-
-            <h5>Prompts</h5>
-            <pre><code class="language-markdown"># lib/features/job-title-generation/prompts/generate-from-job-title/system.md
-
-Tu es un expert en cr&eacute;ation de CV professionnels.
-Ta mission est de g&eacute;n&eacute;rer un CV FICTIF mais REALISTE
-pour un candidat correspondant au titre de poste donn&eacute;.
-
-# R&Egrave;GLES
-1. G&eacute;n&egrave;re un candidat FICTIF complet (nom, contact, parcours)
-2. Le parcours doit &ecirc;tre COHERENT avec le titre de poste
-3. Inclus les comp&eacute;tences TYPIQUES pour ce m&eacute;tier
-4. Respecte STRICTEMENT le sch&eacute;ma JSON fourni
-5. G&eacute;n&egrave;re le CV dans la LANGUE demand&eacute;e</code></pre>
-
-            <pre><code class="language-markdown"># lib/features/job-title-generation/prompts/generate-from-job-title/user.md
-
-G&eacute;n&egrave;re un CV pour le titre de poste suivant :
-
-**Titre de poste** : {{jobTitle}}
-**Langue du CV** : {{language}}
-
-**Sch&eacute;ma JSON &agrave; respecter** :
-{{cvSchema}}</code></pre>
-
-            <h5>Appel OpenAI</h5>
-            <pre><code class="language-javascript">// lib/features/job-title-generation/service.js
-const response = await client.chat.completions.create({
-  model,
-  messages: [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt }
-  ],
-  response_format: { type: 'json_object' }
-}, fetchOptions);</code></pre>
-
-            <h5>Validation du R&eacute;sultat</h5>
-            <pre><code class="language-javascript">// Valider que c'est du JSON valide
-let parsedCV;
-try {
-  parsedCV = JSON.parse(rawContent);
-} catch (parseError) {
-  throw new Error(JSON.stringify({
-    translationKey: 'errors.api.openai.invalidJsonResponse'
-  }));
-}
-
-// V&eacute;rifier que le CV contient les champs essentiels
-if (!parsedCV.header?.full_name || !parsedCV.header?.current_title) {
-  throw new Error(JSON.stringify({
-    translationKey: 'errors.api.openai.incompleteCv'
-  }));
-}</code></pre>
-          </div>
-        </div>
-
-        <h3>&Eacute;tape 4 : Sauvegarde</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">CvFile cr&eacute;&eacute;</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Stockage</h5>
-            <pre><code class="language-javascript">// lib/features/job-title-generation/job.js
-const cvFile = await prisma.cvFile.create({
-  data: {
-    userId,
-    filename: `cv-${jobTitle.replace(/\s+/g, '-')}-${Date.now()}.json`,
-    content: cvContent,
-    language: language === 'fran&ccedil;ais' ? 'fr' : language.slice(0, 2),
-    metadata: {
-      origin: 'job_title_generation',
-      jobTitle: jobTitle,
-      generatedAt: new Date().toISOString()
-    }
-  }
-});</code></pre>
-
-            <h5>Exemple de CV g&eacute;n&eacute;r&eacute;</h5>
-            <pre><code class="language-json">{
-  "header": {
-    "full_name": "Thomas Martin",
-    "current_title": "Chef de Projet IT",
-    "contact": {
-      "email": "thomas.martin@email.com",
-      "phone": "+33 6 98 76 54 32",
-      "location": {
-        "city": "Lyon",
-        "region": "Auvergne-Rh&ocirc;ne-Alpes",
-        "country_code": "FR"
-      },
-      "links": [
-        {
-          "type": "linkedin",
-          "url": "https://linkedin.com/in/thomasmartin"
-        }
-      ]
-    }
-  },
-  "summary": {
-    "description": "Chef de Projet IT avec 6 ans d'exp&eacute;rience dans la conduite de projets de transformation digitale..."
-  },
-  "skills": {
-    "hard_skills": [
-      { "name": "Gestion de projet Agile", "proficiency": 5 },
-      { "name": "JIRA", "proficiency": 4 },
-      { "name": "MS Project", "proficiency": 4 }
-    ],
-    "soft_skills": ["Leadership", "Communication", "R&eacute;solution de probl&egrave;mes"],
-    "methodologies": ["Scrum", "Kanban", "PRINCE2"]
-  },
-  "experience": [
-    {
-      "title": "Chef de Projet IT Senior",
-      "company": "Digital Solutions SA",
-      "start_date": "2020-03",
-      "end_date": null,
-      "responsibilities": [
-        "Pilotage de 5 projets de transformation digitale",
-        "Management d'une &eacute;quipe de 8 d&eacute;veloppeurs",
-        "Budget g&eacute;r&eacute; : 2M EUR annuel"
-      ]
-    }
-  ],
-  "education": [
-    {
-      "institution": "INSA Lyon",
-      "degree": "Master",
-      "field_of_study": "Informatique",
-      "start_date": "2013-09",
-      "end_date": "2018-06"
-    }
-  ],
-  "languages": [
-    { "name": "Fran&ccedil;ais", "level": "Natif" },
-    { "name": "Anglais", "level": "Courant (C1)" }
-  ]
-}</code></pre>
-          </div>
-        </div>
-
+        <!-- ==================== LANGUES ==================== -->
         <h2>Langues Support&eacute;es</h2>
-
-        <p>Le CV peut &ecirc;tre g&eacute;n&eacute;r&eacute; dans les <strong>4 langues</strong> de l'application :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Valeur</th>
-              <th>Langue du CV</th>
-              <th>Code ISO</th>
+              <th>Langue</th>
+              <th>Valeur du param&egrave;tre</th>
+              <th>D&eacute;faut</th>
             </tr>
           </thead>
           <tbody>
             <tr>
+              <td>Fran&ccedil;ais</td>
               <td><code>fran&ccedil;ais</code></td>
-              <td>Fran&ccedil;ais (d&eacute;faut)</td>
-              <td>fr</td>
+              <td><span class="badge badge-success">Oui</span></td>
             </tr>
             <tr>
-              <td><code>anglais</code></td>
               <td>Anglais</td>
-              <td>en</td>
+              <td><code>anglais</code></td>
+              <td></td>
             </tr>
             <tr>
-              <td><code>allemand</code></td>
               <td>Allemand</td>
-              <td>de</td>
+              <td><code>allemand</code></td>
+              <td></td>
             </tr>
             <tr>
-              <td><code>espagnol</code></td>
               <td>Espagnol</td>
-              <td>es</td>
+              <td><code>espagnol</code></td>
+              <td></td>
             </tr>
           </tbody>
         </table>
 
-        <div class="callout callout-success">
-          <div class="callout-title">Mapping automatique</div>
-          <p>La langue de l'interface utilisateur est automatiquement mapp&eacute;e vers la valeur attendue par l'API. Le mapping se fait via <code>LOCALE_TO_LANGUAGE</code> dans <code>CvGeneratorModal.jsx</code>.</p>
+        <div class="callout callout-info">
+          <div class="callout-title">Langue par d&eacute;faut</div>
+          <p>Si aucune langue n'est sp&eacute;cifi&eacute;e, le CV est g&eacute;n&eacute;r&eacute; en <strong>fran&ccedil;ais</strong>. La langue est transmise dans le prompt utilisateur pour que l'IA g&eacute;n&egrave;re tout le contenu dans la langue cible.</p>
         </div>
 
+        <!-- ==================== PIPELINE FLOWCHART ==================== -->
+        <h2>Pipeline Complet</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline de g&eacute;n&eacute;ration CV mod&egrave;le depuis titre de poste</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTREE"]
+        Title["Titre de poste"]
+        Lang["Langue cible"]
+    end
+
+    subgraph Step1["ETAPE 1 - VERIFICATION"]
+        Credits["checkOpenAICredits()&lt;br/&gt;V&eacute;rification budget OpenAI"]
+        Model["getAiModelSetting()&lt;br/&gt;'model_generate_from_job_title'"]
+    end
+
+    subgraph Step2["ETAPE 2 - VALIDATION (DESACTIVEE)"]
+        Validate["validateJobTitle()&lt;br/&gt;BYPASSEE - tous les titres accept&eacute;s"]
+    end
+
+    subgraph Step3["ETAPE 3 - PREPARATION"]
+        Schema["getCvSchema()&lt;br/&gt;data/template.json (ou fallback)"]
+        Prompts["Chargement prompts&lt;br/&gt;system.md + user.md"]
+    end
+
+    subgraph Step4["ETAPE 4 - GENERATION IA"]
+        Call["OpenAI chat.completions.create()&lt;br/&gt;response_format: json_object"]
+    end
+
+    subgraph Step5["ETAPE 5 - VALIDATION RESULTAT"]
+        Parse["JSON.parse()"]
+        Check{"parsedCV.header.full_name&lt;br/&gt;ET&lt;br/&gt;parsedCV.header.current_title&lt;br/&gt;existent ?"}
+    end
+
+    subgraph Step6["ETAPE 6 - TRACKING"]
+        Track["trackOpenAIUsage()&lt;br/&gt;featureName: generate_from_job_title"]
+    end
+
+    subgraph Output["SORTIE"]
+        Result["{ cvContent, jobTitle, language }"]
+        Error["Erreur : CV invalide"]
+    end
+
+    Title --> Credits
+    Lang --> Credits
+    Credits --> Model --> Validate
+    Validate --> Schema --> Prompts
+    Prompts --> Call
+    Schema --> Call
+    Call --> Parse --> Check
+    Check -->|Oui| Track --> Result
+    Check -->|Non| Error
+          </div>
+        </div>
+
+        <!-- ==================== ETAPES DETAILLEES ==================== -->
+        <h2>&Eacute;tapes D&eacute;taill&eacute;es</h2>
+
+        <!-- ===== Etape 1 ===== -->
+        <h3>&Eacute;tape 1 : V&eacute;rification</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">VERIFICATION &mdash; Pr&eacute;requis avant g&eacute;n&eacute;ration</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Composants initialis&eacute;s</div>
+            <ol>
+              <li><code>checkOpenAICredits()</code> &mdash; V&eacute;rifie que le budget OpenAI n'est pas &eacute;puis&eacute;</li>
+              <li><code>getAiModelSetting('model_generate_from_job_title')</code> &mdash; R&eacute;cup&egrave;re le mod&egrave;le IA configur&eacute; pour cette fonctionnalit&eacute;</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- ===== Etape 2 ===== -->
+        <h3>&Eacute;tape 2 : Validation du Titre (D&eacute;sactiv&eacute;e)</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">VALIDATION TITRE &mdash; Fonction existante mais bypass&eacute;e</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">validateJobTitle() &mdash; D&eacute;sactiv&eacute;e</div>
+            <p>La fonction <code>validateJobTitle()</code> existe dans le code mais est actuellement <strong>bypass&eacute;e</strong>. Tous les titres de poste sont accept&eacute;s sans validation pr&eacute;alable.</p>
+          </div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Fonctionnement (si r&eacute;activ&eacute;e)</div>
+            <ul>
+              <li>Utilise le mod&egrave;le <code>model_generate_from_job_title</code></li>
+              <li>Charge les prompts depuis <code>lib/features/job-title-generation/prompts/validate-job-title/system.md</code> et <code>user.md</code></li>
+              <li>Retourne <code>VALIDE</code> ou <code>INVALIDE</code></li>
+              <li>Objectif : rejeter les titres absurdes ou offensants</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Validation d&eacute;sactiv&eacute;e</div>
+          <p>La validation du titre de poste est actuellement d&eacute;sactiv&eacute;e. Tous les titres soumis par l'utilisateur sont accept&eacute;s et transmis directement &agrave; l'IA pour la g&eacute;n&eacute;ration du CV. Cette d&eacute;cision a &eacute;t&eacute; prise pour simplifier le flux et &eacute;viter les faux positifs de la validation IA.</p>
+        </div>
+
+        <!-- ===== Etape 3 ===== -->
+        <h3>&Eacute;tape 3 : Pr&eacute;paration</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">PREPARATION &mdash; Chargement du sch&eacute;ma et des prompts</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Sch&eacute;ma CV</div>
+            <p><code>getCvSchema()</code> charge le sch&eacute;ma depuis <code>data/template.json</code>. En cas d'erreur de lecture, un sch&eacute;ma par d&eacute;faut est utilis&eacute; en fallback.</p>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Prompts</div>
+            <table>
+              <tr>
+                <td><strong>System prompt</strong></td>
+                <td><code>lib/features/job-title-generation/prompts/generate-from-job-title/system.md</code></td>
+              </tr>
+              <tr>
+                <td><strong>User prompt</strong></td>
+                <td><code>lib/features/job-title-generation/prompts/generate-from-job-title/user.md</code></td>
+              </tr>
+            </table>
+            <p>Le user prompt re&ccedil;oit le titre de poste, la langue cible et le sch&eacute;ma CV comme variables de template.</p>
+          </div>
+        </div>
+
+        <!-- ===== Etape 4 ===== -->
+        <h3>&Eacute;tape 4 : G&eacute;n&eacute;ration IA</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">GENERATION IA &mdash; Appel OpenAI</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Configuration OpenAI</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Param&egrave;tre</th>
+                  <th>Valeur</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>model</code></td>
+                  <td>Via <code>getAiModelSetting('model_generate_from_job_title')</code></td>
+                </tr>
+                <tr>
+                  <td><code>response_format</code></td>
+                  <td><code>{ type: 'json_object' }</code></td>
+                </tr>
+                <tr>
+                  <td><code>messages</code></td>
+                  <td>System prompt + User prompt (avec titre, langue, sch&eacute;ma)</td>
+                </tr>
+                <tr>
+                  <td><code>AbortSignal</code></td>
+                  <td>Optionnel &mdash; permet l'annulation</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">R&eacute;sultat brut</div>
+            <pre><code class="language-javascript">const response = await client.chat.completions.create(requestOptions, fetchOptions);
+const content = response.choices[0].message.content;
+const parsedCV = JSON.parse(content);</code></pre>
+          </div>
+        </div>
+
+        <!-- ===== Etape 5 ===== -->
+        <h3>&Eacute;tape 5 : Validation du R&eacute;sultat</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">VALIDATION &mdash; V&eacute;rification du CV g&eacute;n&eacute;r&eacute;</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Crit&egrave;res obligatoires</div>
+            <table>
+              <tr>
+                <td><code>parsedCV.header.full_name</code></td>
+                <td>Le CV doit contenir un nom complet</td>
+                <td><span class="badge badge-error">Obligatoire</span></td>
+              </tr>
+              <tr>
+                <td><code>parsedCV.header.current_title</code></td>
+                <td>Le CV doit contenir un titre de poste</td>
+                <td><span class="badge badge-error">Obligatoire</span></td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Comportement</div>
+            <p>Si l'un des deux champs est absent, la g&eacute;n&eacute;ration est consid&eacute;r&eacute;e comme &eacute;chou&eacute;e et une erreur est lev&eacute;e. Le CV incomplet n'est pas retourn&eacute; &agrave; l'utilisateur.</p>
+          </div>
+        </div>
+
+        <!-- ===== Etape 6 ===== -->
+        <h3>&Eacute;tape 6 : Tracking</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">TRACKING &mdash; Enregistrement de l'utilisation</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">trackOpenAIUsage()</div>
+            <pre><code class="language-javascript">await trackOpenAIUsage({
+  userId,
+  featureName: 'generate_from_job_title',
+  model,
+  promptTokens: response.usage.prompt_tokens,
+  completionTokens: response.usage.completion_tokens,
+  duration,
+});</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== API ENDPOINT ==================== -->
+        <h2>API Endpoint</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">POST /api/background-tasks/generate-cv-from-job-title</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Requ&ecirc;te (FormData)</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Champ</th>
+                  <th>Type</th>
+                  <th>Requis</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>jobTitle</code></td>
+                  <td><code>string</code></td>
+                  <td><span class="badge badge-error">Oui</span></td>
+                  <td>Titre du poste (ex: "Chef de Projet Digital")</td>
+                </tr>
+                <tr>
+                  <td><code>language</code></td>
+                  <td><code>string</code></td>
+                  <td>Non</td>
+                  <td>Langue du CV (d&eacute;faut: <code>fran&ccedil;ais</code>)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Traitement</div>
+            <ul>
+              <li>Cr&eacute;e une seule <code>BackgroundTask</code></li>
+              <li>Feature utilis&eacute;e pour les cr&eacute;dits : <code>generate_from_job_title</code></li>
+              <li>Le r&eacute;sultat contient le CV g&eacute;n&eacute;r&eacute; en JSON</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">R&eacute;ponse</div>
+            <pre><code class="language-javascript">// R&eacute;ponse API
+{
+  success: true,
+  task: {
+    id: "task-id",
+    status: "pending",
+    jobTitle: "D&eacute;veloppeur Full Stack Senior",
+    language: "fran&ccedil;ais",
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== GESTION DES ERREURS ==================== -->
         <h2>Gestion des Erreurs</h2>
 
         <table>
@@ -355,57 +380,74 @@ const cvFile = await prisma.cvFile.create({
             <tr>
               <th>Erreur</th>
               <th>Cause</th>
-              <th>Action</th>
+              <th>&Eacute;tape</th>
+              <th>Comportement</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>NO_JOB_TITLE_PROVIDED</code></td>
-              <td>Titre manquant ou vide</td>
-              <td>Rejet imm&eacute;diat, pas de d&eacute;bit</td>
+              <td><span class="badge badge-error">Budget &eacute;puis&eacute;</span></td>
+              <td><code>checkOpenAICredits()</code> &eacute;choue</td>
+              <td>1</td>
+              <td>Pipeline interrompu imm&eacute;diatement</td>
             </tr>
             <tr>
-              <td><code>FEATURE_LIMIT_REACHED</code></td>
-              <td>Limite mensuelle atteinte</td>
-              <td>Rejet, proposition achat cr&eacute;dits</td>
+              <td><span class="badge badge-error">Titre manquant</span></td>
+              <td>Param&egrave;tre <code>jobTitle</code> vide ou absent</td>
+              <td>1</td>
+              <td>Erreur de validation requ&ecirc;te</td>
             </tr>
             <tr>
-              <td><code>invalidJsonResponse</code></td>
-              <td>R&eacute;ponse GPT non-JSON</td>
-              <td>Remboursement cr&eacute;dits</td>
+              <td><span class="badge badge-warning">R&eacute;ponse IA vide</span></td>
+              <td>OpenAI retourne un contenu vide</td>
+              <td>4</td>
+              <td>Erreur lev&eacute;e, t&acirc;che marqu&eacute;e en &eacute;chec</td>
             </tr>
             <tr>
-              <td><code>incompleteCv</code></td>
-              <td>CV sans champs essentiels</td>
-              <td>Remboursement cr&eacute;dits</td>
+              <td><span class="badge badge-warning">JSON invalide</span></td>
+              <td><code>JSON.parse()</code> &eacute;choue sur la r&eacute;ponse</td>
+              <td>5</td>
+              <td>Erreur lev&eacute;e, t&acirc;che marqu&eacute;e en &eacute;chec</td>
             </tr>
             <tr>
-              <td><code>gptGenerationFailed</code></td>
-              <td>&Eacute;chec GPT</td>
-              <td>Remboursement cr&eacute;dits</td>
+              <td><span class="badge badge-error">CV incomplet</span></td>
+              <td><code>header.full_name</code> ou <code>header.current_title</code> absent</td>
+              <td>5</td>
+              <td>Erreur lev&eacute;e, CV rejet&eacute;</td>
             </tr>
             <tr>
-              <td><code>Task cancelled</code></td>
-              <td>Annulation utilisateur</td>
-              <td>Remboursement cr&eacute;dits</td>
+              <td><span class="badge badge-warning">T&acirc;che annul&eacute;e</span></td>
+              <td><code>AbortSignal</code> d&eacute;clench&eacute;</td>
+              <td>Toute</td>
+              <td>Pipeline interrompu proprement</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Monitoring</h2>
+        <!-- ==================== MONITORING ==================== -->
+        <h2>Monitoring et Tracking</h2>
 
-        <p>Chaque g&eacute;n&eacute;ration est trac&eacute;e dans <code>OpenAIUsageLog</code> :</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Feature Name</th>
+              <th>Donn&eacute;es Track&eacute;es</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>generate_from_job_title</code></td>
+              <td>Mod&egrave;le IA utilis&eacute;, tokens prompt/completion, dur&eacute;e de l'appel, co&ucirc;t estim&eacute;</td>
+            </tr>
+          </tbody>
+        </table>
 
-        <pre><code class="language-json">{
-  "userId": "user_123",
-  "featureName": "generate_from_job_title",
-  "model": "gpt-4o",
-  "promptTokens": 1800,
-  "completionTokens": 1500,
-  "cachedTokens": 0,
-  "duration": 5200
-}</code></pre>
+        <div class="callout callout-success">
+          <div class="callout-title">Pipeline plus simple</div>
+          <p>Contrairement au pipeline "depuis offre" qui n&eacute;cessite l'extraction et le formatage de l'offre, ce pipeline est plus direct : un seul appel OpenAI suffit pour g&eacute;n&eacute;rer le CV complet. Il n'y a pas de <code>jobOfferId</code> associ&eacute; et pas de cache d'extraction.</p>
+        </div>
 
+        <!-- ==================== FICHIERS CLES ==================== -->
         <h2>Fichiers Cl&eacute;s</h2>
 
         <table>
@@ -417,57 +459,48 @@ const cvFile = await prisma.cvFile.create({
           </thead>
           <tbody>
             <tr>
-              <td><code>app/api/background-tasks/generate-cv-from-job-title/route.js</code></td>
-              <td>Endpoint API</td>
-            </tr>
-            <tr>
               <td><code>lib/features/job-title-generation/service.js</code></td>
-              <td>Service de g&eacute;n&eacute;ration</td>
+              <td><code>generateCvFromJobTitle()</code>, <code>validateJobTitle()</code> (d&eacute;sactiv&eacute;e), <code>getCvSchema()</code></td>
             </tr>
             <tr>
-              <td><code>lib/features/job-title-generation/job.js</code></td>
-              <td>Background job</td>
+              <td><code>lib/features/job-title-generation/prompts/generate-from-job-title/system.md</code></td>
+              <td>System prompt &mdash; instructions IA pour la g&eacute;n&eacute;ration</td>
             </tr>
             <tr>
-              <td><code>lib/features/job-title-generation/prompts/generate-from-job-title/</code></td>
-              <td>Prompts de g&eacute;n&eacute;ration</td>
+              <td><code>lib/features/job-title-generation/prompts/generate-from-job-title/user.md</code></td>
+              <td>User prompt &mdash; titre, langue, sch&eacute;ma CV</td>
             </tr>
             <tr>
-              <td><code>lib/features/job-title-generation/prompts/validate-job-title/</code></td>
-              <td>Prompts de validation (d&eacute;sactiv&eacute;)</td>
+              <td><code>lib/features/job-title-generation/prompts/validate-job-title/system.md</code></td>
+              <td>System prompt &mdash; validation titre (d&eacute;sactiv&eacute;e)</td>
             </tr>
             <tr>
-              <td><code>lib/settings/aiModels.js</code></td>
-              <td>Configuration mod&egrave;le GPT</td>
+              <td><code>lib/features/job-title-generation/prompts/validate-job-title/user.md</code></td>
+              <td>User prompt &mdash; validation titre (d&eacute;sactiv&eacute;e)</td>
             </tr>
             <tr>
-              <td><code>components/TopBar/modals/CvGeneratorModal.jsx</code></td>
-              <td>Interface utilisateur</td>
+              <td><code>data/template.json</code></td>
+              <td>Sch&eacute;ma CV utilis&eacute; pour guider la g&eacute;n&eacute;ration</td>
+            </tr>
+            <tr>
+              <td><code>lib/openai/usage.js</code></td>
+              <td><code>trackOpenAIUsage()</code> &mdash; enregistrement des tokens et co&ucirc;ts</td>
+            </tr>
+            <tr>
+              <td><code>lib/openai/credits.js</code></td>
+              <td><code>checkOpenAICredits()</code> &mdash; v&eacute;rification du budget</td>
+            </tr>
+            <tr>
+              <td><code>lib/openai/models.js</code></td>
+              <td><code>getAiModelSetting()</code> &mdash; r&eacute;cup&eacute;ration du mod&egrave;le configur&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>app/api/background-tasks/generate-cv-from-job-title/route.js</code></td>
+              <td>API endpoint &mdash; d&eacute;clenchement de la t&acirc;che en arri&egrave;re-plan</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>R&eacute;ponse API</h2>
-
-        <h3>Succ&egrave;s (202 Accepted)</h3>
-        <pre><code class="language-json">{
-  "success": true,
-  "queued": true,
-  "taskId": "task_job_title_1234567890_abc123def"
-}</code></pre>
-
-        <h3>Erreur Limite (403 Forbidden)</h3>
-        <pre><code class="language-json">{
-  "error": "Limite mensuelle atteinte",
-  "actionRequired": "purchase_credits",
-  "redirectUrl": "/credits"
-}</code></pre>
-
-        <h3>Erreur Validation (400 Bad Request)</h3>
-        <pre><code class="language-json">{
-  "error": "NO_JOB_TITLE_PROVIDED",
-  "message": "Le titre de poste est requis"
-}</code></pre>
       </div>
     </main>
   </div>
@@ -482,8 +515,6 @@ const cvFile = await prisma.cvFile.create({
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

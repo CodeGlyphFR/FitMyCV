@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Système de Review | FitMyCV.io</title>
+  <title>Syst&egrave;me de Review | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,46 +26,454 @@
           <span>Review</span>
         </div>
 
-
-        <h1>Système de Review</h1>
+        <h1>Syst&egrave;me de Review</h1>
         <p class="lead">
-          Interface permettant a l'utilisateur de valider ou rejeter les suggestions d'optimisation.
+          Le syst&egrave;me de review permet &agrave; l'utilisateur d'<strong>accepter ou rejeter</strong> chaque modification apport&eacute;e par l'IA lors de la g&eacute;n&eacute;ration d'un CV. Il repose sur un <strong>change tracking</strong> initialis&eacute; pendant la phase de recomposition (<code>recompose.js</code>), des fonctions de diff programmatique, et un endpoint API d&eacute;di&eacute; (<code>POST /api/cv/apply-review</code>) qui applique les d&eacute;cisions de l'utilisateur.
         </p>
 
-        <h2>Etats des Suggestions</h2>
+        <!-- ==================== DIAGRAMME D'ETAT ==================== -->
+        <h2>Flux de Review</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'un changement dans le syst&egrave;me de review</div>
+          <div class="mermaid">
+stateDiagram-v2
+    [*] --> pending: Generation CV terminee
+    pending --> accepted: Utilisateur accepte
+    pending --> rejected: Utilisateur rejete
+
+    state "Batch Review" as batch {
+        pending --> all_accepted: Accepter tout
+        pending --> all_rejected: Rejeter tout
+    }
+
+    accepted --> applied: POST /api/cv/apply-review
+    rejected --> applied: POST /api/cv/apply-review
+
+    applied --> [*]: CvVersion creee (origin: review)
+
+    note right of pending
+        Initialise par initializeReviewState()
+        dans recompose.js
+    end note
+
+    note right of applied
+        applySelectiveChanges() construit
+        le CV final avec les decisions
+    end note
+          </div>
+        </div>
+
+        <!-- ==================== INITIALISATION ==================== -->
+        <h2>Initialisation du Review State</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/recompose.js</code></p>
+        <p>L'&eacute;tat de review est initialis&eacute; &agrave; la fin de la phase de recomposition du pipeline de g&eacute;n&eacute;ration :</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">RECOMPOSE - Initialisation du change tracking</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Processus en 4 &eacute;tapes</div>
+            <ol>
+              <li><strong><code>extractChangesFromBatchResults()</code></strong> &mdash; Extrait les modifications de l'IA depuis les <code>batchResults</code> (experiences, summary, skills, extras, education, languages). D&eacute;tecte les champs modifi&eacute;s via les champs <code>_reason</code> et les <code>skill_changes</code>.</li>
+              <li><strong><code>computeCvDiff()</code></strong> &mdash; D&eacute;tecte les changements programmatiques (suppressions, ajouts) par diff entre le CV adapt&eacute; et le CV source.</li>
+              <li><strong><code>mergeTranslationPairs()</code></strong> &mdash; Fusionne les paires <code>removed + added</code> qui sont des traductions en un seul changement <code>modified</code> (via <code>isLikelyTranslation()</code>).</li>
+              <li><strong><code>initializeReviewState()</code></strong> &mdash; Stocke la liste d&eacute;dupliqu&eacute;e des changements en DB avec <code>status: 'pending'</code> pour chaque changement.</li>
+            </ol>
+          </div>
+        </div>
+
+        <h3>Sources des Changements</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Changements IA (<code>extractChangesFromBatchResults</code>)</h4>
+            <p>Extraits depuis les r&eacute;sultats des batches avec les raisons de l'IA :</p>
+            <ul>
+              <li><strong>Experiences</strong> &mdash; title, description, responsibilities, deliverables, skills_used (via <code>_reason</code> et <code>skill_changes</code>)</li>
+              <li><strong>Summary</strong> &mdash; description (via <code>modifications[]</code>)</li>
+              <li><strong>Skills</strong> &mdash; renamed, deleted, kept (traduit), multi_renamed (consolidation) (via <code>_raw</code>)</li>
+              <li><strong>Extras</strong> &mdash; modified, removed, added (via <code>extras_modifications</code>)</li>
+              <li><strong>Education</strong> &mdash; degree, field_of_study (via <code>education_modifications</code>)</li>
+              <li><strong>Languages</strong> &mdash; name, level (via <code>language_modifications</code>)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Changements Programmatiques (<code>computeCvDiff</code>)</h4>
+            <p>D&eacute;tect&eacute;s par diff algorithmique :</p>
+            <ul>
+              <li><strong>removed</strong> &mdash; &Eacute;l&eacute;ments pr&eacute;sents dans le CV source mais absents du CV adapt&eacute;</li>
+              <li><strong>experience_removed</strong> &mdash; Exp&eacute;riences enti&egrave;res supprim&eacute;es (classification REMOVE)</li>
+              <li><strong>added</strong> &mdash; &Eacute;l&eacute;ments nouveaux dans le CV adapt&eacute; (non document&eacute;s par l'IA)</li>
+            </ul>
+            <p>Ces changements sont d&eacute;dupliqu&eacute;s avec les changements IA pour &eacute;viter les doublons.</p>
+          </div>
+        </div>
+
+        <!-- ==================== STRUCTURE CHANGE ==================== -->
+        <h2>Structure d'un Changement</h2>
+
+        <pre><code class="language-json">{
+  "id": "change_a1b2c3d4",
+  "section": "experience",
+  "field": "responsibilities",
+  "path": "experience[0].responsibilities",
+  "expIndex": 0,
+  "changeType": "modified",
+  "itemName": "Responsabilites",
+  "beforeValue": ["Ancien texte responsabilite 1", "Ancien texte responsabilite 2"],
+  "afterValue": ["Nouveau texte responsabilite 1", "Nouveau texte 2", "Nouveau texte 3"],
+  "beforeDisplay": "Ancien texte responsabilite 1\nAncien texte responsabilite 2",
+  "afterDisplay": "Nouveau texte responsabilite 1\nNouveau texte 2\nNouveau texte 3",
+  "change": "Responsabilites modifiees dans \"Senior Developer @ Acme Corp\"",
+  "reason": "Ajout de responsabilites Kubernetes pour matcher l'offre",
+  "status": "pending"
+}</code></pre>
 
         <table>
           <thead>
             <tr>
-              <th>Statut</th>
+              <th>Champ</th>
+              <th>Type</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>pending</code></td>
-              <td>En attente de decision</td>
+              <td><code>id</code></td>
+              <td><code>string</code></td>
+              <td>Identifiant unique g&eacute;n&eacute;r&eacute; par <code>generateChangeId()</code></td>
             </tr>
             <tr>
-              <td><code>accepted</code></td>
-              <td>Acceptee, prete a appliquer</td>
+              <td><code>section</code></td>
+              <td><code>string</code></td>
+              <td>Section du CV : <code>experience</code>, <code>summary</code>, <code>skills</code>, <code>extras</code>, <code>education</code>, <code>languages</code></td>
             </tr>
             <tr>
-              <td><code>rejected</code></td>
-              <td>Rejetee par l'utilisateur</td>
+              <td><code>field</code></td>
+              <td><code>string</code></td>
+              <td>Champ sp&eacute;cifique modifi&eacute; (ex: <code>responsibilities</code>, <code>hard_skills</code>, <code>degree</code>)</td>
             </tr>
             <tr>
-              <td><code>applied</code></td>
-              <td>Appliquee au CV</td>
+              <td><code>path</code></td>
+              <td><code>string</code></td>
+              <td>Chemin complet dans le JSON (ex: <code>experience[0].responsibilities</code>)</td>
+            </tr>
+            <tr>
+              <td><code>changeType</code></td>
+              <td><code>string</code></td>
+              <td><code>added</code>, <code>modified</code>, <code>removed</code>, <code>reordered</code>, <code>multi_renamed</code>, <code>experience_removed</code></td>
+            </tr>
+            <tr>
+              <td><code>beforeValue</code></td>
+              <td><code>any</code></td>
+              <td>Valeur avant modification (string, array ou null)</td>
+            </tr>
+            <tr>
+              <td><code>afterValue</code></td>
+              <td><code>any</code></td>
+              <td>Valeur apr&egrave;s modification (string, array ou null)</td>
+            </tr>
+            <tr>
+              <td><code>reason</code></td>
+              <td><code>string</code></td>
+              <td>Raison de la modification (fournie par l'IA)</td>
+            </tr>
+            <tr>
+              <td><code>status</code></td>
+              <td><code>string</code></td>
+              <td><code>pending</code> (en attente de review), <code>accepted</code>, <code>rejected</code></td>
             </tr>
           </tbody>
         </table>
 
-        <h2>API Endpoints</h2>
+        <!-- ==================== TYPES DE CHANGEMENTS ==================== -->
+        <h2>Types de Changements</h2>
 
-        <pre><code>// POST /api/cv/[id]/suggestions/[suggestionId]/accept
-// POST /api/cv/[id]/suggestions/[suggestionId]/reject
-// POST /api/cv/[id]/suggestions/apply-all</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>changeType</th>
+              <th>Description</th>
+              <th>Exemples</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">added</span></td>
+              <td>&Eacute;l&eacute;ment ajout&eacute; par l'IA</td>
+              <td>Nouvelle responsabilit&eacute;, nouveau skill, nouvelle certification</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">modified</span></td>
+              <td>&Eacute;l&eacute;ment modifi&eacute; (reformulation, traduction)</td>
+              <td>Titre traduit, responsabilit&eacute; reformul&eacute;e, skill renomm&eacute;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">removed</span></td>
+              <td>&Eacute;l&eacute;ment supprim&eacute; par l'IA</td>
+              <td>Skill non pertinent, extra retir&eacute;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">multi_renamed</span></td>
+              <td>Plusieurs skills consolid&eacute;s en un seul</td>
+              <td>"React.js" + "ReactJS" &rarr; "React"</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">experience_removed</span></td>
+              <td>Exp&eacute;rience enti&egrave;re supprim&eacute;e (classification REMOVE)</td>
+              <td>Job &eacute;tudiant non pertinent pour un poste senior</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">reordered</span></td>
+              <td>R&eacute;ordonnancement d'&eacute;l&eacute;ments</td>
+              <td>Langues r&eacute;ordonn&eacute;es par pertinence</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== API APPLY-REVIEW ==================== -->
+        <h2>API : <code>POST /api/cv/apply-review</code></h2>
+
+        <p><strong>Fichier :</strong> <code>app/api/cv/apply-review/route.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">POST /api/cv/apply-review - Application des d&eacute;cisions</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Body de la requ&ecirc;te</div>
+            <pre><code class="language-json">{
+  "offerId": "clx-offer-id-xxx",
+  "decisions": {
+    "experience:0:responsibilities": "accepted",
+    "experience:0:skills_used": "rejected",
+    "skills:hard_skills:React": "accepted",
+    "summary:description": "accepted",
+    "extras:extras:CertifAWS": "rejected"
+  }
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Traitement</div>
+            <ol>
+              <li>V&eacute;rifier authentification et propri&eacute;t&eacute; de l'offre</li>
+              <li>R&eacute;cup&eacute;rer <code>CvGenerationOffer</code> avec <code>batchResults</code>, <code>generatedCvFile</code> et <code>sourceCvFile</code></li>
+              <li>R&eacute;cup&eacute;rer le titre de l'offre d'emploi depuis <code>JobOffer</code></li>
+              <li>Appeler <code>applySelectiveChanges({ sourceCv, batchResults, decisions, jobOffer })</code></li>
+              <li>Cr&eacute;er une <code>CvVersion</code> avec origin <code>'review'</code> via <code>createCvVersionWithTracking()</code></li>
+              <li>Mettre &agrave; jour le <code>CvFile.content</code> avec le CV final</li>
+              <li><strong>R&eacute;initialiser tous les champs de score</strong> (<code>matchScore</code>, <code>scoreBreakdown</code>, etc.) &agrave; <code>null</code></li>
+              <li>Stocker les informations de review dans <code>batchResults.review</code></li>
+              <li>&Eacute;mettre un &eacute;v&eacute;nement SSE via <code>dbEmitter.emitCvUpdate()</code></li>
+              <li>Envoyer la t&eacute;l&eacute;m&eacute;trie <code>CV_CHANGES_REVIEWED</code> (si consentement analytics)</li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">R&eacute;ponse</div>
+            <pre><code class="language-json">{
+  "success": true,
+  "cvFileId": "clx-cvfile-id-xxx",
+  "filename": "mon-cv_adapted_senior-developer_20260215143000_a1b2.json",
+  "stats": {
+    "total": 12,
+    "accepted": 9,
+    "rejected": 3
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">R&eacute;initialisation du score</div>
+          <p>Apr&egrave;s l'application d'une review, <strong>tous les champs de score sont mis &agrave; <code>null</code></strong> car le contenu du CV a chang&eacute; et les scores ne sont plus repr&eacute;sentatifs. L'utilisateur doit relancer un calcul de score pour obtenir un nouveau score.</p>
+        </div>
+
+        <!-- ==================== FONCTIONS CLE ==================== -->
+        <h2>Fonctions Cl&eacute;s</h2>
+
+        <h3>Depuis <code>recompose.js</code></h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>extractChangesFromBatchResults(batchResults, sourceCv)</code></td>
+              <td>Extrait les modifications de l'IA depuis les batchResults. Analyse les champs <code>_reason</code>, <code>skill_changes</code>, <code>modifications</code>, <code>_raw</code>, <code>extras_modifications</code>, <code>education_modifications</code>, <code>language_modifications</code>.</td>
+            </tr>
+            <tr>
+              <td><code>mergeTranslationPairs(changes)</code></td>
+              <td>Fusionne les paires <code>removed + added</code> qui sont des traductions d'une m&ecirc;me comp&eacute;tence en un seul changement <code>modified</code>. Utilise <code>isLikelyTranslation()</code> avec un mapping de traductions connues EN/FR.</td>
+            </tr>
+            <tr>
+              <td><code>isLikelyTranslation(str1, str2)</code></td>
+              <td>D&eacute;tecte si deux strings sont des traductions (mapping connu + sous-cha&icirc;nes communes).</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Depuis <code>lib/cv-core/changeTracking.js</code> (r&eacute;exports)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Source</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>initializeReviewState(userId, filename, changes, version)</code></td>
+              <td><code>lib/cv-core/review/state.js</code></td>
+              <td>Stocke les changements <code>pending</code> en DB pour un fichier CV donn&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>getReviewState(userId, filename)</code></td>
+              <td><code>lib/cv-core/review/state.js</code></td>
+              <td>R&eacute;cup&egrave;re l'&eacute;tat de review d'un CV</td>
+            </tr>
+            <tr>
+              <td><code>updateChangeStatus(userId, filename, changeId, status)</code></td>
+              <td><code>lib/cv-core/review/state.js</code></td>
+              <td>Met &agrave; jour le statut d'un changement (accepted/rejected)</td>
+            </tr>
+            <tr>
+              <td><code>processReviewAction(userId, filename, changeId, action)</code></td>
+              <td><code>lib/cv-core/review/actions.js</code></td>
+              <td>Traite l'action de review (accept/reject) pour un changement</td>
+            </tr>
+            <tr>
+              <td><code>processBatchReviewAction(userId, filename, action)</code></td>
+              <td><code>lib/cv-core/review/actions.js</code></td>
+              <td>Applique accept/reject &agrave; tous les changements d'un coup</td>
+            </tr>
+            <tr>
+              <td><code>applyPartialRollback(userId, filename, changeId)</code></td>
+              <td><code>lib/cv-core/review/rollback.js</code></td>
+              <td>Rollback partiel : restaure un changement rejet&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>computeCvDiff(adaptedCv, sourceCv)</code></td>
+              <td><code>lib/cv-core/modifications/diff.js</code></td>
+              <td>D&eacute;tecte les changements programmatiques entre deux CVs</td>
+            </tr>
+            <tr>
+              <td><code>generateChangeId()</code></td>
+              <td><code>lib/cv-core/modifications/diff.js</code></td>
+              <td>G&eacute;n&egrave;re un ID unique pour un changement</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== DEDUPLICATION ==================== -->
+        <h2>D&eacute;duplication des Changements</h2>
+
+        <p>La phase de recomposition fusionne les changements IA et les changements programmatiques en &eacute;vitant les doublons. Le processus est le suivant :</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">D&Eacute;DUPLICATION - Fusion intelligente des changements</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">R&egrave;gles de d&eacute;duplication</div>
+            <ol>
+              <li><strong>Cl&eacute;s de d&eacute;duplication</strong> &mdash; <code>section|field|itemName|expIndex</code> (lowercase)</li>
+              <li><strong>Changements <code>removed</code> exclus si</strong> :
+                <ul>
+                  <li>D&eacute;j&agrave; pr&eacute;sent dans les changements IA (m&ecirc;me <code>itemName</code>)</li>
+                  <li><code>itemName</code> correspond au <code>beforeValue</code> d'un changement <code>modified</code> (traduction)</li>
+                  <li><code>itemName</code> correspond au <code>beforeDisplay</code> d'un changement <code>removed</code> IA</li>
+                  <li><code>itemName</code> est dans les originaux d'une consolidation <code>multi_renamed</code></li>
+                  <li><code>itemName</code> correspond au <code>beforeValue.name</code> d'un changement objet <code>modified</code></li>
+                </ul>
+              </li>
+              <li><strong>Changements <code>added</code> exclus si</strong> d&eacute;j&agrave; pr&eacute;sents dans les changements IA</li>
+              <li><strong>Fusion de traductions</strong> &mdash; <code>mergeTranslationPairs()</code> fusionne les <code>removed + added</code> restants qui sont des traductions</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- ==================== VERSIONING ==================== -->
+        <h2>Versioning apr&egrave;s Review</h2>
+
+        <p>L'application d'une review cr&eacute;e un nouvel enregistrement dans la table <code>CvVersion</code> :</p>
+
+        <pre><code class="language-javascript">// app/api/cv/apply-review/route.js
+await createCvVersionWithTracking(
+  userId,
+  generatedCvFile.filename,
+  `Review utilisateur: ${stats.accepted} acceptees, ${stats.rejected} refusees`,
+  'review',          // origin
+  sourceCvFileName   // sourceFile
+);</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ CvVersion</th>
+              <th>Valeur</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>changelog</code></td>
+              <td><code>"Review utilisateur: N accept&eacute;es, M refus&eacute;es"</code></td>
+            </tr>
+            <tr>
+              <td><code>changeType</code></td>
+              <td><code>'review'</code></td>
+            </tr>
+            <tr>
+              <td><code>sourceFile</code></td>
+              <td>Nom du fichier CV source original</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== TELEMETRIE ==================== -->
+        <h2>T&eacute;l&eacute;m&eacute;trie</h2>
+
+        <p>Apr&egrave;s l'application de la review, un &eacute;v&eacute;nement de t&eacute;l&eacute;m&eacute;trie <code>CV_CHANGES_REVIEWED</code> est envoy&eacute; (si l'utilisateur a consenti &agrave; la cat&eacute;gorie <code>analytics</code>) :</p>
+
+        <pre><code class="language-javascript">// Telemetrie avec verification du consentement
+const hasAnalyticsConsent = await hasConsentForCategory(userId, 'analytics');
+if (hasAnalyticsConsent) {
+  await trackCvChangesReviewed({
+    userId,
+    taskId: offer.task?.id,
+    offerId,
+    stats: { total, accepted, rejected },
+  });
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Structure des fichiers concern&eacute;s</div>
+          <pre><code class="language-bash">lib/cv-core/
+├── changeTracking.js           # Re-exports (backward compat)
+├── modifications/
+│   └── diff.js                 # computeCvDiff(), generateChangeId(), computeArrayItemDiff()
+├── review/
+│   ├── state.js                # initializeReviewState(), getReviewState(), updateChangeStatus()
+│   ├── actions.js              # processReviewAction(), processBatchReviewAction()
+│   └── rollback.js             # applyPartialRollback()
+└── versioning.js               # createCvVersionWithTracking()
+
+lib/features/cv-adaptation/
+└── phases/
+    └── recompose.js            # extractChangesFromBatchResults(), mergeTranslationPairs()
+
+app/api/cv/
+└── apply-review/
+    └── route.js                # POST /api/cv/apply-review</code></pre>
+        </div>
+
       </div>
     </main>
   </div>
@@ -86,7 +488,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

@@ -3,24 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestion Utilisateurs | FitMyCV.io</title>
+  <title>Gestion des Utilisateurs | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -32,45 +29,368 @@
           <span>Utilisateurs</span>
         </div>
 
-
         <h1>Gestion des Utilisateurs</h1>
         <p class="lead">
-          Interface d'administration pour gérer les comptes utilisateurs.
+          Interface d'administration compl&egrave;te pour g&eacute;rer les utilisateurs de la plateforme : consultation pagin&eacute;e avec filtres, cr&eacute;ation manuelle, modification des r&ocirc;les, validation d'email et suppression s&eacute;curis&eacute;e avec nettoyage des fichiers associ&eacute;s.
         </p>
 
-        <h2>Fonctionnalites</h2>
-        <ul>
-          <li>Liste des utilisateurs avec filtres et recherche</li>
-          <li>Details du compte (plan, credits, activite)</li>
-          <li>Actions : suspendre, supprimer, modifier credits</li>
-          <li>Historique des transactions</li>
-        </ul>
+        <h2>Workflow G&eacute;n&eacute;ral</h2>
 
-        <h2>API Endpoints</h2>
+        <div class="diagram">
+          <div class="diagram-title">Flux de gestion des utilisateurs</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Admin["INTERFACE ADMIN"]
+        UsersTab["UsersTab"]
+        AddModal["AddUserModal"]
+        EditModal["EditUserModal"]
+    end
+
+    subgraph API["API /api/admin/users"]
+        GET["GET<br/>Liste pagin&eacute;e + KPIs"]
+        POST["POST<br/>Cr&eacute;ation utilisateur"]
+        PATCH["PATCH /[userId]<br/>Modification"]
+        DELETE["DELETE /[userId]<br/>Suppression"]
+    end
+
+    subgraph Actions["ACTIONS PATCH"]
+        UpdateRole["updateRole<br/>USER / ADMIN"]
+        UpdateEmail["updateEmail<br/>+ reset emailVerified"]
+        ValidateEmail["validateEmail<br/>Validation manuelle"]
+    end
+
+    subgraph DB["BASE DE DONN&Eacute;ES"]
+        User[(User)]
+        CvFile[(CvFile)]
+        Files["Fichiers S3/disque"]
+    end
+
+    UsersTab -->|"Recherche, filtres"| GET
+    AddModal -->|"email, name, password, role"| POST
+    EditModal --> PATCH
+    UsersTab -->|"Supprimer"| DELETE
+
+    PATCH --> UpdateRole
+    PATCH --> UpdateEmail
+    PATCH --> ValidateEmail
+
+    GET --> User
+    POST --> User
+    UpdateRole --> User
+    UpdateEmail --> User
+    ValidateEmail --> User
+    DELETE -->|"Cascade compl&egrave;te"| User
+    DELETE -->|"Nettoyage"| CvFile
+    DELETE -->|"Nettoyage"| Files
+          </div>
+        </div>
+
+        <h2>GET /api/admin/users</h2>
+
+        <p>R&eacute;cup&egrave;re la liste pagin&eacute;e des utilisateurs avec des KPIs globaux. Accessible uniquement aux administrateurs.</p>
+
+        <h3>Param&egrave;tres de requ&ecirc;te</h3>
 
         <table>
           <thead>
             <tr>
-              <th>Endpoint</th>
+              <th>Param&egrave;tre</th>
+              <th>Type</th>
+              <th>D&eacute;faut</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>GET /api/admin/users</code></td>
-              <td>Liste paginee des utilisateurs</td>
+              <td><code>page</code></td>
+              <td>Int</td>
+              <td>1</td>
+              <td>Num&eacute;ro de page (pagination)</td>
             </tr>
             <tr>
-              <td><code>GET /api/admin/users/[id]</code></td>
-              <td>Details d'un utilisateur</td>
+              <td><code>limit</code></td>
+              <td>Int</td>
+              <td>10</td>
+              <td>Nombre de r&eacute;sultats par page (max : 50)</td>
             </tr>
             <tr>
-              <td><code>PUT /api/admin/users/[id]</code></td>
-              <td>Modifier un utilisateur</td>
+              <td><code>role</code></td>
+              <td>String</td>
+              <td>&mdash;</td>
+              <td>Filtre par r&ocirc;le : <code>USER</code> ou <code>ADMIN</code></td>
             </tr>
             <tr>
-              <td><code>POST /api/admin/users/[id]/credits</code></td>
-              <td>Ajouter/retirer des credits</td>
+              <td><code>emailStatus</code></td>
+              <td>String</td>
+              <td>&mdash;</td>
+              <td>Filtre par statut email : <code>verified</code> ou <code>unverified</code></td>
+            </tr>
+            <tr>
+              <td><code>search</code></td>
+              <td>String</td>
+              <td>&mdash;</td>
+              <td>Recherche dans le nom et l'email (insensible &agrave; la casse)</td>
+            </tr>
+            <tr>
+              <td><code>sortBy</code></td>
+              <td>String</td>
+              <td>newest</td>
+              <td>Tri : <code>newest</code> (plus r&eacute;cent) ou <code>oldest</code> (plus ancien)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>R&eacute;ponse</h3>
+
+        <pre><code class="language-json">{
+  "users": [
+    {
+      "id": "clu...",
+      "name": "Jean Dupont",
+      "email": "jean@example.com",
+      "role": "USER",
+      "emailVerified": "2024-01-15T10:30:00Z",
+      "createdAt": "2024-01-10T08:00:00Z",
+      "lastActivity": "2024-02-01T14:22:00Z",
+      "subscription": {
+        "plan": { "name": "Pro", "tier": 1 },
+        "status": "active",
+        "interval": "monthly"
+      },
+      "creditBalance": { "balance": 42 },
+      "accounts": [
+        { "provider": "google" }
+      ],
+      "_count": { "cvFiles": 3 }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "totalUsers": 256,
+    "totalPages": 26
+  },
+  "kpis": {
+    "totalUsers": 256,
+    "avgCvPerUser": 2.4,
+    "unverifiedCount": 18
+  }
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Donn&eacute;es incluses</div>
+          <p>Chaque utilisateur retourn&eacute; inclut ses relations : abonnement actif (avec plan), solde de cr&eacute;dits, providers OAuth connect&eacute;s (Google, GitHub, etc.), nombre de CV et derni&egrave;re activit&eacute;.</p>
+        </div>
+
+        <h2>POST /api/admin/users</h2>
+
+        <p>Cr&eacute;ation manuelle d'un utilisateur par l'administrateur. Le mot de passe est hash&eacute; c&ocirc;t&eacute; serveur avant stockage.</p>
+
+        <h3>Body (JSON)</h3>
+
+        <pre><code class="language-json">{
+  "email": "nouveau@example.com",
+  "name": "Marie Martin",
+  "password": "MotDePasse123",
+  "role": "USER"
+}</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Validation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>email</code></td>
+              <td>String</td>
+              <td>Oui</td>
+              <td>Format email valide, unicit&eacute; v&eacute;rifi&eacute;e</td>
+            </tr>
+            <tr>
+              <td><code>name</code></td>
+              <td>String</td>
+              <td>Oui</td>
+              <td>Non vide</td>
+            </tr>
+            <tr>
+              <td><code>password</code></td>
+              <td>String</td>
+              <td>Oui</td>
+              <td>Minimum 8 caract&egrave;res</td>
+            </tr>
+            <tr>
+              <td><code>role</code></td>
+              <td>String</td>
+              <td>Non</td>
+              <td><code>USER</code> (d&eacute;faut) ou <code>ADMIN</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Pas de v&eacute;rification email</div>
+          <p>Les utilisateurs cr&eacute;&eacute;s manuellement par l'admin n'ont <strong>pas</strong> leur email v&eacute;rifi&eacute; automatiquement. Utilisez l'action <code>validateEmail</code> du PATCH pour valider manuellement si n&eacute;cessaire.</p>
+        </div>
+
+        <h2>PATCH /api/admin/users/[userId]</h2>
+
+        <p>Modification d'un utilisateur existant. Le type d'action est d&eacute;termin&eacute; par le champ <code>action</code> envoy&eacute; dans le body.</p>
+
+        <h3>Actions disponibles</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Champs requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>updateRole</code></td>
+              <td><code>role</code> (<code>USER</code> ou <code>ADMIN</code>)</td>
+              <td>Change le r&ocirc;le de l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>updateEmail</code></td>
+              <td><code>email</code> (nouveau)</td>
+              <td>Met &agrave; jour l'email. Emp&ecirc;che la modification des emails provenant d'OAuth. Remet <code>emailVerified</code> &agrave; <code>null</code></td>
+            </tr>
+            <tr>
+              <td><code>validateEmail</code></td>
+              <td>&mdash;</td>
+              <td>Valide manuellement l'email en positionnant <code>emailVerified</code> &agrave; la date courante</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Exemples de requ&ecirc;tes</h3>
+
+        <pre><code class="language-javascript">// Changer le r&ocirc;le d'un utilisateur
+await fetch('/api/admin/users/clu123', {
+  method: 'PATCH',
+  body: JSON.stringify({
+    action: 'updateRole',
+    role: 'ADMIN'
+  })
+});
+
+// Modifier l'email
+await fetch('/api/admin/users/clu123', {
+  method: 'PATCH',
+  body: JSON.stringify({
+    action: 'updateEmail',
+    email: 'nouvel-email@example.com'
+  })
+});
+
+// Valider manuellement l'email
+await fetch('/api/admin/users/clu123', {
+  method: 'PATCH',
+  body: JSON.stringify({
+    action: 'validateEmail'
+  })
+});</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Protection OAuth</div>
+          <p>L'action <code>updateEmail</code> refuse la modification si l'email actuel de l'utilisateur provient d'un provider OAuth (Google, GitHub, etc.). Cela &eacute;vite de d&eacute;synchroniser l'identit&eacute; OAuth avec l'email en base.</p>
+        </div>
+
+        <h2>DELETE /api/admin/users/[userId]</h2>
+
+        <p>Suppression compl&egrave;te d'un utilisateur avec nettoyage int&eacute;gral de toutes les donn&eacute;es associ&eacute;es.</p>
+
+        <h3>Op&eacute;rations effectu&eacute;es</h3>
+
+        <ul>
+          <li><strong>Base de donn&eacute;es</strong> : suppression en cascade de toutes les relations (CV, abonnements, transactions, sessions, comptes OAuth, etc.)</li>
+          <li><strong>Fichiers</strong> : suppression des fichiers PDF et images associ&eacute;s aux CV de l'utilisateur (stockage disque/S3)</li>
+        </ul>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Protection contre l'auto-suppression</div>
+          <p>Un administrateur <strong>ne peut pas se supprimer lui-m&ecirc;me</strong>. L'API retourne une erreur <code>403</code> si le <code>userId</code> correspond &agrave; l'utilisateur connect&eacute;.</p>
+        </div>
+
+        <h2>Composants React</h2>
+
+        <p>L'interface d'administration des utilisateurs est construite avec les composants suivants, situ&eacute;s dans <code>components/admin/users/</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>UsersTab</code></td>
+              <td>Onglet principal : barre de recherche, filtres (r&ocirc;le, statut email, tri), tableau pagin&eacute;, KPIs en haut de page</td>
+            </tr>
+            <tr>
+              <td><code>UserRow</code></td>
+              <td>Ligne du tableau : affiche nom, email, r&ocirc;le, badges, abonnement, cr&eacute;dits, actions (modifier, supprimer)</td>
+            </tr>
+            <tr>
+              <td><code>UserBadges</code></td>
+              <td>Badges visuels : r&ocirc;le (USER/ADMIN), statut email (v&eacute;rifi&eacute;/non v&eacute;rifi&eacute;), providers OAuth connect&eacute;s</td>
+            </tr>
+            <tr>
+              <td><code>AddUserModal</code></td>
+              <td>Modal de cr&eacute;ation : formulaire email, nom, mot de passe, r&ocirc;le avec validation c&ocirc;t&eacute; client</td>
+            </tr>
+            <tr>
+              <td><code>EditUserModal</code></td>
+              <td>Modal d'&eacute;dition : changement de r&ocirc;le, modification d'email, validation manuelle d'email</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Cl&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/api/admin/users/route.js</code></td>
+              <td>GET (liste pagin&eacute;e + KPIs) et POST (cr&eacute;ation)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/users/[userId]/route.js</code></td>
+              <td>PATCH (modification) et DELETE (suppression)</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/users/UsersTab.jsx</code></td>
+              <td>Onglet principal avec recherche, filtres et pagination</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/users/UserRow.jsx</code></td>
+              <td>Ligne individuelle du tableau utilisateurs</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/users/UserBadges.jsx</code></td>
+              <td>Badges de statut (r&ocirc;le, email, OAuth)</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/users/AddUserModal.jsx</code></td>
+              <td>Modal de cr&eacute;ation d'utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/users/EditUserModal.jsx</code></td>
+              <td>Modal d'&eacute;dition d'utilisateur</td>
             </tr>
           </tbody>
         </table>

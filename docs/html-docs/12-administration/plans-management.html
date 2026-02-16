@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -29,42 +26,353 @@
           <span>/</span>
           <a href="./overview.html">Administration</a>
           <span>/</span>
-          <span>Gestion Plans</span>
+          <span>Plans d'Abonnement</span>
         </div>
-
 
         <h1>Gestion des Plans</h1>
         <p class="lead">
-          Creation et modification des plans d'abonnement.
+          CRUD complet des plans d'abonnement avec synchronisation automatique vers Stripe. Les plans d&eacute;finissent les tiers de tarification, les limites par feature et la structure tarifaire mensuelle/annuelle de la plateforme.
         </p>
 
-        <h2>Interface Admin</h2>
+        <h2>Syst&egrave;me de Tiers</h2>
+
+        <p>Chaque plan est identifi&eacute; par un <code>tier</code> num&eacute;rique (0&ndash;4) qui d&eacute;termine la hi&eacute;rarchie et les upgrades/downgrades :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Nom (auto-g&eacute;n&eacute;r&eacute;)</th>
+              <th>Description</th>
+              <th>isFree</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>0</strong></td>
+              <td>Gratuit</td>
+              <td>Plan de base sans paiement, fonctionnalit&eacute;s limit&eacute;es</td>
+              <td><code>true</code></td>
+            </tr>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>Pro</td>
+              <td>Plan interm&eacute;diaire pour les professionnels</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>Premium</td>
+              <td>Plan avanc&eacute; avec limites &eacute;lev&eacute;es</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>Enterprise</td>
+              <td>Plan entreprise (r&eacute;serv&eacute;)</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td>Custom</td>
+              <td>Plan sur mesure (r&eacute;serv&eacute;)</td>
+              <td><code>false</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Nom auto-g&eacute;n&eacute;r&eacute;</div>
+          <p>Le nom du plan est automatiquement d&eacute;duit du tier lors de la cr&eacute;ation et de la modification. Il n'est pas n&eacute;cessaire de le sp&eacute;cifier dans le body de la requ&ecirc;te.</p>
+        </div>
+
+        <h2>Mod&egrave;le Prisma : SubscriptionPlan</h2>
+
+        <pre><code class="language-javascript">model SubscriptionPlan {
+  id                    Int       @id @default(autoincrement())
+  name                  String    @unique    // "Gratuit", "Pro", "Premium"
+  description           String?
+  isFree                Boolean   @default(false)
+  tier                  Int       @default(0) // 0=Gratuit, 1=Pro, 2=Premium, 3=Enterprise, 4=Custom
+  isPopular             Boolean   @default(false)
+  priceMonthly          Float     @default(0)
+  priceYearly           Float     @default(0)
+  yearlyDiscountPercent Float     @default(0)
+  priceCurrency         String    @default("EUR")
+  stripeProductId       String?   @unique
+  stripePriceIdMonthly  String?   @unique  // Stripe Price ID mensuel
+  stripePriceIdYearly   String?   @unique  // Stripe Price ID annuel
+
+  subscriptions         Subscription[]
+  featureLimits         SubscriptionPlanFeatureLimit[]
+}</code></pre>
+
+        <h2>Mod&egrave;le Prisma : SubscriptionPlanFeatureLimit</h2>
+
+        <pre><code class="language-javascript">model SubscriptionPlanFeatureLimit {
+  id          String  @id @default(cuid())
+  planId      Int
+  featureName String  // "gpt_cv_generation", "export_cv", etc.
+  isEnabled   Boolean @default(true)
+  usageLimit  Int     @default(-1)  // -1 = illimit&eacute;
+
+  plan        SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@unique([planId, featureName])
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Contrainte d'unicit&eacute;</div>
+          <p>La combinaison <code>(planId, featureName)</code> est unique : un plan ne peut avoir qu'une seule limite par feature. Cela garantit l'int&eacute;grit&eacute; des donn&eacute;es de configuration.</p>
+        </div>
+
+        <h2>GET /api/admin/subscription-plans</h2>
+
+        <p>R&eacute;cup&egrave;re tous les plans d'abonnement avec leurs limites de features associ&eacute;es.</p>
+
+        <h3>R&eacute;ponse</h3>
+
+        <pre><code class="language-json">{
+  "plans": [
+    {
+      "id": 1,
+      "name": "Gratuit",
+      "description": "Plan de base",
+      "isFree": true,
+      "tier": 0,
+      "isPopular": false,
+      "priceMonthly": 0,
+      "priceYearly": 0,
+      "yearlyDiscountPercent": 0,
+      "priceCurrency": "EUR",
+      "stripeProductId": null,
+      "stripePriceIdMonthly": null,
+      "stripePriceIdYearly": null,
+      "featureLimits": [
+        {
+          "id": "clu...",
+          "featureName": "gpt_cv_generation",
+          "isEnabled": true,
+          "usageLimit": 3
+        },
+        {
+          "id": "clu...",
+          "featureName": "export_cv",
+          "isEnabled": true,
+          "usageLimit": 5
+        }
+      ]
+    }
+  ]
+}</code></pre>
+
+        <h2>POST /api/admin/subscription-plans</h2>
+
+        <p>Cr&eacute;e un nouveau plan d'abonnement. Le nom est auto-g&eacute;n&eacute;r&eacute; &agrave; partir du tier.</p>
+
+        <h3>Body (JSON)</h3>
+
+        <pre><code class="language-json">{
+  "tier": 1,
+  "priceMonthly": 9.99,
+  "priceYearly": 99.90,
+  "priceCurrency": "EUR",
+  "isFree": false,
+  "isPopular": true,
+  "featureLimits": [
+    { "featureName": "gpt_cv_generation", "isEnabled": true, "usageLimit": 20 },
+    { "featureName": "export_cv", "isEnabled": true, "usageLimit": -1 },
+    { "featureName": "import_pdf", "isEnabled": true, "usageLimit": 10 }
+  ]
+}</code></pre>
+
+        <h3>Validations</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>R&egrave;gle</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tier unique</td>
+              <td>Un seul plan par tier. Retourne <code>409</code> si un plan avec ce tier existe d&eacute;j&agrave;</td>
+            </tr>
+            <tr>
+              <td>Un seul plan gratuit</td>
+              <td>Un seul plan peut avoir <code>isFree = true</code>. Retourne <code>409</code> si un plan gratuit existe</td>
+            </tr>
+            <tr>
+              <td>Calcul r&eacute;duction</td>
+              <td><code>yearlyDiscountPercent</code> est calcul&eacute; automatiquement : <code>((priceMonthly * 12 - priceYearly) / (priceMonthly * 12)) * 100</code></td>
+            </tr>
+            <tr>
+              <td>Sync Stripe</td>
+              <td>Apr&egrave;s cr&eacute;ation en DB, synchronisation automatique avec Stripe (non-bloquante)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>PATCH /api/admin/subscription-plans/[id]</h2>
+
+        <p>Modifie un plan existant. Tous les champs sont optionnels.</p>
+
+        <h3>Body (JSON) &mdash; Tous les champs optionnels</h3>
+
+        <pre><code class="language-json">{
+  "tier": 2,
+  "priceMonthly": 19.99,
+  "priceYearly": 199.90,
+  "isPopular": false,
+  "featureLimits": [
+    { "featureName": "gpt_cv_generation", "isEnabled": true, "usageLimit": 50 }
+  ]
+}</code></pre>
+
+        <h3>Comportement</h3>
+
         <ul>
-          <li>Creer un nouveau plan</li>
-          <li>Modifier les limites et features</li>
-          <li>Activer/desactiver un plan</li>
-          <li>Synchronisation avec Stripe</li>
+          <li>Le <strong>nom</strong> est automatiquement r&eacute;g&eacute;n&eacute;r&eacute; si le tier change</li>
+          <li>L'<strong>unicit&eacute; du tier</strong> est v&eacute;rifi&eacute;e (exclut le plan en cours de modification)</li>
+          <li>Le <code>yearlyDiscountPercent</code> est <strong>recalcul&eacute;</strong> si les prix changent</li>
+          <li>La synchronisation Stripe est d&eacute;clench&eacute;e automatiquement (non-bloquante)</li>
+          <li>Les <code>featureLimits</code> sont mises &agrave; jour via un <strong>upsert</strong> sur la contrainte <code>(planId, featureName)</code></li>
         </ul>
 
-        <h2>Structure d'un Plan</h2>
+        <h2>DELETE /api/admin/subscription-plans/[id]</h2>
 
-        <pre><code>{
-  "name": "Pro",
-  "stripePriceId": "price_xxx",
-  "price": 9.99,
-  "interval": "monthly",
-  "features": {
-    "cv_generation": true,
-    "pdf_export": true,
-    "docx_export": true,
-    "translation": true
-  },
-  "limits": {
-    "cv_generation": 50,
-    "pdf_export": -1,
-    "translation": 10
-  }
-}</code></pre>
+        <p>Supprime un plan d'abonnement. Les feature limits associ&eacute;es sont supprim&eacute;es en cascade.</p>
+
+        <h3>Op&eacute;rations effectu&eacute;es</h3>
+
+        <ul>
+          <li>Suppression des <code>SubscriptionPlanFeatureLimit</code> li&eacute;es au plan</li>
+          <li>Suppression du plan en base de donn&eacute;es</li>
+          <li>D&eacute;sactivation/archivage des produits et prix correspondants sur Stripe (non-bloquant)</li>
+        </ul>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Abonn&eacute;s existants</div>
+          <p>V&eacute;rifiez qu'aucun utilisateur n'est abonn&eacute; &agrave; ce plan avant de le supprimer. Les abonnements actifs li&eacute;s &agrave; un plan supprim&eacute; peuvent causer des incoh&eacute;rences.</p>
+        </div>
+
+        <h2>Synchronisation Stripe</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de synchronisation Plan &harr; Stripe</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Admin["ACTION ADMIN"]
+        Create["Cr&eacute;er / Modifier plan"]
+    end
+
+    subgraph Sync["syncStripeProductsInternal()"]
+        CheckPlan{"Plan gratuit ?"}
+        FindProduct["Chercher Product Stripe<br/>par stripeProductId"]
+        CreateProduct["Cr&eacute;er Product Stripe"]
+        CheckPriceM{"Price mensuel<br/>&agrave; jour ?"}
+        CheckPriceY{"Price annuel<br/>&agrave; jour ?"}
+        CreatePriceM["Cr&eacute;er Price mensuel"]
+        CreatePriceY["Cr&eacute;er Price annuel"]
+        ArchiveOld["Archiver ancien Price"]
+        SaveIds["Sauvegarder IDs Stripe<br/>en base"]
+    end
+
+    subgraph Stripe["STRIPE"]
+        Product["Product"]
+        PriceM["Price (monthly)"]
+        PriceY["Price (yearly)"]
+    end
+
+    Create --> CheckPlan
+    CheckPlan -->|"Oui"| Skip["Ignor&eacute;"]
+    CheckPlan -->|"Non"| FindProduct
+    FindProduct -->|"Existe"| CheckPriceM
+    FindProduct -->|"N'existe pas"| CreateProduct
+    CreateProduct --> CheckPriceM
+    CheckPriceM -->|"Montant chang&eacute;"| ArchiveOld
+    ArchiveOld --> CreatePriceM
+    CheckPriceM -->|"OK"| CheckPriceY
+    CreatePriceM --> CheckPriceY
+    CheckPriceY -->|"Montant chang&eacute;"| CreatePriceY
+    CheckPriceY -->|"OK"| SaveIds
+    CreatePriceY --> SaveIds
+    SaveIds --> Product
+    SaveIds --> PriceM
+    SaveIds --> PriceY
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Synchronisation non-bloquante</div>
+          <p>La synchronisation Stripe s'ex&eacute;cute de mani&egrave;re <strong>asynchrone</strong> apr&egrave;s la r&eacute;ponse API. Si Stripe est indisponible, le plan est cr&eacute;&eacute; en base sans IDs Stripe. La synchronisation peut &ecirc;tre relanc&eacute;e manuellement depuis l'interface admin.</p>
+        </div>
+
+        <h2>Feature Limits</h2>
+
+        <p>Chaque plan d&eacute;finit des limites d'utilisation par feature via la table <code>SubscriptionPlanFeatureLimit</code>. Ces limites sont v&eacute;rifi&eacute;es par <code>canUseFeature()</code> avant chaque action.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Signification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>isEnabled = true</code></td>
+              <td>La feature est accessible pour ce plan</td>
+            </tr>
+            <tr>
+              <td><code>isEnabled = false</code></td>
+              <td>La feature est d&eacute;sactiv&eacute;e pour ce plan (bloqu&eacute;e m&ecirc;me avec cr&eacute;dits)</td>
+            </tr>
+            <tr>
+              <td><code>usageLimit = -1</code></td>
+              <td>Utilisation illimit&eacute;e</td>
+            </tr>
+            <tr>
+              <td><code>usageLimit = N</code></td>
+              <td>Maximum N utilisations par p&eacute;riode de facturation</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Cl&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/api/admin/subscription-plans/route.js</code></td>
+              <td>GET (liste) et POST (cr&eacute;ation) des plans</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/subscription-plans/[id]/route.js</code></td>
+              <td>PATCH (modification) et DELETE (suppression)</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/stripeSync.js</code></td>
+              <td>Synchronisation bidirectionnelle avec Stripe (produits et prix)</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/planUtils.js</code></td>
+              <td>Utilitaires : getPlanTier, comparePlans, getPlanIcon, formatPlanPrice</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/macroFeatures.js</code></td>
+              <td>D&eacute;finition des macro-features et getDefaultFeatureLimits()</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

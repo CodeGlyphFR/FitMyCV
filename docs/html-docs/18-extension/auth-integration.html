@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentification &amp; Intégration SaaS | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Extension Navigateur</a>
+          <span>/</span>
+          <span>Authentification &amp; Intégration</span>
+        </div>
+
+        <h1>Authentification &amp; Intégration SaaS</h1>
+        <p class="lead">
+          L'extension s'authentifie auprès du SaaS via un JWT dédié (7 jours), distinct du cookie de session NextAuth. Deux méthodes d'authentification sont supportées : email/password direct et OAuth (Google/GitHub) via le navigateur.
+        </p>
+
+        <!-- ─── Vue d'ensemble auth ─── -->
+
+        <h2>Vue d'Ensemble de l'Authentification</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Détail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Type de token</strong></td>
+              <td>JWT signé côté serveur via <code>signExtensionToken()</code></td>
+            </tr>
+            <tr>
+              <td><strong>Durée de validité</strong></td>
+              <td>7 jours</td>
+            </tr>
+            <tr>
+              <td><strong>Refresh proactif</strong></td>
+              <td>Quand le token expire dans &lt; 24h (alarm 12h + avant chaque polling/requête)</td>
+            </tr>
+            <tr>
+              <td><strong>Stockage</strong></td>
+              <td><code>browser.storage.local</code> (clé <code>fitmycv_token</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Transport</strong></td>
+              <td>Header <code>Authorization: Bearer &lt;token&gt;</code></td>
+            </tr>
+            <tr>
+              <td><strong>Validation serveur</strong></td>
+              <td>Middleware <code>withExtensionAuth</code> &mdash; vérifie signature + existence user</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Flow Credentials ─── -->
+
+        <h2>Flow 1 : Email / Password</h2>
+
+        <p>L'utilisateur saisit ses identifiants directement dans le popup de l'extension.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Authentification par email/password</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant POP as Popup (login.js)
+    participant API as POST /api/auth/extension-token
+    participant DB as Prisma (User)
+
+    U->>POP: Saisit email + password
+    POP->>API: POST { email, password }
+    API->>DB: findUnique({ email })
+    DB-->>API: User { id, passwordHash, emailVerified }
+    API->>API: bcrypt.compare(password, hash)
+
+    alt Authentification réussie
+        API->>API: signExtensionToken(userId)
+        API-->>POP: { success: true, token, user: { name, email } }
+        POP->>POP: storage.local.set({ fitmycv_token, fitmycv_user })
+        POP->>POP: showMainView()
+    else Échec
+        API-->>POP: { error: "errors.api.auth.invalidCredentials" }
+        POP->>POP: Affiche message d'erreur traduit
+    end
+          </div>
+        </div>
+
+        <h3>Endpoint : <code>POST /api/auth/extension-token</code></h3>
+
+        <pre><code class="language-javascript">// Body attendu
+{ "email": "user@example.com", "password": "..." }
+
+// Réponse succès (200)
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": { "name": "John", "email": "user@example.com" }
+}
+
+// Réponse erreur (401)
+{ "error": "errors.api.auth.invalidCredentials" }</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Pas de reCAPTCHA :</strong> Contrairement au login web, l'endpoint extension n'exige pas de vérification reCAPTCHA car l'extension est un contexte plus contrôlé (installée manuellement par l'utilisateur).
+        </div>
+
+        <h3>Validations serveur</h3>
+
+        <ol>
+          <li>Email et password requis (sinon <code>emailAndPasswordRequired</code>)</li>
+          <li>Utilisateur existe avec un <code>passwordHash</code> (sinon <code>invalidCredentials</code> &mdash; message générique)</li>
+          <li>Comparaison bcrypt du password (sinon <code>invalidCredentials</code>)</li>
+          <li>Email vérifié (sinon <code>emailNotVerified</code>)</li>
+          <li>Mode maintenance non actif ou user ADMIN (sinon <code>serviceUnavailable</code>)</li>
+        </ol>
+
+        <!-- ─── Flow OAuth ─── -->
+
+        <h2>Flow 2 : OAuth (Google / GitHub)</h2>
+
+        <p>L'utilisateur clique sur &laquo; Continuer avec Google/GitHub &raquo; dans le popup. L'extension ouvre un onglet vers le SaaS qui gère l'OAuth classique, puis transmet le token à l'extension.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Authentification OAuth via le navigateur</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant POP as Popup (login.js)
+    participant TAB as Onglet navigateur
+    participant SAAS as SaaS /extension-auth
+    participant OAUTH as Google/GitHub OAuth
+    participant AR as auth-receiver.js
+    participant SW as Service Worker
+
+    U->>POP: Clic "Continuer avec Google"
+    POP->>TAB: browser.tabs.create({ url: "/extension-auth" })
+    TAB->>SAAS: Charge la page /extension-auth
+    SAAS->>OAUTH: Redirige vers OAuth provider
+    U->>OAUTH: Autorise l'accès
+    OAUTH-->>SAAS: Callback avec auth code
+    SAAS->>SAAS: Crée/met à jour session NextAuth
+    SAAS->>SAAS: GET /api/auth/extension-token/from-session
+    Note over SAAS: Génère JWT extension depuis la session active
+    SAAS->>TAB: postMessage({ type: 'FITMYCV_EXTENSION_AUTH', token, user })
+    TAB->>AR: window.message event
+    AR->>AR: Valide format JWT (3 parts)
+    AR->>AR: storage.local.set({ fitmycv_token, fitmycv_user })
+    AR->>SW: sendMessage({ type: 'OAUTH_LOGIN_SUCCESS' })
+    Note over POP: Au prochain open, le popup détecte le token et affiche la vue principale
+          </div>
+        </div>
+
+        <h3>auth-receiver.js (Content Script)</h3>
+
+        <pre><code class="language-javascript">// Injecté uniquement sur *://app.fitmycv.io/extension-auth*
+// et *://dev.fitmycv.io/extension-auth*
+
+window.addEventListener('message', async (event) => {
+  // Sécurité : accepte uniquement les messages du même origin
+  if (event.origin !== window.location.origin) return;
+
+  const data = event.data;
+  if (!data || data.type !== 'FITMYCV_EXTENSION_AUTH') return;
+  if (!data.token) return;
+
+  // Validation basique du format JWT (3 parties base64url séparées par des points)
+  const jwtParts = data.token.split('.');
+  if (jwtParts.length !== 3 || jwtParts.some(p => p.length === 0)) return;
+
+  // Stocke le token et notifie le service worker
+  await browser.storage.local.set({
+    fitmycv_token: data.token,
+    fitmycv_user: data.user || null,
+  });
+  await browser.runtime.sendMessage({ type: 'OAUTH_LOGIN_SUCCESS' });
+});</code></pre>
+
+        <h3>Endpoint : <code>GET /api/auth/extension-token/from-session</code></h3>
+
+        <pre><code class="language-javascript">// Génère un JWT extension depuis une session NextAuth active
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) return CommonErrors.notAuthenticated();
+
+  const token = await signExtensionToken(session.user.id, {
+    name: session.user.name,
+    email: session.user.email,
+  });
+
+  return Response.json({ success: true, token, user: { name, email } });
+}</code></pre>
+
+        <!-- ─── Token Refresh ─── -->
+
+        <h2>Refresh de Token</h2>
+
+        <p>Le refresh du JWT est géré à deux niveaux :</p>
+
+        <h3>1. Refresh proactif (avant expiration)</h3>
+
+        <pre><code class="language-javascript">// token-utils.js — Vérifie si le token expire dans moins de 24h
+export function shouldRefreshToken(token) {
+  const payload = decodeTokenPayload(token);      // Décode sans vérification signature
+  if (!payload?.exp) return false;
+  const expiresAt = payload.exp * 1000;
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  return expiresAt - Date.now() < oneDayMs;        // true si expire dans < 24h
+}</code></pre>
+
+        <p>Le refresh proactif est déclenché :</p>
+        <ul>
+          <li><strong>Service Worker</strong> : alarm MV3 toutes les 12h (<code>ALARM_TOKEN_REFRESH</code>)</li>
+          <li><strong>Service Worker</strong> : avant chaque polling de tâches si le token est proche de l'expiration</li>
+          <li><strong>API Client</strong> : <code>ensureTokenFresh()</code> avant chaque requête API avec mutex anti-concurrence</li>
+        </ul>
+
+        <h3>2. Refresh réactif (sur erreur 401)</h3>
+
+        <pre><code class="language-javascript">// api-client.js — Retry automatique sur 401
+async function apiFetch(path, options = {}) {
+  await ensureTokenFresh();                    // Refresh proactif si nécessaire
+
+  let response = await fetch(url, { ...options, headers });
+
+  if (response.status === 401 && token) {      // Reactive: 401 reçu
+    const refreshed = await refreshToken();     // Tente un refresh
+    if (refreshed) {
+      const newToken = await getToken();
+      headers['Authorization'] = `Bearer ${newToken}`;
+      response = await fetch(url, { ...options, headers });  // Retry
+    }
+  }
+
+  if (response.status === 401) {               // Encore 401 → session expirée
+    await clearToken();
+    throw new AuthError('Session expirée');
+  }
+
+  return response;
+}</code></pre>
+
+        <h3>Endpoint : <code>POST /api/auth/extension-token/refresh</code></h3>
+
+        <pre><code class="language-javascript">// Body : aucun (le token actuel est dans le header Authorization)
+// Réponse succès (200)
+{
+  "success": true,
+  "token": "eyJhbGciOi...",   // Nouveau token 7 jours
+  "user": { "name": "John", "email": "user@example.com" }
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <strong>Mode maintenance :</strong> Le refresh est refusé si le mode maintenance est actif et que l'utilisateur n'est pas ADMIN. Dans ce cas, l'extension affichera un message <code>serviceUnavailable</code>.
+        </div>
+
+        <!-- ─── Middleware ─── -->
+
+        <h2>Middleware <code>withExtensionAuth</code></h2>
+
+        <p>Toutes les routes <code>/api/ext/*</code> sont protégées par ce middleware qui :</p>
+
+        <ol>
+          <li>Extrait le token du header <code>Authorization: Bearer &lt;token&gt;</code></li>
+          <li>Vérifie la signature JWT via <code>verifyExtensionToken()</code></li>
+          <li>Charge l'utilisateur depuis Prisma (<code>id</code>, <code>name</code>, <code>email</code>, <code>role</code>)</li>
+          <li>Passe <code>{ userId, user }</code> au handler</li>
+        </ol>
+
+        <pre><code class="language-javascript">export function withExtensionAuth(handler) {
+  return async function authenticatedHandler(request, routeContext) {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return AuthErrors.tokenRequired();        // 401
+    }
+
+    const token = authHeader.slice(7);
+
+    let tokenPayload;
+    try {
+      tokenPayload = await verifyExtensionToken(token);
+    } catch (error) {
+      const isExpired = error?.code === 'ERR_JWT_EXPIRED';
+      return isExpired
+        ? AuthErrors.tokenExpired()              // 401 — token expiré
+        : AuthErrors.tokenInvalid();             // 401 — token malformé
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: tokenPayload.userId },
+    });
+
+    if (!user) return CommonErrors.notAuthenticated();  // 401 — user supprimé
+
+    return handler(request, { userId: user.id, user, ...routeContext });
+  };
+}</code></pre>
+
+        <!-- ─── API Endpoints ─── -->
+
+        <h2>Endpoints API Extension</h2>
+
+        <p>Toutes les routes sont protégées par <code>withExtensionAuth</code>.</p>
+
+        <h3>Gestion des CVs</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Route</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/ext/cvs</code></td>
+              <td>Liste des CVs de l'utilisateur (filtrée : imported, manual, translated uniquement)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Réponse <code>GET /api/ext/cvs</code></h4>
+
+        <pre><code class="language-json">{
+  "items": [
+    {
+      "file": "1707123456789_cv.json",
+      "label": "15/02/2024 - Développeur Full Stack",
+      "title": "Développeur Full Stack",
+      "isImported": true,
+      "isManual": false,
+      "isGenerated": false,
+      "isTranslated": false,
+      "language": "fr",
+      "createdAt": "2024-02-15T10:00:00.000Z"
+    }
+  ],
+  "current": "1707123456789_cv.json"
+}</code></pre>
+
+        <h3>Gestion des Crédits</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Route</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/ext/credits/balance</code></td>
+              <td>Solde de crédits de l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/ext/credits/costs</code></td>
+              <td>Coût par fonctionnalité (ex: <code>gpt_cv_generation: 2</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Génération de CV</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Route</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>POST</code></td>
+              <td><code>/api/ext/background-tasks/generate-cv-from-content</code></td>
+              <td>Soumet des offres extraites pour génération de CVs optimisés</td>
+            </tr>
+            <tr>
+              <td><code>GET</code></td>
+              <td><code>/api/ext/background-tasks/sync</code></td>
+              <td>Polling des tâches (full ou incrémental via <code>since</code>)</td>
+            </tr>
+            <tr>
+              <td><code>DELETE</code></td>
+              <td><code>/api/ext/background-tasks/sync?taskId=X&amp;action=cancel</code></td>
+              <td>Annulation d'une tâche + remboursement crédits</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Requête <code>POST /api/ext/background-tasks/generate-cv-from-content</code></h4>
+
+        <pre><code class="language-json">{
+  "baseFile": "1707123456789_cv.json",
+  "offers": [
+    {
+      "title": "Développeur React Senior",
+      "content": "# Développeur React Senior\n\n## Missions\n- Développer...",
+      "sourceUrl": "https://www.linkedin.com/jobs/view/123456/"
+    }
+  ],
+  "deviceId": "ext-550e8400-e29b-41d4-a716-446655440000",
+  "userInterfaceLanguage": "fr"
+}</code></pre>
+
+        <h4>Réponse (202 Accepted)</h4>
+
+        <pre><code class="language-json">{
+  "success": true,
+  "queued": true,
+  "tasks": [
+    {
+      "taskId": "clxyz123...",
+      "offerId": "clxyz456...",
+      "title": "Développeur React Senior",
+      "sourceUrl": "https://www.linkedin.com/jobs/view/123456/"
+    }
+  ],
+  "totalTasks": 1
+}</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Flux de données :</strong> L'extension envoie du <strong>Markdown brut</strong> (déjà extrait côté client). Le serveur exécute <code>extractJobOfferFromMarkdown()</code> pour structurer les données en JSON, puis lance le pipeline de génération CV standard.
+        </div>
+
+        <!-- ─── Flow génération ─── -->
+
+        <h2>Flow de Génération Complet</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Soumission, polling et réception du CV généré</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant POP as Popup (offer-list.js)
+    participant API as SaaS API
+    participant DB as Base de données
+    participant JQ as Job Queue
+    participant SW as Service Worker
+
+    POP->>POP: Crée tâches temporaires (analyzing)
+    POP->>POP: Retire offres du picklist
+    POP->>POP: Affiche progression immédiate
+
+    POP->>API: POST /api/ext/background-tasks/generate-cv-from-content
+    API->>DB: incrementFeatureCounter (débit crédits)
+    API->>DB: Crée CvGenerationTask + CvGenerationOffer
+    API->>DB: Crée BackgroundTask (status: queued)
+    API->>JQ: enqueueJob(startSingleOfferGeneration)
+    API-->>POP: { tasks: [{ taskId, offerId }] }
+
+    POP->>POP: Remplace tâches temp → IDs réels
+    POP->>SW: START_POLLING
+
+    loop Toutes les 30s (alarm MV3)
+        SW->>API: GET /api/ext/background-tasks/sync?deviceId=X&since=T
+        API-->>SW: { tasks: [{ status: "running", currentStep: "generation" }] }
+        SW->>SW: Merge dans storage.local
+    end
+
+    loop Toutes les 5s (popup ouvert)
+        POP->>API: GET /api/ext/background-tasks/sync
+        API-->>POP: { tasks: [{ status: "completed", cvFile: "..." }] }
+        POP->>POP: Affiche ✓ terminé + lien vers SaaS
+    end
+
+    Note over POP: Clic sur tâche complétée → cookie cvFile → ouvre SaaS
+          </div>
+        </div>
+
+        <!-- ─── Gestion erreurs auth ─── -->
+
+        <h2>Gestion des Erreurs d'Authentification</h2>
+
+        <p>L'extension mappe les clés d'erreur serveur vers des messages traduits côté client :</p>
+
+        <pre><code class="language-javascript">const ERROR_KEY_MAP = {
+  'errors.api.auth.invalidCredentials':     'errors.invalidCredentials',
+  'errors.api.auth.emailNotVerified':       'errors.emailNotVerified',
+  'errors.api.auth.tokenExpired':           'errors.tokenExpired',
+  'errors.api.auth.tokenInvalid':           'errors.tokenInvalid',
+  'errors.api.extension.serviceUnavailable':'errors.serviceUnavailable',
+  'errors.api.extension.baseFileRequired':  'errors.baseFileRequired',
+  'errors.api.extension.sourceCvNotFound':  'errors.sourceCvNotFound',
+  'errors.api.common.notAuthenticated':     'errors.notAuthenticated',
+  'errors.api.subscription.limitReached':   'errors.limitReached',
+  // ...
+};</code></pre>
+
+        <h3>Expiration de session</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Gestion de l'expiration du token</div>
+          <div class="mermaid">
+flowchart TD
+    REQ["Requête API"] --> FRESH["ensureTokenFresh()"]
+    FRESH -->|"expire dans < 24h"| REFRESH["refreshToken()"]
+    FRESH -->|"token OK"| FETCH["fetch()"]
+    REFRESH -->|"succès"| FETCH
+    REFRESH -->|"échec"| FETCH
+    FETCH -->|"200 OK"| OK["✓ Réponse"]
+    FETCH -->|"401"| RETRY["Tentative refresh"]
+    RETRY -->|"refresh OK"| REFETCH["Re-fetch()"]
+    RETRY -->|"refresh échoué"| CLEAR["clearToken()"]
+    REFETCH -->|"200 OK"| OK
+    REFETCH -->|"401"| CLEAR
+    CLEAR --> EXPIRED["AuthError: Session expirée"]
+    EXPIRED --> LOGIN["Retour vue login"]
+          </div>
+        </div>
+
+        <p>Quand le service worker reçoit un 401 persistant lors du polling :</p>
+
+        <pre><code class="language-javascript">// Service worker : 401 après retry → nettoyage et notification
+if (response.status === 401) {
+  await browser.storage.local.remove(['fitmycv_token', 'fitmycv_user']);
+  await stopPolling();
+  try {
+    await browser.runtime.sendMessage({ type: 'AUTH_EXPIRED' });
+  } catch { /* popup may not be open */ }
+}</code></pre>
+
+        <p>Le popup écoute ce message pour revenir automatiquement à la vue login :</p>
+
+        <pre><code class="language-javascript">browser.runtime.onMessage.addListener((message) => {
+  if (message.type === 'AUTH_EXPIRED') {
+    stopProgressRefresh();
+    document.getElementById('header-user').style.display = 'none';
+    showView('login');
+  }
+});</code></pre>
+
+        <!-- ─── Annulation ─── -->
+
+        <h2>Annulation de Tâches</h2>
+
+        <p>Les tâches en cours (<code>queued</code> ou <code>running</code>) peuvent être annulées via le popup :</p>
+
+        <pre><code class="language-javascript">// DELETE /api/ext/background-tasks/sync?taskId=X&action=cancel
+// Le serveur :
+// 1. Vérifie l'ownership de la tâche
+// 2. Rembourse les crédits débités (si queued/running)
+// 3. Met à jour le status → 'cancelled'
+// 4. Kill le processus en cours (via processRegistry)
+
+// Réponse
+{
+  "success": true,
+  "cancelled": true,
+  "refunded": true,
+  "refundedAmount": 2,
+  "timestamp": 1707123456789
+}</code></pre>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

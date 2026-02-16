@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -30,424 +24,270 @@
           <span>Administration</span>
         </div>
 
-        <h1>Administration</h1>
+        <h1>Panneau d'Administration</h1>
         <p class="lead">
-          Le dashboard d'administration permet de gérer tous les aspects de l'application : utilisateurs, abonnements, crédits, monitoring OpenAI, templates email et paramètres système.
+          Le panneau admin de FitMyCV.io centralise la gestion des utilisateurs, abonnements, cr&eacute;dits, co&ucirc;ts OpenAI, emails et param&egrave;tres syst&egrave;me. Il est accessible uniquement aux utilisateurs avec le r&ocirc;le <code>ADMIN</code> via <code>/admin/new</code> et expos&eacute; par <strong>65 endpoints API</strong> sous <code>/api/admin/*</code> et <code>/api/analytics/*</code>.
         </p>
-
-        <div class="callout callout-warning">
-          <div class="callout-title">Accès restreint</div>
-          <p>L'accès au dashboard admin nécessite le rôle <code>ADMIN</code> sur le compte utilisateur. Vérifié via <code>session.user.role === 'ADMIN'</code>.</p>
-        </div>
 
         <h2>Architecture du Dashboard</h2>
 
-        <h3>Modules disponibles</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Module</th>
-              <th>Description</th>
-              <th>API Endpoint</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Overview</strong></td>
-              <td>KPIs globaux (MRR, utilisateurs, CVs générés)</td>
-              <td><code>/api/analytics/*</code></td>
-            </tr>
-            <tr>
-              <td><strong>Utilisateurs</strong></td>
-              <td>Gestion des comptes utilisateurs</td>
-              <td><code>/api/admin/users</code></td>
-            </tr>
-            <tr>
-              <td><strong>Plans</strong></td>
-              <td>Abonnements Stripe</td>
-              <td><code>/api/admin/subscription-plans</code></td>
-            </tr>
-            <tr>
-              <td><strong>Crédits</strong></td>
-              <td>Packs et transactions</td>
-              <td><code>/api/admin/credit-packs</code></td>
-            </tr>
-            <tr>
-              <td><strong>OpenAI</strong></td>
-              <td>Monitoring coûts et alertes</td>
-              <td><code>/api/admin/openai-*</code></td>
-            </tr>
-            <tr>
-              <td><strong>Email</strong></td>
-              <td>Templates et logs</td>
-              <td><code>/api/admin/email-*</code></td>
-            </tr>
-            <tr>
-              <td><strong>Settings</strong></td>
-              <td>Configuration système (modèles IA, coûts crédits)</td>
-              <td><code>/api/admin/settings</code></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Architecture</h3>
         <div class="diagram">
-          <div class="diagram-title">Flux de données admin</div>
+          <div class="diagram-title">Modules du panneau admin et flux de donn&eacute;es</div>
           <div class="mermaid">
 flowchart TB
-    Admin["Dashboard Admin"]
-
-    subgraph Modules["MODULES"]
-        Overview["Overview"]
-        Users["Utilisateurs"]
-        Plans["Plans"]
-        Credits["Crédits"]
-        OpenAIMod["OpenAI"]
-        EmailMod["Email"]
-        Settings["Settings"]
+    subgraph Dashboard["PANNEAU ADMIN (11 onglets)"]
+        Overview["OverviewTab<br/>KPIs + MRR"]
+        Users["UsersTab<br/>Gestion utilisateurs"]
+        Revenue["RevenueTab<br/>Revenus + marges"]
+        Plans["SubscriptionPlansTab<br/>Plans + feature limits"]
+        OpenAI["OpenAICostsTab<br/>Monitoring IA"]
+        Email["EmailManagementTab<br/>Templates + triggers"]
+        Settings["SettingsTab<br/>Configuration"]
+        Onboarding["OnboardingTab<br/>Funnel analytics"]
+        Features["FeaturesTab<br/>Feature flags"]
+        Errors["ErrorsTab<br/>Logs erreurs"]
+        Feedback["FeedbackTab<br/>Retours users"]
     end
 
-    subgraph Data["SOURCES DE DONNÉES"]
-        DB[(PostgreSQL)]
-        StripeAPI["Stripe API"]
-        OpenAIAPI["OpenAI API"]
+    subgraph API["65 ENDPOINTS /api/admin/* + /api/analytics/*"]
+        UsersAPI["users<br/>users/:id"]
+        SettingsAPI["settings<br/>settings/:id<br/>settings/history"]
+        PlansAPI["subscription-plans<br/>subscription-mode"]
+        CreditsAPI["credit-packs<br/>credit-packs/:id"]
+        OpenAIAPI["openai-pricing<br/>openai-balance<br/>openai-alerts<br/>openai-alerts/triggered"]
+        EmailAPI["email-templates<br/>email-triggers<br/>email-logs<br/>email-stats<br/>email-test"]
+        RevenueAPI["revenue<br/>plan-costs"]
+        MaintAPI["maintenance<br/>cancel-all-subscriptions<br/>telemetry/cleanup"]
+        OnboardingAPI["onboarding/analytics<br/>onboarding/config<br/>onboarding/stats"]
+        AnalyticsAPI["analytics/cv<br/>analytics/features<br/>analytics/conversions<br/>analytics/errors"]
     end
 
-    Admin --> Modules
+    subgraph DB["BASE DE DONNEES (9 modeles admin)"]
+        Models["Setting | SubscriptionPlan<br/>CreditPack | OpenAIPricing<br/>OpenAIAlert | OpenAIUsage<br/>EmailTrigger | EmailTemplate<br/>EmailLog"]
+    end
 
-    Overview --> DB
-    Users --> DB
-    Plans --> DB
-    Plans --> StripeAPI
-    Credits --> DB
-    OpenAIMod --> DB
-    OpenAIMod --> OpenAIAPI
-    EmailMod --> DB
-    Settings --> DB
+    Dashboard --> API
+    API --> DB
           </div>
         </div>
 
-        <h2>Modules Disponibles</h2>
+        <h2>Modules</h2>
 
         <div class="card-grid">
           <div class="card">
-            <h4>Overview (KPIs)</h4>
-            <ul>
-              <li>MRR / ARR / ARPU</li>
-              <li>Nombre utilisateurs (total, nouveaux)</li>
-              <li>CVs générés / optimisés</li>
-              <li>Taux de conversion onboarding</li>
-            </ul>
-            <p><strong>Endpoint :</strong> <code>GET /api/analytics/summary</code></p>
+            <h4>Utilisateurs</h4>
+            <p>Liste pagin&eacute;e avec filtres (r&ocirc;le, email, recherche), cr&eacute;ation manuelle, modification r&ocirc;le/email, validation email, suppression compl&egrave;te (DB + fichiers).</p>
+            <p><strong>4 endpoints</strong> &middot; <a href="./users.html">D&eacute;tails &rarr;</a></p>
           </div>
-
           <div class="card">
-            <h4>Gestion Utilisateurs</h4>
-            <ul>
-              <li>Liste avec pagination et filtres</li>
-              <li>Détails utilisateur (abonnement, crédits, CVs)</li>
-              <li>Modification rôle (USER/ADMIN)</li>
-              <li>Suppression compte</li>
-            </ul>
-            <p><strong>Endpoint :</strong> <code>/api/admin/users/*</code></p>
+            <h4>Mode Abonnement</h4>
+            <p>Bascule globale entre mode abonnement (Stripe) et mode cr&eacute;dits uniquement. Compte les abonn&eacute;s payants avant d&eacute;sactivation.</p>
+            <p><strong>2 endpoints</strong> &middot; <a href="./subscription-mode.html">D&eacute;tails &rarr;</a></p>
           </div>
-
           <div class="card">
             <h4>Plans d'Abonnement</h4>
-            <ul>
-              <li>Création/modification plans</li>
-              <li>Configuration limites par feature</li>
-              <li>Synchronisation Stripe</li>
-              <li>Switch mode abonnement/crédits</li>
-            </ul>
-            <p><strong>Endpoint :</strong> <code>/api/admin/subscription-plans/*</code></p>
+            <p>CRUD des plans avec tiers (0-4), feature limits par plan, calcul automatique du discount annuel, sync Stripe non-bloquante.</p>
+            <p><strong>4 endpoints</strong> &middot; <a href="./plans-management.html">D&eacute;tails &rarr;</a></p>
           </div>
-
           <div class="card">
-            <h4>Packs de Crédits</h4>
-            <ul>
-              <li>Création/modification packs</li>
-              <li>Configuration prix/quantités</li>
-              <li>Activation/désactivation</li>
-              <li>Historique transactions</li>
-            </ul>
-            <p><strong>Endpoint :</strong> <code>/api/admin/credit-packs/*</code></p>
+            <h4>Packs Cr&eacute;dits</h4>
+            <p>CRUD des packs avec montant unique (contrainte unique), prix, devise, nom auto-g&eacute;n&eacute;r&eacute;, sync Stripe.</p>
+            <p><strong>4 endpoints</strong> &middot; <a href="./credit-packs.html">D&eacute;tails &rarr;</a></p>
           </div>
-
           <div class="card">
             <h4>Monitoring OpenAI</h4>
-            <ul>
-              <li>Solde compte OpenAI</li>
-              <li>Coûts par feature/jour/utilisateur</li>
-              <li>Configuration alertes seuils</li>
-              <li>Historique appels et tokens</li>
-            </ul>
-            <p><strong>Endpoint :</strong> <code>/api/admin/openai-*</code></p>
+            <p>Pricing par mod&egrave;le (standard + priority), balance compte (cache 5 min), alertes configurables avec d&eacute;tection des d&eacute;passements et utilisateurs affect&eacute;s.</p>
+            <p><strong>9 endpoints</strong> &middot; <a href="./openai-monitoring.html">D&eacute;tails &rarr;</a></p>
           </div>
-
           <div class="card">
             <h4>Templates Email</h4>
-            <ul>
-              <li>Éditeur de templates</li>
-              <li>Gestion triggers</li>
-              <li>Logs d'envoi</li>
-              <li>Test d'envoi</li>
-            </ul>
-            <p><strong>Endpoint :</strong> <code>/api/admin/email-*</code></p>
+            <p>Syst&egrave;me trigger/template avec &eacute;diteur visuel Maily/TipTap, activation atomique (un seul actif par trigger), logs, statistiques SMTP (limite 200/h).</p>
+            <p><strong>16 endpoints</strong> &middot; <a href="./email-templates.html">D&eacute;tails &rarr;</a></p>
+          </div>
+          <div class="card">
+            <h4>Param&egrave;tres Syst&egrave;me</h4>
+            <p>Configuration cl&eacute;/valeur par cat&eacute;gorie, historique via t&eacute;l&eacute;m&eacute;trie, invalidation des caches (mod&egrave;les IA, PDF), diffusion SSE temps r&eacute;el.</p>
+            <p><strong>5 endpoints</strong> &middot; <a href="./settings.html">D&eacute;tails &rarr;</a></p>
+          </div>
+          <div class="card">
+            <h4>Revenus &amp; Marges</h4>
+            <p>KPIs financiers (MRR, ARR, ARPU), historique par p&eacute;riode configurable, calcul des marges par plan via vue PostgreSQL <code>v_cout_api_par_plan</code>.</p>
+            <p><strong>2 endpoints</strong></p>
+          </div>
+          <div class="card">
+            <h4>Onboarding Admin</h4>
+            <p>Configuration du flux d'onboarding, analytics du funnel (taux compl&eacute;tion, drop-off par &eacute;tape, health score), statistiques de progression.</p>
+            <p><strong>3 endpoints</strong></p>
+          </div>
+          <div class="card">
+            <h4>Analytics &amp; T&eacute;l&eacute;m&eacute;trie</h4>
+            <p>Tableaux de bord analytiques : g&eacute;n&eacute;ration CV, utilisation des features, conversions, erreurs, et donn&eacute;es de t&eacute;l&eacute;m&eacute;trie pour le monitoring applicatif.</p>
+            <p><strong>12 endpoints</strong></p>
+          </div>
+          <div class="card">
+            <h4>Maintenance &amp; Ops</h4>
+            <p>Gestion des sessions actives, annulation globale d'abonnements (avec prorata Stripe), purge t&eacute;l&eacute;m&eacute;trie (7 tables), images publiques, documentation.</p>
+            <p><strong>6 endpoints</strong></p>
           </div>
         </div>
 
-        <h2>KPIs et Métriques</h2>
-
-        <h3>Métriques Financières</h3>
+        <h2>KPIs du Dashboard</h2>
 
         <table>
           <thead>
             <tr>
-              <th>Métrique</th>
-              <th>Description</th>
-              <th>Source</th>
+              <th>Cat&eacute;gorie</th>
+              <th>M&eacute;triques</th>
+              <th>Source API</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>MRR</strong></td>
-              <td>Monthly Recurring Revenue</td>
-              <td>Somme des abonnements actifs</td>
+              <td><strong>Revenus</strong></td>
+              <td>MRR, ARR, ARPU, revenus cr&eacute;dits, abonn&eacute;s actifs</td>
+              <td><code>/api/admin/revenue</code></td>
             </tr>
             <tr>
-              <td><strong>ARR</strong></td>
-              <td>Annual Recurring Revenue</td>
-              <td>MRR × 12</td>
+              <td><strong>Utilisateurs</strong></td>
+              <td>Total, nouveaux (p&eacute;riode), non v&eacute;rifi&eacute;s, CV moyen par user</td>
+              <td><code>/api/admin/users</code></td>
             </tr>
             <tr>
-              <td><strong>ARPU</strong></td>
-              <td>Average Revenue Per User</td>
-              <td>MRR / utilisateurs payants</td>
+              <td><strong>OpenAI</strong></td>
+              <td>Co&ucirc;t jour/mois, tokens utilis&eacute;s, balance restante</td>
+              <td><code>/api/admin/openai-*</code></td>
             </tr>
             <tr>
-              <td><strong>Churn Rate</strong></td>
-              <td>Taux de désabonnement</td>
-              <td>Annulations / total abonnés</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Métriques Usage</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Métrique</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>CVs générés</strong></td>
-              <td>Nombre de CV créés via pipeline génération</td>
+              <td><strong>Plans</strong></td>
+              <td>Distribution par plan, co&ucirc;t API par plan, marge brute en %</td>
+              <td><code>/api/admin/plan-costs</code></td>
             </tr>
             <tr>
-              <td><strong>CVs optimisés</strong></td>
-              <td>Nombre de CV améliorés via pipeline optimisation</td>
+              <td><strong>Onboarding</strong></td>
+              <td>Taux compl&eacute;tion, taux skip, funnel par &eacute;tape, health score</td>
+              <td><code>/api/admin/onboarding/analytics</code></td>
             </tr>
             <tr>
-              <td><strong>PDFs importés</strong></td>
-              <td>Nombre d'imports PDF réussis</td>
-            </tr>
-            <tr>
-              <td><strong>Exports</strong></td>
-              <td>Nombre d'exports PDF/DOCX</td>
-            </tr>
-            <tr>
-              <td><strong>Coûts OpenAI</strong></td>
-              <td>Coûts par feature, utilisateur, période</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h2>Monitoring OpenAI</h2>
-
-        <p>Le système de monitoring permet de suivre les coûts OpenAI en temps réel et de configurer des alertes.</p>
-
-        <h3>Types d'Alertes</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Description</th>
-              <th>Exemple</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>user_daily</code></td>
-              <td>Coût par utilisateur par jour</td>
-              <td>Alerte si > 5$ / jour</td>
-            </tr>
-            <tr>
-              <td><code>user_monthly</code></td>
-              <td>Coût par utilisateur par mois</td>
-              <td>Alerte si > 50$ / mois</td>
-            </tr>
-            <tr>
-              <td><code>global_daily</code></td>
-              <td>Coût total par jour</td>
-              <td>Alerte si > 100$ / jour</td>
-            </tr>
-            <tr>
-              <td><code>global_monthly</code></td>
-              <td>Coût total par mois</td>
-              <td>Alerte si > 2000$ / mois</td>
-            </tr>
-            <tr>
-              <td><code>feature_daily</code></td>
-              <td>Coût par feature par jour</td>
-              <td>Alerte si cv_generation > 50$ / jour</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Tracking des Tokens</h3>
-
-        <pre><code>// Chaque appel OpenAI est tracké
-{
-  userId: "user_id",
-  featureName: "cv_generation",
-  model: "gpt-4o",
-  promptTokens: 1500,
-  cachedTokens: 800,        // Tokens du cache (90% moins cher)
-  completionTokens: 500,
-  totalTokens: 2000,
-  estimatedCost: 0.025,     // En USD
-  duration: 2500            // En ms
-}</code></pre>
-
-        <h2>Gestion des Settings</h2>
-
-        <p>Les paramètres système sont stockés dans la table <code>Setting</code> et peuvent être modifiés en temps réel.</p>
-
-        <h3>Catégories de Settings</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Catégorie</th>
-              <th>Exemples</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>app</code></td>
-              <td>maintenance_mode, registration_enabled</td>
-            </tr>
-            <tr>
-              <td><code>subscription</code></td>
-              <td>subscription_mode_enabled, default_plan_id</td>
-            </tr>
-            <tr>
-              <td><code>credits</code></td>
-              <td>welcome_credits, credits_gpt_cv_generation</td>
-            </tr>
-            <tr>
-              <td><code>openai</code></td>
-              <td>model_cv_generation, model_match_score</td>
-            </tr>
-            <tr>
-              <td><code>cv</code></td>
-              <td>cv_max_versions, cv_encryption_enabled</td>
+              <td><strong>Emails</strong></td>
+              <td>Envois/heure (limite 200 SMTP), taux d'&eacute;chec, timeline 24h</td>
+              <td><code>/api/admin/email-stats</code></td>
             </tr>
           </tbody>
         </table>
 
         <h2>Composants React Admin</h2>
 
-        <pre><code>components/admin/
-├── AdminProvider.jsx           # Context mode édition
-├── tabs/
-│   ├── OverviewTab.jsx         # KPIs
-│   ├── UsersTab.jsx            # Gestion users
-│   ├── SubscriptionPlansTab.jsx
-│   ├── FeaturesTab.jsx
-│   ├── FeedbackTab.jsx
-│   ├── SettingsTab.jsx
-│   ├── OpenAICostsTab.jsx
-│   ├── RevenueTab.jsx
-│   ├── OnboardingTab.jsx
-│   └── ErrorsTab.jsx
-├── charts/
-│   ├── KPICard.jsx
-│   ├── MRRHistoryChart.jsx
-│   ├── PlanDistributionChart.jsx
-│   └── OnboardingDropoffChart.jsx
-├── email/
-│   ├── EmailDashboard.jsx
-│   ├── EmailTemplatesSection.jsx
-│   └── EmailHistorySection.jsx
-└── hooks/
-    ├── useAlertManagement.js
-    └── useOpenAICostsData.js</code></pre>
-
-        <h2>Endpoints Admin (38)</h2>
+        <p>Le dashboard est construit avec <strong>68 composants React</strong> dans <code>components/admin/</code> :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Groupe</th>
-              <th>Endpoints</th>
-              <th>Nombre</th>
+              <th>Composant</th>
+              <th>R&ocirc;le</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Utilisateurs</td>
-              <td><code>/api/admin/users/*</code></td>
-              <td>5</td>
+              <td><code>TabsBar</code></td>
+              <td>Navigation par onglets (Overview, Users, Revenue, Plans, OpenAI, Email, Settings...)</td>
             </tr>
             <tr>
-              <td>Plans</td>
-              <td><code>/api/admin/subscription-plans/*</code></td>
-              <td>6</td>
+              <td><code>KPICard</code></td>
+              <td>Carte m&eacute;trique avec valeur, tendance et ic&ocirc;ne</td>
             </tr>
             <tr>
-              <td>Crédits</td>
-              <td><code>/api/admin/credit-packs/*</code></td>
-              <td>4</td>
+              <td><code>MRRHistoryChart</code></td>
+              <td>Graphique revenus mensuels r&eacute;currents</td>
             </tr>
             <tr>
-              <td>Email</td>
-              <td><code>/api/admin/email-*</code></td>
-              <td>8</td>
+              <td><code>PlanDistributionChart</code></td>
+              <td>Distribution des abonn&eacute;s par plan</td>
             </tr>
             <tr>
-              <td>OpenAI</td>
-              <td><code>/api/admin/openai-*</code></td>
-              <td>4</td>
+              <td><code>EmailDashboard</code></td>
+              <td>Interface compl&egrave;te de gestion email (nav, config, templates, historique)</td>
             </tr>
             <tr>
-              <td>Settings</td>
-              <td><code>/api/admin/settings/*</code></td>
-              <td>4</td>
+              <td><code>GrapesJsEditorModal</code></td>
+              <td>&Eacute;diteur visuel de templates email</td>
             </tr>
             <tr>
-              <td>Analytics</td>
-              <td><code>/api/analytics/*</code></td>
-              <td>9</td>
+              <td><code>OnboardingStatusChart</code></td>
+              <td>Graphique de compl&eacute;tion du funnel d'onboarding</td>
+            </tr>
+            <tr>
+              <td><code>ConfirmDialog</code></td>
+              <td>Bo&icirc;te de confirmation pour actions destructives</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Prochaines Sections</h2>
+        <h2>S&eacute;curit&eacute; &amp; Autorisation</h2>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Contr&ocirc;le d'acc&egrave;s</div>
+          <p>Tous les endpoints admin v&eacute;rifient <code>session?.user?.role === 'ADMIN'</code> et retournent <strong>403 Forbidden</strong> sinon. Deux exceptions :</p>
+          <ul>
+            <li><code>/api/admin/openai-balance</code> &mdash; Endpoint public (balance affich&eacute;e dans le footer admin)</li>
+            <li><code>/api/admin/mutate</code> &mdash; Accessible &agrave; tout utilisateur authentifi&eacute; (mutation CV g&eacute;n&eacute;rique)</li>
+          </ul>
+        </div>
+
+        <h2>Op&eacute;rations de Maintenance</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>M&eacute;thode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/admin/maintenance/active-sessions</code></td>
+              <td>GET</td>
+              <td>Compte les utilisateurs actifs r&eacute;cents (7 jours) pour &eacute;valuer l'impact d'une maintenance</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/cancel-all-subscriptions</code></td>
+              <td>GET</td>
+              <td>Pr&eacute;visualise les abonnements &agrave; annuler avec calcul du prorata de remboursement</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/cancel-all-subscriptions</code></td>
+              <td>POST</td>
+              <td>Annule tous les abonnements payants avec remboursement prorata (code: <code>CANCEL_ALL_SUBSCRIPTIONS</code>)</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/telemetry/cleanup</code></td>
+              <td>DELETE</td>
+              <td>Purge 7 tables de t&eacute;l&eacute;m&eacute;trie en transaction atomique (FeatureUsage, OpenAICall, OpenAIUsage, TelemetryEvent, CvGenerationSubtask/Offer/Task)</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/public-images</code></td>
+              <td>GET</td>
+              <td>Liste les images du dossier public (par dossier, taille, extension)</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/docs/[[...path]]</code></td>
+              <td>GET</td>
+              <td>Sert la documentation HTML avec r&eacute;&eacute;criture automatique des chemins relatifs en absolus</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Sections D&eacute;taill&eacute;es</h2>
 
         <ul>
-          <li><a href="./users.html">Gestion Utilisateurs</a> - CRUD utilisateurs</li>
-          <li><a href="./subscription-mode.html">Mode Abonnement</a> - Switch entre modèles</li>
-          <li><a href="./plans-management.html">Gestion Plans</a> - Configuration plans</li>
-          <li><a href="./credit-packs.html">Packs Crédits</a> - Configuration crédits</li>
-          <li><a href="./openai-monitoring.html">Monitoring OpenAI</a> - Coûts et alertes</li>
-          <li><a href="./email-templates.html">Templates Email</a> - Gestion emails</li>
-          <li><a href="./settings.html">Paramètres</a> - Configuration système</li>
+          <li><a href="./users.html">Gestion des Utilisateurs</a> &mdash; CRUD, filtres, KPIs utilisateurs</li>
+          <li><a href="./subscription-mode.html">Mode Abonnement</a> &mdash; Bascule abonnement/cr&eacute;dits</li>
+          <li><a href="./plans-management.html">Gestion des Plans</a> &mdash; Plans, tiers, feature limits, sync Stripe</li>
+          <li><a href="./credit-packs.html">Packs Cr&eacute;dits</a> &mdash; Configuration des packs d'achat</li>
+          <li><a href="./openai-monitoring.html">Monitoring OpenAI</a> &mdash; Pricing, balance, alertes</li>
+          <li><a href="./email-templates.html">Templates Email</a> &mdash; Triggers, templates, logs, statistiques</li>
+          <li><a href="./settings.html">Param&egrave;tres Syst&egrave;me</a> &mdash; Configuration cl&eacute;/valeur par cat&eacute;gorie</li>
+          <li><a href="../15-api-reference/admin.html">R&eacute;f&eacute;rence API Admin</a> &mdash; Documentation compl&egrave;te des 65 endpoints</li>
         </ul>
       </div>
     </main>
@@ -463,7 +303,6 @@ flowchart TB
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

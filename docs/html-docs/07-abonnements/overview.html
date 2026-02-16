@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -30,235 +27,179 @@
           <span>Abonnements</span>
         </div>
 
-        <h1>Système d'Abonnements</h1>
+        <h1>Syst&egrave;me d'Abonnements</h1>
         <p class="lead">
-          FitMyCV.io utilise Stripe pour gérer les abonnements et paiements. Le système supporte deux modèles économiques configurables : abonnement avec crédits ou crédits uniquement.
+          FitMyCV.io utilise <strong>Stripe</strong> pour g&eacute;rer les abonnements et paiements. Le syst&egrave;me supporte deux mod&egrave;les &eacute;conomiques configurables : <strong>abonnement avec cr&eacute;dits</strong> ou <strong>cr&eacute;dits uniquement</strong>.
         </p>
 
         <h2>Architecture</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Intégration Stripe</div>
+          <div class="diagram-title">Int&eacute;gration Stripe</div>
           <div class="mermaid">
 flowchart TB
     subgraph App["APPLICATION"]
-        Plans["Plans en DB"]
-        Sub["Subscription model"]
+        Plans["SubscriptionPlan"]
+        Sub["Subscription"]
         Balance["CreditBalance"]
+        Packs["CreditPack"]
+        Counters["FeatureUsageCounter"]
     end
 
     subgraph Stripe["STRIPE"]
         Products["Products"]
-        Prices["Prices"]
+        Prices["Prices<br/>(monthly + yearly)"]
         Customers["Customers"]
         Subscriptions["Subscriptions"]
         Checkout["Checkout Sessions"]
+        Schedules["Subscription Schedules<br/>(downgrades)"]
     end
 
     subgraph Sync["SYNCHRONISATION"]
-        Webhooks["Webhooks"]
-        Events["Events"]
+        SyncScript["stripeSync.js"]
+        Webhooks["Webhook Handler<br/>/api/webhooks/stripe"]
+        Log["StripeWebhookLog<br/>(idempotence)"]
     end
 
-    App <--> Stripe
-    Stripe --> Webhooks
-    Webhooks --> App
+    Plans <-->|"sync products/prices"| SyncScript
+    SyncScript <--> Products
+    SyncScript <--> Prices
 
-    Plans --> Products
     Sub --> Subscriptions
+    Packs --> Products
     Checkout --> Balance
+
+    Stripe -->|"8 events"| Webhooks
+    Webhooks --> Log
+    Webhooks --> App
           </div>
         </div>
 
         <h2>Plans d'Abonnement</h2>
 
+        <p>Les plans sont stock&eacute;s dans <code>SubscriptionPlan</code> avec un syst&egrave;me de <strong>tiers</strong> (0=Gratuit, 1=Pro, 2=Premium). Les prix et limites sont configur&eacute;s en base de donn&eacute;es et synchronis&eacute;s avec Stripe.</p>
+
         <table>
           <thead>
             <tr>
               <th>Plan</th>
-              <th>Prix</th>
-              <th>Limites mensuelles</th>
+              <th>Tier</th>
+              <th>Prix mensuel</th>
+              <th>Prix annuel</th>
+              <th>Facturation</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Free</strong></td>
-              <td>0€/mois</td>
-              <td>3 générations CV, 1 export, 5 match scores</td>
+              <td><strong>Gratuit</strong></td>
+              <td>0</td>
+              <td>0&euro;</td>
+              <td>0&euro;</td>
+              <td>Pas de Stripe (local uniquement)</td>
             </tr>
             <tr>
               <td><strong>Pro</strong></td>
-              <td>9.99€/mois</td>
-              <td>20 générations CV, 10 exports, 50 match scores</td>
+              <td>1</td>
+              <td>Configurable en DB</td>
+              <td>Configurable en DB</td>
+              <td>Stripe Subscription</td>
             </tr>
             <tr>
               <td><strong>Premium</strong></td>
-              <td>19.99€/mois</td>
-              <td>Illimité sur la plupart des features</td>
+              <td>2</td>
+              <td>Configurable en DB</td>
+              <td>Configurable en DB</td>
+              <td>Stripe Subscription</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Modèles de Données</h2>
+        <div class="callout callout-info">
+          <div class="callout-title">Plans dynamiques</div>
+          <p>Les prix et caract&eacute;ristiques des plans ne sont <strong>pas hardcod&eacute;s</strong> : ils sont stock&eacute;s dans la table <code>SubscriptionPlan</code> et synchronis&eacute;s avec Stripe via <code>lib/subscription/stripeSync.js</code>. Les plans gratuits ne sont jamais sync avec Stripe.</p>
+        </div>
 
-        <h3>Subscription</h3>
-
-        <pre><code>model Subscription {
-  id                    Int       @id @default(autoincrement())
-  userId                String    @unique
-  stripeCustomerId      String?
-  stripeSubscriptionId  String?   @unique
-  stripePriceId         String?
-  status                String    // active, canceled, past_due, etc.
-  currentPeriodStart    DateTime?
-  currentPeriodEnd      DateTime?
-  cancelAtPeriodEnd     Boolean   @default(false)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  user                  User      @relation(fields: [userId], references: [id])
-  plan                  SubscriptionPlan? @relation(fields: [stripePriceId], references: [stripePriceId])
-}</code></pre>
+        <h2>Mod&egrave;les de Donn&eacute;es</h2>
 
         <h3>SubscriptionPlan</h3>
 
-        <pre><code>model SubscriptionPlan {
-  id              Int       @id @default(autoincrement())
-  name            String    // Free, Pro, Premium
-  displayName     String
-  description     String?
-  priceMonthly    Decimal
-  priceYearly     Decimal?
-  stripePriceId   String?   @unique
-  stripeProductId String?
-  isActive        Boolean   @default(true)
-  isDefault       Boolean   @default(false)
-  sortOrder       Int       @default(0)
-  createdAt       DateTime  @default(now())
+        <pre><code class="language-javascript">model SubscriptionPlan {
+  id                    Int       @id @default(autoincrement())
+  name                  String    @unique    // "Gratuit", "Pro", "Premium"
+  description           String?
+  isFree                Boolean   @default(false)
+  tier                  Int       @default(0) // 0=Gratuit, 1=Pro, 2=Premium
+  isPopular             Boolean   @default(false)
+  priceMonthly          Float     @default(0)
+  priceYearly           Float     @default(0)
+  yearlyDiscountPercent Float     @default(0)
+  priceCurrency         String    @default("EUR")
+  stripeProductId       String?   @unique
+  stripePriceIdMonthly  String?   @unique
+  stripePriceIdYearly   String?   @unique
 
-  subscriptions   Subscription[]
-  featureLimits   FeatureLimit[]
+  subscriptions         Subscription[]
+  featureLimits         SubscriptionPlanFeatureLimit[]
 }</code></pre>
 
-        <h3>FeatureLimit</h3>
+        <h3>Subscription</h3>
 
-        <pre><code>model FeatureLimit {
-  id          Int       @id @default(autoincrement())
-  planId      Int
-  featureName String    // gpt_cv_generation, export_cv, etc.
-  usageLimit  Int       // -1 = illimité
-  isEnabled   Boolean   @default(true)
+        <pre><code class="language-javascript">model Subscription {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  stripeCustomerId     String   @unique
+  stripeSubscriptionId String?  @unique
+  stripePriceId        String?
+  planId               Int
+  status               String    // "active", "canceled", "past_due"
+  billingPeriod        String    // "monthly", "yearly"
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean  @default(false)
+  canceledAt           DateTime?
 
-  plan        SubscriptionPlan @relation(fields: [planId], references: [id])
-
-  @@unique([planId, featureName])
+  plan                 SubscriptionPlan @relation(...)
+  user                 User             @relation(...)
 }</code></pre>
 
-        <h2>Vérification des Limites</h2>
-
-        <pre><code>// lib/subscription/featureUsage.js
-
-export async function canUseFeature(userId, featureName) {
-  // 1. Vérifier balance négative (chargeback)
-  const balance = await getCreditBalance(userId);
-  if (balance < 0) {
-    return { canUse: false, reason: 'balance_negative' };
-  }
-
-  // 2. Mode crédits uniquement ?
-  const subscriptionMode = await getSetting('subscription_mode_enabled');
-  if (subscriptionMode !== 'true') {
-    return checkCreditsOnly(userId, featureName);
-  }
-
-  // 3. Récupérer le plan de l'utilisateur
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId },
-    include: { plan: { include: { featureLimits: true } } }
-  });
-
-  const plan = subscription?.plan || await getDefaultPlan();
-  const limit = plan.featureLimits.find(l => l.featureName === featureName);
-
-  // 4. Feature désactivée ?
-  if (!limit?.isEnabled) {
-    return checkCreditsAvailable(userId, featureName);
-  }
-
-  // 5. Illimité ?
-  if (limit.usageLimit === -1) {
-    return { canUse: true, useCredit: false };
-  }
-
-  // 6. Vérifier compteur mensuel
-  const counter = await getFeatureCounter(userId, featureName);
-  if (counter.count < limit.usageLimit) {
-    return { canUse: true, useCredit: false };
-  }
-
-  // 7. Limite atteinte → crédits ?
-  return checkCreditsAvailable(userId, featureName);
-}</code></pre>
-
-        <h2>Flux Checkout</h2>
+        <h2>Flux de V&eacute;rification des Limites</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Processus de souscription</div>
+          <div class="diagram-title">Algorithme canUseFeature()</div>
           <div class="mermaid">
-sequenceDiagram
-    participant U as Utilisateur
-    participant App as Application
-    participant Stripe as Stripe
-    participant WH as Webhook
+flowchart TD
+    Start["canUseFeature(userId, featureName)"] --> BalCheck{"Balance < 0 ?"}
+    BalCheck -->|"Oui"| Blocked["BLOQU&Eacute; : balance n&eacute;gative"]
+    BalCheck -->|"Non"| ModeCheck{"Mode abonnement ?"}
 
-    U->>App: Clic "Souscrire Pro"
-    App->>Stripe: Créer Checkout Session
-    Stripe-->>App: Session URL
-    App-->>U: Redirection Stripe
+    ModeCheck -->|"Non (cr&eacute;dits-only)"| CostCheck{"Co&ucirc;t = 0 ?"}
+    CostCheck -->|"Oui"| FreeOK["AUTORIS&Eacute; : gratuit"]
+    CostCheck -->|"Non"| CredCheck{"Cr&eacute;dits >= co&ucirc;t ?"}
+    CredCheck -->|"Oui"| UseCredit["AUTORIS&Eacute; : useCredit=true"]
+    CredCheck -->|"Non"| NoCred["BLOQU&Eacute; : cr&eacute;dits insuffisants"]
 
-    U->>Stripe: Paiement
-    Stripe->>WH: checkout.session.completed
-    WH->>App: Mise à jour Subscription
+    ModeCheck -->|"Oui"| SubCheck{"Abonnement actif ?"}
+    SubCheck -->|"Non"| NoSub["BLOQU&Eacute;"]
+    SubCheck -->|"Oui"| PremCheck{"premiumRequired ?"}
 
-    Stripe->>WH: invoice.payment_succeeded
-    WH->>App: Confirmation paiement
+    PremCheck -->|"Oui"| IsPrem{"Plan Premium ?"}
+    IsPrem -->|"Oui"| PremOK["AUTORIS&Eacute; : Premium inclus"]
+    IsPrem -->|"Non"| PremBlock["BLOQU&Eacute; : Premium requis"]
 
-    App-->>U: Redirection succès
+    PremCheck -->|"Non"| EnabledCheck{"Feature enabled ?"}
+    EnabledCheck -->|"Non"| CredFallback{"Cr&eacute;dits >= co&ucirc;t ?"}
+    CredFallback -->|"Oui"| UseCredit2["AUTORIS&Eacute; : useCredit"]
+    CredFallback -->|"Non"| BlockedFeat["BLOQU&Eacute;"]
+
+    EnabledCheck -->|"Oui"| LimitCheck{"usageLimit = -1 ?"}
+    LimitCheck -->|"Oui"| Unlimited["AUTORIS&Eacute; : illimit&eacute;"]
+    LimitCheck -->|"Non"| CounterCheck{"compteur < limite ?"}
+    CounterCheck -->|"Oui"| UnderLimit["AUTORIS&Eacute; : sous la limite"]
+    CounterCheck -->|"Non"| OverLimit{"Cr&eacute;dits >= co&ucirc;t ?"}
+    OverLimit -->|"Oui"| UseCredit3["AUTORIS&Eacute; : useCredit"]
+    OverLimit -->|"Non"| LimitReached["BLOQU&Eacute; : limite atteinte"]
           </div>
         </div>
-
-        <h2>Webhooks Stripe</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Event</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>checkout.session.completed</code></td>
-              <td>Créer/Mettre à jour Subscription</td>
-            </tr>
-            <tr>
-              <td><code>customer.subscription.updated</code></td>
-              <td>Sync status, période, plan</td>
-            </tr>
-            <tr>
-              <td><code>customer.subscription.deleted</code></td>
-              <td>Marquer comme canceled</td>
-            </tr>
-            <tr>
-              <td><code>invoice.payment_succeeded</code></td>
-              <td>Confirmer paiement, reset compteurs</td>
-            </tr>
-            <tr>
-              <td><code>invoice.payment_failed</code></td>
-              <td>Marquer past_due, notifier user</td>
-            </tr>
-          </tbody>
-        </table>
 
         <h2>API Endpoints</h2>
 
@@ -266,89 +207,73 @@ sequenceDiagram
           <thead>
             <tr>
               <th>Endpoint</th>
-              <th>Méthode</th>
+              <th>M&eacute;thode</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>/api/subscription</code></td>
+              <td><code>/api/subscription/current</code></td>
               <td>GET</td>
-              <td>Récupérer l'abonnement actuel</td>
+              <td>R&eacute;sum&eacute; complet (abonnement, cr&eacute;dits, compteurs, downgrade programm&eacute;)</td>
             </tr>
             <tr>
-              <td><code>/api/subscription/checkout</code></td>
-              <td>POST</td>
-              <td>Créer session Checkout</td>
+              <td><code>/api/subscription/plans</code></td>
+              <td>GET</td>
+              <td>Liste des plans avec feature limits</td>
             </tr>
             <tr>
-              <td><code>/api/subscription/portal</code></td>
+              <td><code>/api/subscription/credit-packs</code></td>
+              <td>GET</td>
+              <td>Liste des packs de cr&eacute;dits disponibles</td>
+            </tr>
+            <tr>
+              <td><code>/api/checkout/subscription</code></td>
               <td>POST</td>
-              <td>Accéder au Customer Portal</td>
+              <td>Cr&eacute;er checkout, upgrade direct, ou downgrade programm&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>/api/checkout/credits</code></td>
+              <td>POST</td>
+              <td>Checkout Stripe pour achat pack cr&eacute;dits</td>
             </tr>
             <tr>
               <td><code>/api/subscription/cancel</code></td>
               <td>POST</td>
-              <td>Annuler à la fin de période</td>
+              <td>Annulation (imm&eacute;diate ou fin de p&eacute;riode)</td>
+            </tr>
+            <tr>
+              <td><code>/api/subscription/reactivate</code></td>
+              <td>POST</td>
+              <td>R&eacute;activer un abonnement annul&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>/api/subscription/preview-upgrade</code></td>
+              <td>POST</td>
+              <td>Calculer le prorata d'un upgrade</td>
+            </tr>
+            <tr>
+              <td><code>/api/subscription/cancel-downgrade</code></td>
+              <td>POST</td>
+              <td>Annuler un downgrade programm&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>/api/subscription/billing-portal</code></td>
+              <td>POST</td>
+              <td>Acc&eacute;der au Stripe Billing Portal</td>
+            </tr>
+            <tr>
+              <td><code>/api/subscription/invoices</code></td>
+              <td>GET</td>
+              <td>Factures Stripe (abonnements + cr&eacute;dits)</td>
             </tr>
             <tr>
               <td><code>/api/webhooks/stripe</code></td>
               <td>POST</td>
-              <td>Recevoir webhooks Stripe</td>
+              <td>Handler webhooks Stripe (8 events)</td>
             </tr>
           </tbody>
         </table>
-
-        <h2>Localisation Checkout Stripe</h2>
-
-        <p>Le message d'acceptation des CGV affich&eacute; dans Stripe Checkout est localis&eacute; selon la langue de l'utilisateur.</p>
-
-        <h3>Fonction getTermsMessage()</h3>
-
-        <pre><code>// lib/stripe/checkoutLocale.js
-
-import { getTermsMessage } from '@/lib/stripe/checkoutLocale';
-
-// G&eacute;n&egrave;re le message d'acceptation CGV localis&eacute;
-getTermsMessage('fr')
-// &rarr; "J'accepte les [Conditions G&eacute;n&eacute;rales de Vente](https://app.fitmycv.io/terms)."
-
-getTermsMessage('en')
-// &rarr; "I accept the [Terms of Service](https://app.fitmycv.io/terms)."</code></pre>
-
-        <h3>Messages par Langue</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Locale</th>
-              <th>Message</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>fr</code></td>
-              <td>J'accepte les <a href="#">Conditions G&eacute;n&eacute;rales de Vente</a>.</td>
-            </tr>
-            <tr>
-              <td><code>en</code></td>
-              <td>I accept the <a href="#">Terms of Service</a>.</td>
-            </tr>
-            <tr>
-              <td><code>es</code></td>
-              <td>Acepto los <a href="#">T&eacute;rminos de Servicio</a>.</td>
-            </tr>
-            <tr>
-              <td><code>de</code></td>
-              <td>Ich akzeptiere die <a href="#">Nutzungsbedingungen</a>.</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="callout callout-success">
-          <div class="callout-title">R&eacute;utilisation des traductions</div>
-          <p>Les messages sont extraits des fichiers <code>locales/{lang}/subscription.json</code> existants, garantissant la coh&eacute;rence avec le reste de l'application.</p>
-        </div>
 
         <h2>Fichiers Cl&eacute;s</h2>
 
@@ -362,34 +287,54 @@ getTermsMessage('en')
           <tbody>
             <tr>
               <td><code>lib/subscription/subscriptions.js</code></td>
-              <td>Gestion abonnements Stripe</td>
+              <td>CRUD abonnements, assignDefaultPlan, getSubscriptionSummary</td>
             </tr>
             <tr>
               <td><code>lib/subscription/featureUsage.js</code></td>
-              <td>V&eacute;rification limites &amp; cr&eacute;dits</td>
+              <td>canUseFeature(), incrementFeatureCounter(), refundFeatureUsage()</td>
             </tr>
             <tr>
-              <td><code>lib/stripe/client.js</code></td>
-              <td>Client Stripe configur&eacute;</td>
+              <td><code>lib/subscription/credits.js</code></td>
+              <td>getCreditBalance(), debitCredit(), refundCredit(), grantCredits()</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/creditCost.js</code></td>
+              <td>getCreditCostForFeature() depuis Settings DB</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/planUtils.js</code></td>
+              <td>Comparaison plans (isUpgrade, isDowngrade, getPlanTier)</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/stripeSync.js</code></td>
+              <td>Synchronisation Products/Prices avec Stripe</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/macroFeatures.js</code></td>
+              <td>D&eacute;finition des macro-features et limites par d&eacute;faut</td>
+            </tr>
+            <tr>
+              <td><code>lib/stripe.js</code></td>
+              <td>Client Stripe singleton (API v2024-12-18.acacia)</td>
             </tr>
             <tr>
               <td><code>lib/stripe/checkoutLocale.js</code></td>
-              <td>Localisation messages CGV</td>
+              <td>Localisation messages CGV (fr, en, es, de)</td>
             </tr>
             <tr>
-              <td><code>app/api/webhooks/stripe/route.js</code></td>
-              <td>Handler webhooks</td>
+              <td><code>app/api/webhooks/stripe/</code></td>
+              <td>Handler webhooks modulaire (handlers/*.js)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Prochaines Sections</h2>
+        <h2>Sections D&eacute;taill&eacute;es</h2>
 
         <ul>
-          <li><a href="./business-models.html">Modèles économiques</a> - Abonnement vs Crédits</li>
-          <li><a href="./plans-stripe.html">Plans Stripe</a> - Configuration détaillée</li>
-          <li><a href="./checkout-flow.html">Checkout</a> - Flux de paiement</li>
-          <li><a href="./webhooks.html">Webhooks</a> - Synchronisation events</li>
+          <li><a href="./business-models.html">Mod&egrave;les &eacute;conomiques</a> &mdash; Abonnement + Cr&eacute;dits vs Cr&eacute;dits uniquement</li>
+          <li><a href="./plans-stripe.html">Plans Stripe</a> &mdash; Configuration, synchronisation, tier system</li>
+          <li><a href="./checkout-flow.html">Checkout Flow</a> &mdash; Souscription, upgrade, downgrade, packs cr&eacute;dits</li>
+          <li><a href="./webhooks.html">Webhooks Stripe</a> &mdash; 8 events, handlers modulaires, idempotence</li>
         </ul>
       </div>
     </main>

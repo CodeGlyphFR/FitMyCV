@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -34,125 +34,393 @@
 
         <h1>OAuth Flow</h1>
         <p class="lead">
-          FitMyCV.io supporte l'authentification OAuth 2.0 via Google et LinkedIn, permettant une connexion rapide et securisee.
+          FitMyCV.io supporte l'authentification OAuth 2.0 via Google, GitHub et Apple.
+          Les providers sont conditionnels : activés uniquement si les variables d'environnement
+          sont configurées, via la fonction <code>maybeProvider()</code>.
         </p>
 
-        <h2>Flux OAuth 2.0</h2>
+        <h2>Flux OAuth - Première Connexion</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Sequence OAuth</div>
+          <div class="diagram-title">Séquence OAuth (inscription ou connexion)</div>
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
     participant F as FitMyCV
-    participant P as Provider (Google/LinkedIn)
+    participant P as Provider OAuth
     participant DB as PostgreSQL
 
-    U->>F: Clic "Connexion avec Google"
-    F->>P: Redirection vers OAuth
+    U->>F: Clic "Connexion avec Google/GitHub/Apple"
+    F->>P: Redirection vers OAuth (prompt: select_account)
     P->>U: Page de consentement
-    U->>P: Autorise l'acces
+    U->>P: Autorise l'accès
     P->>F: Code d'autorisation
-    F->>P: Echange code contre token
-    P->>F: Access token + profil
-    F->>DB: Creer/mettre a jour User
-    F->>DB: Creer Account (liaison)
-    F->>U: Session créée, redirection
+    F->>P: Échange code contre access token
+    P->>F: Access token + profil utilisateur
+
+    alt Nouvel utilisateur
+        F->>DB: Créer User (emailVerified: auto)
+        F->>DB: Créer Account (provider link)
+        Note over F: Event createUser déclenché
+        F->>F: assignDefaultPlan()
+        F->>F: sendWelcomeEmail()
+        F->>F: Initialiser onboardingState
+    else Utilisateur existant
+        F->>DB: Mettre à jour Account
+    end
+
+    F->>F: Callback signIn vérifie maintenance + registration
+    F->>DB: Update lastLoginAt
+    F->>F: Générer JWT session (7 jours)
+    F->>U: Session créée, redirection /
           </div>
         </div>
 
-        <h2>Providers Configures</h2>
+        <h2>Providers Configurés</h2>
 
         <div class="card-grid">
           <div class="card">
             <h4>Google OAuth</h4>
             <ul>
-              <li><strong>Scopes</strong>: email, profile</li>
-              <li><strong>Donnees recuperees</strong>: email, nom, avatar</li>
-              <li><strong>Callback</strong>: /api/auth/callback/google</li>
+              <li><strong>Scopes</strong> : openid, email, profile</li>
+              <li><strong>Prompt</strong> : select_account</li>
+              <li><strong>Callback</strong> : <code>/api/auth/callback/google</code></li>
+              <li><strong>Données</strong> : email, nom, avatar</li>
+              <li><strong>Env</strong> : <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code></li>
             </ul>
           </div>
           <div class="card">
-            <h4>LinkedIn OAuth</h4>
+            <h4>GitHub OAuth</h4>
             <ul>
-              <li><strong>Scopes</strong>: r_liteprofile, r_emailaddress</li>
-              <li><strong>Donnees recuperees</strong>: email, nom, photo</li>
-              <li><strong>Callback</strong>: /api/auth/callback/linkedin</li>
+              <li><strong>Scopes</strong> : read:user, user:email</li>
+              <li><strong>Prompt</strong> : select_account</li>
+              <li><strong>Callback</strong> : <code>/api/auth/callback/github</code></li>
+              <li><strong>Données</strong> : email (primaire vérifié), nom/login</li>
+              <li><strong>Env</strong> : <code>GITHUB_ID</code>, <code>GITHUB_SECRET</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Apple Sign-In</h4>
+            <ul>
+              <li><strong>Scopes</strong> : name, email</li>
+              <li><strong>Prompt</strong> : login</li>
+              <li><strong>Callback</strong> : <code>/api/auth/callback/apple</code></li>
+              <li><strong>Données</strong> : email (via id_token JWT)</li>
+              <li><strong>Env</strong> : 5 variables (<code>APPLE_CLIENT_ID</code>, <code>APPLE_CLIENT_SECRET</code>, <code>APPLE_TEAM_ID</code>, <code>APPLE_KEY_ID</code>, <code>APPLE_PRIVATE_KEY</code>)</li>
             </ul>
           </div>
         </div>
 
-        <h2>Configuration Provider</h2>
+        <h2>Configuration des Providers</h2>
 
-        <pre><code>// lib/auth/options.js
+        <pre><code class="language-javascript">// lib/auth/options.js (extrait providers OAuth)
 
-import GoogleProvider from 'next-auth/providers/google';
-import LinkedInProvider from 'next-auth/providers/linkedin';
+maybeProvider(
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+  () => GoogleProvider({
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    authorization: {
+      params: { prompt: "select_account" },
+    },
+  })
+),
 
-export const authOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: 'consent',
-          access_type: 'offline',
-          response_type: 'code'
-        }
-      }
-    }),
+maybeProvider(
+  process.env.GITHUB_ID && process.env.GITHUB_SECRET,
+  () => GithubProvider({
+    clientId: process.env.GITHUB_ID,
+    clientSecret: process.env.GITHUB_SECRET,
+    authorization: {
+      params: { prompt: "select_account" },
+    },
+  })
+),
 
-    LinkedInProvider({
-      clientId: process.env.LINKEDIN_CLIENT_ID,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-      authorization: {
-        params: {
-          scope: 'r_liteprofile r_emailaddress'
-        }
-      }
-    })
-  ]
-};</code></pre>
+maybeProvider(
+  process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET
+    && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID
+    && process.env.APPLE_PRIVATE_KEY,
+  () => AppleProvider({
+    clientId: process.env.APPLE_CLIENT_ID,
+    clientSecret: {
+      privateKey: process.env.APPLE_PRIVATE_KEY,
+      teamId: process.env.APPLE_TEAM_ID,
+      keyId: process.env.APPLE_KEY_ID,
+    },
+    authorization: {
+      params: { prompt: "login" },
+    },
+  })
+),</code></pre>
 
-        <h2>Liaison de Comptes</h2>
+        <div class="callout callout-info">
+          <div class="callout-title">Providers conditionnels</div>
+          <p>Chaque provider est enveloppé dans <code>maybeProvider(condition, factory)</code> qui retourne
+          <code>null</code> si les variables d'environnement ne sont pas définies. Le tableau providers est
+          filtré avec <code>.filter(Boolean)</code> pour exclure les <code>null</code>. Cela permet de
+          désactiver un provider simplement en ne configurant pas ses variables.</p>
+        </div>
 
-        <p>Quand un utilisateur se connecte via OAuth, NextAuth crée automatiquement :</p>
+        <h2>Event createUser (Nouvel Utilisateur OAuth)</h2>
+
+        <p>Quand un nouvel utilisateur se connecte via OAuth, NextAuth crée automatiquement le <code>User</code>
+        et le record <code>Account</code>. L'event <code>createUser</code> est alors déclenché :</p>
+
+        <pre><code class="language-javascript">// lib/auth/options.js (extrait event createUser)
+events: {
+  async createUser({ user }) {
+    // 1. Vérifier que les inscriptions sont autorisées
+    const [regSetting, maintenanceSetting] = await Promise.all([
+      prisma.setting.findUnique({ where: { settingName: 'registration_enabled' } }),
+      prisma.setting.findUnique({ where: { settingName: 'maintenance_enabled' } }),
+    ]);
+
+    if (regSetting?.value === '0' || maintenanceSetting?.value === '1') {
+      // User sera supprimé dans signIn callback
+      return;
+    }
+
+    // 2. Auto-vérifier l'email (pas de passwordHash = OAuth)
+    if (!dbUser.passwordHash && !dbUser.emailVerified) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
+    }
+
+    // 3. Initialiser l'onboardingState
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { onboardingState: DEFAULT_ONBOARDING_STATE },
+    });
+
+    // 4. Envoyer l'email de bienvenue
+    await sendWelcomeEmail({ email: user.email, name: user.name, userId: user.id });
+
+    // 5. Attribuer le plan gratuit par défaut
+    await assignDefaultPlan(user.id);
+  },
+},</code></pre>
+
+        <h2>Protection contre les Inscriptions Non Autorisées</h2>
+
+        <p>Le callback <code>signIn</code> gère les cas où un nouvel utilisateur OAuth doit être bloqué :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Logique de blocage OAuth dans signIn</div>
+          <div class="mermaid">
+flowchart TD
+    A["signIn callback"] --> B{"registration_enabled<br/>= '0' ?"}
+    B -->|Oui| C{"User existe<br/>en DB ?"}
+    C -->|Non| D["BLOQUER<br/>(nouvel utilisateur)"]
+    C -->|Oui| E{"Créé < 60s<br/>et pas de password ?"}
+    E -->|Oui| F["Supprimer user<br/>+ BLOQUER"]
+    E -->|Non| G["AUTORISER<br/>(utilisateur existant)"]
+    B -->|Non| H{"maintenance_enabled<br/>= '1' ?"}
+    H -->|Oui| I{"User est ADMIN ?"}
+    I -->|Oui| G
+    I -->|Non| J{"Nouvel user<br/>(< 60s) ?"}
+    J -->|Oui| K["Supprimer user<br/>+ BLOQUER"]
+    J -->|Non| L["BLOQUER"]
+    H -->|Non| G
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Suppression sécurisée</div>
+          <p>La fonction <code>deleteNewOAuthUser()</code> ne supprime <strong>jamais</strong> un utilisateur ADMIN.
+          Elle utilise une transaction Prisma atomique pour supprimer d'abord les records <code>Account</code>
+          puis le <code>User</code>.</p>
+        </div>
+
+        <h2>Liaison de Comptes OAuth</h2>
+
+        <p>Un utilisateur connecté peut lier/délier des providers OAuth depuis la page <code>/account</code>.
+        Ce flux utilise un state token CSRF custom (pas NextAuth) avec cookie sécurisé.</p>
+
+        <h3>Flux de Liaison</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Séquence de liaison OAuth</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant F as FitMyCV (/account)
+    participant API as API link-oauth
+    participant P as Provider OAuth
+    participant CB as Callback link/[provider]
+
+    U->>F: Clic "Lier Google/GitHub/Apple"
+    F->>API: POST /api/account/link-oauth {provider, recaptchaToken}
+    API->>API: Vérifier reCAPTCHA + session
+    API->>API: Vérifier provider pas déjà lié
+    API->>API: Générer state token (nonce + userId + exp 10min)
+    API->>API: Stocker state en cookie httpOnly
+    API->>F: { authUrl }
+    F->>P: Redirection vers OAuth
+    P->>U: Page de consentement
+    U->>P: Autorise
+    P->>CB: GET /api/auth/callback/link/[provider]?code=xxx&state=yyy
+    CB->>CB: Valider state vs cookie (CSRF)
+    CB->>CB: Supprimer cookie immédiatement
+    CB->>CB: Vérifier session + expiration
+    CB->>P: Échanger code contre token
+    CB->>P: Récupérer profil utilisateur
+    CB->>CB: Vérifier email match (FitMyCV == OAuth)
+    CB->>CB: Vérifier provider pas déjà lié à un autre user
+    CB->>DB: CREATE Account (provider link)
+    CB->>U: Redirect /account?linkSuccess=true
+          </div>
+        </div>
+
+        <h3>Vérification Email Match</h3>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Contrainte de sécurité</div>
+          <p>L'email du compte OAuth <strong>doit correspondre</strong> à l'email du compte FitMyCV.
+          Si les emails ne matchent pas, la liaison est refusée avec l'erreur <code>email_mismatch</code>.
+          Cette contrainte empêche un utilisateur de lier un compte OAuth appartenant à quelqu'un d'autre.</p>
+        </div>
+
+        <h3>API Endpoints Liaison</h3>
 
         <table>
           <thead>
             <tr>
-              <th>Table</th>
-              <th>Donnees</th>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>User</code></td>
-              <td>id, email, name, image (si nouveau)</td>
+              <td><code>/api/account/link-oauth</code></td>
+              <td>POST</td>
+              <td>Initier la liaison OAuth (retourne l'URL d'autorisation)</td>
             </tr>
             <tr>
-              <td><code>Account</code></td>
-              <td>provider, providerAccountId, access_token, refresh_token</td>
+              <td><code>/api/auth/callback/link/[provider]</code></td>
+              <td>GET</td>
+              <td>Callback OAuth pour finaliser la liaison</td>
+            </tr>
+            <tr>
+              <td><code>/api/account/linked-accounts</code></td>
+              <td>GET</td>
+              <td>Lister comptes liés + providers disponibles + canUnlink</td>
+            </tr>
+            <tr>
+              <td><code>/api/account/unlink-oauth</code></td>
+              <td>DELETE</td>
+              <td>Supprimer un lien OAuth (requiert &gt; 1 provider)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Gestion Multi-Providers</h2>
+        <h3>Réponse linked-accounts</h3>
 
-        <p>Un utilisateur peut lier plusieurs providers a son compte :</p>
+        <pre><code class="language-json">// GET /api/account/linked-accounts
+{
+  "linkedAccounts": [
+    { "provider": "google", "providerAccountId": "123...", "linkedAt": "2025-..." },
+    { "provider": "github", "providerAccountId": "456...", "linkedAt": "2025-..." }
+  ],
+  "availableProviders": {
+    "google": true,
+    "github": true,
+    "apple": false
+  },
+  "canUnlink": {
+    "google": true,
+    "github": true
+  }
+}</code></pre>
 
-        <pre><code>// Verifier les comptes lies
-const accounts = await prisma.account.findMany({
-  where: { userId: session.user.id }
-});
+        <div class="callout callout-info">
+          <div class="callout-title">Règle de déliaison</div>
+          <p><code>canUnlink</code> est <code>true</code> pour chaque provider uniquement si
+          <code>linkedAccounts.length > 1</code>. On ne peut pas supprimer le dernier provider
+          lié pour éviter de verrouiller l'utilisateur hors de son compte.</p>
+        </div>
 
-// Exemple de resultat
-[
-  { provider: 'google', providerAccountId: '123...' },
-  { provider: 'linkedin', providerAccountId: '456...' },
-  { provider: 'credentials', providerAccountId: null }
-]</code></pre>
+        <h2>Récupération de Profil par Provider</h2>
+
+        <p>Le callback <code>/api/auth/callback/link/[provider]</code> utilise des fonctions spécifiques
+        pour récupérer le profil de chaque provider :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>API Profil</th>
+              <th>Données extraites</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Google</td>
+              <td><code>googleapis.com/oauth2/v2/userinfo</code></td>
+              <td>id, email, name</td>
+            </tr>
+            <tr>
+              <td>GitHub</td>
+              <td><code>api.github.com/user</code> + <code>/user/emails</code></td>
+              <td>id, email (primaire vérifié), name/login</td>
+            </tr>
+            <tr>
+              <td>Apple</td>
+              <td>Décodage du <code>id_token</code> JWT</td>
+              <td>sub (id), email</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Données Stockées (Table Account)</h2>
+
+        <p>Quand un utilisateur se connecte ou lie un provider OAuth, NextAuth/le callback crée un record dans la table <code>Account</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>userId</code></td>
+              <td>Référence vers la table User</td>
+            </tr>
+            <tr>
+              <td><code>type</code></td>
+              <td><code>"oauth"</code></td>
+            </tr>
+            <tr>
+              <td><code>provider</code></td>
+              <td><code>"google"</code>, <code>"github"</code> ou <code>"apple"</code></td>
+            </tr>
+            <tr>
+              <td><code>providerAccountId</code></td>
+              <td>ID unique chez le provider</td>
+            </tr>
+            <tr>
+              <td><code>access_token</code></td>
+              <td>Token d'accès OAuth</td>
+            </tr>
+            <tr>
+              <td><code>refresh_token</code></td>
+              <td>Token de refresh (si disponible)</td>
+            </tr>
+            <tr>
+              <td><code>expires_at</code></td>
+              <td>Timestamp d'expiration du token</td>
+            </tr>
+            <tr>
+              <td><code>id_token</code></td>
+              <td>ID token JWT (Apple principalement)</td>
+            </tr>
+          </tbody>
+        </table>
 
         <h2>Variables d'Environnement</h2>
 
@@ -160,25 +428,55 @@ const accounts = await prisma.account.findMany({
           <thead>
             <tr>
               <th>Variable</th>
+              <th>Provider</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><code>GOOGLE_CLIENT_ID</code></td>
+              <td>Google</td>
               <td>Client ID Google Cloud Console</td>
             </tr>
             <tr>
               <td><code>GOOGLE_CLIENT_SECRET</code></td>
+              <td>Google</td>
               <td>Client Secret Google</td>
             </tr>
             <tr>
-              <td><code>LINKEDIN_CLIENT_ID</code></td>
-              <td>Client ID LinkedIn Developer</td>
+              <td><code>GITHUB_ID</code></td>
+              <td>GitHub</td>
+              <td>Client ID GitHub OAuth App</td>
             </tr>
             <tr>
-              <td><code>LINKEDIN_CLIENT_SECRET</code></td>
-              <td>Client Secret LinkedIn</td>
+              <td><code>GITHUB_SECRET</code></td>
+              <td>GitHub</td>
+              <td>Client Secret GitHub</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_CLIENT_ID</code></td>
+              <td>Apple</td>
+              <td>Service ID Apple</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_CLIENT_SECRET</code></td>
+              <td>Apple</td>
+              <td>Client Secret Apple</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_TEAM_ID</code></td>
+              <td>Apple</td>
+              <td>Team ID Apple Developer</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_KEY_ID</code></td>
+              <td>Apple</td>
+              <td>Key ID du certificat</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_PRIVATE_KEY</code></td>
+              <td>Apple</td>
+              <td>Clé privée pour signer le JWT client</td>
             </tr>
           </tbody>
         </table>

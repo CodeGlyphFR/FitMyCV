@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pipeline Optimisation CV | FitMyCV.io</title>
+  <title>Pipeline Optimisation CV - Vue d'ensemble | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -34,84 +28,79 @@
 
         <h1>Pipeline d'Optimisation CV</h1>
         <p class="lead">
-          Le pipeline d'optimisation (cv-improvement) améliore un CV existant de manière ciblée, basée sur les suggestions de l'IA et les choix de l'utilisateur. Contrairement au pipeline de génération qui transforme complètement le CV, ce pipeline effectue des modifications précises et traçables.
+          Le pipeline <strong>cv-improvement</strong> permet d'am&eacute;liorer un CV existant de mani&egrave;re cibl&eacute;e &agrave; partir des suggestions g&eacute;n&eacute;r&eacute;es lors du scoring. Il utilise une architecture &agrave; <strong>4 stages</strong> avec parall&eacute;lisation contr&ocirc;l&eacute;e (<code>pLimit(5)</code>), des imports dynamiques pour le chargement diff&eacute;r&eacute; des modules, et un syst&egrave;me de pr&eacute;traitement Chain-of-Thought pour router les suggestions vers les bonnes cibles.
         </p>
 
         <div class="callout callout-info">
-          <div class="callout-title">Coût</div>
-          <p>2 crédits par optimisation. Le scoring initial coûte 1 crédit supplémentaire.</p>
+          <div class="callout-title">Co&ucirc;t en cr&eacute;dits</div>
+          <p>Le pipeline d'optimisation utilise la feature <code>optimize_cv</code>. Le co&ucirc;t est configurable dans <strong>Administration &rarr; Settings</strong> via <code>incrementFeatureCounter(userId, 'optimize_cv')</code>. Le cr&eacute;dit est d&eacute;bit&eacute; au lancement de la t&acirc;che et <strong>rembours&eacute; automatiquement</strong> en cas d'&eacute;chec.</p>
         </div>
 
-        <h2>Workflow Global</h2>
+        <!-- ==================== FLOWCHART COMPLET ==================== -->
+        <h2>Workflow Global - 4 Stages</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Pipeline complet d'optimisation</div>
+          <div class="diagram-title">Pipeline complet d'optimisation CV - 4 stages</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTRÉE UTILISATEUR"]
-        CV["CV existant"]
-        Offer["Offre d'emploi (optionnelle)"]
-        Trigger["Déclencher optimisation"]
+    subgraph Input["ENTREE"]
+        CV["CV existant<br/>(CvFile.content)"]
+        Score["Score + Suggestions<br/>(depuis scoring)"]
+        User["Selections utilisateur<br/>(suggestions + skills)"]
     end
 
-    subgraph Scoring["ÉTAPE 1 - SCORING"]
-        CalcScore["Calcul Match Score"]
-        Score["Score 0-100"]
-        Suggestions["Suggestions IA (max 3-4)"]
-        Missing["Skills manquants"]
+    subgraph API["API ENTRY POINT"]
+        Improve["POST /api/cv/improve<br/>route.js"]
+        Schedule["scheduleImproveCvJob()"]
     end
 
-    subgraph Selection["SÉLECTION UTILISATEUR"]
-        ChooseSugg["Choisir suggestions"]
-        AddContext["Ajouter contexte"]
-        ChooseSkills["Choisir skills à ajouter"]
+    subgraph Stage12["STAGE 1 &amp; 2 (PARALLELE)"]
+        direction LR
+        S1["Stage 1<br/>classifySkills()<br/>Classification skills manquants"]
+        S2["Stage 2<br/>preprocessSuggestions()<br/>Chain-of-Thought routing"]
     end
 
-    subgraph Pipeline["ÉTAPE 2 - PIPELINE 4 STAGES"]
-        S1["Stage 1: Classify Skills"]
-        S2["Stage 2: Preprocess Suggestions"]
-        S3["Stage 3: Improve Sections<br/>(parallèle)"]
-        S4["Stage 4: Update Summary"]
+    subgraph Stage3["STAGE 3 - AMELIORATIONS (pLimit 5)"]
+        direction TB
+        Exp["improveExperience()<br/>Responsabilites, deliverables"]
+        Proj["improveProject()<br/>Modifier ou creer projets"]
+        Lang["improveLanguages()<br/>Niveaux, certifications"]
+        Extras["improveExtras()<br/>Certifications, extras"]
     end
 
-    subgraph Review["ÉTAPE 3 - REVIEW"]
-        Changes["Changements proposés"]
-        Accept["Accepter"]
-        Reject["Rejeter"]
+    subgraph Stage4["STAGE 4 - SUMMARY"]
+        Summary["improveSummary()<br/>Sequentiel si exp/proj changes"]
     end
 
     subgraph Output["SORTIE"]
-        FinalCV["CV optimisé"]
-        Version["Nouvelle version"]
+        FinalCV["CV Ameliore"]
+        Changes["allChangesMade[]"]
+        Metrics["stageMetrics"]
     end
 
-    Input --> Scoring
-    CV --> CalcScore
-    Offer --> CalcScore
-    CalcScore --> Score
-    CalcScore --> Suggestions
-    CalcScore --> Missing
+    CV --> Improve
+    Score --> Improve
+    User --> Improve
+    Improve --> Schedule
 
-    Suggestions --> Selection
-    Missing --> Selection
-    Selection --> Pipeline
+    Schedule --> S1
+    Schedule --> S2
 
-    ChooseSugg --> S2
-    AddContext --> S2
-    ChooseSkills --> S1
+    S1 --> Stage3
+    S2 --> Stage3
 
-    S1 --> S3
-    S2 --> S3
-    S3 --> S4
-    S4 --> Review
+    Exp --> Stage4
+    Proj --> Stage4
+    Lang --> Stage4
+    Extras --> Stage4
 
-    Changes --> Accept
-    Changes --> Reject
-    Accept --> FinalCV
-    FinalCV --> Version
+    Stage4 --> FinalCV
+    Stage4 --> Changes
+    Stage4 --> Metrics
           </div>
         </div>
 
+        <!-- ==================== TABLE DES STAGES ==================== -->
         <h2>Les 4 Stages du Pipeline</h2>
 
         <table>
@@ -120,344 +109,244 @@ flowchart TB
               <th>Stage</th>
               <th>Nom</th>
               <th>Fichier</th>
-              <th>Exécution</th>
+              <th>Ex&eacute;cution</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><span class="badge badge-primary">1</span></td>
-              <td>Classify Skills</td>
-              <td><code>stage1-classify-skills.js</code></td>
-              <td rowspan="2">Parallèle</td>
+              <td>Classification Skills</td>
+              <td><code>stages/stage1-classify-skills.js</code></td>
+              <td>Parall&egrave;le (avec Stage 2)</td>
+              <td>Classe les <code>missingSkillsToAdd</code> en cat&eacute;gories (hard_skills, soft_skills, tools, methodologies)</td>
             </tr>
             <tr>
               <td><span class="badge badge-primary">2</span></td>
-              <td>Preprocess Suggestions</td>
-              <td><code>stage2-preprocess.js</code></td>
+              <td>Pr&eacute;traitement Suggestions</td>
+              <td><code>stages/stage2-preprocess.js</code></td>
+              <td>Parall&egrave;le (avec Stage 1)</td>
+              <td>Analyse Chain-of-Thought pour router les suggestions vers les bonnes cibles (exp&eacute;rience, projet, langue, extras)</td>
             </tr>
             <tr>
               <td><span class="badge badge-warning">3</span></td>
-              <td>Improve Sections</td>
-              <td><code>stage3-improve/*.js</code></td>
-              <td>Parallèle (max 5)</td>
+              <td>Am&eacute;liorations Parall&egrave;les</td>
+              <td><code>stages/stage3-improve/*</code></td>
+              <td>Parall&egrave;le (<code>pLimit(5)</code>)</td>
+              <td>Ex&eacute;cute les am&eacute;liorations cibl&eacute;es : exp&eacute;riences, projets, langues, extras</td>
             </tr>
             <tr>
               <td><span class="badge badge-success">4</span></td>
-              <td>Update Summary</td>
-              <td><code>stage4-summary/improveSummary.js</code></td>
-              <td>Séquentiel</td>
+              <td>Summary</td>
+              <td><code>stages/stage4-summary/improveSummary.js</code></td>
+              <td>S&eacute;quentiel (conditionnel)</td>
+              <td>Met &agrave; jour le summary uniquement si des exp&eacute;riences ou projets ont &eacute;t&eacute; modifi&eacute;s</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Étape 1 : Scoring</h2>
+        <!-- ==================== API ENTRY POINT ==================== -->
+        <h2>Point d'Entr&eacute;e API</h2>
 
-        <p><strong>Fichier :</strong> <code>lib/scoring/service.js</code></p>
+        <p><strong>Fichier :</strong> <code>app/api/cv/improve/route.js</code></p>
+        <p><strong>M&eacute;thode :</strong> <code>POST /api/cv/improve</code></p>
 
         <div class="data-flow">
-          <div class="data-flow-header">SCORING - Calcul du Match Score</div>
+          <div class="data-flow-header">API - D&eacute;clenchement du pipeline d'optimisation</div>
 
           <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <p><strong>Provenance :</strong> <code>CvFile.content</code> + <code>JobOffer.content</code></p>
-            <pre><code>{
-  "cvContent": "{ header: {...}, experience: [...], skills: {...} }",
-  "jobOffer": {
-    "title": "Senior Developer",
-    "skills": { "required": [...], "nice_to_have": [...] },
-    "responsibilities": [...]
-  }
+            <div class="data-flow-label">Body de la requ&ecirc;te</div>
+            <pre><code class="language-json">{
+  "cvFile": "mon-cv.json",
+  "replaceExisting": false,
+  "selectedSuggestionIndices": [0, 2, 5],
+  "suggestionsWithContext": [
+    { "index": 0, "context": "J'ai 3 ans d'exp en React" },
+    { "index": 2, "context": "" }
+  ],
+  "missingSkillsToAdd": [
+    { "skill": "Kubernetes", "level": "intermediate" },
+    { "skill": "CI/CD", "level": "advanced" }
+  ],
+  "pipelineVersion": 2
 }</code></pre>
           </div>
 
           <div class="data-flow-section data-flow-prompt">
-            <div class="data-flow-label">Résumé du prompt</div>
-            <blockquote>
-              "Expert recruteur avec 15 ans d'expérience. Analyser la correspondance entre le CV et l'offre d'emploi.
-              Retourner un score global (0-100), des scores par catégorie, max 3-4 suggestions d'amélioration
-              avec priorité et impact estimé, les compétences manquantes et correspondantes."
-            </blockquote>
-            <p><strong>Formule de pondération :</strong></p>
-            <pre><code>score_final = (technical_skills × 0.35) +
-              (experience × 0.30) +
-              (education × 0.20) +
-              (soft_skills_languages × 0.15)</code></pre>
+            <div class="data-flow-label">Traitement</div>
+            <ol>
+              <li>Parse les suggestions : format legacy (indices) OU nouveau format (<code>suggestionsWithContext</code>)</li>
+              <li>V&eacute;rifie les limites et d&eacute;bite le cr&eacute;dit via <code>incrementFeatureCounter(userId, 'optimize_cv')</code></li>
+              <li>Cr&eacute;e un <code>BackgroundTask</code> de type <code>improve-cv</code></li>
+              <li>Lance <code>scheduleImproveCvJob()</code> en arri&egrave;re-plan</li>
+            </ol>
           </div>
 
           <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie</div>
-            <pre><code>{
-  "match_score": 75,
-  "score_breakdown": {
+            <div class="data-flow-label">R&eacute;ponse</div>
+            <pre><code class="language-json">{
+  "success": true,
+  "taskId": "uuid-v4",
+  "message": "Am&eacute;lioration en cours..."
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Deux formats de suggestions support&eacute;s</div>
+          <p><strong>Legacy :</strong> <code>selectedSuggestionIndices</code> &mdash; tableau d'indices simples (sans contexte utilisateur).</p>
+          <p><strong>Nouveau :</strong> <code>suggestionsWithContext</code> &mdash; tableau de <code>{ index, context }</code> permettant &agrave; l'utilisateur d'ajouter du contexte libre pour guider l'IA.</p>
+        </div>
+
+        <!-- ==================== SCORING ==================== -->
+        <h2>Scoring : <code>calculateMatchScoreWithAnalysis()</code></h2>
+
+        <p><strong>Fichier :</strong> <code>lib/scoring/service.js</code></p>
+        <p><strong>Mod&egrave;le IA :</strong> <code>model_match_score</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">SCORING - Calcul du score de correspondance CV / Offre</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es</div>
+            <ul>
+              <li><code>cvContent</code> &mdash; Contenu JSON du CV (d&eacute;crypt&eacute;)</li>
+              <li><code>cvFile</code> &mdash; Record DB avec relations <code>jobOffer</code> et <code>jobOfferSnapshot</code></li>
+              <li><code>signal</code> &mdash; AbortSignal pour annulation</li>
+              <li><code>userId</code> &mdash; Pour tracking t&eacute;l&eacute;m&eacute;trie OpenAI</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Formule de pond&eacute;ration (score recalcul&eacute;)</div>
+            <pre><code class="language-javascript">calculatedScore = Math.round(
+  (technical_skills * 0.35) +
+  (experience * 0.30) +
+  (education * 0.20) +
+  (soft_skills_languages * 0.15)
+);</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-json">{
+  "matchScore": 75,
+  "scoreBreakdown": {
     "technical_skills": 80,
     "experience": 73,
     "education": 75,
     "soft_skills_languages": 67
   },
-  "suggestions": [
-    {
-      "title": "Ajouter certification AWS",
-      "suggestion": "Vous maîtrisez Docker et Kubernetes...",
-      "priority": "high",
-      "impact": "+5 points"
-    }
-  ],
-  "missing_skills": ["Kubernetes", "CI/CD", "Terraform"],
-  "matching_skills": ["Python", "React", "PostgreSQL"]
+  "suggestions": [...],
+  "missingSkills": ["Kubernetes", "CI/CD"],
+  "matchingSkills": ["Python", "React"]
 }</code></pre>
           </div>
         </div>
 
-        <h2>Étape 2 : Pipeline d'Amélioration</h2>
-
-        <h3>Stage 1 & 2 (Parallèles)</h3>
-
-        <div class="card-grid">
-          <div class="card">
-            <h4>Stage 1: Classify Skills</h4>
-            <p>Classifier les compétences à ajouter dans les bonnes catégories :</p>
-            <ul>
-              <li><code>hard_skills</code> - Savoir-faire métier</li>
-              <li><code>soft_skills</code> - Qualités personnelles</li>
-              <li><code>tools</code> - Logiciels, langages</li>
-              <li><code>methodologies</code> - Méthodes de travail</li>
-            </ul>
-            <p><strong>Modèle :</strong> <code>gpt-4o-mini</code> (rapide)</p>
-          </div>
-          <div class="card">
-            <h4>Stage 2: Preprocess Suggestions</h4>
-            <p>Analyser les suggestions sélectionnées avec Chain-of-Thought :</p>
-            <ul>
-              <li>Identifier les contextes distincts</li>
-              <li>Extraire chiffres et compétences</li>
-              <li>Déterminer les sections cibles</li>
-              <li>Une suggestion peut créer plusieurs actions</li>
-            </ul>
-            <p><strong>Modèle :</strong> <code>gpt-4o</code></p>
-          </div>
+        <div class="callout callout-info">
+          <div class="callout-title">Score recalcul&eacute; vs score GPT</div>
+          <p>Le <code>matchScore</code> retourn&eacute; n'est <strong>pas</strong> le <code>match_score</code> brut de GPT. Le score est <strong>recalcul&eacute;</strong> &agrave; partir des sous-scores (<code>scoreBreakdown</code>) avec la formule de pond&eacute;ration ci-dessus. Cela garantit la coh&eacute;rence entre le score global et les sous-scores.</p>
         </div>
 
-        <h3>Stage 3: Improve Sections (Parallèle)</h3>
-
-        <p>Max 5 appels OpenAI concurrents via <code>pLimit(5)</code>.</p>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Sous-stage</th>
-              <th>Fichier</th>
-              <th>Cible</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>3a</td>
-              <td><code>improveExperience.js</code></td>
-              <td>Expériences (responsibilities, deliverables)</td>
-            </tr>
-            <tr>
-              <td>3b</td>
-              <td><code>improveProject.js</code></td>
-              <td>Projets (existants ou nouveaux)</td>
-            </tr>
-            <tr>
-              <td>3c</td>
-              <td><code>improveLanguages.js</code></td>
-              <td>Langues (niveaux, certifications)</td>
-            </tr>
-            <tr>
-              <td>3d</td>
-              <td><code>improveExtras.js</code></td>
-              <td>Extras (certifications, bénévolat)</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="data-flow">
-          <div class="data-flow-header">STAGE 3a - Improve Experience</div>
-
-          <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <pre><code>{
-  "experience": {
-    "title": "Senior Developer",
-    "responsibilities": ["Développer des applications web"],
-    "deliverables": []
-  },
-  "suggestion": {
-    "suggestion": "Mentionner vos réalisations en recrutement",
-    "actionDescription": "Ajouter recrutement 6 personnes",
-    "extractedInfo": {
-      "numbers": ["6 personnes"],
-      "skills": ["recrutement", "formation"]
-    }
-  }
-}</code></pre>
-          </div>
-
-          <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie</div>
-            <pre><code>{
-  "reasoning": {
-    "analysis": "Suggestion demande ajout recrutement...",
-    "responsibility_decision": "Ajouter responsabilité pertinente",
-    "deliverable_decision": "Ajouter résultat quantifié"
-  },
-  "modifications": {
-    "responsibilities": {
-      "add": ["Recruter et former des développeurs"],
-      "remove": []
-    },
-    "deliverables": {
-      "add": ["6 pers. recrutées"],
-      "remove": []
-    },
-    "skills_used": {
-      "add": ["Recrutement"],
-      "remove": []
-    }
-  }
-}</code></pre>
-          </div>
-        </div>
-
-        <h3>Stage 4: Update Summary</h3>
-
-        <p>Met à jour le résumé professionnel pour refléter les améliorations apportées.</p>
-        <p><strong>Skip :</strong> Si aucune amélioration experience/project → pas d'appel OpenAI.</p>
-
-        <h2>Étape 3 : Review Utilisateur</h2>
-
-        <p>Après le pipeline, les modifications sont stockées dans <code>CvFile.pendingChanges</code> pour review.</p>
-
-        <div class="diagram">
-          <div class="diagram-title">Système de review</div>
-          <div class="mermaid">
-flowchart LR
-    subgraph Changes["CHANGEMENTS PROPOSÉS"]
-        C1["Modification 1<br/>status: pending"]
-        C2["Modification 2<br/>status: pending"]
-        C3["Modification 3<br/>status: pending"]
-    end
-
-    subgraph Review["REVIEW"]
-        Accept["Accepter"]
-        Reject["Rejeter"]
-    end
-
-    subgraph Final["RÉSULTAT"]
-        Applied["Appliqué au CV"]
-        Discarded["Ignoré"]
-    end
-
-    C1 --> Accept
-    C2 --> Accept
-    C3 --> Reject
-
-    Accept --> Applied
-    Reject --> Discarded
-          </div>
-        </div>
-
-        <h3>Structure d'un changement</h3>
-
-        <pre><code>{
-  "id": "uuid",
-  "section": "experience",
-  "field": "responsibilities",
-  "itemName": "Senior Developer @ TechCorp",
-  "changeType": "added",
-  "beforeValue": null,
-  "afterValue": "Recruter et former des développeurs",
-  "change": "Ajout de responsabilité recrutement",
-  "reason": "Alignement avec suggestion utilisateur",
-  "status": "pending",  // pending | accepted | rejected
-  "reviewedAt": null
-}</code></pre>
-
-        <h2>Différences avec Pipeline Génération</h2>
+        <!-- ==================== COMPARAISON ==================== -->
+        <h2>Diff&eacute;rences avec Pipeline G&eacute;n&eacute;ration</h2>
 
         <table>
           <thead>
             <tr>
               <th>Aspect</th>
-              <th>Pipeline Génération</th>
+              <th>Pipeline G&eacute;n&eacute;ration</th>
               <th>Pipeline Optimisation</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Objectif</strong></td>
-              <td>Transformation complète</td>
-              <td>Amélioration ciblée</td>
+              <td>Transformation compl&egrave;te du CV</td>
+              <td>Am&eacute;lioration cibl&eacute;e (suggestions)</td>
             </tr>
             <tr>
-              <td><strong>Offre d'emploi</strong></td>
-              <td>Obligatoire</td>
-              <td>Optionnelle</td>
+              <td><strong>D&eacute;clencheur</strong></td>
+              <td>URL/PDF/Markdown d'offre d'emploi</td>
+              <td>S&eacute;lection de suggestions par l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><strong>Architecture</strong></td>
+              <td>3 phases (extraction &rarr; batches &rarr; recomposition)</td>
+              <td>4 stages (classify &rarr; preprocess &rarr; improve &rarr; summary)</td>
             </tr>
             <tr>
               <td><strong>Classification</strong></td>
-              <td>IA classe automatiquement</td>
-              <td>Utilisateur choisit</td>
+              <td>IA classe automatiquement (KEEP/REMOVE/MOVE)</td>
+              <td>L'utilisateur choisit les sections via suggestions</td>
             </tr>
             <tr>
-              <td><strong>Review</strong></td>
-              <td>Optionnel (post-génération)</td>
-              <td>Intégré au workflow</td>
-            </tr>
-            <tr>
-              <td><strong>Coût</strong></td>
-              <td>1 crédit</td>
-              <td>2 crédits (+ 1 scoring)</td>
+              <td><strong>Parall&eacute;lisation</strong></td>
+              <td>6 batches en <code>Promise.all</code> + 1 s&eacute;quentiel</td>
+              <td><code>pLimit(5)</code> pour contr&ocirc;ler la concurrence</td>
             </tr>
             <tr>
               <td><strong>Cache</strong></td>
-              <td>Cache A/B structuré</td>
-              <td>Pas de cache spécifique</td>
+              <td>Cache A/B structur&eacute; + staggered skills</td>
+              <td>Pas de cache sp&eacute;cifique</td>
+            </tr>
+            <tr>
+              <td><strong>Review</strong></td>
+              <td>Post-g&eacute;n&eacute;ration (<code>initializeReviewState</code>)</td>
+              <td>Int&eacute;gr&eacute; au workflow (suggestions s&eacute;lectionn&eacute;es)</td>
+            </tr>
+            <tr>
+              <td><strong>Co&ucirc;t</strong></td>
+              <td>Feature <code>gpt_cv_generation</code></td>
+              <td>Feature <code>optimize_cv</code></td>
+            </tr>
+            <tr>
+              <td><strong>Imports</strong></td>
+              <td>Statiques</td>
+              <td>Dynamiques (lazy loading des stages)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Fichiers et Structure</h2>
+        <!-- ==================== FILE STRUCTURE ==================== -->
+        <h2>Structure des Fichiers</h2>
 
-        <pre><code>lib/features/cv-improvement/
-├── orchestrator.js              # Coordination des 4 stages
-├── job.js                       # Job runner
+        <pre><code class="language-bash">lib/features/cv-improvement/
+├── job.js                          # scheduleImproveCvJob() - lancement background
+├── orchestrator.js                 # runImprovementPipeline() - 4 stages
 ├── stages/
-│   ├── stage1-classify-skills.js
-│   ├── stage2-preprocess.js
+│   ├── stage1-classify-skills.js   # classifySkills() - gpt-4o-mini
+│   ├── stage2-preprocess.js        # preprocessSuggestions() - Chain-of-Thought
 │   ├── stage3-improve/
-│   │   ├── improveExperience.js
-│   │   ├── improveProject.js
-│   │   ├── improveLanguages.js
-│   │   └── improveExtras.js
+│   │   ├── improveExperience.js    # improveExperience() - responsabilites, deliverables
+│   │   ├── improveProject.js       # improveProject() - modifier ou creer projets
+│   │   ├── improveLanguages.js     # improveLanguages(), applyLanguageModifications()
+│   │   └── improveExtras.js        # improveExtras(), applyExtrasModifications()
 │   └── stage4-summary/
-│       └── improveSummary.js
-└── prompts/
-    ├── experience-system.md, experience-user.md
-    ├── project-system.md, project-user.md
-    ├── languages-system.md, languages-user.md
-    ├── preprocess-system.md, preprocess-user.md
-    └── summary-system.md, summary-user.md
+│       └── improveSummary.js       # improveSummary() - summary conditionnel
+└── prompts/                        # 14 fichiers .md (7 stages x 2 system/user)
+    ├── preprocess-system.md / preprocess-user.md
+    ├── experience-system.md / experience-user.md
+    ├── project-system.md / project-user.md
+    ├── languages-system.md / languages-user.md
+    ├── extras-system.md / extras-user.md
+    └── summary-system.md / summary-user.md
 
 lib/scoring/
-├── service.js                   # Calcul match score
+├── service.js                      # calculateMatchScoreWithAnalysis()
 └── prompts/
-    ├── system.md
-    └── user.md
+    ├── system.md                   # Prompt systeme scoring
+    └── user.md                     # Prompt utilisateur scoring</code></pre>
 
-lib/cv-core/review/
-├── state.js                     # Gestion pendingChanges
-└── actions.js                   # Accept/Reject</code></pre>
-
-        <h2>Prochaines Sections</h2>
+        <!-- ==================== LIENS ==================== -->
+        <h2>Sections D&eacute;taill&eacute;es</h2>
 
         <ul>
-          <li><a href="./scoring.html">Scoring</a> - Détail du calcul de score</li>
-          <li><a href="./suggestions.html">Suggestions</a> - Génération et sélection</li>
-          <li><a href="./application.html">Application</a> - Les 4 stages en détail</li>
-          <li><a href="./review-system.html">Review</a> - Système de validation</li>
+          <li><a href="./scoring.html">Scoring</a> &mdash; Calcul du score, pond&eacute;ration, cross-language, API endpoints</li>
+          <li><a href="./suggestions.html">Suggestions</a> &mdash; Format des suggestions, s&eacute;lection utilisateur, enrichissement</li>
+          <li><a href="./application.html">Application des Am&eacute;liorations</a> &mdash; 4 stages d&eacute;taill&eacute;s avec data-flow</li>
+          <li><a href="./review-system.html">Syst&egrave;me de Review</a> &mdash; Apply-review, changements, &eacute;tat de review</li>
         </ul>
       </div>
     </main>
@@ -473,7 +362,6 @@ lib/cv-core/review/
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

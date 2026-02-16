@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -32,45 +29,252 @@
           <span>Mode Abonnement</span>
         </div>
 
-
         <h1>Mode Abonnement</h1>
         <p class="lead">
-          Basculement entre le mode abonnement et le mode credits.
+          Bascule globale entre deux mod&egrave;les de mon&eacute;tisation : le mode abonnement (plans Stripe avec cr&eacute;dits optionnels) et le mode cr&eacute;dits-only (achat direct de packs de cr&eacute;dits sans abonnement). Ce r&eacute;glage impacte l'ensemble de l'application.
         </p>
 
-        <h2>Modes Disponibles</h2>
+        <h2>Les Deux Modes</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Mode Abonnement (activ&eacute;)</h3>
+            <p>Les utilisateurs doivent souscrire &agrave; un plan (Gratuit, Pro, Premium) via Stripe pour acc&eacute;der aux fonctionnalit&eacute;s. Chaque plan d&eacute;finit des <strong>limites par feature</strong> (nombre d'utilisations mensuelles). Les cr&eacute;dits peuvent &ecirc;tre achet&eacute;s en compl&eacute;ment via des packs.</p>
+            <ul>
+              <li>Page pricing affich&eacute;e avec les plans</li>
+              <li>Checkout Stripe en mode <code>subscription</code></li>
+              <li>Feature limits g&eacute;r&eacute;es par <code>SubscriptionPlanFeatureLimit</code></li>
+              <li>Cr&eacute;dits consomm&eacute;s au-del&agrave; des limites du plan</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Mode Cr&eacute;dits-Only (d&eacute;sactiv&eacute;)</h3>
+            <p>Pas d'abonnement requis. Les utilisateurs ach&egrave;tent des <strong>packs de cr&eacute;dits</strong> directement et chaque action consomme un nombre d&eacute;fini de cr&eacute;dits, configurable via la table <code>Setting</code>.</p>
+            <ul>
+              <li>Page pricing masqu&eacute;e ou redirig&eacute;e vers les packs</li>
+              <li>Checkout Stripe en mode <code>payment</code> (one-shot)</li>
+              <li>Co&ucirc;ts par feature d&eacute;finis dans les Settings</li>
+              <li>Cr&eacute;dits bienvenue offerts &agrave; l'inscription</li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Flux de Basculement</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Changement de mode de mon&eacute;tisation</div>
+          <div class="mermaid">
+flowchart TB
+    Admin["Admin clique sur le toggle"]
+    Check{"Mode actuel ?"}
+
+    subgraph Activation["ACTIVATION ABONNEMENT"]
+        EnableReq["POST /api/admin/subscription-mode<br/>{ enabled: true }"]
+        EnableDB["Setting subscription_mode_enabled = true"]
+        EnableEffect["Affichage plans + checkout subscription"]
+    end
+
+    subgraph Desactivation["D&Eacute;SACTIVATION ABONNEMENT"]
+        DisableReq["POST /api/admin/subscription-mode<br/>{ enabled: false }"]
+        CountPaid{"Compter les abonn&eacute;s<br/>payants actifs"}
+        Warning["Afficher avertissement :<br/>N abonn&eacute;s seront impact&eacute;s"]
+        DisableDB["Setting subscription_mode_enabled = false"]
+        DisableEffect["Affichage packs cr&eacute;dits uniquement"]
+    end
+
+    SSE["dbEmitter &rarr; settings:updated<br/>Rafra&icirc;chissement temps r&eacute;el"]
+
+    Admin --> Check
+    Check -->|"Cr&eacute;dits-only &rarr; Abonnement"| EnableReq
+    EnableReq --> EnableDB
+    EnableDB --> SSE
+
+    Check -->|"Abonnement &rarr; Cr&eacute;dits-only"| DisableReq
+    DisableReq --> CountPaid
+    CountPaid --> Warning
+    Warning -->|"Confirmation"| DisableDB
+    DisableDB --> SSE
+
+    EnableDB --> EnableEffect
+    DisableDB --> DisableEffect
+          </div>
+        </div>
+
+        <h2>GET /api/admin/subscription-mode</h2>
+
+        <p>R&eacute;cup&egrave;re l'&eacute;tat actuel du mode d'abonnement.</p>
+
+        <h3>R&eacute;ponse</h3>
+
+        <pre><code class="language-json">{
+  "subscriptionModeEnabled": true,
+  "paidSubscribersCount": 42,
+  "settingId": "clu..."
+}</code></pre>
 
         <table>
           <thead>
             <tr>
-              <th>Mode</th>
+              <th>Champ</th>
+              <th>Type</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>subscription</strong></td>
-              <td>Plans mensuels avec limites</td>
+              <td><code>subscriptionModeEnabled</code></td>
+              <td>Boolean</td>
+              <td><code>true</code> = mode abonnement, <code>false</code> = mode cr&eacute;dits-only</td>
             </tr>
             <tr>
-              <td><strong>credits</strong></td>
-              <td>Paiement a l'usage</td>
+              <td><code>paidSubscribersCount</code></td>
+              <td>Int</td>
+              <td>Nombre d'utilisateurs avec un abonnement payant actif (utile pour l'avertissement de d&eacute;sactivation)</td>
             </tr>
             <tr>
-              <td><strong>hybrid</strong></td>
-              <td>Plans + credits supplementaires</td>
+              <td><code>settingId</code></td>
+              <td>String</td>
+              <td>Identifiant du Setting en base de donn&eacute;es</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Configuration</h2>
+        <h2>POST /api/admin/subscription-mode</h2>
 
-        <pre><code>// Settings en base de données
-{
-  "subscriptionMode": "hybrid",
-  "allowCreditOverage": true,
-  "creditOverageMultiplier": 1.5
+        <p>Active ou d&eacute;sactive le mode abonnement globalement.</p>
+
+        <h3>Body (JSON)</h3>
+
+        <pre><code class="language-json">{
+  "enabled": true
 }</code></pre>
+
+        <h3>Comportement</h3>
+
+        <ul>
+          <li><strong>Activation</strong> (<code>enabled: true</code>) : active le mode abonnement. Les utilisateurs devront souscrire &agrave; un plan pour acc&eacute;der aux fonctionnalit&eacute;s.</li>
+          <li><strong>D&eacute;sactivation</strong> (<code>enabled: false</code>) : l'API compte d'abord le nombre d'abonn&eacute;s payants actifs (<code>paidSubscribersCount</code>) comme v&eacute;rification de s&eacute;curit&eacute;. Le front-end affiche un avertissement avant de confirmer.</li>
+        </ul>
+
+        <h3>R&eacute;ponse</h3>
+
+        <pre><code class="language-json">{
+  "success": true,
+  "subscriptionModeEnabled": false,
+  "paidSubscribersCount": 42,
+  "message": "Mode abonnement d&eacute;sactiv&eacute;. 42 abonn&eacute;s payants seront impact&eacute;s."
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Impact de la d&eacute;sactivation</div>
+          <p>D&eacute;sactiver le mode abonnement <strong>n'annule pas</strong> les abonnements Stripe existants. Les abonn&eacute;s payants continueront &agrave; &ecirc;tre factur&eacute;s par Stripe jusqu'&agrave; annulation manuelle. L'application masque simplement l'interface d'abonnement et bascule sur le syst&egrave;me de cr&eacute;dits.</p>
+        </div>
+
+        <h2>Stockage en Base de Donn&eacute;es</h2>
+
+        <p>Le mode est stock&eacute; dans la table <code>Setting</code> avec les param&egrave;tres suivants :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Valeur</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>key</code></td>
+              <td><code>subscription_mode_enabled</code></td>
+            </tr>
+            <tr>
+              <td><code>value</code></td>
+              <td><code>"true"</code> ou <code>"false"</code> (stock&eacute; en String)</td>
+            </tr>
+            <tr>
+              <td><code>category</code></td>
+              <td><code>subscription</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// Lecture du mode dans le code serveur
+const setting = await prisma.setting.findUnique({
+  where: { key: 'subscription_mode_enabled' }
+});
+const isSubscriptionMode = setting?.value === 'true';</code></pre>
+
+        <h2>Impact sur l'Application</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonctionnalit&eacute;</th>
+              <th>Mode Abonnement</th>
+              <th>Mode Cr&eacute;dits-Only</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Page Pricing</td>
+              <td>Plans affich&eacute;s (Gratuit, Pro, Premium)</td>
+              <td>Packs cr&eacute;dits affich&eacute;s</td>
+            </tr>
+            <tr>
+              <td>Checkout Stripe</td>
+              <td>Mode <code>subscription</code></td>
+              <td>Mode <code>payment</code></td>
+            </tr>
+            <tr>
+              <td>Acc&egrave;s features</td>
+              <td>Limites par plan (<code>SubscriptionPlanFeatureLimit</code>)</td>
+              <td>D&eacute;bit cr&eacute;dits par action</td>
+            </tr>
+            <tr>
+              <td>Co&ucirc;t <code>0</code> pour une feature</td>
+              <td><code>premiumRequired = true</code> (r&eacute;serv&eacute;e aux abonn&eacute;s)</td>
+              <td>Feature gratuite pour tous</td>
+            </tr>
+            <tr>
+              <td>Inscription</td>
+              <td>Plan Gratuit assign&eacute; automatiquement</td>
+              <td>Cr&eacute;dits bienvenue offerts</td>
+            </tr>
+            <tr>
+              <td>Context React</td>
+              <td><code>creditsOnlyMode = false</code></td>
+              <td><code>creditsOnlyMode = true</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Cl&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/api/admin/subscription-mode/route.js</code></td>
+              <td>GET et POST pour le toggle du mode abonnement</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/creditCost.js</code></td>
+              <td>V&eacute;rifie le mode pour d&eacute;terminer <code>premiumRequired</code> vs co&ucirc;t gratuit</td>
+            </tr>
+            <tr>
+              <td><code>lib/creditCosts/CreditCostsContext.jsx</code></td>
+              <td>Expose <code>creditsOnlyMode</code> c&ocirc;t&eacute; client via React Context</td>
+            </tr>
+            <tr>
+              <td><code>lib/events/dbEmitter.js</code></td>
+              <td>&Eacute;met <code>settings:updated</code> en SSE pour rafra&icirc;chissement temps r&eacute;el</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

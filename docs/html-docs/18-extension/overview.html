@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extension Navigateur - Vue d'ensemble | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Extension Navigateur</a>
+          <span>/</span>
+          <span>Vue d'ensemble</span>
+        </div>
+
+        <h1>Extension Navigateur - Vue d'ensemble</h1>
+        <p class="lead">
+          L'extension navigateur FitMyCV (Chrome/Firefox) est une extension Manifest V3 qui permet d'extraire les offres d'emploi directement depuis les sites d'emploi et de lancer la génération de CV optimisés via le SaaS, sans quitter le navigateur.
+        </p>
+
+        <!-- ─── Caractéristiques ─── -->
+
+        <h2>Caractéristiques Principales</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Choix technologique</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Manifest</strong></td>
+              <td>Manifest V3 (Chrome + Firefox via <code>browser_specific_settings.gecko</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Build</strong></td>
+              <td>Vite 6 + <code>vite-plugin-web-extension</code> 4</td>
+            </tr>
+            <tr>
+              <td><strong>Modules</strong></td>
+              <td>ESM natif (<code>"type": "module"</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Polyfill</strong></td>
+              <td><code>webextension-polyfill</code> 0.12 (API unifiée Chrome/Firefox)</td>
+            </tr>
+            <tr>
+              <td><strong>Extraction HTML</strong></td>
+              <td><code>@mozilla/readability</code> 0.6 + <code>turndown</code> 7.2 (HTML &rarr; Markdown)</td>
+            </tr>
+            <tr>
+              <td><strong>Auth</strong></td>
+              <td>JWT Bearer token (signé par le SaaS, durée 7 jours)</td>
+            </tr>
+            <tr>
+              <td><strong>i18n</strong></td>
+              <td>4 langues (FR, EN, ES, DE) via fichiers JSON dans <code>locales/</code></td>
+            </tr>
+            <tr>
+              <td><strong>Version</strong></td>
+              <td>1.1.0 (synchronisée avec <code>extension/package.json</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Architecture ─── -->
+
+        <h2>Architecture Générale</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture de l'extension Manifest V3</div>
+          <div class="mermaid">
+graph TB
+    subgraph Extension["Extension Navigateur"]
+        SW["Service Worker<br/>(background)"]
+        DET["detector.js<br/>(content script)"]
+        EXT["extractor.js<br/>(content script)"]
+        AUTH["auth-receiver.js<br/>(content script)"]
+        POPUP["Popup UI<br/>(popup.html)"]
+        LIB["Librairies partagées<br/>(lib/)"]
+    end
+
+    subgraph SaaS["SaaS FitMyCV.io"]
+        API_AUTH["POST /api/auth/extension-token"]
+        API_REFRESH["POST .../extension-token/refresh"]
+        API_SESSION["GET .../extension-token/from-session"]
+        API_CVS["GET /api/ext/cvs"]
+        API_CREDITS["GET /api/ext/credits/*"]
+        API_GENERATE["POST /api/ext/background-tasks/generate-cv-from-content"]
+        API_SYNC["GET /api/ext/background-tasks/sync"]
+    end
+
+    subgraph JobSites["Sites d'emploi"]
+        LI["LinkedIn"]
+        IND["Indeed"]
+        APEC["APEC"]
+        FT["France Travail"]
+        WJ["Welcome to the Jungle"]
+        OTHER["+ 8 autres sites"]
+    end
+
+    DET -->|"détecte offre"| SW
+    DET -->|"import dynamique"| EXT
+    POPUP -->|"messages"| SW
+    SW -->|"EXTRACT_OFFER"| DET
+    AUTH -->|"OAUTH_LOGIN_SUCCESS"| SW
+    LIB --> POPUP
+    LIB --> SW
+
+    POPUP -->|"Bearer JWT"| API_CVS
+    POPUP -->|"Bearer JWT"| API_CREDITS
+    POPUP -->|"Bearer JWT"| API_GENERATE
+    SW -->|"polling alarms"| API_SYNC
+    AUTH -->|"postMessage"| API_SESSION
+
+    JobSites --> DET
+          </div>
+        </div>
+
+        <!-- ─── Structure fichiers ─── -->
+
+        <h2>Structure des Fichiers</h2>
+
+        <pre><code class="language-bash">extension/
+├── background/
+│   └── service-worker.js        # Badge, polling tâches, message routing, device ID
+├── content-scripts/
+│   ├── detector.js              # Détection d'offres sur job boards (2 phases)
+│   ├── extractor.js             # Extraction HTML → Markdown (Readability + Turndown)
+│   └── auth-receiver.js         # Réception JWT depuis le SaaS (OAuth flow)
+├── popup/
+│   ├── popup.html               # Structure HTML du popup
+│   ├── popup.js                 # Contrôleur principal (routing vues, init)
+│   ├── popup.css                # Design system dark mode (tokens CSS)
+│   └── views/
+│       ├── login.js             # Vue connexion (email/password + OAuth)
+│       ├── cv-selector.js       # Dropdown sélection CV source
+│       ├── offer-list.js        # Picklist offres + crédits + bouton générer
+│       └── progress.js          # Suivi tâches de génération en temps réel
+├── lib/
+│   ├── api-client.js            # Client API authentifié (Bearer JWT, refresh)
+│   ├── scoring.js               # Scoring qualité offre extraite (0-100)
+│   ├── site-selectors.js        # Sélecteurs CSS par job board
+│   ├── token-utils.js           # Décodage JWT, vérification expiration
+│   └── i18n.js                  # Module i18n (4 langues, dot-notation)
+├── locales/
+│   ├── fr.json                  # Traductions français
+│   ├── en.json                  # Traductions anglais
+│   ├── es.json                  # Traductions espagnol
+│   └── de.json                  # Traductions allemand
+├── icons/                       # Icônes (16, 48, 128 + grey + drapeaux)
+├── manifest.json                # Configuration Manifest V3
+├── vite.config.js               # Build config (__API_BASE__, TARGET_BROWSER)
+└── package.json                 # Dépendances et scripts npm</code></pre>
+
+        <!-- ─── Permissions ─── -->
+
+        <h2>Permissions Manifest V3</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Permission</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>storage</code></td>
+              <td>Stocker le JWT, le picklist d'offres, les préférences utilisateur et les tâches actives</td>
+            </tr>
+            <tr>
+              <td><code>activeTab</code></td>
+              <td>Accéder au contenu de l'onglet actif pour l'extraction d'offre</td>
+            </tr>
+            <tr>
+              <td><code>alarms</code></td>
+              <td>Polling périodique des tâches (30s) et refresh token (12h)</td>
+            </tr>
+            <tr>
+              <td><code>cookies</code></td>
+              <td>Définir le cookie <code>cvFile</code> pour ouvrir le CV généré dans le SaaS</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Host Permissions</h3>
+
+        <pre><code class="language-json">"host_permissions": [
+  "https://app.fitmycv.io/*",
+  "https://dev.fitmycv.io/*"
+]</code></pre>
+
+        <p>Ces permissions permettent au service worker d'effectuer des requêtes <code>fetch()</code> vers les API du SaaS (authentification, polling, génération).</p>
+
+        <!-- ─── Content Scripts ─── -->
+
+        <h2>Content Scripts</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Script</th>
+              <th>Injection</th>
+              <th>Pages ciblées</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>detector.js</code></td>
+              <td><code>document_idle</code></td>
+              <td><code>*://*/*</code> (toutes pages)</td>
+              <td>Détection universelle d'offres d'emploi, injection bouton &laquo; FitMyCV + &raquo;</td>
+            </tr>
+            <tr>
+              <td><code>extractor.js</code></td>
+              <td>Import dynamique</td>
+              <td>Chargé par <code>detector.js</code> au clic</td>
+              <td>Extraction du contenu HTML &rarr; Markdown</td>
+            </tr>
+            <tr>
+              <td><code>auth-receiver.js</code></td>
+              <td><code>document_idle</code></td>
+              <td><code>*://app.fitmycv.io/extension-auth*</code><br/><code>*://dev.fitmycv.io/extension-auth*</code></td>
+              <td>Réception du JWT après login OAuth</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Build system ─── -->
+
+        <h2>Système de Build</h2>
+
+        <p>Le build est géré par <strong>Vite 6</strong> avec le plugin <code>vite-plugin-web-extension</code> qui gère automatiquement la transformation du manifest, le bundling des content scripts et le hot-reload en développement.</p>
+
+        <h3>Variables de Build</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Défaut</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>__API_BASE__</code></td>
+              <td><code>https://app.fitmycv.io</code></td>
+              <td>URL de base de l'API SaaS (injecté via <code>define</code> dans Vite)</td>
+            </tr>
+            <tr>
+              <td><code>TARGET_BROWSER</code></td>
+              <td><code>chrome</code></td>
+              <td>Navigateur cible (<code>chrome</code> ou <code>firefox</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Important :</strong> Utiliser <code>TARGET_BROWSER</code> (pas <code>process.env.BROWSER</code>) car cette dernière est interceptée par VS Code Server.
+        </div>
+
+        <h3>Commandes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Commande</th>
+              <th>Description</th>
+              <th>API_BASE</th>
+              <th>Output</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>npm run dev</code></td>
+              <td>Build watch + mode développement</td>
+              <td><code>https://dev.fitmycv.io</code></td>
+              <td><code>dist/chrome/</code></td>
+            </tr>
+            <tr>
+              <td><code>npm run build:chrome</code></td>
+              <td>Build production Chrome</td>
+              <td><code>https://app.fitmycv.io</code></td>
+              <td><code>dist/chrome/</code></td>
+            </tr>
+            <tr>
+              <td><code>npm run build:firefox</code></td>
+              <td>Build production Firefox</td>
+              <td><code>https://app.fitmycv.io</code></td>
+              <td><code>dist/firefox/</code></td>
+            </tr>
+            <tr>
+              <td><code>npm run zip:chrome</code></td>
+              <td>Zip pour Chrome Web Store</td>
+              <td>&mdash;</td>
+              <td><code>fitmycv-chrome.zip</code></td>
+            </tr>
+            <tr>
+              <td><code>npm run zip:firefox</code></td>
+              <td>Zip pour Firefox Add-ons</td>
+              <td>&mdash;</td>
+              <td><code>fitmycv-firefox.zip</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Configuration Vite</h3>
+
+        <pre><code class="language-javascript">// vite.config.js — Points clés
+import webExtension from 'vite-plugin-web-extension';
+
+const browser = process.env.TARGET_BROWSER || 'chrome';
+const apiBase = process.env.API_BASE || 'https://app.fitmycv.io';
+
+export default defineConfig({
+  define: {
+    __API_BASE__: JSON.stringify(apiBase),     // Remplacé à la compilation
+  },
+  build: {
+    outDir: resolve(__dirname, `dist/${browser}`),
+  },
+  plugins: [
+    webExtension({
+      manifest: resolve(__dirname, 'manifest.json'),
+      additionalInputs: [                       // Scripts non référencés dans manifest
+        'content-scripts/extractor.js',          // Import dynamique depuis detector.js
+        'content-scripts/auth-receiver.js',
+      ],
+      browser,                                   // Adaptations Chrome/Firefox automatiques
+    }),
+    copyStaticAssets(outDir),                    // Copie icons/ et locales/ dans dist/
+  ],
+});</code></pre>
+
+        <!-- ─── Service Worker ─── -->
+
+        <h2>Service Worker</h2>
+
+        <p>Le service worker (<code>background/service-worker.js</code>) est le composant central de l'extension. Il orchestre les communications entre les content scripts, le popup et l'API SaaS.</p>
+
+        <h3>Responsabilités</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Badge management</strong></td>
+              <td>Affiche le nombre d'offres dans le picklist sur l'icône de l'extension (badge vert <code>#10b981</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Icon management</strong></td>
+              <td>Alterne entre icône colorée (offre détectée) et grisée (pas d'offre) par onglet</td>
+            </tr>
+            <tr>
+              <td><strong>Task polling</strong></td>
+              <td>Alarm MV3 toutes les 30s pour synchroniser les tâches de génération via <code>/api/ext/background-tasks/sync</code></td>
+            </tr>
+            <tr>
+              <td><strong>Token refresh</strong></td>
+              <td>Alarm MV3 toutes les 12h + refresh proactif avant polling si le token expire dans &lt; 24h</td>
+            </tr>
+            <tr>
+              <td><strong>Message routing</strong></td>
+              <td>Relais des messages entre popup, content scripts et API</td>
+            </tr>
+            <tr>
+              <td><strong>Device ID</strong></td>
+              <td>Génération d'un identifiant unique <code>ext-{UUID}</code> stocké dans <code>storage.local</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Messages Gérés</h3>
+
+        <pre><code class="language-javascript">// Messages reçus par le service worker
+switch (message.type) {
+  case 'JOB_OFFER_DETECTED':      // Content script → active l'icône couleur
+  case 'JOB_OFFER_NOT_DETECTED':  // Content script → passe en icône grisée
+  case 'EXTRACT_OFFER':           // Popup → forward vers le content script de l'onglet actif
+  case 'START_POLLING':           // Popup → démarre le polling des tâches
+  case 'STOP_POLLING':            // Popup → arrête le polling
+  case 'OAUTH_LOGIN_SUCCESS':     // auth-receiver → token stocké, rien d'autre
+  case 'GET_STATE':               // Popup → retourne l'état global (auth, tasks, polling)
+}</code></pre>
+
+        <!-- ─── Clés storage ─── -->
+
+        <h2>Clés de Storage</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Clé</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>fitmycv_token</code></td>
+              <td><code>string</code></td>
+              <td>JWT d'authentification extension</td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_user</code></td>
+              <td><code>object</code></td>
+              <td>Infos utilisateur <code>{ name, email }</code></td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_device_id</code></td>
+              <td><code>string</code></td>
+              <td>Identifiant unique de l'extension <code>ext-{UUID}</code></td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_picklist</code></td>
+              <td><code>array</code></td>
+              <td>Liste des offres extraites en attente de génération</td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_active_tasks</code></td>
+              <td><code>array</code></td>
+              <td>Tâches de génération en cours / terminées</td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_session_task_ids</code></td>
+              <td><code>array</code></td>
+              <td>IDs des tâches créées dans cette session popup</td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_last_sync</code></td>
+              <td><code>number</code></td>
+              <td>Timestamp du dernier sync (polling incrémental)</td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_polling_active</code></td>
+              <td><code>boolean</code></td>
+              <td>Flag indiquant si le polling est actif</td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_selected_cv</code></td>
+              <td><code>string</code></td>
+              <td>Nom du fichier CV sélectionné dans le dropdown</td>
+            </tr>
+            <tr>
+              <td><code>fitmycv_language</code></td>
+              <td><code>string</code></td>
+              <td>Langue de l'interface (<code>fr</code>, <code>en</code>, <code>es</code>, <code>de</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Sites supportés ─── -->
+
+        <h2>Sites d'Emploi Supportés</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>France</h3>
+            <ul>
+              <li>LinkedIn</li>
+              <li>Indeed (.fr)</li>
+              <li>France Travail</li>
+              <li>APEC</li>
+              <li>Cadremploi</li>
+              <li>HelloWork</li>
+              <li>LesJeudis</li>
+              <li>Meteojob</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>International</h3>
+            <ul>
+              <li>LinkedIn</li>
+              <li>Indeed (.com)</li>
+              <li>Glassdoor (.com / .fr)</li>
+              <li>Monster (.com / .fr)</li>
+              <li>Welcome to the Jungle</li>
+              <li>Workday Jobs</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Universel</h3>
+            <ul>
+              <li>Détection Phase 1 : JSON-LD <code>JobPosting</code>, H1 gender markers, URL patterns</li>
+              <li>Détection Phase 2 : scoring DOM (boutons &laquo; Postuler &raquo;, headings métier, keywords)</li>
+              <li>Sites inconnus : détection automatique + extraction Readability</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ─── Flow global ─── -->
+
+        <h2>Flow Utilisateur Global</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Parcours utilisateur complet</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant JB as Site d'emploi
+    participant DET as detector.js
+    participant EXT as extractor.js
+    participant POP as Popup
+    participant SW as Service Worker
+    participant API as SaaS API
+
+    U->>JB: Navigue sur une offre d'emploi
+    JB->>DET: Page chargée (document_idle)
+    DET->>DET: Phase 1 : JSON-LD, H1, URL
+    DET->>DET: Phase 2 : scoring DOM
+    DET->>SW: JOB_OFFER_DETECTED
+    SW->>SW: Icône active (couleur)
+    DET->>JB: Injecte bouton "FitMyCV +"
+
+    alt Clic bouton "FitMyCV +"
+        U->>DET: Clic sur "FitMyCV +"
+        DET->>EXT: import('./extractor.js')
+        EXT->>EXT: Readability + Turndown
+        EXT->>EXT: Score qualité contenu
+        DET->>DET: Ajoute au picklist (storage.local)
+        DET->>SW: Badge mis à jour
+    end
+
+    alt Popup : Générer CVs
+        U->>POP: Ouvre le popup
+        POP->>API: GET /api/ext/cvs
+        POP->>API: GET /api/ext/credits/balance
+        U->>POP: Sélectionne CV + clique "Générer"
+        POP->>API: POST /api/ext/background-tasks/generate-cv-from-content
+        API-->>POP: { tasks: [...] }
+        POP->>SW: START_POLLING
+        SW->>API: GET /api/ext/background-tasks/sync (alarm 30s)
+        API-->>SW: { tasks: [{ status: "running" }] }
+        SW->>SW: Stocke tasks → storage.local
+        POP->>POP: Affiche progression temps réel
+    end
+          </div>
+        </div>
+
+        <!-- ─── Navigation ─── -->
+
+        <h2>Sections de cette Documentation</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Détection &amp; Extraction</h3>
+            <p>Détection en 2 phases, extraction HTML&rarr;Markdown, sélecteurs par site, scoring qualité.</p>
+            <a href="./detection-extraction.html">Voir la documentation &rarr;</a>
+          </div>
+          <div class="card">
+            <h3>Authentification &amp; Intégration SaaS</h3>
+            <p>Flow OAuth/credentials, JWT, token refresh, API endpoints extension.</p>
+            <a href="./auth-integration.html">Voir la documentation &rarr;</a>
+          </div>
+          <div class="card">
+            <h3>Interface Popup</h3>
+            <p>Architecture des vues, communication inter-composants, design system dark mode.</p>
+            <a href="./popup-ui.html">Voir la documentation &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Onboarding | FitMyCV.io</title>
+  <title>Onboarding - Vue d'ensemble | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,231 +26,387 @@
 
         <h1>Onboarding</h1>
         <p class="lead">
-          Le flux d'onboarding guide les nouveaux utilisateurs à travers la création de leur premier CV, avec tracking des étapes pour analyser les points de friction.
+          Tutoriel guidé en 9 étapes avec modals, tooltips et validation progressive. L'état est persisté en JSON dans le modèle <code>User</code> (champ <code>onboardingState</code>), synchronisé en temps réel via SSE, avec protection anti-régression et gestion admin.
         </p>
 
-        <h2>Flux Utilisateur</h2>
+        <h2>Architecture</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Étapes d'onboarding</div>
+          <div class="diagram-title">Flux d'onboarding</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Registration["INSCRIPTION"]
-        Register["Création compte"]
-        Welcome["Email bienvenue"]
-        Credits["Crédits offerts"]
+    subgraph Client["CLIENT (React)"]
+        Hook["useOnboarding() hook"]
+        Modal["Modal / Carousel"]
+        Tooltip["Tooltip guidé"]
+        Actions["Actions utilisateur"]
     end
 
-    subgraph Onboarding["ONBOARDING"]
-        Step1["Étape 1<br/>Création du CV"]
-        Step1a["Import PDF"]
-        Step1b["Création manuelle"]
-        Step2["Étape 2<br/>Mode édition"]
-        Step3["Étape 3<br/>Première génération"]
+    subgraph API["API (/api/user/onboarding/)"]
+        GET["GET — Lire l'état"]
+        PUT["PUT — Mettre à jour l'état"]
+        PATCH["PATCH — Mise à jour partielle"]
+        POST["POST — Actions (complete/skip/reset)"]
+        Cache["Cache en mémoire (TTL 1000ms)"]
+        AntiRegress["Protection anti-régression (409)"]
     end
 
-    subgraph Conversion["CONVERSION"]
-        Dashboard["Dashboard"]
-        Upgrade["Upgrade plan"]
+    subgraph State["ÉTAT (lib/onboarding/)"]
+        Config["onboardingConfig.js — Timings, API"]
+        Constants["onboardingConstants.js — 9 étapes"]
+        Steps["onboardingSteps.js — Factory i18n"]
+        StateLib["onboardingState.js — Mutations"]
     end
 
-    Register --> Welcome --> Credits
-    Credits --> Step1
-    Step1 --> Step1a & Step1b
-    Step1a & Step1b --> Step2
-    Step2 --> Step3
-    Step3 --> Dashboard
-    Dashboard --> Upgrade
+    subgraph DB["BASE DE DONNÉES"]
+        User["User.onboardingState (JSON)"]
+    end
+
+    subgraph SSE["TEMPS RÉEL"]
+        Emitter["dbEmitter.emit('onboarding:updated')"]
+        Stream["SSE /api/events/stream"]
+    end
+
+    Hook --> GET
+    Actions --> PUT
+    Actions --> POST
+    GET --> Cache --> User
+    PUT --> AntiRegress --> User
+    POST --> User
+    User --> Emitter --> Stream --> Hook
+
+    Config --> Steps
+    Constants --> Steps
+    StateLib --> API
           </div>
         </div>
 
-        <h2>Modèle de Données</h2>
+        <h2>Les 9 étapes</h2>
 
-        <pre><code>model OnboardingProgress {
-  id          Int       @id @default(autoincrement())
-  userId      String    @unique
-  step        Int       @default(1)
-  completed   Boolean   @default(false)
-  method      String?   // pdf_import, manual
-  startedAt   DateTime  @default(now())
-  completedAt DateTime?
-  metadata    Json?     // Données additionnelles
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Clé</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Validation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><code>edit_mode</code></td>
+              <td>Modal + Tooltip</td>
+              <td>Introduction au mode d'édition de CV</td>
+              <td>Fermeture du modal et du tooltip</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><code>ai_generation</code></td>
+              <td>Modal + Tooltip</td>
+              <td>Première génération de CV par IA (URL ou PDF d'offre d'emploi)</td>
+              <td>Complétion d'une tâche <code>AI_GENERATION_TYPES</code></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><code>task_manager</code></td>
+              <td>Tooltip</td>
+              <td>Découverte du gestionnaire de tâches background</td>
+              <td>Fermeture du tooltip</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><code>open_generated_cv</code></td>
+              <td>Tooltip</td>
+              <td>Ouverture et consultation du CV généré</td>
+              <td>Précondition : <code>step4.cvGenerated</code> doit être <code>true</code></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><code>ai_review</code></td>
+              <td>Modal + Tooltip</td>
+              <td>Analyse et revue IA du CV</td>
+              <td>Lancement de la revue IA</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><code>match_score</code></td>
+              <td>Tooltip</td>
+              <td>Calcul du score de correspondance CV ↔ offre</td>
+              <td>Lancement du calcul de score</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><code>optimization</code></td>
+              <td>Modal + Tooltip</td>
+              <td>Optimisation ATS du CV</td>
+              <td>Lancement de l'optimisation</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><code>history</code></td>
+              <td>Modal + Tooltip</td>
+              <td>Consultation de l'historique et des versions du CV</td>
+              <td>Ouverture de l'historique</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><code>export</code></td>
+              <td>Modal + Tooltip</td>
+              <td>Export du CV en PDF ou DOCX</td>
+              <td>Déclenchement d'un export</td>
+            </tr>
+          </tbody>
+        </table>
 
-  user        User      @relation(fields: [userId], references: [id])
+        <h2>Configuration</h2>
+
+        <h3>Constantes de timing</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Constante</th>
+              <th>Valeur</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>STEP_TRANSITION_DELAY</code></td>
+              <td>2000 ms</td>
+              <td>Délai entre la validation d'une étape et l'affichage de la suivante</td>
+            </tr>
+            <tr>
+              <td><code>WELCOME_MORPH_DURATION</code></td>
+              <td>700 ms</td>
+              <td>Animation de morphing du modal de bienvenue</td>
+            </tr>
+            <tr>
+              <td><code>CACHE_TTL</code></td>
+              <td>1000 ms</td>
+              <td>Durée du cache en mémoire de l'état onboarding (API)</td>
+            </tr>
+            <tr>
+              <td><code>MAX_RETRY_ATTEMPTS</code></td>
+              <td>3</td>
+              <td>Nombre maximum de tentatives de retry API</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Définition des étapes</h3>
+
+        <p>Les 9 étapes sont définies dans <code>onboardingConstants.js</code> :</p>
+
+        <pre><code class="language-javascript">export const ONBOARDING_STEPS_COUNT = 9;
+
+export const STEP_DEFINITIONS = [
+  { id: 0, key: 'edit_mode', emoji: '✏️' },
+  { id: 1, key: 'ai_generation', emoji: '✨' },
+  { id: 2, key: 'task_manager', emoji: '📋' },
+  { id: 3, key: 'open_generated_cv', emoji: '📄' },
+  { id: 4, key: 'ai_review', emoji: '🔍' },
+  { id: 5, key: 'match_score', emoji: '🎯' },
+  { id: 6, key: 'optimization', emoji: '🚀' },
+  { id: 7, key: 'history', emoji: '🔄' },
+  { id: 8, key: 'export', emoji: '📥' },
+];</code></pre>
+
+        <h2>État de l'onboarding</h2>
+
+        <p>L'état est stocké en JSON dans <code>User.onboardingState</code> :</p>
+
+        <pre><code class="language-javascript">// DEFAULT_ONBOARDING_STATE
+{
+  currentStep: 0,
+  completedSteps: [],
+  hasCompleted: false,
+  isSkipped: false,
+  modals: {
+    welcome: false,
+    step1: false,    // edit_mode
+    step2: false,    // ai_generation
+    step5: false,    // ai_review
+    step7: false,    // optimization
+    step8: false,    // history
+    step9: false,    // export
+    completion: false,
+  },
+  tooltips: {
+    1: false, 2: false, 3: false, 4: false, 5: false,
+    6: false, 7: false, 8: false, 9: false,
+  },
+  timestamps: {
+    startedAt: null,
+    completedAt: null,
+    skippedAt: null,
+    lastStepChangeAt: null,
+  },
+  step4: {
+    cvGenerated: false,
+    cvFilename: null,
+  },
 }</code></pre>
 
-        <h2>Étapes Détaillées</h2>
+        <h3>Fonctions de mutation</h3>
+
+        <p>Le module <code>onboardingState.js</code> fournit des fonctions pures de mutation :</p>
+
+        <ul>
+          <li><code>markModalCompleted(state, stepKey)</code> — Marquer un modal comme complété</li>
+          <li><code>markTooltipClosed(state, stepKey)</code> — Marquer un tooltip comme fermé</li>
+          <li><code>markStepCompleted(state, stepKey)</code> — Marquer une étape comme complétée et l'ajouter à <code>completedSteps[]</code></li>
+          <li><code>updateCurrentStep(state, stepIndex)</code> — Mettre à jour l'étape courante</li>
+          <li><code>markOnboardingCompleted(state)</code> — Terminer l'onboarding (<code>hasCompleted: true</code>)</li>
+          <li><code>updateStep4Preconditions(state)</code> — Mettre à jour les préconditions de l'étape 4 (<code>step4.cvGenerated</code>)</li>
+          <li><code>normalizeOnboardingState(state)</code> — Normaliser l'état (ajouter les champs manquants)</li>
+          <li><code>validateOnboardingState(state)</code> — Valider la cohérence de l'état</li>
+        </ul>
+
+        <h2>API Onboarding</h2>
+
+        <p>Le endpoint <code>/api/user/onboarding</code> gère 4 méthodes HTTP :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Action</th>
+              <th>Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GET</code></td>
+              <td>Lire l'état</td>
+              <td>Cache en mémoire avec TTL de 1000ms. Retourne l'état normalisé.</td>
+            </tr>
+            <tr>
+              <td><code>PUT</code></td>
+              <td>Mettre à jour</td>
+              <td>Mise à jour de l'étape courante. <strong>Protection anti-régression</strong> : retourne 409 si <code>currentStep</code> recule.</td>
+            </tr>
+            <tr>
+              <td><code>PATCH</code></td>
+              <td>Mise à jour partielle</td>
+              <td>Merge partiel de l'état (ex : un seul champ d'une étape). Cache invalidé après mise à jour.</td>
+            </tr>
+            <tr>
+              <td><code>POST</code></td>
+              <td>Actions</td>
+              <td>3 actions : <code>complete</code> (terminer), <code>skip</code> (passer), <code>reset</code> (réinitialiser).</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Anti-régression</strong> — La route PUT retourne une erreur 409 (Conflict) si le client essaie de diminuer le <code>currentStep</code>. Cela empêche les conditions de course entre plusieurs onglets ou appareils.
+        </div>
+
+        <h2>Synchronisation temps réel</h2>
+
+        <p>Chaque modification de l'état d'onboarding émet un événement SSE :</p>
+
+        <pre><code class="language-javascript">// Après mise à jour en DB
+dbEmitter.emit('onboarding:updated', {
+  userId,
+  data: updatedState,
+});
+
+// Le client React reçoit l'événement via SSE
+// et met à jour le hook useOnboarding()</code></pre>
+
+        <p>Le endpoint SSE écoute aussi <code>onboarding:reset</code> pour gérer la réinitialisation admin.</p>
+
+        <h2>Factory i18n</h2>
+
+        <p>La fonction <code>createOnboardingSteps(t)</code> dans <code>onboardingSteps.js</code> génère les 9 étapes avec :</p>
+
+        <ul>
+          <li><code>targetSelector</code> — Sélecteur CSS de l'élément cible pour le tooltip</li>
+          <li><code>tooltip</code> — Configuration du tooltip (titre, description, position)</li>
+          <li><code>modal</code> — Configuration du modal avec carousel (écrans multiples) — présent aux étapes 1, 2, 5, 7, 8, 9</li>
+          <li><code>validation</code> — Règles de validation pour passer à l'étape suivante</li>
+          <li><code>preconditions</code> — Conditions requises pour afficher l'étape (ex : étape 4 nécessite <code>step4.cvGenerated</code>)</li>
+          <li><code>fallback</code> — Comportement alternatif si la précondition échoue</li>
+        </ul>
+
+        <p>Toutes les chaînes de caractères sont passées par la fonction de traduction <code>t()</code> pour supporter l'internationalisation.</p>
+
+        <h3>Mapping modals → étapes</h3>
+
+        <p>Le module <code>onboardingConfig.js</code> définit le mapping <code>STEP_TO_MODAL_KEY</code> entre les étapes et les clés de modals dans l'état :</p>
 
         <table>
           <thead>
             <tr>
               <th>Étape</th>
-              <th>Description</th>
-              <th>Action tracking</th>
+              <th>Clé modal</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>1</strong></td>
-              <td>Création du premier CV (Import PDF ou création manuelle)</td>
-              <td><code>onboarding_cv_created</code></td>
+              <td><code>edit_mode</code> (étape 1)</td>
+              <td><code>step1</code></td>
             </tr>
             <tr>
-              <td><strong>2</strong></td>
-              <td>Découverte du mode édition</td>
-              <td><code>onboarding_edit_mode_discovered</code></td>
+              <td><code>ai_generation</code> (étape 2)</td>
+              <td><code>step2</code></td>
             </tr>
             <tr>
-              <td><strong>3</strong></td>
-              <td>Première génération/optimisation</td>
-              <td><code>onboarding_first_generation</code></td>
+              <td><code>ai_review</code> (étape 5)</td>
+              <td><code>step5</code></td>
             </tr>
             <tr>
-              <td><strong>4</strong></td>
-              <td>Onboarding terminé</td>
-              <td><code>onboarding_completed</code></td>
+              <td><code>optimization</code> (étape 7)</td>
+              <td><code>step7</code></td>
+            </tr>
+            <tr>
+              <td><code>history</code> (étape 8)</td>
+              <td><code>step8</code></td>
+            </tr>
+            <tr>
+              <td><code>export</code> (étape 9)</td>
+              <td><code>step9</code></td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Méthodes de Création CV</h2>
+        <h2>Actions disponibles</h2>
 
-        <div class="card-grid">
-          <div class="card">
-            <h4>Import PDF</h4>
-            <ul>
-              <li>Upload fichier existant</li>
-              <li>Extraction IA automatique</li>
-              <li>Coût configurable dans Settings</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>Création Manuelle</h4>
-            <ul>
-              <li>Formulaire étape par étape</li>
-              <li>Guidage contextuel</li>
-              <li>Gratuit (pas de crédit requis)</li>
-            </ul>
-          </div>
-        </div>
-
-        <h2>Tracking Analytics</h2>
-
-        <pre><code>// lib/analytics/onboarding.js
-
-export async function trackOnboardingStep(userId, step, metadata = {}) {
-  await prisma.onboardingProgress.upsert({
-    where: { userId },
-    update: {
-      step,
-      metadata: {
-        ...existingMetadata,
-        [`step${step}At`]: new Date().toISOString(),
-        ...metadata
-      }
-    },
-    create: {
-      userId,
-      step,
-      metadata
-    }
-  });
-
-  // Envoyer à analytics
-  await trackEvent('onboarding_step', {
-    userId,
-    step,
-    ...metadata
-  });
-}
-
-export async function completeOnboarding(userId) {
-  await prisma.onboardingProgress.update({
-    where: { userId },
-    data: {
-      completed: true,
-      completedAt: new Date()
-    }
-  });
-
-  await trackEvent('onboarding_completed', { userId });
+        <pre><code class="language-javascript">// Objet ONBOARDING_ACTIONS exporté par onboardingSteps.js
+ONBOARDING_ACTIONS = {
+  complete: 'complete',  // Terminer l'onboarding normalement
+  skip: 'skip',          // Passer l'onboarding
+  reset: 'reset',        // Réinitialiser (admin)
 }</code></pre>
 
-        <h2>Métriques Clés</h2>
+        <h2>Admin</h2>
+
+        <p>L'interface admin dispose de deux endpoints dédiés :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Métrique</th>
+              <th>Endpoint</th>
               <th>Description</th>
-              <th>Objectif</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Completion Rate</strong></td>
-              <td>% d'utilisateurs qui terminent</td>
-              <td>> 60%</td>
+              <td><code>/api/admin/onboarding/analytics</code></td>
+              <td>KPIs : totalUsers, started, completed, skipped, inProgress, stuck, completionRate, skipRate, avgCompletionTime, healthScore. Funnel par étape, analyse des abandons, stats modals, timeline.</td>
             </tr>
             <tr>
-              <td><strong>Drop-off par étape</strong></td>
-              <td>Où les utilisateurs abandonnent</td>
-              <td>< 15% par étape</td>
-            </tr>
-            <tr>
-              <td><strong>Time to First CV</strong></td>
-              <td>Temps jusqu'au premier CV créé</td>
-              <td>< 10 minutes</td>
-            </tr>
-            <tr>
-              <td><strong>Method Distribution</strong></td>
-              <td>Répartition des méthodes choisies</td>
-              <td>-</td>
+              <td><code>/api/admin/onboarding/reset</code></td>
+              <td>Réinitialisation de l'état d'onboarding d'un utilisateur. Émet <code>onboarding:reset</code> via SSE.</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Dashboard Admin</h2>
-
-        <p>Le dashboard admin affiche les métriques d'onboarding via <code>OnboardingTab.jsx</code> :</p>
-
-        <ul>
-          <li>Graphique funnel de conversion</li>
-          <li>Taux de complétion par période</li>
-          <li>Distribution des méthodes de création</li>
-          <li>Points de drop-off identifiés</li>
-        </ul>
-
-        <h2>Composants</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Composant</th>
-              <th>Rôle</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>OnboardingWizard</code></td>
-              <td>Container principal du flux</td>
-            </tr>
-            <tr>
-              <td><code>MethodSelector</code></td>
-              <td>Choix méthode création CV</td>
-            </tr>
-            <tr>
-              <td><code>OnboardingProgress</code></td>
-              <td>Barre de progression</td>
-            </tr>
-            <tr>
-              <td><code>OnboardingStep</code></td>
-              <td>Wrapper d'étape avec tracking</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h2>Fichiers Clés</h2>
+        <h2>Fichiers clés</h2>
 
         <table>
           <thead>
@@ -267,23 +417,36 @@ export async function completeOnboarding(userId) {
           </thead>
           <tbody>
             <tr>
-              <td><code>app/[locale]/(protected)/onboarding/page.jsx</code></td>
-              <td>Page onboarding</td>
+              <td><code>lib/onboarding/onboardingConfig.js</code></td>
+              <td>Constantes de timing, configuration API, mapping <code>STEP_TO_MODAL_KEY</code></td>
             </tr>
             <tr>
-              <td><code>components/onboarding/</code></td>
-              <td>Composants onboarding</td>
+              <td><code>lib/onboarding/onboardingConstants.js</code></td>
+              <td>Définition des 9 étapes (id, key, emoji), constantes</td>
             </tr>
             <tr>
-              <td><code>lib/analytics/onboarding.js</code></td>
-              <td>Tracking et métriques</td>
+              <td><code>lib/onboarding/onboardingSteps.js</code></td>
+              <td>Factory i18n <code>createOnboardingSteps(t)</code>, modals, tooltips, validation</td>
             </tr>
             <tr>
-              <td><code>app/api/onboarding/</code></td>
-              <td>Endpoints API</td>
+              <td><code>lib/onboarding/onboardingState.js</code></td>
+              <td>État par défaut, fonctions de mutation, validation, normalisation</td>
+            </tr>
+            <tr>
+              <td><code>app/api/user/onboarding/route.js</code></td>
+              <td>API REST (GET/PUT/PATCH/POST) avec cache, anti-régression, SSE</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/onboarding/analytics/route.js</code></td>
+              <td>KPIs et analytics d'onboarding (admin)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/onboarding/reset/route.js</code></td>
+              <td>Réinitialisation d'onboarding utilisateur (admin)</td>
             </tr>
           </tbody>
         </table>
+
       </div>
     </main>
   </div>
@@ -298,7 +461,6 @@ export async function completeOnboarding(userId) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

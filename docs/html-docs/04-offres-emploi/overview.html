@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -32,28 +32,37 @@
 
         <h1>Offres d'Emploi</h1>
         <p class="lead">
-          Le système de gestion des offres d'emploi permet d'extraire automatiquement les informations structurées depuis une URL ou un texte brut, puis de calculer un score de compatibilité avec un CV.
+          Le syst&egrave;me de gestion des offres d'emploi permet d'extraire automatiquement les informations structur&eacute;es depuis une URL, un PDF ou du Markdown pr&eacute;-extrait (extension navigateur). L'extraction utilise OpenAI Structured Outputs pour garantir un sch&eacute;ma JSON strict.
         </p>
 
         <h2>Architecture</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Flux de traitement des offres</div>
+          <div class="diagram-title">Architecture compl&egrave;te du syst&egrave;me d'offres d'emploi</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTRÉE"]
+    subgraph Input["ENTR&Eacute;E"]
         URL["URL offre"]
-        Text["Texte brut"]
+        PDF["PDF offre"]
+        Extension["Extension navigateur<br/>(Markdown pr&eacute;-extrait)"]
     end
 
-    subgraph Fetch["RÉCUPÉRATION"]
-        Scraper["Web Scraper<br/>(Puppeteer)"]
-        Cache["Cache URL<br/>(JobOfferRaw)"]
+    subgraph Fetch["R&Eacute;CUP&Eacute;RATION"]
+        SimpleFetch["Simple HTTP Fetch"]
+        Puppeteer["Puppeteer + Stealth"]
+        PdfParse["pdf-parse<br/>(texte)"]
     end
 
     subgraph Extract["EXTRACTION IA"]
-        GPT["GPT-4o-mini"]
-        Schema["JSON Schema"]
+        OpenAI["OpenAI Structured Outputs"]
+        Schema["jobOfferExtractionSchema.json"]
+        LangDetect["D&eacute;tection langue"]
+    end
+
+    subgraph Cache["CACHE"]
+        Normalize["Normalisation URL"]
+        HashPdf["Hash SHA256 PDF"]
+        Dedup["D&eacute;duplication<br/>@@unique userId+sourceValue"]
     end
 
     subgraph Storage["STOCKAGE"]
@@ -61,355 +70,370 @@ flowchart TB
     end
 
     subgraph Usage["UTILISATION"]
-        Generation["Pipeline Génération"]
-        Optimization["Pipeline Optimisation"]
-        MatchScore["Calcul Match Score"]
+        Generation["Pipeline G&eacute;n&eacute;ration CV"]
+        Optimization["Pipeline Optimisation CV"]
     end
 
-    URL --> Scraper
-    Text --> Extract
-    Scraper --> Cache
-    Cache --> Extract
-    Extract --> GPT
-    GPT --> Schema
-    Schema --> JobOffer
+    URL --> SimpleFetch
+    SimpleFetch -->|antibot?| Puppeteer
+    URL --> Puppeteer
+    PDF --> PdfParse
+    Extension --> Extract
+
+    SimpleFetch --> Extract
+    Puppeteer --> Extract
+    PdfParse --> Extract
+
+    Extract --> OpenAI
+    OpenAI --> Schema
+    Schema --> LangDetect
+    LangDetect --> Cache
+    Cache --> Normalize
+    Cache --> HashPdf
+    Cache --> Dedup
+    Dedup --> JobOffer
     JobOffer --> Usage
           </div>
         </div>
 
-        <h2>Structure d'une Offre</h2>
+        <h2>Mod&egrave;le JobOffer (Prisma)</h2>
 
-        <pre><code>{
-  "title": "Développeur Full Stack Senior",
-  "company": "TechCorp",
-  "location": "Paris, France",
-  "type": "CDI",
-  "remote": "Hybride",
-  "experience": "5+ ans",
+        <pre><code class="language-javascript">model JobOffer {
+  id              String   @id @default(cuid())
+  userId          String
+  sourceType      String   // 'url' | 'pdf'
+  sourceValue     String   // URL normalis&eacute;e ou nom fichier PDF
+  contentHash     String?  // Hash SHA256 du contenu PDF (null pour URLs)
+  content         Json     // Extraction structur&eacute;e JSON
+  extractedAt     DateTime @default(now())
+  extractionModel String   // Mod&egrave;le IA utilis&eacute;
+  tokensUsed      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(...)
+  cvFiles         CvFile[] // CVs g&eacute;n&eacute;r&eacute;s &agrave; partir de cette offre
 
-  "description": "Nous recherchons un développeur...",
-
-  "requirements": {
-    "required": [
-      "5 ans d'expérience en développement web",
-      "Maîtrise de React et Node.js",
-      "Expérience avec PostgreSQL"
-    ],
-    "niceToHave": [
-      "Connaissance de TypeScript",
-      "Expérience avec Docker/Kubernetes"
-    ]
-  },
-
-  "skills": {
-    "technical": ["React", "Node.js", "PostgreSQL", "TypeScript"],
-    "soft": ["Leadership", "Communication", "Autonomie"],
-    "methodologies": ["Agile", "Scrum", "CI/CD"]
-  },
-
-  "responsibilities": [
-    "Développer des fonctionnalités front et back",
-    "Participer aux code reviews",
-    "Mentorer les développeurs juniors"
-  ],
-
-  "benefits": [
-    "Télétravail 2j/semaine",
-    "Tickets restaurant",
-    "Mutuelle"
-  ],
-
-  "salary": {
-    "min": 55000,
-    "max": 70000,
-    "currency": "EUR",
-    "period": "annual"
-  },
-
-  "metadata": {
-    "sourceUrl": "https://jobs.techcorp.com/123",
-    "extractedAt": "2024-01-15T10:30:00Z",
-    "language": "fr"
-  }
+  @@unique([userId, sourceValue])
+  @@index([userId])
+  @@index([sourceType])
+  @@index([userId, contentHash])
 }</code></pre>
-
-        <h2>Modèles de Données</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Modèle</th>
-              <th>Description</th>
-              <th>Champs clés</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>JobOffer</code></td>
-              <td>Offre structurée</td>
-              <td>id, userId, url, content (JSON), extractedAt</td>
-            </tr>
-            <tr>
-              <td><code>JobOfferRaw</code></td>
-              <td>Contenu brut (cache)</td>
-              <td>url, html, text, fetchedAt</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h2>Extraction depuis URL</h2>
-
-        <h3>Étape 1 : Récupération du contenu</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge input">INPUT</span>
-            <span class="data-flow-title">URL de l'offre</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Vérification cache</h5>
-            <pre><code>// Vérifier si déjà en cache (< 24h)
-const cached = await prisma.jobOfferRaw.findFirst({
-  where: {
-    url,
-    fetchedAt: {
-      gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-    }
-  }
-});
-
-if (cached) {
-  return cached.text; // Utiliser le cache
-}</code></pre>
-
-            <h5>Scraping (si pas en cache)</h5>
-            <pre><code>// lib/features/job-offers/scraper.js
-import puppeteer from 'puppeteer';
-
-export async function scrapeJobOffer(url) {
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-
-  await page.goto(url, { waitUntil: 'networkidle0' });
-
-  // Extraire le contenu textuel
-  const text = await page.evaluate(() => {
-    // Supprimer scripts, styles, nav
-    const elementsToRemove = document.querySelectorAll(
-      'script, style, nav, header, footer'
-    );
-    elementsToRemove.forEach(el => el.remove());
-
-    return document.body.innerText;
-  });
-
-  await browser.close();
-
-  // Sauvegarder en cache
-  await prisma.jobOfferRaw.create({
-    data: { url, text, fetchedAt: new Date() }
-  });
-
-  return text;
-}</code></pre>
-          </div>
-        </div>
-
-        <h3>Étape 2 : Extraction IA</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge ai">IA</span>
-            <span class="data-flow-title">GPT-4o-mini - Extraction</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Prompt</h5>
-            <pre><code># Mission
-Extraire les informations structurées de cette offre d'emploi.
-
-# Règles
-1. Extraire UNIQUEMENT ce qui est explicitement mentionné
-2. Ne JAMAIS inventer de compétences ou exigences
-3. Différencier les compétences requises vs souhaitées
-4. Conserver la langue originale de l'offre
-
-# Output
-Retourner un JSON structuré selon le schema fourni.</code></pre>
-
-            <h5>JSON Schema</h5>
-            <pre><code>{
-  "type": "json_schema",
-  "json_schema": {
-    "name": "job_offer_extraction",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "company": { "type": "string" },
-        "location": { "type": "string" },
-        "requirements": {
-          "type": "object",
-          "properties": {
-            "required": { "type": "array", "items": { "type": "string" } },
-            "niceToHave": { "type": "array", "items": { "type": "string" } }
-          }
-        },
-        "skills": {
-          "type": "object",
-          "properties": {
-            "technical": { "type": "array", "items": { "type": "string" } },
-            "soft": { "type": "array", "items": { "type": "string" } },
-            "methodologies": { "type": "array", "items": { "type": "string" } }
-          }
-        },
-        "responsibilities": { "type": "array", "items": { "type": "string" } }
-      },
-      "required": ["title", "skills"]
-    },
-    "strict": true
-  }
-}</code></pre>
-          </div>
-        </div>
-
-        <h2>Match Score</h2>
-
-        <p>Le calcul du match score évalue la compatibilité entre un CV et une offre d'emploi.</p>
 
         <div class="callout callout-info">
-          <div class="callout-title">Coût</div>
-          <p><strong>1 crédit</strong> par calcul de match score.</p>
+          <div class="callout-title">Contrainte unique</div>
+          <p>La contrainte <code>@@unique([userId, sourceValue])</code> emp&ecirc;che un m&ecirc;me utilisateur d'extraire deux fois la m&ecirc;me offre. Le <code>sourceValue</code> est soit l'URL normalis&eacute;e, soit le nom du fichier PDF.</p>
         </div>
 
-        <h3>Algorithme</h3>
+        <h2>Sch&eacute;ma d'Extraction (JSON)</h2>
 
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge ai">IA</span>
-            <span class="data-flow-title">GPT-4o-mini - Match Score</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Input</h5>
-            <pre><code>{
-  "cv": { /* CV complet */ },
-  "jobOffer": { /* Offre extraite */ }
-}</code></pre>
-
-            <h5>Output</h5>
-            <pre><code>{
-  "score": 78,
-  "breakdown": {
-    "technicalSkills": 85,
-    "experience": 75,
-    "softSkills": 70,
-    "education": 80
-  },
-  "matches": [
-    "5 ans d'expérience en développement web",
-    "Maîtrise de React confirmée",
-    "Expérience Node.js"
-  ],
-  "gaps": [
-    "TypeScript non mentionné",
-    "Pas d'expérience Kubernetes"
-  ],
-  "recommendations": [
-    "Mettre en avant les projets React",
-    "Ajouter les certifications si disponibles"
-  ]
-}</code></pre>
-          </div>
-        </div>
-
-        <h2>API Endpoints</h2>
+        <p>L'extraction utilise <strong>OpenAI Structured Outputs</strong> avec le sch&eacute;ma d&eacute;fini dans <code>lib/job-offer/schemas/jobOfferExtractionSchema.json</code>. Ce sch&eacute;ma impose <strong>13 champs requis</strong> :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
+              <th>Champ</th>
+              <th>Type</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>/api/job-offers</code></td>
-              <td>GET</td>
-              <td>Lister les offres de l'utilisateur</td>
+              <td><code>title</code></td>
+              <td><code>string|null</code></td>
+              <td>Titre du poste (3-8 mots)</td>
             </tr>
             <tr>
-              <td><code>/api/job-offers</code></td>
-              <td>POST</td>
-              <td>Créer/extraire une offre</td>
+              <td><code>company</code></td>
+              <td><code>string|null</code></td>
+              <td>Nom de l'entreprise</td>
             </tr>
             <tr>
-              <td><code>/api/job-offers/[id]</code></td>
-              <td>GET</td>
-              <td>Récupérer une offre</td>
+              <td><code>contract</code></td>
+              <td><code>string|null</code></td>
+              <td>CDI, CDD, Freelance, Stage, Alternance</td>
             </tr>
             <tr>
-              <td><code>/api/job-offers/[id]</code></td>
-              <td>DELETE</td>
-              <td>Supprimer une offre</td>
+              <td><code>experience</code></td>
+              <td><code>object|null</code></td>
+              <td><code>{min_years, max_years, level: junior|mid|senior|lead}</code></td>
             </tr>
             <tr>
-              <td><code>/api/cv/match-score</code></td>
-              <td>POST</td>
-              <td>Calculer le match score</td>
+              <td><code>location</code></td>
+              <td><code>object|null</code></td>
+              <td><code>{city, country, remote: full|hybrid|none}</code></td>
+            </tr>
+            <tr>
+              <td><code>salary</code></td>
+              <td><code>object|null</code></td>
+              <td><code>{min, max, currency, period: year|month|day|hour}</code></td>
+            </tr>
+            <tr>
+              <td><code>skills</code></td>
+              <td><code>object</code></td>
+              <td><strong>LE PLUS IMPORTANT</strong> &mdash; Voir d&eacute;tail ci-dessous</td>
+            </tr>
+            <tr>
+              <td><code>education</code></td>
+              <td><code>object|null</code></td>
+              <td><code>{level, field}</code></td>
+            </tr>
+            <tr>
+              <td><code>languages</code></td>
+              <td><code>array</code></td>
+              <td><code>[{language, level, requirement: required|nice_to_have}]</code></td>
+            </tr>
+            <tr>
+              <td><code>responsibilities</code></td>
+              <td><code>array</code></td>
+              <td>Liste des responsabilit&eacute;s du poste</td>
+            </tr>
+            <tr>
+              <td><code>benefits</code></td>
+              <td><code>array</code></td>
+              <td>Avantages propos&eacute;s</td>
+            </tr>
+            <tr>
+              <td><code>recruitment_process</code></td>
+              <td><code>object|null</code></td>
+              <td><code>{steps: string[], duration, contact, deadline}</code></td>
+            </tr>
+            <tr>
+              <td><code>language</code></td>
+              <td><code>string|null</code></td>
+              <td>Langue d&eacute;tect&eacute;e : <code>fr|en|es|de</code></td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Cache et Performance</h2>
+        <h3>Structure du champ <code>skills</code></h3>
+
+        <p>Le champ <code>skills</code> est le plus important du sch&eacute;ma. Il est structur&eacute; en 4 sous-cat&eacute;gories, chacune diff&eacute;renciant les comp&eacute;tences requises et souhait&eacute;es :</p>
+
+        <pre><code class="language-json">{
+  "skills": {
+    "hard_skills": {
+      "required": ["Backend development", "API Design"],
+      "nice_to_have": ["Cloud Architecture"]
+    },
+    "tools": {
+      "required": ["React", "Node.js", "PostgreSQL"],
+      "nice_to_have": ["TypeScript", "Docker"]
+    },
+    "methodologies": {
+      "required": ["Agile", "CI/CD"],
+      "nice_to_have": ["TDD"]
+    },
+    "soft_skills": ["Leadership", "Communication", "Autonomie"]
+  }
+}</code></pre>
+
+        <h3>Exemple complet d'extraction</h3>
+
+        <pre><code class="language-json">{
+  "title": "D&eacute;veloppeur Full Stack Senior",
+  "company": "TechCorp",
+  "contract": "CDI",
+  "experience": { "min_years": 5, "max_years": null, "level": "senior" },
+  "location": { "city": "Paris", "country": "France", "remote": "hybrid" },
+  "salary": { "min": 55000, "max": 70000, "currency": "EUR", "period": "year" },
+  "skills": {
+    "hard_skills": {
+      "required": ["Backend development", "API Design"],
+      "nice_to_have": ["Cloud Architecture"]
+    },
+    "tools": {
+      "required": ["React", "Node.js", "PostgreSQL"],
+      "nice_to_have": ["TypeScript", "Docker"]
+    },
+    "methodologies": {
+      "required": ["Agile", "CI/CD"],
+      "nice_to_have": ["TDD"]
+    },
+    "soft_skills": ["Leadership", "Communication", "Autonomie"]
+  },
+  "education": { "level": "Bac+5", "field": "Informatique" },
+  "languages": [
+    { "language": "Fran&ccedil;ais", "level": "Natif", "requirement": "required" },
+    { "language": "Anglais", "level": "Courant", "requirement": "required" }
+  ],
+  "responsibilities": [
+    "D&eacute;velopper des fonctionnalit&eacute;s front et back",
+    "Participer aux code reviews"
+  ],
+  "benefits": ["T&eacute;l&eacute;travail 2j/semaine", "Tickets restaurant"],
+  "recruitment_process": {
+    "steps": ["Entretien RH", "Test technique", "Entretien final"],
+    "duration": "2-3 semaines",
+    "contact": null,
+    "deadline": null
+  },
+  "language": "fr"
+}</code></pre>
+
+        <h2>Sources d'Extraction</h2>
+
+        <p>Le syst&egrave;me supporte trois modes d'extraction selon la source de l'offre :</p>
 
         <div class="card-grid">
           <div class="card">
-            <h4>Cache URL (JobOfferRaw)</h4>
+            <h4>1. URL (SaaS web)</h4>
+            <p><strong>Fonction :</strong> <code>extractJobOfferFromUrl()</code></p>
             <ul>
-              <li>Évite de re-scraper la même URL</li>
-              <li>TTL : 24 heures</li>
-              <li>Unique par (url, userId)</li>
+              <li>Tentative HTTP simple d'abord</li>
+              <li>Fallback sur Puppeteer + Stealth si antibot d&eacute;tect&eacute;</li>
+              <li>Normalisation de l'URL avant stockage</li>
+              <li>Support des principaux job boards</li>
             </ul>
           </div>
           <div class="card">
-            <h4>Cache Extraction (JobOffer)</h4>
+            <h4>2. PDF (upload)</h4>
+            <p><strong>Fonction :</strong> <code>extractJobOfferFromPdf()</code></p>
             <ul>
-              <li>Offre déjà extraite réutilisable</li>
-              <li>Liée à plusieurs CvFile</li>
-              <li>Pas de ré-extraction si existante</li>
+              <li>Extraction texte via <code>pdf-parse</code></li>
+              <li>Hash SHA256 du contenu pour d&eacute;duplication</li>
+              <li>Stockage du nom de fichier comme <code>sourceValue</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>3. Markdown (extension)</h4>
+            <p><strong>Fonction :</strong> <code>extractJobOfferFromMarkdown()</code></p>
+            <ul>
+              <li>Markdown pr&eacute;-extrait par l'extension navigateur</li>
+              <li>Pas de scraping n&eacute;cessaire c&ocirc;t&eacute; serveur</li>
+              <li>Envoy&eacute; directement &agrave; OpenAI</li>
+              <li>Flux : Extension HTML &rarr; Markdown &rarr; API &rarr; JSON</li>
             </ul>
           </div>
         </div>
 
-        <h2>Fichiers Clés</h2>
+        <h2>Strat&eacute;gie de Cache</h2>
+
+        <p>Le syst&egrave;me &eacute;vite les extractions redondantes gr&acirc;ce &agrave; plusieurs m&eacute;canismes de cache :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Normalisation URL</h4>
+            <p><strong>Fonction :</strong> <code>normalizeJobUrl()</code></p>
+            <ul>
+              <li>Supprime les param&egrave;tres de tracking (UTM, etc.)</li>
+              <li>Normalise le format de l'URL</li>
+              <li>Permet de d&eacute;tecter la m&ecirc;me offre post&eacute;e avec des liens diff&eacute;rents</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Hash PDF</h4>
+            <p><strong>Fonction :</strong> <code>computeContentHash()</code></p>
+            <ul>
+              <li>Hash SHA256 du contenu textuel extrait</li>
+              <li>Stock&eacute; dans le champ <code>contentHash</code></li>
+              <li>D&eacute;tecte les PDFs identiques m&ecirc;me avec des noms diff&eacute;rents</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Fonctions getOrExtract*()</div>
+          <p>Les fonctions <code>getOrExtractJobOfferFromUrl()</code>, <code>getOrExtractJobOfferFromPdf()</code> et <code>getOrExtractJobOfferFromMarkdown()</code> v&eacute;rifient syst&eacute;matiquement le cache avant de lancer une extraction. La contrainte <code>@@unique([userId, sourceValue])</code> garantit qu'un m&ecirc;me utilisateur ne peut pas avoir deux extractions identiques.</p>
+        </div>
+
+        <h2>Validation</h2>
+
+        <p><strong>Fonction :</strong> <code>isJobOfferValid()</code></p>
+
+        <p>Apr&egrave;s extraction, l'offre est valid&eacute;e selon les crit&egrave;res suivants :</p>
+
+        <ul>
+          <li>Doit avoir un <code>title</code></li>
+          <li><strong>ET</strong> au moins un de :
+            <ul>
+              <li><code>responsibilities</code> non vide</li>
+              <li><code>skills</code> avec au moins des <code>hard_skills</code> ou <code>tools</code></li>
+              <li>Description substantielle + <code>company</code> ou <code>location</code></li>
+            </ul>
+          </li>
+        </ul>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Offre invalide</div>
+          <p>Si l'extraction ne produit pas une offre valide (page bloqu&eacute;e, contenu insuffisant), l'op&eacute;ration est rejet&eacute;e et le cr&eacute;dit n'est pas d&eacute;bit&eacute;.</p>
+        </div>
+
+        <h2>D&eacute;tection de Langue</h2>
+
+        <p><strong>Fonction :</strong> <code>detectJobOfferLanguageWithOpenAI()</code></p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>D&eacute;tail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Source d'analyse</strong></td>
+              <td>Champs <code>responsibilities</code> et <code>benefits</code> (pas l'URL)</td>
+            </tr>
+            <tr>
+              <td><strong>Langues support&eacute;es</strong></td>
+              <td><code>fr</code>, <code>en</code>, <code>es</code>, <code>de</code></td>
+            </tr>
+            <tr>
+              <td><strong>Fallback</strong></td>
+              <td>Si le contenu est insuffisant pour d&eacute;terminer la langue</td>
+            </tr>
+            <tr>
+              <td><strong>Stockage</strong></td>
+              <td>Champ <code>language</code> dans le JSON <code>content</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Cl&eacute;s</h2>
 
         <table>
           <thead>
             <tr>
               <th>Fichier</th>
-              <th>Rôle</th>
+              <th>R&ocirc;le</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>lib/features/job-offers/index.js</code></td>
-              <td>Exports publics</td>
+              <td><code>lib/job-offer/index.js</code></td>
+              <td>Re-exports</td>
             </tr>
             <tr>
-              <td><code>lib/features/job-offers/scraper.js</code></td>
-              <td>Web scraping Puppeteer</td>
+              <td><code>lib/job-offer/extraction/url.js</code></td>
+              <td>Extraction URL (~550 lignes)</td>
             </tr>
             <tr>
-              <td><code>lib/features/job-offers/extractor.js</code></td>
-              <td>Extraction IA</td>
+              <td><code>lib/job-offer/extraction/pdf.js</code></td>
+              <td>Extraction PDF</td>
             </tr>
             <tr>
-              <td><code>lib/features/job-offers/matchScore.js</code></td>
-              <td>Calcul compatibilité</td>
+              <td><code>lib/job-offer/extraction/helpers.js</code></td>
+              <td>Hash, validation, stockage</td>
             </tr>
             <tr>
-              <td><code>app/api/job-offers/route.js</code></td>
-              <td>API endpoint</td>
+              <td><code>lib/job-offer/extraction/warmup.js</code></td>
+              <td>Cache warmup OpenAI</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/extraction/languageDetection.js</code></td>
+              <td>D&eacute;tection de langue</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/schemas/jobOfferExtractionSchema.json</code></td>
+              <td>Sch&eacute;ma Structured Outputs</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/prompts/system.md</code></td>
+              <td>System prompt extraction</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/prompts/user.md</code></td>
+              <td>User prompt template</td>
             </tr>
           </tbody>
         </table>
@@ -417,8 +441,8 @@ Retourner un JSON structuré selon le schema fourni.</code></pre>
         <h2>Prochaines Sections</h2>
 
         <ul>
-          <li><a href="./extraction-url.html">Extraction URL</a> - Scraping et extraction depuis URL</li>
-          <li><a href="./extraction-pdf.html">Extraction PDF</a> - Import et extraction depuis PDF</li>
+          <li><a href="./extraction-url.html">Extraction URL</a> &mdash; Scraping intelligent et extraction</li>
+          <li><a href="./extraction-pdf.html">Extraction PDF</a> &mdash; Import et extraction depuis PDF</li>
         </ul>
       </div>
     </main>

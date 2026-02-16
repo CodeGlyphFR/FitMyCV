@@ -9,21 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
+
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
@@ -34,13 +29,17 @@
 
         <h1>Import PDF</h1>
         <p class="lead">
-          Le système d'import PDF utilise l'API Vision de GPT-4o pour extraire et structurer les informations d'un CV au format PDF vers le format JSON standardisé.
+          Le systeme d'import PDF utilise l'API Vision de GPT-4o pour extraire et structurer les informations d'un CV au format PDF vers le format JSON standardise (<code>data/schema.json</code>).
         </p>
 
         <div class="callout callout-info">
-          <div class="callout-title">Coût</div>
-          <p><strong>5 crédits</strong> par import. Le crédit est débité au lancement et remboursé en cas d'échec.</p>
+          <div class="callout-title">Cout</div>
+          <p>Credits debites selon le plan de l'utilisateur. Le credit est debite au lancement via <code>incrementFeatureCounter(userId, 'import_pdf')</code> et rembourse en cas d'echec.</p>
         </div>
+
+        <!-- ============================================ -->
+        <!-- PIPELINE D'IMPORT                            -->
+        <!-- ============================================ -->
 
         <h2>Pipeline d'Import</h2>
 
@@ -48,20 +47,20 @@
           <div class="diagram-title">Flux d'import PDF</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTRÉE"]
-        PDF["PDF uploadé"]
+    subgraph Input["ENTREE"]
+        PDF["PDF uploade"]
     end
 
     subgraph Process["TRAITEMENT"]
-        Upload["Upload & Validation"]
-        Convert["Conversion images<br/>(pdf-lib + sharp)"]
-        Vision["GPT-4o Vision<br/>Extraction"]
-        Parse["Parsing JSON"]
-        Validate["Validation structure"]
+        Upload["Upload & Validation<br/>(type, taille)"]
+        Convert["Conversion images<br/>(pdf2pic + sharp)"]
+        Vision["GPT-4o Vision<br/>Extraction structuree"]
+        Parse["Parsing JSON<br/>+ sanitization null bytes"]
+        Reconstruct["Reconstruction CV<br/>(reconstructCv)"]
     end
 
     subgraph Output["SORTIE"]
-        CvFile["CvFile créé"]
+        CvFile["CvFile cree<br/>+ source enregistree"]
         Error["Erreur + Remboursement"]
     end
 
@@ -69,15 +68,20 @@ flowchart TB
     Upload --> Convert
     Convert --> Vision
     Vision --> Parse
-    Parse --> Validate
-    Validate -->|Valide| CvFile
-    Validate -->|Invalide| Error
+    Parse --> Reconstruct
+    Reconstruct -->|Valide| CvFile
+    Reconstruct -->|Invalide| Error
           </div>
         </div>
 
-        <h2>Data Flow Détaillé</h2>
+        <!-- ============================================ -->
+        <!-- DATA FLOW DETAILLE                           -->
+        <!-- ============================================ -->
 
-        <h3>Étape 1 : Upload et Validation</h3>
+        <h2>Data Flow Detaille</h2>
+
+        <!-- ETAPE 1 -->
+        <h3>Etape 1 : Upload et Validation</h3>
 
         <div class="data-flow">
           <div class="data-flow-header">
@@ -89,222 +93,388 @@ flowchart TB
             <ul>
               <li>Type MIME : <code>application/pdf</code></li>
               <li>Taille max : <strong>10 MB</strong></li>
-              <li>Pages max : <strong>5 pages</strong></li>
+              <li>Pages max : <strong>10 pages</strong> (configurable via Settings <code>pdf_import.maxPages</code>)</li>
             </ul>
             <h5>Source</h5>
-            <p>Upload formulaire multipart/form-data vers <code>/api/cv/import-pdf</code></p>
+            <p>Upload formulaire <code>multipart/form-data</code> vers <code>POST /api/background-tasks/import-pdf</code></p>
+
+            <pre><code class="language-javascript">// app/api/background-tasks/import-pdf/route.js
+const validation = await validateUploadedFile(pdfFile, {
+  allowedTypes: ['application/pdf'],
+  maxSize: 10 * 1024 * 1024, // 10 MB
+});
+
+if (!validation.valid) {
+  return NextResponse.json({ error: validation.error }, { status: 400 });
+}
+
+// Debit du credit avant lancement
+const usageResult = await incrementFeatureCounter(userId, 'import_pdf', {
+  taskId: taskIdentifier
+});</code></pre>
+
+            <h5>Execution asynchrone</h5>
+            <p>L'import est execute en tache de fond via <code>scheduleImportPdfJob()</code>. L'API retourne immediatement un <code>taskId</code> (HTTP 202) et le client suit la progression via polling.</p>
           </div>
         </div>
 
-        <h3>Étape 2 : Conversion en Images</h3>
+        <!-- ETAPE 2 -->
+        <h3>Etape 2 : Conversion en Images</h3>
 
         <div class="data-flow">
           <div class="data-flow-header">
             <span class="data-flow-badge process">PROCESS</span>
-            <span class="data-flow-title">PDF → Images</span>
+            <span class="data-flow-title">PDF &rarr; Images JPEG</span>
           </div>
           <div class="data-flow-content">
-            <h5>Traitement</h5>
-            <pre><code>// lib/features/pdf-import/converter.js
-import { PDFDocument } from 'pdf-lib';
+            <h5>Librairies</h5>
+            <ul>
+              <li><code>pdf2pic</code> (<code>fromPath</code>) : conversion PDF vers images via ImageMagick</li>
+              <li><code>sharp</code> : resize, trim des marges blanches, compression JPEG</li>
+            </ul>
+
+            <h5>Configuration (depuis Settings)</h5>
+            <table>
+              <thead>
+                <tr>
+                  <th>Parametre</th>
+                  <th>Defaut</th>
+                  <th>Setting</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Largeur max</td>
+                  <td>1000 px</td>
+                  <td><code>pdf_image_max_width</code></td>
+                </tr>
+                <tr>
+                  <td>Densite (DPI)</td>
+                  <td>100</td>
+                  <td><code>pdf_image_density</code></td>
+                </tr>
+                <tr>
+                  <td>Qualite JPEG</td>
+                  <td>75</td>
+                  <td><code>pdf_image_quality</code></td>
+                </tr>
+                <tr>
+                  <td>Detail Vision</td>
+                  <td>high</td>
+                  <td><code>pdf_vision_detail</code></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <pre><code class="language-javascript">// lib/openai-core/pdfToImages.js
+import { fromPath } from 'pdf2pic';
 import sharp from 'sharp';
 
-export async function convertPdfToImages(pdfBuffer) {
-  const pdfDoc = await PDFDocument.load(pdfBuffer);
-  const pages = pdfDoc.getPages();
-  const images = [];
+export async function convertPdfToImages(pdfPath, options = {}) {
+  const converter = fromPath(pdfPath, {
+    density: options.density || 100,
+    format: 'jpeg',
+    width: maxWidth * 2,
+    preserveAspectRatio: true,
+    graphicsMagick: false, // Utiliser ImageMagick
+  });
 
-  for (let i = 0; i < pages.length; i++) {
-    // Render page to PNG
-    const pageImage = await renderPage(pages[i]);
-    // Resize pour optimiser tokens
-    const resized = await sharp(pageImage)
-      .resize(1200, null, { fit: 'inside' })
-      .png()
-      .toBuffer();
-    images.push(resized.toString('base64'));
-  }
+  const results = await converter.bulk(-1, { responseType: 'buffer' });
 
-  return images;
+  const base64Images = await Promise.all(
+    results.map(async (result) => {
+      // Resize PUIS trim = 4x moins de pixels a analyser
+      const resizedBuffer = await sharp(result.buffer)
+        .resize({ width: maxWidth, withoutEnlargement: true, fit: 'inside' })
+        .trim({ threshold: 10 })
+        .jpeg({ quality })
+        .toBuffer();
+
+      return resizedBuffer.toString('base64');
+    })
+  );
+
+  return base64Images.filter(img => img !== null);
 }</code></pre>
+
             <h5>Output</h5>
-            <p>Array de strings base64 (1 par page)</p>
+            <p>Array de strings base64 JPEG (1 par page, compressees et trimmees).</p>
           </div>
         </div>
 
-        <h3>Étape 3 : Extraction IA (GPT-4o Vision)</h3>
+        <!-- ETAPE 3 -->
+        <h3>Etape 3 : Extraction IA (GPT-4o Vision)</h3>
 
         <div class="data-flow">
           <div class="data-flow-header">
             <span class="data-flow-badge ai">IA</span>
-            <span class="data-flow-title">GPT-4o Vision - Extraction</span>
+            <span class="data-flow-title">GPT-4o Vision - Structured Outputs</span>
           </div>
           <div class="data-flow-content">
+            <h5>Modele</h5>
+            <p>Configurable via Settings : <code>model_import_pdf</code> (standard) ou <code>model_first_import_pdf</code> (premier import d'un utilisateur). Par defaut GPT-4o.</p>
+
+            <h5>Prompts</h5>
+            <ul>
+              <li><strong>System</strong> : <code>lib/features/import-pdf/prompts/system.md</code> &mdash; regles d'extraction, classification skills, chain-of-thought avec section <code>reasoning</code></li>
+              <li><strong>User</strong> : <code>lib/features/import-pdf/prompts/user.md</code> &mdash; instruction simple de retour</li>
+            </ul>
+
             <h5>Input (Messages)</h5>
-            <pre><code>[
+            <pre><code class="language-json">[
   {
     "role": "system",
-    "content": "Tu es un expert en extraction de CV..."
+    "content": "# CV EXTRACTION EXPERT\nYou are an expert at extracting structured data..."
   },
   {
     "role": "user",
     "content": [
-      {
-        "type": "text",
-        "text": "Extrais les informations de ce CV..."
-      },
+      { "type": "text", "text": "Return ONLY the extracted CV content..." },
       {
         "type": "image_url",
         "image_url": {
-          "url": "data:image/png;base64,{page1}",
+          "url": "data:image/jpeg;base64,{page1}",
           "detail": "high"
         }
-      },
-      // ... autres pages
+      }
     ]
   }
 ]</code></pre>
 
-            <h5>Prompt Structure</h5>
-            <pre><code>// lib/features/pdf-import/prompts/extract-cv.md
+            <h5>Structured Outputs (response_format)</h5>
+            <p>Le schema <code>cvExtractionSchema.json</code> utilise <code>"strict": true</code> pour garantir un JSON valide. Il inclut une section <code>reasoning</code> (chain-of-thought) que le modele remplit AVANT l'extraction :</p>
 
-# Mission
-Extraire TOUTES les informations du CV en image.
-
-# Règles
-1. Extraire uniquement ce qui est visible
-2. Ne JAMAIS inventer d'information
-3. Conserver la langue originale du CV
-4. Structurer selon le schema JSON fourni
-
-# Sections à extraire
-- Informations personnelles (header)
-- Résumé professionnel
-- Expériences professionnelles
-- Compétences (techniques, soft, langues)
-- Formation
-- Projets
-- Certifications
-- Autres (bénévolat, hobbies...)</code></pre>
-
-            <h5>JSON Schema (response_format)</h5>
-            <pre><code>{
-  "type": "json_schema",
-  "json_schema": {
-    "name": "cv_extraction_output",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "header": {
-          "type": "object",
-          "properties": {
-            "firstName": { "type": "string" },
-            "lastName": { "type": "string" },
-            "email": { "type": "string" },
-            "phone": { "type": "string" },
-            "location": { "type": "string" },
-            "linkedIn": { "type": "string" },
-            "portfolio": { "type": "string" }
-          },
-          "required": ["firstName", "lastName"]
-        },
-        "sections": {
-          "type": "object",
-          "properties": {
-            "experiences": { "type": "array" },
-            "skills": { "type": "object" },
-            "education": { "type": "array" },
-            // ...
-          }
-        },
-        "metadata": {
-          "type": "object",
-          "properties": {
-            "detectedLanguage": { "type": "string" },
-            "confidence": { "type": "number" }
-          }
+            <pre><code class="language-json">{
+  "name": "cv_content_extraction",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "reasoning": {
+        "properties": {
+          "document_structure": { "type": "string" },
+          "detected_language": { "type": "string", "enum": ["fr", "en", "es", "de"] },
+          "language_confirmation": { "type": "string" },
+          "ocr_issues": { "type": ["string", "null"] },
+          "skills_analysis": { "type": "string" },
+          "extraction_strategy": { "type": "string" }
         }
       },
-      "required": ["header", "sections"]
+      "header": { "..." },
+      "summary": { "..." },
+      "skills": { "..." },
+      "experience": { "..." },
+      "education": { "..." },
+      "languages": { "..." },
+      "extras": { "..." },
+      "projects": { "..." }
     },
-    "strict": true
+    "required": ["reasoning", "header", "summary", "skills", "experience",
+                  "education", "languages", "extras", "projects"]
   }
 }</code></pre>
 
-            <h5>Output</h5>
-            <pre><code>{
-  "header": {
-    "firstName": "Jean",
-    "lastName": "Dupont",
-    "email": "jean.dupont@email.com",
-    "phone": "+33 6 12 34 56 78",
-    "location": "Paris, France"
-  },
-  "sections": {
-    "experiences": [
-      {
-        "title": "Développeur Full Stack",
-        "company": "TechCorp",
-        "startDate": "2021-03",
-        "endDate": null,
-        "current": true,
-        "responsibilities": [
-          "Développement d'applications React",
-          "APIs Node.js"
-        ]
-      }
-    ],
-    "skills": {
-      "technical": ["JavaScript", "React", "Node.js"],
-      "soft": ["Travail d'équipe"],
-      "languages": [
-        { "language": "Français", "level": "Natif" }
-      ]
-    }
-  },
-  "metadata": {
-    "detectedLanguage": "fr",
-    "confidence": 0.95
-  }
-}</code></pre>
+            <h5>Parametres GPT</h5>
+            <table>
+              <thead>
+                <tr>
+                  <th>Parametre</th>
+                  <th>Defaut</th>
+                  <th>Setting</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Temperature</td>
+                  <td>0.1</td>
+                  <td><code>temperature_import_pdf</code></td>
+                </tr>
+                <tr>
+                  <td>Top P</td>
+                  <td>1</td>
+                  <td><code>top_p_import_pdf</code></td>
+                </tr>
+                <tr>
+                  <td>Seed</td>
+                  <td>0 (desactive)</td>
+                  <td><code>seed_import_pdf</code></td>
+                </tr>
+                <tr>
+                  <td>Max tokens</td>
+                  <td>4096</td>
+                  <td>Non configurable</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <h3>Étape 4 : Sauvegarde</h3>
+        <!-- ETAPE 4 -->
+        <h3>Etape 4 : Reconstruction CV</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge process">PROCESS</span>
+            <span class="data-flow-title">reconstructCv()</span>
+          </div>
+          <div class="data-flow-content">
+            <h5>Module</h5>
+            <p><code>lib/cv-core/reconstruction.js</code></p>
+
+            <h5>Traitement</h5>
+            <p><code>reconstructCv()</code> reconstruit le CV a partir des donnees extraites (sparse) et garantit la presence des 8 sections avec leur structure standardisee :</p>
+
+            <pre><code class="language-javascript">// lib/cv-core/reconstruction.js
+export async function reconstructCv(extracted) {
+  return {
+    header: reconstructHeader(extracted.header),
+    summary: reconstructSummary(extracted.summary),
+    skills: extracted.skills || getEmptySkills(),
+    experience: reconstructExperiences(extracted.experience || []),
+    education: reconstructEducation(extracted.education || []),
+    languages: extracted.languages || [],
+    extras: extracted.extras || [],
+    projects: reconstructProjects(extracted.projects || []),
+  };
+}</code></pre>
+
+            <h5>Reconstructions par section</h5>
+            <ul>
+              <li><strong>header</strong> : Reconstruit <code>contact.location</code> imbrique depuis les champs plats (<code>city</code>, <code>region</code>, <code>country_code</code>)</li>
+              <li><strong>experience</strong> : Reconstruit <code>location</code> imbrique, assure la presence de <code>responsibilities</code>, <code>deliverables</code>, <code>skills_used</code></li>
+              <li><strong>education</strong> : Reconstruit <code>location</code> imbrique depuis champs plats</li>
+              <li><strong>projects</strong> : Assure <code>tech_stack</code> comme array</li>
+              <li><strong>summary, skills, languages, extras</strong> : Valeurs par defaut si absent</li>
+            </ul>
+
+            <h5>Langue</h5>
+            <p>La langue est detectee par le modele via la section <code>reasoning.detected_language</code> et stockee dans <code>CvFile.language</code> (pas dans le JSON).</p>
+          </div>
+        </div>
+
+        <!-- ETAPE 5 -->
+        <h3>Etape 5 : Sauvegarde</h3>
 
         <div class="data-flow">
           <div class="data-flow-header">
             <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">CvFile créé</span>
+            <span class="data-flow-title">CvFile cree</span>
           </div>
           <div class="data-flow-content">
-            <h5>Stockage</h5>
-            <pre><code>const cvFile = await prisma.cvFile.create({
-  data: {
-    userId,
-    filename: `import-${Date.now()}.json`,
-    content: extractedCv, // JSON structuré
-    isDefault: false,
-    metadata: {
-      origin: 'pdf_import',
-      originalFilename: uploadedFile.name,
-      importedAt: new Date().toISOString()
-    }
-  }
-});
+            <h5>Stockage fichier</h5>
+            <pre><code class="language-javascript">// lib/features/import-pdf/job.js (handleResult)
+const filename = `${DateTime.now().toFormat('yyyyMMddHHmmssSSS')}.json`;
 
-// Créer version initiale
-await prisma.cvVersion.create({
-  data: {
-    cvFileId: cvFile.id,
-    versionNumber: 1,
-    content: extractedCv,
-    origin: 'pdf_import',
-    description: 'Import depuis PDF'
-  }
+// Ecrire le fichier JSON sur le filesystem
+await writeUserCvFile(userId, filename, cvContent);
+
+// Creer l'entree en base
+await prisma.cvFile.upsert({
+  where: { userId_filename: { userId, filename } },
+  update: { language: detectedLanguage },
+  create: { userId, filename, language: detectedLanguage },
 });</code></pre>
+
+            <h5>Source enregistree</h5>
+            <pre><code class="language-javascript">// Enregistrer la source PDF
+await setCvSource(userId, filename, 'pdf', pdfFileName, 'import-pdf', null);
+// sourceType: 'pdf'
+// sourceValue: nom du fichier PDF original
+// createdBy: 'import-pdf'</code></pre>
+
+            <h5>Validation du contenu</h5>
+            <p>Avant la sauvegarde, le job verifie que le CV extrait contient au minimum un <code>full_name</code> et un <code>current_title</code> non vides. Si le CV est vide, l'import est rejete avec remboursement.</p>
           </div>
         </div>
+
+        <!-- ============================================ -->
+        <!-- SCHEMA DE SORTIE                             -->
+        <!-- ============================================ -->
+
+        <h2>Schema de sortie</h2>
+
+        <p>Le CV JSON produit suit le schema <code>data/schema.json</code> avec 8 sections de contenu pur. Les metadonnees (<code>language</code>, <code>createdBy</code>, <code>sourceType</code>) sont stockees en DB sur le modele <code>CvFile</code>, pas dans le JSON.</p>
+
+        <pre><code class="language-json">{
+  "header": {
+    "full_name": "Jean Dupont",
+    "current_title": "Developpeur Full Stack Senior",
+    "contact": {
+      "email": "jean.dupont@email.com",
+      "phone": "+33 6 12 34 56 78",
+      "location": {
+        "city": "Paris",
+        "region": "Ile-de-France",
+        "country_code": "FR"
+      },
+      "links": [
+        { "label": "LinkedIn", "url": "https://linkedin.com/in/jeandupont" },
+        { "label": "GitHub", "url": "https://github.com/jeandupont" }
+      ]
+    }
+  },
+  "summary": {
+    "description": "Developpeur Full Stack avec 8 ans d'experience..."
+  },
+  "skills": {
+    "hard_skills": [
+      { "name": "JavaScript", "proficiency": 5 },
+      { "name": "Python", "proficiency": 4 }
+    ],
+    "tools": [
+      { "name": "Docker", "proficiency": 3 },
+      { "name": "PostgreSQL", "proficiency": 4 }
+    ],
+    "methodologies": ["Agile", "Scrum", "CI/CD"],
+    "soft_skills": ["Leadership", "Communication"]
+  },
+  "experience": [
+    {
+      "title": "Developpeur Full Stack Senior",
+      "company": "TechCorp",
+      "department_or_client": "Direction IT",
+      "start_date": "2021-03",
+      "end_date": null,
+      "location": { "city": "Paris", "region": "Ile-de-France", "country_code": "FR" },
+      "description": "Conception et maintenance d'applications web critiques.",
+      "responsibilities": ["Developpement d'APIs REST", "Revue de code"],
+      "deliverables": ["Reduction du temps de reponse de 40%"],
+      "skills_used": ["JavaScript", "React", "Node.js"]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Universite Paris-Saclay",
+      "degree": "Master",
+      "field_of_study": "Informatique",
+      "location": { "city": "Paris", "region": "Ile-de-France", "country_code": "FR" },
+      "start_date": "2013-09",
+      "end_date": "2015-06"
+    }
+  ],
+  "languages": [
+    { "name": "Francais", "level": "Langue maternelle" },
+    { "name": "Anglais", "level": "C1" }
+  ],
+  "extras": [
+    { "name": "Permis", "summary": "B" },
+    { "name": "Centres d'interet", "summary": "Course a pied, Photographie" }
+  ],
+  "projects": [
+    {
+      "name": "Mon Portfolio",
+      "role": "Developpeur",
+      "summary": "Site web personnel avec blog technique.",
+      "tech_stack": ["Next.js", "Tailwind CSS"],
+      "start_date": "2023-01",
+      "end_date": "2023-03"
+    }
+  ]
+}</code></pre>
+
+        <!-- ============================================ -->
+        <!-- GESTION DES ERREURS                          -->
+        <!-- ============================================ -->
 
         <h2>Gestion des Erreurs</h2>
 
@@ -320,82 +490,174 @@ await prisma.cvVersion.create({
             <tr>
               <td><code>INVALID_FILE_TYPE</code></td>
               <td>Fichier non-PDF</td>
-              <td>Rejet immédiat, pas de débit</td>
+              <td>Rejet immediat, pas de debit</td>
             </tr>
             <tr>
               <td><code>FILE_TOO_LARGE</code></td>
-              <td>PDF > 10MB</td>
-              <td>Rejet immédiat, pas de débit</td>
+              <td>PDF &gt; 10 MB</td>
+              <td>Rejet immediat, pas de debit</td>
             </tr>
             <tr>
-              <td><code>TOO_MANY_PAGES</code></td>
-              <td>PDF > 5 pages</td>
-              <td>Rejet immédiat, pas de débit</td>
+              <td><code>pdfTooManyPages</code></td>
+              <td>PDF &gt; 10 pages</td>
+              <td>Rejet immediat, pas de debit</td>
             </tr>
             <tr>
               <td><code>EXTRACTION_FAILED</code></td>
-              <td>Échec GPT-4o</td>
-              <td>Remboursement crédits</td>
+              <td>Echec GPT-4o (timeout, erreur API)</td>
+              <td>Remboursement credits</td>
             </tr>
             <tr>
               <td><code>VALIDATION_FAILED</code></td>
-              <td>JSON invalide</td>
-              <td>Remboursement crédits</td>
+              <td>JSON invalide ou CV vide (pas de <code>full_name</code>/<code>current_title</code>)</td>
+              <td>Remboursement credits</td>
+            </tr>
+            <tr>
+              <td><code>pdfConversionFailed</code></td>
+              <td>Echec conversion PDF &rarr; images (ImageMagick)</td>
+              <td>Remboursement credits</td>
+            </tr>
+            <tr>
+              <td><code>Task cancelled</code></td>
+              <td>Annulation par l'utilisateur via AbortSignal</td>
+              <td>Remboursement credits</td>
             </tr>
           </tbody>
         </table>
 
+        <!-- ============================================ -->
+        <!-- MONITORING                                   -->
+        <!-- ============================================ -->
+
         <h2>Monitoring</h2>
 
-        <p>Chaque import est tracké dans <code>OpenAIUsageLog</code> :</p>
+        <p>Chaque import est tracke dans <code>OpenAIUsageLog</code> via <code>trackOpenAIUsage()</code> :</p>
 
-        <pre><code>{
-  userId: "user_123",
-  featureName: "pdf_import",
-  model: "gpt-4o",
-  promptTokens: 8500,      // Images = beaucoup de tokens
-  completionTokens: 1200,
-  totalTokens: 9700,
-  estimatedCost: 0.145,    // ~ $0.15 par import
-  duration: 8500           // 8.5 secondes
-}</code></pre>
+        <pre><code class="language-javascript">// lib/features/import-pdf/service.js
+await trackOpenAIUsage({
+  userId,
+  featureName: isFirstImport ? 'first_import_pdf' : 'import_pdf',
+  model,                                        // ex: 'gpt-4o'
+  promptTokens: result.usage.prompt_tokens,      // Images = beaucoup de tokens
+  completionTokens: result.usage.completion_tokens,
+  cachedTokens: result.usage.prompt_tokens_details?.cached_tokens || 0,
+  duration: result.duration,                     // en ms
+});</code></pre>
 
-        <h2>Fichiers Clés</h2>
+        <p>Le tracking distingue le premier import (<code>first_import_pdf</code>) des imports suivants (<code>import_pdf</code>) pour permettre l'utilisation d'un modele different (potentiellement plus performant) pour le premier import.</p>
+
+        <p>Un second tracking via <code>trackCvImport()</code> enregistre les metriques cote telemetrie serveur :</p>
+
+        <pre><code class="language-javascript">// lib/features/import-pdf/job.js (trackSuccess)
+await trackCvImport({
+  userId,
+  deviceId,
+  fileSize,          // Taille du PDF original
+  duration,          // Duree totale du job
+  status: 'success', // ou 'error'
+  isFirstImport,
+});</code></pre>
+
+        <!-- ============================================ -->
+        <!-- FICHIERS CLES                                -->
+        <!-- ============================================ -->
+
+        <h2>Fichiers Cles</h2>
 
         <table>
           <thead>
             <tr>
               <th>Fichier</th>
-              <th>Rôle</th>
+              <th>Role</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>lib/features/pdf-import/index.js</code></td>
-              <td>Orchestrateur import</td>
+              <td><code>app/api/background-tasks/import-pdf/route.js</code></td>
+              <td>API endpoint : validation, debit credits, scheduling du job</td>
             </tr>
             <tr>
-              <td><code>lib/features/pdf-import/converter.js</code></td>
-              <td>Conversion PDF → images</td>
+              <td><code>lib/features/import-pdf/job.js</code></td>
+              <td>Job runner : orchestration, sauvegarde CvFile, tracking</td>
             </tr>
             <tr>
-              <td><code>lib/features/pdf-import/extractor.js</code></td>
-              <td>Appel GPT-4o Vision</td>
+              <td><code>lib/features/import-pdf/service.js</code></td>
+              <td>Service principal : appel Vision API, parsing, reconstruction</td>
             </tr>
             <tr>
-              <td><code>lib/features/pdf-import/prompts/</code></td>
-              <td>Prompts d'extraction</td>
+              <td><code>lib/features/import-pdf/prompts/system.md</code></td>
+              <td>Prompt systeme : regles d'extraction, chain-of-thought, classification</td>
             </tr>
             <tr>
-              <td><code>lib/features/pdf-import/schemas/</code></td>
-              <td>JSON Schemas output</td>
+              <td><code>lib/features/import-pdf/schemas/cvExtractionSchema.json</code></td>
+              <td>JSON Schema pour Structured Outputs (contenu pur + reasoning)</td>
             </tr>
             <tr>
-              <td><code>app/api/cv/import-pdf/route.js</code></td>
-              <td>API endpoint</td>
+              <td><code>lib/openai-core/pdfToImages.js</code></td>
+              <td>Conversion PDF &rarr; images JPEG via pdf2pic + sharp</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/reconstruction.js</code></td>
+              <td>Reconstruction CV depuis donnees extraites (8 sections)</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/source.js</code></td>
+              <td>Enregistrement source : <code>setCvSource()</code> avec sourceType/createdBy</td>
+            </tr>
+            <tr>
+              <td><code>data/schema.json</code></td>
+              <td>Schema JSON de reference du format CV (8 sections)</td>
             </tr>
           </tbody>
         </table>
+
+        <!-- ============================================ -->
+        <!-- EXPORT PDF                                   -->
+        <!-- ============================================ -->
+
+        <h2>Export PDF</h2>
+
+        <p>L'export PDF (generation d'un PDF a partir du CV JSON) utilise un pipeline distinct base sur le rendu HTML via Puppeteer.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/pdf/index.js</code></td>
+              <td>Exports publics : styles, translations, utils, generators</td>
+            </tr>
+            <tr>
+              <td><code>lib/pdf/cvStyles.js</code></td>
+              <td>CSS styling : <code>getBaseStyles()</code> + <code>getExportStyles()</code> + <code>getPreviewStyles()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/pdf/cvTranslations.js</code></td>
+              <td>Traductions FR/EN/ES/DE, niveaux de competence via <code>createTranslator()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/pdf/cvUtils.js</code></td>
+              <td>Utilitaires : <code>formatDate()</code>, <code>sortExperiences()</code>, <code>prepareCvData()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/pdf/sectionGenerators.js</code></td>
+              <td>Generateurs HTML par section via <code>createSectionGenerators()</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h5>Architecture de l'export</h5>
+        <ul>
+          <li><code>prepareCvData()</code> trie les experiences/education par date et filtre selon les selections</li>
+          <li><code>createSectionGenerators()</code> cree un objet avec un generateur HTML par section (summary, skills, experience, education, languages, projects, extras)</li>
+          <li><code>generateSectionsHtml()</code> assemble les sections dans l'ordre defini par <code>DEFAULT_SECTION_ORDER</code></li>
+          <li>Supporte 4 langues (FR, EN, ES, DE) via <code>createTranslator(language)</code></li>
+        </ul>
+
       </div>
     </main>
   </div>
@@ -410,7 +672,6 @@ await prisma.cvVersion.create({
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

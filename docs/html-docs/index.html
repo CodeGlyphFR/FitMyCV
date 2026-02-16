@@ -31,7 +31,7 @@
 
         <div class="callout callout-info">
           <div class="callout-title">Version 1.1.0.0</div>
-          <p>Cette documentation reflète la codebase actuelle de FitMyCV.io. Elle est destinée à servir de référence technique complète pour le développement et la maintenance.</p>
+          <p>Cette documentation reflète la codebase actuelle de FitMyCV.io (mise à jour février 2026). Elle est destinée à servir de référence technique complète pour le développement et la maintenance.</p>
         </div>
 
         <div class="callout callout-warning">
@@ -50,15 +50,19 @@
           </div>
           <div class="card">
             <h4>Statistiques</h4>
-            <p>114 API Routes, 138 Composants React, 34 Modèles Prisma, 4 Langues supportées</p>
+            <p>123 API Routes, 200+ Composants React, 34 Modèles Prisma, 34 Modules lib/, 4 Langues</p>
           </div>
           <div class="card">
             <h4>Pipelines IA</h4>
-            <p>Génération CV adapté, Optimisation CV, Scoring matching, Extraction offres</p>
+            <p>Génération CV adapté, Optimisation CV, Scoring matching, Extraction offres, CV Modèle</p>
           </div>
           <div class="card">
             <h4>Modèles Économiques</h4>
             <p>Abonnement + Crédits ou Crédits uniquement, configurable en admin</p>
+          </div>
+          <div class="card">
+            <h4>Extension Navigateur</h4>
+            <p>Chrome &amp; Firefox Manifest V3 : détection offres sur 10+ job boards, extraction, génération CV</p>
           </div>
         </div>
 
@@ -75,7 +79,7 @@ flowchart TB
     end
 
     subgraph API["API Layer (Next.js)"]
-        Routes[113 API Routes]
+        Routes[123 API Routes]
         Auth[NextAuth.js]
         Middleware[Middlewares]
     end
@@ -98,7 +102,12 @@ flowchart TB
         Email[SMTP/Resend]
     end
 
+    subgraph Extension["Extension Navigateur"]
+        Ext[Chrome/Firefox Manifest V3]
+    end
+
     Frontend --> API
+    Extension --> API
     API --> Business
     Business --> Data
     Business --> External
@@ -129,6 +138,22 @@ flowchart TB
           <li><strong>Mode Abonnement</strong> - Plans Free/Pro/Premium avec limites mensuelles</li>
           <li><strong>Mode Crédits</strong> - Paiement à l'usage uniquement</li>
           <li><strong>Intégration Stripe</strong> - Paiements, webhooks, facturation</li>
+        </ul>
+
+        <h3>Extension Navigateur</h3>
+        <ul>
+          <li><strong>Détection automatique</strong> - Reconnaissance des offres sur 10+ job boards</li>
+          <li><strong>Extraction intelligente</strong> - HTML vers Markdown via Readability + Turndown</li>
+          <li><strong>Intégration SaaS</strong> - Auth JWT, sélection CV, génération directe</li>
+          <li><strong>Multi-navigateur</strong> - Chrome et Firefox (Manifest V3)</li>
+        </ul>
+
+        <h3>Système</h3>
+        <ul>
+          <li><strong>Background Jobs</strong> - Queue en mémoire avec concurrence (max 3 globaux)</li>
+          <li><strong>Export</strong> - PDF (Puppeteer) et DOCX avec templates personnalisables</li>
+          <li><strong>Traduction</strong> - CV multilingue (FR, EN, ES, DE) via OpenAI</li>
+          <li><strong>Email</strong> - Double transport SMTP/Resend avec templates dynamiques</li>
         </ul>
 
         <h2>Structure de la Documentation</h2>
@@ -174,8 +199,24 @@ flowchart TB
               <td>Dashboard, monitoring, configuration</td>
             </tr>
             <tr>
+              <td><strong>Background Jobs &amp; Export</strong></td>
+              <td>Queue, concurrence, export PDF/DOCX, traduction</td>
+            </tr>
+            <tr>
+              <td><strong>Onboarding &amp; Email</strong></td>
+              <td>9 étapes onboarding, templates email, double transport</td>
+            </tr>
+            <tr>
+              <td><strong>Extension Navigateur</strong></td>
+              <td>Architecture Manifest V3, détection, extraction, auth JWT</td>
+            </tr>
+            <tr>
               <td><strong>API Reference</strong></td>
-              <td>114 endpoints documentés</td>
+              <td>123 endpoints documentés (public, auth, admin, extension)</td>
+            </tr>
+            <tr>
+              <td><strong>Composants React</strong></td>
+              <td>200+ composants en 16 catégories, patterns, architecture</td>
             </tr>
           </tbody>
         </table>

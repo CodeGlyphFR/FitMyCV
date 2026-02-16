@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -39,45 +39,40 @@
 
         <h2>Pattern API Route</h2>
 
-        <p>Toutes les API Routes suivent une structure standardisée :</p>
+        <p>Toutes les 123 API Routes suivent une structure standardisée :</p>
 
-        <pre><code>// app/api/example/route.js
+        <pre><code class="language-javascript">// app/api/example/route.js
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
-import { apiError, CommonErrors } from '@/lib/api/apiErrors';
+import { CommonErrors } from '@/lib/api/apiErrors';
 
 export async function GET(request) {
   try {
-    // 1. Authentification
+    // 1. Authentification (via NextAuth 4)
     const session = await auth();
     if (!session?.user?.id) {
-      return apiError(CommonErrors.notAuthenticated());
+      return CommonErrors.notAuthenticated();
     }
 
     // 2. Extraction paramètres
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    // 3. Validation (optionnel)
-    if (!id) {
-      return apiError(CommonErrors.missingParameter('id'));
-    }
-
-    // 4. Logique métier
+    // 3. Logique métier
     const data = await prisma.example.findUnique({
       where: { id, userId: session.user.id }
     });
 
     if (!data) {
-      return apiError(CommonErrors.notFound('Example'));
+      return CommonErrors.notFound('Example');
     }
 
-    // 5. Réponse
+    // 4. Réponse
     return Response.json({ data });
 
   } catch (error) {
     console.error('[API] Example error:', error);
-    return apiError(CommonErrors.serverError());
+    return CommonErrors.serverError();
   }
 }
 
@@ -85,113 +80,89 @@ export async function POST(request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return apiError(CommonErrors.notAuthenticated());
+      return CommonErrors.notAuthenticated();
     }
 
-    // Parse body
     const body = await request.json();
 
-    // Validation avec Zod (optionnel)
-    const validated = schema.parse(body);
-
-    // Création
     const created = await prisma.example.create({
-      data: { ...validated, userId: session.user.id }
+      data: { ...body, userId: session.user.id }
     });
 
     return Response.json({ data: created }, { status: 201 });
 
   } catch (error) {
-    if (error.name === 'ZodError') {
-      return apiError(CommonErrors.validation(error.errors));
-    }
-    return apiError(CommonErrors.serverError());
+    return CommonErrors.serverError();
   }
 }</code></pre>
 
-        <h2>Pattern Gestion d'Erreurs</h2>
+        <h2>Pattern Gestion d'Erreurs i18n</h2>
+
+        <p>Les erreurs API utilisent des clés de traduction i18n au lieu de messages bruts. Cela permet aux clients de localiser les messages d'erreur.</p>
 
         <div class="diagram">
-          <div class="diagram-title">Hiérarchie des erreurs API</div>
+          <div class="diagram-title">Architecture des erreurs API par domaine</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Errors["TYPES D'ERREURS"]
-        Auth["401 - Non authentifié"]
-        Forbidden["403 - Accès refusé"]
-        NotFound["404 - Non trouvé"]
-        Validation["400 - Validation"]
-        Limit["429 - Limite atteinte"]
-        Server["500 - Erreur serveur"]
+    subgraph Factory["apiError(translationKey, options)"]
+        direction TB
+        Key["Clé i18n"]
+        Status["HTTP Status"]
+        Params["Params dynamiques"]
+        Action["actionRequired + redirectUrl"]
     end
 
-    subgraph Handler["GESTIONNAIRE"]
-        ApiError["apiError()"]
-        CommonErrors["CommonErrors.*"]
+    subgraph Domains["DOMAINES D'ERREURS"]
+        Common["CommonErrors<br/>notAuthenticated, notFound,<br/>serverError, forbidden,<br/>invalidPayload"]
+        Auth["AuthErrors<br/>emailRequired, tokenExpired,<br/>passwordWeak, oauthOnly,<br/>registrationDisabled"]
+        Cv["CvErrors<br/>notFound, invalidFilename,<br/>readError, improveError"]
+        Sub["SubscriptionErrors<br/>limitReached, invalidPlan,<br/>checkoutError"]
+        Bg["BackgroundErrors<br/>noSourceProvided, queueError"]
+        Ext["ExtensionErrors<br/>invalidCredentials,<br/>sourceCvNotFound"]
     end
 
-    CommonErrors --> ApiError
-    ApiError --> Auth & Forbidden & NotFound & Validation & Limit & Server
+    Factory --> Domains
           </div>
         </div>
 
-        <pre><code>// lib/api/apiErrors.js
+        <pre><code class="language-javascript">// lib/api/apiErrors.js - Factory avec clés i18n
 
-export function apiError({ error, status = 400, code = null, details = null }) {
-  return Response.json(
-    {
-      error,
-      code,
-      details,
-      timestamp: new Date().toISOString()
-    },
-    { status }
-  );
+export function apiError(translationKey, options = {}) {
+  const { params = {}, actionRequired = false, redirectUrl = null, status = 400 } = options;
+
+  const response = {
+    error: translationKey,              // Ex: 'errors.api.auth.emailRequired'
+    ...(Object.keys(params).length > 0 && { params }),
+    ...(actionRequired && { actionRequired }),
+    ...(redirectUrl && { redirectUrl })
+  };
+
+  return NextResponse.json(response, { status });
 }
 
+// Erreurs pré-définies par domaine
 export const CommonErrors = {
-  notAuthenticated: () => ({
-    error: 'Authentication required',
-    status: 401,
-    code: 'AUTH_REQUIRED'
-  }),
+  notAuthenticated: (opts) => apiError('errors.api.common.notAuthenticated', { status: 401, ...opts }),
+  notFound: (resource, opts) => apiError('errors.api.common.notFound', { params: { resource }, status: 404, ...opts }),
+  forbidden: (opts) => apiError('errors.api.common.forbidden', { status: 403, ...opts }),
+  serverError: (opts) => apiError('errors.api.common.serverError', { status: 500, ...opts }),
+  invalidPayload: (opts) => apiError('errors.api.common.invalidPayload', { status: 400, ...opts }),
+};
 
-  notAuthorized: () => ({
-    error: 'Access denied',
-    status: 403,
-    code: 'ACCESS_DENIED'
+// Erreurs avec redirection (upgrade abonnement)
+export const SubscriptionErrors = {
+  limitReached: (feature) => apiError('errors.api.subscription.limitReached', {
+    params: { feature },
+    actionRequired: true,
+    redirectUrl: '/subscription'
   }),
-
-  notFound: (resource) => ({
-    error: `${resource} not found`,
-    status: 404,
-    code: 'NOT_FOUND'
-  }),
-
-  limitReached: (feature) => ({
-    error: `Usage limit reached for ${feature}`,
-    status: 429,
-    code: 'LIMIT_REACHED'
-  }),
-
-  validation: (errors) => ({
-    error: 'Validation failed',
-    status: 400,
-    code: 'VALIDATION_ERROR',
-    details: errors
-  }),
-
-  serverError: () => ({
-    error: 'Internal server error',
-    status: 500,
-    code: 'SERVER_ERROR'
-  })
 };</code></pre>
 
         <h2>Pattern Feature Usage</h2>
 
         <p>Vérification des limites et débit de crédits avant chaque action payante :</p>
 
-        <pre><code>// Pattern complet de vérification feature
+        <pre><code class="language-javascript">// Pattern complet de vérification feature
 import { canUseFeature, incrementFeatureCounter } from '@/lib/subscription/featureUsage';
 import { debitCredit, refundCredit } from '@/lib/subscription/credits';
 
@@ -209,13 +180,7 @@ export async function POST(request) {
   } = await canUseFeature(userId, featureName);
 
   if (!allowed) {
-    return apiError({
-      error: reason === 'limit_reached'
-        ? 'Limite mensuelle atteinte'
-        : 'Crédits insuffisants',
-      status: 429,
-      code: 'FEATURE_UNAVAILABLE'
-    });
+    return SubscriptionErrors.limitReached(featureName);
   }
 
   // 2. Débiter le crédit si nécessaire (AVANT l'action)
@@ -247,27 +212,24 @@ export async function POST(request) {
 
         <h2>Pattern CV Operations</h2>
 
-        <pre><code>// Lecture/Écriture CV avec validation
+        <pre><code class="language-javascript">// Lecture/Écriture CV en base de données
 import { readUserCvFile, writeUserCvFile, listUserCvFiles } from '@/lib/cv-core/storage';
 import { validateCv } from '@/lib/cv-core/validation';
 
-// Lire un CV
+// Lire un CV (contenu JSON depuis CvFile.content)
 const cvData = await readUserCvFile(userId, filename);
 // cvData = { header, sections, metadata }
 
 // Valider un CV
 const { valid, errors } = validateCv(cvData);
-if (!valid) {
-  return apiError(CommonErrors.validation(errors));
-}
 
-// Modifier et sauvegarder
+// Modifier et sauvegarder (incrémente contentVersion)
 cvData.sections.experiences[0].title = 'Nouveau titre';
 await writeUserCvFile(userId, filename, cvData);
 
-// Lister tous les CV
+// Lister tous les CV d'un utilisateur
 const cvFiles = await listUserCvFiles(userId);
-// [{ filename, createdAt, matchScore, ... }]</code></pre>
+// [{ filename, createdAt, matchScore, language, ... }]</code></pre>
 
         <h2>Pattern Background Jobs</h2>
 
@@ -285,32 +247,33 @@ stateDiagram-v2
           </div>
         </div>
 
-        <pre><code>// Création et enqueue d'une tâche
+        <pre><code class="language-javascript">// Création et enqueue d'une tâche
 import { enqueueJob } from '@/lib/background-jobs/jobQueue';
-import { startSingleOfferGeneration } from '@/lib/cv-generation';
 
 // 1. Créer la tâche en base (tracking)
-const task = await prisma.cvGenerationTask.create({
+const task = await prisma.backgroundTask.create({
   data: {
-    userId,
-    sourceCvFileId,
-    mode: 'adapt',
+    id: taskId,
+    title: 'Génération CV',
+    type: 'cv_generation',
     status: 'pending',
-    totalOffers: 1
+    userId,
+    deviceId,
   }
 });
 
-// 2. Enqueue le job (max 3 concurrent)
-enqueueJob(() => startSingleOfferGeneration(task.id, offer.id));
+// 2. Enqueue le job (géré par processRegistry)
+enqueueJob(() => startGeneration(task.id));
 
 // Le job met à jour le status en base :
 // pending -> running -> completed/failed</code></pre>
 
         <h2>Pattern OpenAI Structured Output</h2>
 
-        <pre><code>// Appel OpenAI avec JSON Schema
+        <pre><code class="language-javascript">// Appel OpenAI avec JSON Schema validé par ajv
 import { callOpenAI } from '@/lib/openai-core/client';
 import { loadSchema } from '@/lib/openai-core/schemaLoader';
+import { loadPrompt } from '@/lib/openai-core/promptLoader';
 
 const schema = await loadSchema('cv-adaptation/batch-experience-output');
 const prompt = await loadPrompt('cv-adaptation/batch-experience');
@@ -329,37 +292,44 @@ const result = await callOpenAI({
       schema: schema,
       strict: true
     }
-  },
-  // Cache context pour réutilisation
-  cacheContext: buildCacheA(jobOffer)
+  }
 });
 
-// result = JSON validé selon le schema</code></pre>
+// result = JSON validé selon le schema
+// Tokens (prompt, cached, completion) et coûts loggés automatiquement</code></pre>
 
         <h2>Pattern SSE Progress</h2>
 
-        <pre><code>// Envoi de progression en temps réel
-import { createSSEResponse, sendSSE } from '@/lib/sse/sseHelpers';
+        <pre><code class="language-javascript">// Envoi de progression en temps réel via Server-Sent Events
+// app/api/events/stream/route.js
+import { dbEmitter } from '@/lib/events/dbEmitter';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const taskId = searchParams.get('taskId');
+  const deviceId = searchParams.get('deviceId');
 
-  // Créer la réponse SSE
-  const { stream, controller } = createSSEResponse();
+  const stream = new ReadableStream({
+    start(controller) {
+      const encoder = new TextEncoder();
 
-  // Écouter les événements de progression
-  const unsubscribe = onProgress(taskId, (event) => {
-    sendSSE(controller, {
-      type: event.type,
-      phase: event.phase,
-      progress: event.progress,
-      message: event.message
-    });
+      const sendEvent = (data) => {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      };
 
-    if (event.type === 'complete' || event.type === 'error') {
-      controller.close();
-      unsubscribe();
+      // Écouter les événements DB pour ce device
+      const listener = (event) => {
+        if (event.deviceId === deviceId) {
+          sendEvent(event);
+        }
+      };
+
+      dbEmitter.on('task-update', listener);
+
+      // Cleanup à la déconnexion
+      request.signal.addEventListener('abort', () => {
+        dbEmitter.off('task-update', listener);
+        controller.close();
+      });
     }
   });
 
@@ -370,6 +340,28 @@ export async function GET(request) {
       'Connection': 'keep-alive'
     }
   });
+}</code></pre>
+
+        <h2>Pattern Extension Auth (JWT)</h2>
+
+        <pre><code class="language-javascript">// lib/api/withExtensionAuth.js
+// Middleware d'authentification pour les routes /api/ext/*
+import { verifyExtensionToken } from '@/lib/auth/extensionToken';
+
+export async function withExtensionAuth(request) {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return ExtensionErrors.invalidCredentials();
+  }
+
+  const token = authHeader.slice(7);
+  const payload = await verifyExtensionToken(token);
+
+  if (!payload) {
+    return ExtensionErrors.invalidCredentials();
+  }
+
+  return { userId: payload.userId };
 }</code></pre>
 
         <h2>Conventions de Nommage</h2>
@@ -418,6 +410,11 @@ export async function GET(request) {
               <td>snake_case</td>
               <td><code>gpt_cv_generation</code></td>
             </tr>
+            <tr>
+              <td>Clés erreur i18n</td>
+              <td>dot.notation</td>
+              <td><code>errors.api.auth.emailRequired</code></td>
+            </tr>
           </tbody>
         </table>
 
@@ -428,27 +425,50 @@ export async function GET(request) {
             <h4>Branches</h4>
             <ul>
               <li><code>main</code> - Production</li>
-              <li><code>release</code> - Staging</li>
+              <li><code>release</code> - Stable</li>
               <li><code>dev</code> - Développement</li>
             </ul>
           </div>
           <div class="card">
             <h4>Préfixes branches</h4>
             <ul>
-              <li><code>feature/</code> - Nouvelles fonctionnalités</li>
-              <li><code>improvement/</code> - Améliorations</li>
-              <li><code>bug/</code> - Corrections</li>
+              <li><code>feat/</code> - Nouvelles fonctionnalités</li>
+              <li><code>fix/</code> - Corrections</li>
+              <li><code>chore/</code> - Maintenance</li>
               <li><code>hotfix/</code> - Urgences prod</li>
             </ul>
           </div>
           <div class="card">
-            <h4>Commits</h4>
+            <h4>Conventional Commits</h4>
             <ul>
-              <li><code>feat:</code> - Nouvelle feature</li>
-              <li><code>fix:</code> - Correction bug</li>
-              <li><code>refactor:</code> - Refactoring</li>
-              <li><code>docs:</code> - Documentation</li>
+              <li><code>feat:</code> - Nouvelle feature (minor)</li>
+              <li><code>fix:</code> - Bug fonctionnel (patch)</li>
+              <li><code>chore:</code> - Tooling/CI (build)</li>
+              <li><code>feat!:</code> - Breaking change (major)</li>
             </ul>
+          </div>
+          <div class="card">
+            <h4>Versioning automatique</h4>
+            <ul>
+              <li>Format : <code>X.X.X.X</code> (4 parties)</li>
+              <li>Bump automatique au merge sur <code>main</code></li>
+              <li>Basé sur les préfixes de commits</li>
+              <li>Script : <code>scripts/bump-version.sh</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <h2>Déploiement CI/CD</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline de déploiement</div>
+          <div class="mermaid">
+flowchart LR
+    PR["PR vers main"] --> PreProd["Pre-prod<br/>dev.fitmycv.io:3001"]
+    PreProd --> Test["Tests<br/>DB clonée"]
+    Merge["Merge main"] --> Bump["Bump version<br/>auto"]
+    Bump --> Deploy["Deploy prod<br/>app.fitmycv.io:3000"]
+    Deploy --> Sync["Sync branches<br/>release + dev"]
           </div>
         </div>
       </div>
