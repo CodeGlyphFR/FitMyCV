@@ -1,7 +1,7 @@
 {
   "name": "FitMyCV",
   "private": true,
-  "version": "1.0.15.0",
+  "version": "1.1.0.0",
   "scripts": {
     "dev": "dotenv -e .env -- next dev",
     "build": "next build",
