@@ -399,15 +399,37 @@
         ]
       },
       {
+        "id": "browser-extension",
+        "title": "13. Browser Extension",
+        "content": [
+          { "type": "paragraph", "text": "FitMyCV offers an extension for Chrome, Edge, Brave and Firefox browsers. This extension adds job offer capture features directly from job sites." },
+          { "type": "subtitle", "text": "13.1 Data collected by the extension" },
+          { "type": "list", "items": [
+            "URLs of job offers you choose to capture",
+            "Text content of job offers (title, description, location) extracted from the visited page",
+            "Authentication token stored locally in the browser to maintain your session"
+          ]},
+          { "type": "subtitle", "text": "13.2 How it works" },
+          { "type": "list", "items": [
+            "The extension does not collect any data outside of job offer pages where you actively click the \"FitMyCV +\" button",
+            "Extracted content is sent to our servers only for CV generation, then processed in the same way as offers submitted through the website",
+            "Captured offers are temporarily stored in the browser's local storage until submission",
+            "No browsing history is collected or transmitted"
+          ]},
+          { "type": "subtitle", "text": "13.3 Permissions" },
+          { "type": "paragraph", "text": "The extension requires the following permissions: active tab access (to detect job offers), local storage (to save your offers and preferences), cookies (for authentication with your FitMyCV account)." }
+        ]
+      },
+      {
         "id": "international",
-        "title": "13. International Transfers",
+        "title": "14. International Transfers",
         "content": [
           { "type": "paragraph", "text": "Some data may be transferred outside the European Union (OpenAI, Resend in the United States). These transfers are governed by standard contractual clauses approved by the European Commission." }
         ]
       },
       {
         "id": "modifications",
-        "title": "14. Modifications",
+        "title": "15. Modifications",
         "content": [
           { "type": "paragraph", "text": "This policy may be modified at any time. Changes will be posted on this page with the update date. In case of substantial changes, you will be notified by email." }
         ]
