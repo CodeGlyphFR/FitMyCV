@@ -78,7 +78,7 @@ flowchart TB
 
     subgraph Apply["applyClassification()"]
         FilterExp["Experiences KEEP"]
-        ConvertProj["convertExperienceToProject()<br/>MOVE_TO_PROJECTS → Projets"]
+        ConvertProj["Conversion inline<br/>MOVE_TO_PROJECTS → Projets"]
         Stats["Statistiques"]
     end
 
@@ -147,24 +147,24 @@ const response = await client.chat.completions.create({
   "experiences": [
     {
       "index": 0,
-      "decision": "KEEP",
+      "action": "KEEP",
       "reason": "Expérience directement liée au poste cible"
     },
     {
       "index": 1,
-      "decision": "REMOVE",
+      "action": "REMOVE",
       "reason": "Job étudiant non pertinent pour un poste senior"
     },
     {
       "index": 2,
-      "decision": "MOVE_TO_PROJECTS",
+      "action": "MOVE_TO_PROJECTS",
       "reason": "Mission freelance de 2 mois → convertir en projet"
     }
   ],
   "projects": [
     {
       "index": 0,
-      "decision": "KEEP",
+      "action": "KEEP",
       "reason": "Projet pertinent pour les compétences demandées"
     }
   ]
@@ -197,7 +197,7 @@ const response = await client.chat.completions.create({
             <tr>
               <td><span class="badge badge-warning">MOVE_TO_PROJECTS</span></td>
               <td>Exp&eacute;rience courte (&lt; 3 mois), mission freelance, stage — m&eacute;rite d'&ecirc;tre mentionn&eacute;e mais pas en tant qu'exp&eacute;rience</td>
-              <td>Convertie en projet via <code>convertExperienceToProject()</code></td>
+              <td>Convertie en projet (inline dans <code>applyClassification()</code>)</td>
             </tr>
           </tbody>
         </table>
@@ -218,20 +218,23 @@ const response = await client.chat.completions.create({
             <pre><code class="language-javascript">export function applyClassification(sourceCv, classification) {
   // 1. Filtrer les expériences KEEP
   const experiences = sourceCv.experience.filter((exp, index) => {
-    const decision = classification.experiences.find(e => e.index === index);
-    return decision?.decision === 'KEEP';
+    const c = classification.experiences.find(e => e.index === index);
+    return c?.action === 'KEEP';
   });
 
   // 2. Convertir MOVE_TO_PROJECTS en projets
   const movedToProjects = classification.experiences
-    .filter(e => e.decision === 'MOVE_TO_PROJECTS')
-    .map(e => convertExperienceToProject(sourceCv.experience[e.index]));
+    .filter(c => c.action === 'MOVE_TO_PROJECTS')
+    .map(c => {
+      const exp = sourceCv.experience[c.index];
+      return { /* conversion inline experience → projet */ };
+    });
 
   // 3. Fusionner les projets KEEP + convertis
   const projects = [
     ...sourceCv.projects.filter((proj, index) => {
-      const decision = classification.projects.find(p => p.index === index);
-      return decision?.decision === 'KEEP';
+      const c = classification.projects.find(p => p.index === index);
+      return c?.action === 'KEEP';
     }),
     ...movedToProjects
   ];
@@ -259,21 +262,9 @@ const response = await client.chat.completions.create({
         </div>
 
         <!-- ==================== CONVERSION ==================== -->
-        <h2>convertExperienceToProject()</h2>
+        <h2>Conversion Experience &rarr; Projet</h2>
 
-        <p>Transforme une exp&eacute;rience en format projet, en pr&eacute;servant les m&eacute;tadonn&eacute;es d'origine via <code>_originalExperience</code> :</p>
-
-        <pre><code class="language-javascript">function convertExperienceToProject(experience) {
-  return {
-    name: experience.title,
-    role: experience.title,
-    summary: experience.description || '',
-    tech_stack: experience.skills_used || [],
-    start_date: experience.start_date,
-    end_date: experience.end_date,
-    _originalExperience: experience  // Métadonnées pour traçabilité
-  };
-}</code></pre>
+        <p>La conversion des exp&eacute;riences <code>MOVE_TO_PROJECTS</code> en format projet est effectu&eacute;e <strong>inline dans <code>applyClassification()</code></strong> (classify.js:327-358). Il n'existe pas de fonction <code>convertExperienceToProject()</code> export&eacute;e s&eacute;par&eacute;ment. La transformation pr&eacute;serve les m&eacute;tadonn&eacute;es d'origine via <code>_originalExperience</code>.</p>
 
         <div class="callout callout-info">
           <div class="callout-title">M&eacute;tadonn&eacute;e _originalExperience</div>

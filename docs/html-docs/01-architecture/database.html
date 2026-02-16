@@ -198,7 +198,7 @@ erDiagram
             <tr>
               <td><code>CvGenerationOffer</code></td>
               <td>Offre à traiter dans une tâche</td>
-              <td>taskId, sourceUrl, jobOfferId, offerIndex, status, classificationResult, batchResults, generatedCvFileId</td>
+              <td>taskId, sourceUrl, jobOfferId, offerIndex, status, classificationResult, batchResults, generatedCvFileId, generatedCvFileName, retryCount, creditsRefunded</td>
             </tr>
             <tr>
               <td><code>CvGenerationSubtask</code></td>
@@ -242,7 +242,7 @@ erDiagram
             <tr>
               <td><code>CreditBalance</code></td>
               <td>Solde crédits utilisateur</td>
-              <td>userId, balance, totalPurchased, totalUsed, totalRefunded, totalGifted</td>
+              <td>userId, balance, totalPurchased, totalUsed, totalRefunded, totalGifted, balanceAfterLastPurchase</td>
             </tr>
             <tr>
               <td><code>CreditTransaction</code></td>
@@ -305,7 +305,7 @@ erDiagram
             <tr>
               <td><code>EmailTrigger</code></td>
               <td>Événements déclencheurs d'emails</td>
-              <td>name (unique), label, variables (Json), category, isSystem</td>
+              <td>name (unique), label, variables (String), category, isSystem</td>
             </tr>
             <tr>
               <td><code>EmailTemplate</code></td>
@@ -373,7 +373,7 @@ erDiagram
             <tr>
               <td><code>BackgroundTask</code></td>
               <td>Tâches asynchrones avec tracking</td>
-              <td>id, title, type, status, deviceId, userId, payload, result, error, creditUsed</td>
+              <td>id, title, type, status, deviceId, userId, payload, result, error, creditUsed, successMessage, shouldUpdateCvList, cvFile, featureName, featureCounterPeriodStart</td>
             </tr>
             <tr>
               <td><code>LinkHistory</code></td>

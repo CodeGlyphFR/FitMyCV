@@ -305,11 +305,17 @@ window.addEventListener('popstate', () => {
           </thead>
           <tbody>
             <tr><td>LinkedIn</td><td>14px</td><td>6px 14px</td><td>block</td></tr>
-            <tr><td>Indeed</td><td>12px</td><td>4px 10px</td><td>inline-flex</td></tr>
-            <tr><td>Glassdoor</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
+            <tr><td>Indeed (.com)</td><td>12px</td><td>4px 10px</td><td>inline-flex</td></tr>
+            <tr><td>Indeed (.fr)</td><td>12px</td><td>4px 10px</td><td>inline-flex</td></tr>
+            <tr><td>Glassdoor (.com)</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
+            <tr><td>Glassdoor (.fr)</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
             <tr><td>Welcome to the Jungle</td><td>13px</td><td>6px 14px</td><td>block</td></tr>
             <tr><td>France Travail</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
             <tr><td>APEC</td><td>13px</td><td>5px 12px</td><td>inline-flex</td></tr>
+            <tr><td>HelloWork</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
+            <tr><td>Meteojob</td><td>13px</td><td>5px 12px</td><td>inline-flex</td></tr>
+            <tr><td>Cadremploi</td><td>13px</td><td>5px 12px</td><td>inline-flex</td></tr>
+            <tr><td>Monster (.fr)</td><td>13px</td><td>5px 12px</td><td>inline-flex</td></tr>
             <tr><td>Workday</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
           </tbody>
         </table>
@@ -444,43 +450,59 @@ function cleanMarkdown(md) {
           <tbody>
             <tr>
               <td><strong>LinkedIn</strong></td>
-              <td><code>.description__text</code>, <code>.show-more-less-html__markup</code>, <code>.jobs-description</code></td>
+              <td><code>.description__text</code>, <code>.show-more-less-html__markup</code>, <code>[class*="job-view-layout"]</code>, <code>.jobs-description</code>, <code>.jobs-description__content</code></td>
             </tr>
             <tr>
-              <td><strong>Indeed</strong></td>
-              <td><code>#jobDescriptionText</code>, <code>[data-testid="jobDescriptionText"]</code></td>
+              <td><strong>Indeed (.com)</strong></td>
+              <td><code>#jobDescriptionText</code>, <code>.jobsearch-JobComponent-description</code>, <code>[data-testid="jobDescriptionText"]</code>, <code>.jobsearch-BodyContainer</code></td>
             </tr>
             <tr>
-              <td><strong>APEC</strong></td>
-              <td><code>.details-offre</code>, <code>.offer-description</code>, <code>[class*="jobOffer"]</code></td>
-            </tr>
-            <tr>
-              <td><strong>France Travail</strong></td>
-              <td><code>.description-offre</code>, <code>[class*="offer-description"]</code>, <code>#TexteAnnonce</code></td>
-            </tr>
-            <tr>
-              <td><strong>Glassdoor</strong></td>
-              <td><code>.desc</code>, <code>[class*="jobDescription"]</code>, <code>[data-test="jobDescription"]</code></td>
+              <td><strong>Indeed (.fr)</strong></td>
+              <td><code>#jobDescriptionText</code>, <code>.jobsearch-JobComponent-description</code>, <code>[data-testid="jobDescriptionText"]</code></td>
             </tr>
             <tr>
               <td><strong>WttJ</strong></td>
-              <td><code>[data-testid="job-section-description"]</code>, <code>main article</code></td>
+              <td><code>[data-testid="job-section-description"]</code>, <code>[class*="sc-"][class*="description"]</code>, <code>.ais-JobContent</code>, <code>main article</code>, <code>[data-testid="job-section"]</code></td>
             </tr>
             <tr>
-              <td><strong>Monster</strong></td>
-              <td><code>.job-description</code>, <code>#JobDescription</code>, <code>.job-details</code></td>
+              <td><strong>Monster (.fr / .com)</strong></td>
+              <td><code>.job-description</code>, <code>#JobDescription</code>, <code>.details-content</code>, <code>.job-details</code></td>
+            </tr>
+            <tr>
+              <td><strong>Glassdoor (.fr / .com)</strong></td>
+              <td><code>.desc</code>, <code>[class*="jobDescription"]</code>, <code>.jobDescriptionContent</code>, <code>[data-test="jobDescription"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>France Travail</strong></td>
+              <td><code>.description-offre</code>, <code>[class*="offer-description"]</code>, <code>.contenu-offre</code>, <code>#TexteAnnonce</code></td>
+            </tr>
+            <tr>
+              <td><strong>pole-emploi.fr</strong></td>
+              <td>(identique à France Travail — alias legacy)</td>
+            </tr>
+            <tr>
+              <td><strong>APEC</strong></td>
+              <td><code>.details-offre</code>, <code>.offer-description</code>, <code>[class*="jobOffer"]</code>, <code>.job-description-content</code></td>
             </tr>
             <tr>
               <td><strong>Cadremploi</strong></td>
-              <td><code>.c-jobOffer__description</code>, <code>[class*="job-description"]</code></td>
+              <td><code>.c-jobOffer__description</code>, <code>[class*="job-description"]</code>, <code>.job-content</code></td>
             </tr>
             <tr>
               <td><strong>HelloWork</strong></td>
-              <td><code>.tw-description</code>, <code>.job-description</code></td>
+              <td><code>.tw-description</code>, <code>[class*="description"]</code>, <code>.job-description</code></td>
+            </tr>
+            <tr>
+              <td><strong>LesJeudis</strong></td>
+              <td><code>.job-description</code>, <code>.offer-description</code></td>
+            </tr>
+            <tr>
+              <td><strong>Meteojob</strong></td>
+              <td><code>.offer-main-content</code>, <code>.job-offer-details</code>, <code>.cc-job-offer</code></td>
             </tr>
             <tr>
               <td><strong>Workday</strong></td>
-              <td><code>[data-automation-id="jobPostingDescription"]</code></td>
+              <td><code>[data-automation-id="jobPostingDescription"]</code>, <code>[data-automation-id="job-posting-details"]</code>, <code>[data-automation-id="jobPostingPage"]</code></td>
             </tr>
           </tbody>
         </table>
@@ -498,24 +520,52 @@ function cleanMarkdown(md) {
           </thead>
           <tbody>
             <tr>
+              <td><strong>Indeed (.com / .fr)</strong></td>
+              <td><code>h1[data-testid="jobsearch-JobInfoHeader-title"]</code>, <code>.jobsearch-JobInfoHeader-title</code>, <code>h1.jobTitle</code>, <code>[data-testid="job-title"]</code></td>
+            </tr>
+            <tr>
               <td><strong>LinkedIn</strong></td>
-              <td><code>.job-details-jobs-unified-top-card__job-title h1</code></td>
+              <td><code>.job-details-jobs-unified-top-card__job-title h1</code>, <code>.jobs-unified-top-card__job-title</code>, <code>h1[class*="job-title"]</code>, <code>.t-24.t-bold</code></td>
             </tr>
             <tr>
-              <td><strong>Indeed</strong></td>
-              <td><code>h1[data-testid="jobsearch-JobInfoHeader-title"]</code></td>
+              <td><strong>WttJ</strong></td>
+              <td><code>[data-testid="job-metadata-block"] + h2</code>, <code>h2.wui-text</code>, <code>[data-testid="job-header-title"]</code>, <code>h1[class*="Title"]</code></td>
             </tr>
             <tr>
-              <td><strong>France Travail</strong></td>
-              <td><code>#detailOffreVolet h1.title</code>, <code>h1.t2.title</code></td>
+              <td><strong>France Travail / pole-emploi.fr</strong></td>
+              <td><code>#detailOffreVolet h1.title</code>, <code>h1.t2.title</code>, <code>h1.title</code>, <code>.intitule-offre</code></td>
             </tr>
             <tr>
-              <td><strong>Glassdoor</strong></td>
-              <td><code>h1[id^="jd-job-title"]</code>, <code>[data-test="job-title"]</code></td>
+              <td><strong>APEC</strong></td>
+              <td><code>h1.offer-title</code>, <code>.job-title</code>, <code>h1[class*="title"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Monster (.fr / .com)</strong></td>
+              <td><code>h1[class*="title"]</code>, <code>.job-header h1</code></td>
+            </tr>
+            <tr>
+              <td><strong>Glassdoor (.fr / .com)</strong></td>
+              <td><code>h1[id^="jd-job-title"]</code>, <code>[data-test="job-title"]</code>, <code>h1[class*="heading_Level1"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Cadremploi</strong></td>
+              <td><code>h1.job__title</code>, <code>.c-jobOffer__title h1</code>, <code>h1[class*="title"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>HelloWork</strong></td>
+              <td><code>h1[class*="title"]</code>, <code>.tw-title h1</code></td>
+            </tr>
+            <tr>
+              <td><strong>LesJeudis</strong></td>
+              <td><code>h1.job-title</code>, <code>h1[class*="title"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Meteojob</strong></td>
+              <td><code>h1 .cc-job-offer-title</code>, <code>h1.cc-font-size-base</code></td>
             </tr>
             <tr>
               <td><strong>Workday</strong></td>
-              <td><code>h2[data-automation-id="jobPostingHeader"]</code></td>
+              <td><code>h2[data-automation-id="jobPostingHeader"]</code>, <code>[data-automation-id="jobPostingHeader"]</code></td>
             </tr>
           </tbody>
         </table>
@@ -533,16 +583,16 @@ function cleanMarkdown(md) {
           </thead>
           <tbody>
             <tr>
-              <td><strong>Indeed</strong></td>
-              <td><code>.jobsearch-RightPane</code>, <code>.jobsearch-ViewjobPaneWrapper</code></td>
+              <td><strong>Indeed (.com / .fr)</strong></td>
+              <td><code>.jobsearch-RightPane</code>, <code>.jobsearch-ViewjobPaneWrapper</code>, <code>.jobsearch-ViewJobLayout--embedded</code></td>
             </tr>
             <tr>
               <td><strong>LinkedIn</strong></td>
-              <td><code>.jobs-search__job-details</code>, <code>.scaffold-layout__detail</code></td>
+              <td><code>.jobs-search__job-details</code>, <code>.scaffold-layout__detail</code>, <code>.job-view-layout</code>, <code>[class*="job-view-layout"]</code></td>
             </tr>
             <tr>
-              <td><strong>Glassdoor</strong></td>
-              <td><code>[class*="TwoColumnLayout_columnRight"]</code></td>
+              <td><strong>Glassdoor (.com / .fr)</strong></td>
+              <td><code>[class*="TwoColumnLayout_columnRight"]</code>, <code>[class*="JobDetails_jobDetailsContainer"]</code></td>
             </tr>
           </tbody>
         </table>
@@ -555,15 +605,54 @@ function cleanMarkdown(md) {
   '[class*="job-description"]',
   '[class*="jobDescription"]',
   '[class*="job-content"]',
+  '[class*="job-details"]',
+  '[class*="offer-description"]',
+  '[class*="vacancy-description"]',
+  '[id*="job-description"]',
+  '[id*="jobDescription"]',
   '[data-testid*="description"]',
   '[data-automation*="description"]',
+  '[data-test*="description"]',
   'article[class*="job"]',
   'main article',
   '[role="main"] article',
+  'main section:not([class*="nav"]):not([class*="header"]):not([class*="footer"])',
   'article',
   'main',
   '[role="main"]',
 ];</code></pre>
+
+        <h3>Sélecteurs de titre génériques (<code>GENERIC_TITLE_SELECTORS</code>)</h3>
+
+        <p>Fallback utilisé quand le site n'a pas de sélecteurs de titre spécifiques :</p>
+
+        <pre><code class="language-javascript">const GENERIC_TITLE_SELECTORS = [
+  'h1[class*="job-title"]',
+  'h1[class*="jobTitle"]',
+  'h1[class*="title"]',
+  '[class*="job-title"] h1',
+  '[class*="jobTitle"]',
+  '[data-testid*="title"]',
+  'h1',
+];</code></pre>
+
+        <h3>Domaines nécessitant une authentification (<code>AUTH_REQUIRED_DOMAINS</code>)</h3>
+
+        <p>Certains sites nécessitent que l'utilisateur soit connecté pour accéder au contenu complet de l'offre :</p>
+
+        <pre><code class="language-javascript">const AUTH_REQUIRED_DOMAINS = [
+  'apec.fr/candidat',
+  'linkedin.com/jobs/view',
+];</code></pre>
+
+        <h3>Fonction utilitaire <code>isSplitPanelSite()</code></h3>
+
+        <p>Vérifie si un site utilise un layout split-panel (liste + détail) en testant la présence du hostname dans <code>SITE_DETAIL_PANEL_SELECTORS</code> :</p>
+
+        <pre><code class="language-javascript">export function isSplitPanelSite(hostname) {
+  const host = hostname.replace(/^www\./, '');
+  return Object.keys(SITE_DETAIL_PANEL_SELECTORS).some(d => host.includes(d));
+}</code></pre>
 
         <!-- ─── URL canonique ─── -->
 

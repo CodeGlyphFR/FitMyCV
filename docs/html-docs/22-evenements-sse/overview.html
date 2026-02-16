@@ -290,7 +290,7 @@ await withEvents(
 );</code></pre>
 
         <div class="callout callout-info">
-          <strong>Gestion d'erreurs</strong> : Les fonctions <code>update*</code> utilisent <code>console.warn</code> et retournent <code>null</code> en cas d'erreur (non-bloquant). Les fonctions <code>create*</code> propagent l'erreur (<code>throw</code>) car une création échouée est généralement critique.
+          <strong>Gestion d'erreurs</strong> : Les fonctions <code>update*</code> utilisent <code>console.warn</code> et retournent <code>null</code> en cas d'erreur (non-bloquant). <code>createBackgroundTask</code> propage l'erreur (<code>throw</code>) car une création de tâche échouée est critique, mais <code>createCvFile</code> retourne <code>null</code> avec <code>console.warn</code> (non-bloquant).
         </div>
 
         <!-- ============================================================ -->

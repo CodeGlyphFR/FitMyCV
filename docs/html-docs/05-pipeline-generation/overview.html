@@ -153,7 +153,7 @@ flowchart TB
               <td>Batch Projects</td>
               <td><code>phases/batch-projects.js</code></td>
               <td>Parall&egrave;le</td>
-              <td><code>model_cv_batch_project</code></td>
+              <td><code>model_cv_batch_projects</code></td>
             </tr>
             <tr>
               <td><span class="badge badge-warning">1c</span></td>
@@ -262,7 +262,7 @@ flowchart TB
               </tr>
               <tr>
                 <td><code>MOVE_TO_PROJECTS</code></td>
-                <td>Exp&eacute;rience courte/freelance &rarr; convertie en projet via <code>convertExperienceToProject()</code></td>
+                <td>Exp&eacute;rience courte/freelance &rarr; convertie en projet (inline dans <code>applyClassification()</code>)</td>
               </tr>
             </table>
           </div>
@@ -372,7 +372,7 @@ flowchart TB
         <!-- ==================== SYSTEME DE CACHE ==================== -->
         <h2>Syst&egrave;me de Cache</h2>
 
-        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/utils/cacheContext.js</code> &mdash; <code>buildCacheA()</code> et <code>buildCacheB()</code></p>
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/utils/cacheContext.js</code> &mdash; <code>generateCacheA()</code> et <code>generateCacheB()</code></p>
 
         <div class="card-grid">
           <div class="card">
@@ -560,7 +560,7 @@ flowchart TB
 │   ├── skillsMatchSchema.json
 │   └── recomposeLanguagesSchema.json
 └── utils/
-    ├── cacheContext.js           # buildCacheA, buildCacheB
+    ├── cacheContext.js           # generateCacheA, generateCacheB, buildCachedSystemPrompt
     ├── language.js               # detectJobOfferLanguage, getTargetLanguageName
     ├── sanitize.js               # sanitizeForPostgres
     └── debugLog.js               # generateTimestamp</code></pre>

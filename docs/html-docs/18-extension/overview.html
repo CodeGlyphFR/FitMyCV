@@ -111,7 +111,7 @@ graph TB
         APEC["APEC"]
         FT["France Travail"]
         WJ["Welcome to the Jungle"]
-        OTHER["+ 8 autres sites"]
+        OTHER["+ 7 autres sites"]
     end
 
     DET -->|"détecte offre"| SW
@@ -340,9 +340,9 @@ export default defineConfig({
   plugins: [
     webExtension({
       manifest: resolve(__dirname, 'manifest.json'),
-      additionalInputs: [                       // Scripts non référencés dans manifest
-        'content-scripts/extractor.js',          // Import dynamique depuis detector.js
-        'content-scripts/auth-receiver.js',
+      additionalInputs: [                       // Scripts nécessitant un bundling explicite
+        'content-scripts/extractor.js',          // Import dynamique depuis detector.js (non référencé dans manifest)
+        'content-scripts/auth-receiver.js',      // Référencé dans manifest, mais bundlé explicitement
       ],
       browser,                                   // Adaptations Chrome/Firefox automatiques
     }),

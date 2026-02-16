@@ -200,7 +200,7 @@ locales/
 
         <h3>getTranslatorForCvLanguage(cvLanguage)</h3>
 
-        <p>Crée une fonction de traduction <code>t(path)</code> pour une langue donnée en fusionnant les 9 fichiers JSON de la langue :</p>
+        <p>Crée une fonction de traduction <code>t(path)</code> pour une langue donnée en fusionnant les 10 fichiers JSON de la langue :</p>
 
         <pre><code class="language-javascript">import { getTranslatorForCvLanguage } from '@/lib/i18n/cvLanguageHelper';
 
@@ -551,7 +551,7 @@ t('emptyState.welcome', { firstName: 'Jean' });
           <div class="mermaid">
 graph LR
     A["Pipeline CV<br/>cvLanguage: 'en'"] --> B["getTranslatorForCvLanguage('en')"]
-    B --> C["Fusionne 9 fichiers JSON<br/>en/*.json"]
+    B --> C["Fusionne 10 fichiers JSON<br/>en/*.json"]
     C --> D["t('cvSections.experience')"]
     D --> E["'Experience'"]
 

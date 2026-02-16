@@ -36,7 +36,7 @@
         <div class="callout callout-warning">
           <div class="callout-title">Ne pas confondre</div>
           <p>
-            Ne pas confondre avec l'import PDF de CV (<code>lib/pdf/</code>). Ce module extrait des
+            Ne pas confondre avec l'import PDF de CV (<code>lib/features/import-pdf/</code> + <code>lib/openai-core/pdfToImages.js</code>). Ce module extrait des
             <strong>OFFRES D'EMPLOI</strong> depuis des PDF, pas des CV.
           </p>
         </div>
@@ -71,7 +71,7 @@ flowchart TB
         </p>
 
         <ul>
-          <li>Utilise <code>pdf-parse</code> (pas <code>pdf-to-img</code> ni GPT-4o Vision)</li>
+          <li>Utilise <code>pdf-parse</code> (pas <code>pdf2pic</code> ni GPT-4o Vision)</li>
           <li>Extrait le texte brut du PDF</li>
           <li>Pas de conversion en images (contrairement a l'import CV)</li>
           <li>Meilleure gestion des polices custom (Type3) par rapport a <code>pdf2json</code></li>
@@ -439,7 +439,7 @@ export async function storeJobOffer(userId, sourceType, sourceValue, extraction,
             </tr>
             <tr>
               <td>Library</td>
-              <td><code>pdf-to-img</code> (images)</td>
+              <td><code>pdf2pic</code> (images)</td>
               <td><code>pdf-parse</code> (texte)</td>
             </tr>
             <tr>
@@ -459,7 +459,7 @@ export async function storeJobOffer(userId, sourceType, sourceValue, extraction,
             </tr>
             <tr>
               <td>Module</td>
-              <td><code>lib/pdf/</code></td>
+              <td><code>lib/features/import-pdf/</code> + <code>lib/openai-core/pdfToImages.js</code></td>
               <td><code>lib/job-offer/extraction/pdf.js</code></td>
             </tr>
           </tbody>

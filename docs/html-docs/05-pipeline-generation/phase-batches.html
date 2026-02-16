@@ -652,35 +652,9 @@ function roundHalfDown(value) {
           </div>
         </div>
 
-        <h3>convertExperienceToProject()</h3>
+        <h3>Conversion Experience &rarr; Projet</h3>
 
-        <p>Quand la Classification marque une exp&eacute;rience comme <code>MOVE_TO_PROJECTS</code> (exp&eacute;rience courte, freelance, stage court), la fonction <code>convertExperienceToProject()</code> la transforme au format projet :</p>
-
-        <pre><code class="language-javascript">export function convertExperienceToProject(experience, reason) {
-  if (!experience || typeof experience !== 'object') return null;
-
-  return {
-    name: experience.title || experience.company || 'Projet',
-    role: '',                             // L'IA le deduira
-    start_date: experience.start_date || '',
-    end_date: experience.end_date || '',
-    summary: experience.description || experience.responsibilities?.join('. ') || '',
-    tech_stack: experience.skills_used || [],
-    url: null,
-    _fromExperience: true,                // Marqueur pour l'IA
-    _classificationReason: reason,
-    _originalExperience: {                // Infos originales conservees
-      title: experience.title || '',
-      company: experience.company || '',
-      start_date: experience.start_date || '',
-      end_date: experience.end_date || '',
-      description: experience.description || '',
-      responsibilities: experience.responsibilities || [],
-      deliverables: experience.deliverables || [],
-      skills_used: experience.skills_used || [],
-    },
-  };
-}</code></pre>
+        <p>Quand la Classification marque une exp&eacute;rience comme <code>MOVE_TO_PROJECTS</code> (exp&eacute;rience courte, freelance, stage court), la conversion est effectu&eacute;e <strong>inline dans <code>applyClassification()</code></strong> (classify.js:327-358). Il n'existe pas de fonction <code>convertExperienceToProject()</code> export&eacute;e s&eacute;par&eacute;ment. La transformation pr&eacute;serve les m&eacute;tadonn&eacute;es d'origine via les champs <code>_fromExperience</code>, <code>_classificationReason</code> et <code>_originalExperience</code>.</p>
 
         <div class="callout callout-info">
           <div class="callout-title">Note sp&eacute;ciale dans le user prompt</div>

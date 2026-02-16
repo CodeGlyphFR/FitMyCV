@@ -69,7 +69,7 @@ flowchart TB
     Packs --> Products
     Checkout --> Balance
 
-    Stripe -->|"8 events"| Webhooks
+    Stripe -->|"9 events"| Webhooks
     Webhooks --> Log
     Webhooks --> App
           </div>
@@ -270,7 +270,7 @@ flowchart TD
             <tr>
               <td><code>/api/webhooks/stripe</code></td>
               <td>POST</td>
-              <td>Handler webhooks Stripe (8 events)</td>
+              <td>Handler webhooks Stripe (9 events)</td>
             </tr>
           </tbody>
         </table>
@@ -334,7 +334,7 @@ flowchart TD
           <li><a href="./business-models.html">Mod&egrave;les &eacute;conomiques</a> &mdash; Abonnement + Cr&eacute;dits vs Cr&eacute;dits uniquement</li>
           <li><a href="./plans-stripe.html">Plans Stripe</a> &mdash; Configuration, synchronisation, tier system</li>
           <li><a href="./checkout-flow.html">Checkout Flow</a> &mdash; Souscription, upgrade, downgrade, packs cr&eacute;dits</li>
-          <li><a href="./webhooks.html">Webhooks Stripe</a> &mdash; 8 events, handlers modulaires, idempotence</li>
+          <li><a href="./webhooks.html">Webhooks Stripe</a> &mdash; 9 events, handlers modulaires, idempotence</li>
         </ul>
       </div>
     </main>

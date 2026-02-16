@@ -113,12 +113,14 @@ flowchart TB
     end
 
     subgraph Domains["DOMAINES D'ERREURS"]
-        Common["CommonErrors<br/>notAuthenticated, notFound,<br/>serverError, forbidden,<br/>invalidPayload"]
+        Common["CommonErrors<br/>notAuthenticated, notFound,<br/>serverError, forbidden,<br/>invalidPayload, unknownError"]
         Auth["AuthErrors<br/>emailRequired, tokenExpired,<br/>passwordWeak, oauthOnly,<br/>registrationDisabled"]
         Cv["CvErrors<br/>notFound, invalidFilename,<br/>readError, improveError"]
         Sub["SubscriptionErrors<br/>limitReached, invalidPlan,<br/>checkoutError"]
         Bg["BackgroundErrors<br/>noSourceProvided, queueError"]
         Ext["ExtensionErrors<br/>invalidCredentials,<br/>sourceCvNotFound"]
+        Acct["AccountErrors<br/>updateFailed, passwordUpdateFailed,<br/>deleteFailed, unlinkFailed,<br/>emailChangeFailed"]
+        Other["OtherErrors<br/>feedbackFailed, exportPdfFailed,<br/>consentRequired"]
     end
 
     Factory --> Domains
@@ -173,20 +175,20 @@ export async function POST(request) {
 
   // 1. Vérifier si l'utilisateur peut utiliser la feature
   const {
-    allowed,
-    needsCredit,
+    canUse,
+    useCredit,
     reason,
     creditCost
   } = await canUseFeature(userId, featureName);
 
-  if (!allowed) {
+  if (!canUse) {
     return SubscriptionErrors.limitReached(featureName);
   }
 
   // 2. Débiter le crédit si nécessaire (AVANT l'action)
   let creditTransactionId = null;
-  if (needsCredit) {
-    const transaction = await debitCredit(userId, creditCost, featureName);
+  if (useCredit) {
+    const { success, transaction } = await debitCredit(userId, creditCost, 'usage', { featureName });
     creditTransactionId = transaction.id;
   }
 
@@ -195,7 +197,7 @@ export async function POST(request) {
     const result = await performAction();
 
     // 4. Incrémenter le compteur (mode abonnement)
-    if (!needsCredit) {
+    if (!useCredit) {
       await incrementFeatureCounter(userId, featureName);
     }
 
@@ -204,7 +206,7 @@ export async function POST(request) {
   } catch (error) {
     // 5. Rembourser en cas d'échec
     if (creditTransactionId) {
-      await refundCredit(userId, creditCost, featureName, 'Action failed');
+      await refundCredit(userId, creditTransactionId, 'Action failed');
     }
     throw error;
   }
@@ -271,23 +273,26 @@ enqueueJob(() => startGeneration(task.id));
         <h2>Pattern OpenAI Structured Output</h2>
 
         <pre><code class="language-javascript">// Appel OpenAI avec JSON Schema validé par ajv
-import { callOpenAI } from '@/lib/openai-core/client';
+import { getOpenAIClient, getCvModel } from '@/lib/openai-core/client';
 import { loadSchema } from '@/lib/openai-core/schemaLoader';
 import { loadPrompt } from '@/lib/openai-core/promptLoader';
 
 const schema = await loadSchema('cv-adaptation/batch-experience-output');
 const prompt = await loadPrompt('cv-adaptation/batch-experience');
+const model = await getCvModel();
 
-const result = await callOpenAI({
-  userId,
-  featureName: 'cv_generation',
-  messages: [
+// Obtenir le client OpenAI (singleton avec clé API)
+const client = getOpenAIClient();
+
+const response = await client.responses.create({
+  model,
+  input: [
     { role: 'system', content: prompt },
     { role: 'user', content: JSON.stringify(inputData) }
   ],
-  responseFormat: {
-    type: 'json_schema',
-    json_schema: {
+  text: {
+    format: {
+      type: 'json_schema',
       name: 'batch_experience_output',
       schema: schema,
       strict: true
@@ -295,8 +300,8 @@ const result = await callOpenAI({
   }
 });
 
-// result = JSON validé selon le schema
-// Tokens (prompt, cached, completion) et coûts loggés automatiquement</code></pre>
+// response.output_text = JSON validé selon le schema
+// Tokens et coûts loggés via lib/openai-core/tracking</code></pre>
 
         <h2>Pattern SSE Progress</h2>
 

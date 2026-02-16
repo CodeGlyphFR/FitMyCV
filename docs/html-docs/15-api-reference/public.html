@@ -54,7 +54,7 @@
           </tbody>
         </table>
 
-        <h2>Inscription &amp; Mot de Passe (5 endpoints)</h2>
+        <h2>Inscription &amp; Mot de Passe (4 endpoints)</h2>
         <table>
           <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
@@ -62,7 +62,6 @@
             <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/request-reset</code></td><td>Demander un lien de r&eacute;initialisation</td></tr>
             <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/verify-reset-token</code></td><td>V&eacute;rifier la validit&eacute; du token de reset</td></tr>
             <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/reset-password</code></td><td>R&eacute;initialiser le mot de passe avec token</td></tr>
-            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/resend-verification</code></td><td>Renvoyer l'email de v&eacute;rification</td></tr>
           </tbody>
         </table>
 
@@ -75,21 +74,11 @@
           </tbody>
         </table>
 
-        <h2>Tokens Extension (3 endpoints)</h2>
-        <table>
-          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
-          <tbody>
-            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/extension-token</code></td><td>Session</td><td>G&eacute;n&eacute;rer un JWT pour l'extension navigateur</td></tr>
-            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/extension-token/from-session</code></td><td>Session</td><td>G&eacute;n&eacute;rer JWT depuis session active</td></tr>
-            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/extension-token/refresh</code></td><td>JWT</td><td>Rafra&icirc;chir un JWT extension expir&eacute;</td></tr>
-          </tbody>
-        </table>
-
-        <h2>OAuth Account Linking (1 endpoint)</h2>
+        <h2>Token Extension (1 endpoint)</h2>
         <table>
           <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/callback/link/[provider]</code></td><td>Callback OAuth pour lier un compte externe (Google/GitHub)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/extension-token</code></td><td>G&eacute;n&eacute;rer un JWT pour l'extension navigateur</td></tr>
           </tbody>
         </table>
 
@@ -113,6 +102,15 @@
           <div class="callout-title">S&eacute;curit&eacute; Webhook</div>
           <p>Le webhook Stripe v&eacute;rifie la signature via <code>stripe.webhooks.constructEvent()</code> avec le secret <code>STRIPE_WEBHOOK_SECRET</code>. Les requ&ecirc;tes non sign&eacute;es sont rejet&eacute;es avec 400.</p>
         </div>
+
+        <h2>T&eacute;l&eacute;m&eacute;trie (2 endpoints)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/telemetry/average-task-duration</code></td><td>Dur&eacute;e moyenne des t&acirc;ches par type</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/telemetry/first-import-duration</code></td><td>Dur&eacute;e du premier import PDF</td></tr>
+          </tbody>
+        </table>
 
         <h2>Cron Jobs (1 endpoint)</h2>
         <table>

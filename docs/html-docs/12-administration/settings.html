@@ -82,8 +82,8 @@ GET /api/admin/settings?category=credits</code></pre>
     {
       "id": "clx...",
       "settingName": "subscription_mode_enabled",
-      "value": "true",
-      "category": "subscription",
+      "value": "0",
+      "category": "system",
       "description": "Active le mode abonnement (Stripe)"
     },
     {
@@ -102,9 +102,9 @@ GET /api/admin/settings?category=credits</code></pre>
 
         <pre><code class="language-json">// Body
 {
-  "settingName": "maintenance_mode",
-  "value": "false",
-  "category": "app",
+  "settingName": "maintenance_enabled",
+  "value": "0",
+  "category": "system",
   "description": "Active le mode maintenance (bloque les utilisateurs non-admin)"
 }</code></pre>
 
@@ -180,50 +180,53 @@ GET /api/admin/settings/history?limit=50</code></pre>
           <thead>
             <tr>
               <th>Cat&eacute;gorie</th>
+              <th>Nb</th>
               <th>Description</th>
               <th>Exemples de cl&eacute;s</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>app</code></td>
-              <td>Param&egrave;tres g&eacute;n&eacute;raux de l'application</td>
-              <td><code>maintenance_mode</code>, <code>default_language</code>, <code>app_name</code></td>
-            </tr>
-            <tr>
-              <td><code>subscription</code></td>
-              <td>Configuration du mode d'abonnement</td>
-              <td><code>subscription_mode_enabled</code>, <code>trial_days</code></td>
+              <td><code>ai_models</code></td>
+              <td>24</td>
+              <td>Mod&egrave;les IA par feature (vide le cache &agrave; la MAJ)</td>
+              <td><code>model_cv_generation</code>, <code>model_cv_batch_education</code>, <code>model_extract_job_offer</code>, <code>model_optimize_cv</code>, <code>model_match_score</code>, <code>model_translate_cv</code>, <code>model_improve_experience</code>, <code>model_generate_from_job_title</code></td>
             </tr>
             <tr>
               <td><code>credits</code></td>
+              <td>10</td>
               <td>Co&ucirc;ts en cr&eacute;dits par feature</td>
-              <td><code>credits_gpt_cv_generation</code>, <code>credits_import_pdf</code>, <code>credits_export_cv</code></td>
+              <td><code>credits_gpt_cv_generation</code>, <code>credits_import_pdf</code>, <code>credits_export_cv</code>, <code>credits_optimize_cv</code>, <code>credits_translate_cv</code>, <code>credits_match_score</code>, <code>credits_create_cv_manual</code>, <code>credits_edit_cv</code>, <code>credits_generate_from_job_title</code>, <code>welcome_credits</code></td>
+            </tr>
+            <tr>
+              <td><code>cv_display</code></td>
+              <td>1</td>
+              <td>Param&egrave;tres d'affichage des CV</td>
+              <td><code>cv_section_order</code></td>
+            </tr>
+            <tr>
+              <td><code>features</code></td>
+              <td>12</td>
+              <td>Feature flags ON/OFF pour activer/d&eacute;sactiver des fonctionnalit&eacute;s</td>
+              <td><code>feature_ai_generation</code>, <code>feature_edit_mode</code>, <code>feature_export</code>, <code>feature_feedback</code>, <code>feature_history</code>, <code>feature_import</code>, <code>feature_language_switcher</code>, <code>feature_manual_cv</code>, <code>feature_match_score</code>, <code>feature_optimize</code>, <code>feature_search_bar</code>, <code>feature_translate</code></td>
             </tr>
             <tr>
               <td><code>openai</code></td>
-              <td>Configuration de l'API OpenAI</td>
-              <td><code>openai_monthly_budget</code>, <code>openai_default_model</code></td>
-            </tr>
-            <tr>
-              <td><code>cv</code></td>
-              <td>Param&egrave;tres li&eacute;s aux CV</td>
-              <td><code>cv_max_versions</code>, <code>cv_default_template</code></td>
-            </tr>
-            <tr>
-              <td><code>ai_models</code></td>
-              <td>Mod&egrave;les IA par feature (vide le cache &agrave; la MAJ)</td>
-              <td><code>ai_model_generation</code>, <code>ai_model_optimization</code>, <code>ai_model_scoring</code></td>
+              <td>1</td>
+              <td>Configuration du mode prioritaire OpenAI</td>
+              <td><code>openai_priority_mode</code></td>
             </tr>
             <tr>
               <td><code>pdf_import</code></td>
+              <td>7</td>
               <td>Param&egrave;tres d'import PDF (vide le cache &agrave; la MAJ)</td>
-              <td><code>pdf_max_pages</code>, <code>pdf_ocr_enabled</code>, <code>pdf_extraction_model</code></td>
+              <td><code>pdf_image_density</code>, <code>pdf_image_max_width</code>, <code>pdf_image_quality</code>, <code>pdf_vision_detail</code>, <code>seed_import_pdf</code>, <code>temperature_import_pdf</code>, <code>top_p_import_pdf</code></td>
             </tr>
             <tr>
-              <td><code>export</code></td>
-              <td>Param&egrave;tres d'export de CV</td>
-              <td><code>export_default_format</code>, <code>export_watermark</code></td>
+              <td><code>system</code></td>
+              <td>4</td>
+              <td>Param&egrave;tres syst&egrave;me globaux</td>
+              <td><code>cv_max_versions</code>, <code>maintenance_enabled</code>, <code>registration_enabled</code>, <code>subscription_mode_enabled</code></td>
             </tr>
           </tbody>
         </table>
@@ -232,7 +235,7 @@ GET /api/admin/settings/history?limit=50</code></pre>
           <div class="callout-title">Typage des valeurs</div>
           <p>Toutes les valeurs sont stock&eacute;es en <code>String</code> dans la base de donn&eacute;es. Le parsing est effectu&eacute; c&ocirc;t&eacute; code selon le contexte :</p>
           <ul>
-            <li><strong>Bool&eacute;ens</strong> : <code>"true"</code> / <code>"false"</code></li>
+            <li><strong>Bool&eacute;ens</strong> : <code>"1"</code> / <code>"0"</code> (format principal en DB). Le code accepte aussi <code>"true"</code> / <code>"false"</code> via <code>settingsUtils.js</code> (<code>value === '1' || value === 'true'</code>)</li>
             <li><strong>Nombres</strong> : <code>"2"</code>, <code>"0.5"</code></li>
             <li><strong>JSON</strong> : <code>"{\"key\": \"value\"}"</code></li>
             <li><strong>Texte</strong> : valeur brute</li>

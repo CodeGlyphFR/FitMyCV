@@ -68,7 +68,7 @@ flowchart TB
     subgraph S4["Stage 4 — runner"]
         direction TB
         D1["node:20-alpine"]
-        D2["apk: chromium, fonts, graphicsmagick, ghostscript"]
+        D2["apk: chromium, fonts, graphicsmagick, ghostscript, libc6-compat"]
         D3["Copie production node_modules"]
         D4["Copie .next/standalone + static + public"]
         D5["Copie prisma/ + scripts/"]
@@ -170,6 +170,10 @@ RUN npm ci --omit=dev</code></pre>
               <td><code>openssl</code></td>
               <td>Requis par Prisma pour les connexions SSL à PostgreSQL</td>
             </tr>
+            <tr>
+              <td><code>libc6-compat</code></td>
+              <td>Compatibilité glibc requise par certains binaires natifs Node.js sur Alpine</td>
+            </tr>
           </tbody>
         </table>
 
@@ -262,7 +266,7 @@ flowchart LR
         Build["Docker build production"]
         Deploy["Deploy + health check"]
         Migrate["Prisma + data migrations"]
-        Sync["Sync branches dev/release"]
+        Sync["Sync branches release + dev"]
         Version --> Build --> Deploy --> Migrate
         Version --> Sync
     end
@@ -342,7 +346,7 @@ flowchart TB
     A["Push sur main"] --> B["Checkout (fetch-depth: 0)"]
     B --> C["Versioning automatique"]
     C --> D["git tag vX.X.X.X + push"]
-    D --> E["Sync branche dev"]
+    D --> E["Sync branches release + dev"]
     E --> F["Extract Public Config"]
     F --> G["Docker Build"]
     G --> H["docker compose up -d"]
@@ -368,7 +372,7 @@ git push origin main --tags</code></pre>
         </div>
 
         <h4>2. Synchronisation des branches</h4>
-        <p>Après le versioning, la branche <code>dev</code> est automatiquement synchronisée avec <code>main</code> pour que toutes les branches de travail héritent de la nouvelle version.</p>
+        <p>Après le versioning, les branches <code>release</code> et <code>dev</code> sont automatiquement synchronisées avec <code>main</code> pour que toutes les branches de travail héritent de la nouvelle version.</p>
 
         <h4>3. Build &amp; Deploy</h4>
         <p>Les variables publiques sont extraites depuis le fichier <code>.env</code> du serveur de production et injectées comme <code>--build-arg</code> Docker :</p>
@@ -712,7 +716,7 @@ flowchart TB
     Health -->|"✅"| Migrations["Prisma + data migrations"]
     Health -->|"❌"| Fail["Logs + échec pipeline"]
     Migrations --> Live["🚀 En production"]
-    Version --> SyncDev["Sync branche dev"]
+    Version --> SyncDev["Sync branches release + dev"]
           </div>
         </div>
 

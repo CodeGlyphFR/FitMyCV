@@ -43,7 +43,7 @@ flowchart LR
     Build["Construction Document docx"]
     Pack["Packer.toBuffer()"]
     Response["Response (application/vnd.openxmlformats)"]
-    Refund["refundFeatureUsage()"]
+    Refund["refundCredit()"]
 
     Request --> Auth --> Credits --> Build --> Pack --> Response
     Pack -->|Erreur| Refund
@@ -98,8 +98,9 @@ export async function POST(request) {
     });
   } catch (error) {
     // 6. Remboursement en cas d'erreur
-    if (featureResult?.usageId) {
-      await refundFeatureUsage(featureResult.usageId);
+    if (featureResult?.usedCredit &amp;&amp; featureResult?.transactionId) {
+      await refundCredit(session.user.id, featureResult.transactionId,
+        `Échec export Word: ${error.message}`);
     }
     throw error;
   }
@@ -160,7 +161,7 @@ export async function POST(request) {
 
         <ul>
           <li>Les crédits sont débités <strong>avant</strong> la génération</li>
-          <li>En cas d'erreur, <code>refundFeatureUsage(usageId)</code> rembourse automatiquement</li>
+          <li>En cas d'erreur, <code>refundCredit(userId, transactionId, message)</code> rembourse automatiquement</li>
           <li>L'erreur est loguée et une réponse 500 est retournée au client</li>
         </ul>
 
@@ -187,7 +188,8 @@ export async function POST(request) {
     let filename = requestData.filename;
     const language = requestData.language || 'fr';
     const selections = requestData.selections || null;
-    const sectionsOrder = requestData.sectionsOrder || DEFAULT_SECTION_ORDER;
+    const sectionsOrder = requestData.sectionsOrder
+      || ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'];
 
     // Débit du crédit (feature: export_cv)
     const usageResult = await incrementFeatureCounter(userId, 'export_cv');

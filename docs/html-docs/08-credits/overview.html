@@ -168,6 +168,12 @@ flowchart TB
               <td><code>refundCredit(userId, originalTransactionId)</code></td>
             </tr>
             <tr>
+              <td><code>cv_creation</code></td>
+              <td>Cr&eacute;ation de CV (tra&ccedil;abilit&eacute;)</td>
+              <td>- (selon co&ucirc;t feature)</td>
+              <td><code>debitCredit(userId, amount, 'cv_creation', {featureName})</code></td>
+            </tr>
+            <tr>
               <td><code>chargeback</code></td>
               <td>Contestation paiement</td>
               <td>- (n&eacute;gatif possible)</td>
@@ -235,7 +241,7 @@ flowchart TB
             <tr>
               <td>G&eacute;n&eacute;ration depuis titre</td>
               <td><strong>3</strong></td>
-              <td><code>credits_generate_cv_from_job_title</code></td>
+              <td><code>credits_generate_from_job_title</code></td>
               <td>Oui</td>
             </tr>
             <tr>

@@ -196,10 +196,17 @@ flowchart TD
                 <code>id</code> (cuid), <code>userId</code>, <code>filename</code>, <code>content</code> (Json),
                 <code>contentVersion</code> (Int), <code>sourceType</code>, <code>sourceValue</code>,
                 <code>jobOfferId</code>, <code>jobOfferSnapshot</code> (Json),
-                <code>createdBy</code>, <code>isTranslated</code>, <code>language</code>,
+                <code>createdBy</code>, <code>originalCreatedBy</code> (String?),
+                <code>isTranslated</code>, <code>language</code>,
                 <code>matchScore</code>, <code>scoreBefore</code>, <code>scoreBreakdown</code>,
-                <code>matchScoreStatus</code>, <code>optimiseStatus</code>,
-                <code>blocked</code>, <code>pendingChanges</code> (Json),
+                <code>matchScoreStatus</code>, <code>matchScoreUpdatedAt</code> (DateTime?),
+                <code>improvementSuggestions</code> (String?), <code>missingSkills</code> (String?),
+                <code>matchingSkills</code> (String?),
+                <code>optimiseStatus</code>, <code>optimiseUpdatedAt</code> (DateTime?),
+                <code>blocked</code>, <code>blockedAt</code> (DateTime?), <code>blockedReason</code> (String?),
+                <code>pendingChanges</code> (Json), <code>pendingSourceVersion</code> (Int?),
+                <code>createdWithCredit</code> (Boolean), <code>creditUsedAt</code> (DateTime?),
+                <code>creditTransactionId</code> (String? @unique),
                 <code>createdAt</code>, <code>updatedAt</code>
               </td>
             </tr>

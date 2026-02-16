@@ -60,7 +60,7 @@ flowchart TB
 
     subgraph Credits["CRÉDITS"]
         Debit["incrementFeatureCounter()"]
-        Refund["refundFeatureUsage()"]
+        Refund["refundCredit()"]
     end
 
     Client --> ExportBtn
@@ -109,16 +109,22 @@ flowchart TB
           </thead>
           <tbody>
             <tr>
-              <td>1</td>
+              <td>&mdash;</td>
               <td>En-tête (nom, titre, contact)</td>
               <td><code>header</code></td>
-              <td>Toujours présent</td>
+              <td>Toujours rendu séparément par <code>generateHeaderSection()</code></td>
             </tr>
             <tr>
-              <td>2</td>
+              <td>1</td>
               <td>Résumé professionnel</td>
               <td><code>summary</code></td>
               <td><code>isSectionEnabled()</code></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Compétences</td>
+              <td><code>skills</code></td>
+              <td><code>filterItems()</code></td>
             </tr>
             <tr>
               <td>3</td>
@@ -134,20 +140,20 @@ flowchart TB
             </tr>
             <tr>
               <td>5</td>
+              <td>Langues</td>
+              <td><code>languages</code></td>
+              <td><code>filterItems()</code></td>
+            </tr>
+            <tr>
+              <td>6</td>
               <td>Projets</td>
               <td><code>projects</code></td>
               <td><code>filterItems()</code></td>
             </tr>
             <tr>
-              <td>6</td>
-              <td>Compétences</td>
-              <td><code>skills</code></td>
-              <td><code>filterItems()</code></td>
-            </tr>
-            <tr>
               <td>7</td>
-              <td>Langues</td>
-              <td><code>languages</code></td>
+              <td>Extras</td>
+              <td><code>extras</code></td>
               <td><code>filterItems()</code></td>
             </tr>
           </tbody>
@@ -200,8 +206,8 @@ flowchart TB
         <p>Les deux endpoints d'export (PDF et DOCX) suivent le même pattern de gestion des crédits :</p>
 
         <pre><code class="language-javascript">// 1. Débit avant l'export
-const featureResult = await incrementFeatureCounter(userId, featureName);
-const { usageId } = featureResult;
+const usageResult = await incrementFeatureCounter(userId, featureName);
+const { transactionId, usedCredit } = usageResult;
 
 try {
   // 2. Génération du fichier (PDF ou DOCX)
@@ -209,19 +215,19 @@ try {
   return new Response(buffer, { headers: { ... } });
 } catch (error) {
   // 3. Remboursement automatique en cas d'erreur
-  if (usageId) {
-    await refundFeatureUsage(usageId);
+  if (usedCredit &amp;&amp; transactionId) {
+    await refundCredit(userId, transactionId, `Échec export: ${error.message}`);
   }
   throw error;
 }</code></pre>
 
         <div class="callout callout-info">
-          <strong>Remboursement automatique</strong> — Si l'export échoue après le débit des crédits, la fonction <code>refundFeatureUsage(usageId)</code> rembourse automatiquement le crédit consommé.
+          <strong>Remboursement automatique</strong> — Si l'export échoue après le débit des crédits, la fonction <code>refundCredit(userId, transactionId, message)</code> rembourse automatiquement le crédit consommé.
         </div>
 
         <h2>Traductions des libellés</h2>
 
-        <p>Le module <code>cvTranslations.js</code> supporte 4 langues pour les libellés du CV exporté :</p>
+        <p>Le module <code>lib/pdf/cvTranslations.js</code> supporte 4 langues pour les libellés du CV exporté en PDF. L'export DOCX dispose de son propre fichier de traductions : <code>app/api/export-word/translations.js</code>.</p>
 
         <table>
           <thead>
@@ -302,6 +308,10 @@ try {
               <td>Endpoint export DOCX (bibliothèque docx)</td>
             </tr>
             <tr>
+              <td><code>app/api/export-word/translations.js</code></td>
+              <td>Traductions des libellés spécifiques à l'export DOCX</td>
+            </tr>
+            <tr>
               <td><code>app/api/export-templates/route.js</code></td>
               <td>CRUD des templates de sélection</td>
             </tr>
@@ -328,13 +338,13 @@ export { generateHeaderSection, createSectionGenerators,
         <pre><code class="language-javascript">// lib/pdf/cvUtils.js (extraits clés)
 
 export const DEFAULT_SECTION_ORDER = [
-  'summary', 'experience', 'education', 'projects',
-  'skills', 'languages', 'extras'
+  'summary', 'skills', 'experience', 'education',
+  'languages', 'projects', 'extras'
 ];
 
 export function prepareCvData(cvData, selections) {
   const header = cvData.header || {};
-  const contact = cvData.contact || {};
+  const contact = header.contact || {};
   const summary = cvData.summary || {};
   const section_titles = cvData.section_titles || {};
 
@@ -348,9 +358,10 @@ export function prepareCvData(cvData, selections) {
   let projects = filterItems(cvData.projects || [], selections, 'projects');
   let skills = cvData.skills || {};
   let languages = filterItems(cvData.languages || [], selections, 'languages');
+  let extras = filterItems(cvData.extras || [], selections, 'extras');
 
   return { header, contact, summary, experience, education,
-           projects, skills, languages, section_titles };
+           projects, skills, languages, extras, section_titles };
 }</code></pre>
 
         <h3>Assemblage HTML final (export-pdf)</h3>

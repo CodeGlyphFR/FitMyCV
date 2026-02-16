@@ -37,6 +37,20 @@
         </div>
 
         <!-- ============================================= -->
+        <!-- AUTH (d&eacute;plac&eacute;s depuis Public) -->
+        <!-- ============================================= -->
+        <h2>Auth Session (3 endpoints)</h2>
+        <p>Endpoints d'authentification n&eacute;cessitant une session active via <code>auth()</code>.</p>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/resend-verification</code></td><td>Renvoyer l'email de v&eacute;rification (requiert session active)</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/extension-token/from-session</code></td><td>G&eacute;n&eacute;rer un JWT extension depuis la session active</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/callback/link/[provider]</code></td><td>Callback OAuth pour liaison de compte (Google/GitHub)</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
         <!-- ACCOUNT -->
         <!-- ============================================= -->
         <h2>Account (6 endpoints)</h2>
@@ -324,16 +338,19 @@
         <!-- ============================================= -->
         <!-- TELEMETRY -->
         <!-- ============================================= -->
-        <h2>T&eacute;l&eacute;m&eacute;trie (3 endpoints)</h2>
+        <h2>T&eacute;l&eacute;m&eacute;trie (1 endpoint)</h2>
 
         <table>
           <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
             <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/telemetry/track</code></td><td>Envoyer un &eacute;v&eacute;nement de t&eacute;l&eacute;m&eacute;trie</td></tr>
-            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/telemetry/average-task-duration</code></td><td>Dur&eacute;e moyenne des t&acirc;ches par type</td></tr>
-            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/telemetry/first-import-duration</code></td><td>Dur&eacute;e du premier import PDF</td></tr>
           </tbody>
         </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Endpoints t&eacute;l&eacute;m&eacute;trie publics</div>
+          <p>Les endpoints <code>GET /api/telemetry/average-task-duration</code> et <code>GET /api/telemetry/first-import-duration</code> ne requièrent pas d'authentification et sont document&eacute;s dans la section <a href="./public.html">Endpoints Publics</a>.</p>
+        </div>
 
         <!-- ============================================= -->
         <!-- ONBOARDING -->

@@ -179,9 +179,54 @@ flowchart TB
               <td>Délai entre la validation d'une étape et l'affichage de la suivante</td>
             </tr>
             <tr>
+              <td><code>STEPS_WITHOUT_TIMER</code></td>
+              <td><code>['ai_generation', 'task_manager']</code></td>
+              <td>Steps qui s'enchaînent immédiatement (pas de délai de transition)</td>
+            </tr>
+            <tr>
               <td><code>WELCOME_MORPH_DURATION</code></td>
               <td>700 ms</td>
-              <td>Animation de morphing du modal de bienvenue</td>
+              <td>Animation de morphing du modal de bienvenue vers la checklist</td>
+            </tr>
+            <tr>
+              <td><code>MODAL_CLOSE_ANIMATION_DURATION</code></td>
+              <td>300 ms</td>
+              <td>Durée de fermeture des modals</td>
+            </tr>
+            <tr>
+              <td><code>STEP_VALIDATION_DELAY</code></td>
+              <td>500 ms</td>
+              <td>Délai avant validation automatique d'un step</td>
+            </tr>
+            <tr>
+              <td><code>STEP_CELEBRATION_DURATION</code></td>
+              <td>1500 ms</td>
+              <td>Durée de la célébration (confetti + son) entre les étapes</td>
+            </tr>
+            <tr>
+              <td><code>BUTTON_POLLING_INTERVAL</code></td>
+              <td>200 ms</td>
+              <td>Intervalle de recherche des boutons dans le DOM</td>
+            </tr>
+            <tr>
+              <td><code>BUTTON_POLLING_TIMEOUT</code></td>
+              <td>10000 ms</td>
+              <td>Timeout max avant abandon de la recherche de boutons</td>
+            </tr>
+            <tr>
+              <td><code>ELEMENT_POSITION_RETRY_INTERVAL</code></td>
+              <td>100 ms</td>
+              <td>Intervalle entre tentatives de recherche d'élément (useElementPosition)</td>
+            </tr>
+            <tr>
+              <td><code>ELEMENT_POSITION_MAX_RETRIES</code></td>
+              <td>50</td>
+              <td>Max tentatives de recherche d'élément (5s total)</td>
+            </tr>
+            <tr>
+              <td><code>LOADING_TO_ONBOARDING_DELAY</code></td>
+              <td>1000 ms</td>
+              <td>Délai entre fermeture du loading screen et affichage du welcome modal</td>
             </tr>
             <tr>
               <td><code>CACHE_TTL</code></td>
@@ -198,21 +243,28 @@ flowchart TB
 
         <h3>Définition des étapes</h3>
 
-        <p>Les 9 étapes sont définies dans <code>onboardingConstants.js</code> :</p>
+        <p>Les 9 étapes principales (id 1-9) sont définies dans <code>onboardingConstants.js</code>, plus une étape Welcome (id 0) :</p>
 
         <pre><code class="language-javascript">export const ONBOARDING_STEPS_COUNT = 9;
 
+// Étape Welcome (étape 0, admin uniquement)
+export const WELCOME_STEP = { id: 0, key: 'welcome', emoji: '👋' };
+
+// Étapes principales (1-9)
 export const STEP_DEFINITIONS = [
-  { id: 0, key: 'edit_mode', emoji: '✏️' },
-  { id: 1, key: 'ai_generation', emoji: '✨' },
-  { id: 2, key: 'task_manager', emoji: '📋' },
-  { id: 3, key: 'open_generated_cv', emoji: '📄' },
-  { id: 4, key: 'ai_review', emoji: '🔍' },
-  { id: 5, key: 'match_score', emoji: '🎯' },
-  { id: 6, key: 'optimization', emoji: '🚀' },
-  { id: 7, key: 'history', emoji: '🔄' },
-  { id: 8, key: 'export', emoji: '📥' },
-];</code></pre>
+  { id: 1, key: 'edit_mode', emoji: '✏️' },
+  { id: 2, key: 'ai_generation', emoji: '✨' },
+  { id: 3, key: 'task_manager', emoji: '📋' },
+  { id: 4, key: 'open_generated_cv', emoji: '📄' },
+  { id: 5, key: 'ai_review', emoji: '🔍' },
+  { id: 6, key: 'match_score', emoji: '🎯' },
+  { id: 7, key: 'optimization', emoji: '🚀' },
+  { id: 8, key: 'history', emoji: '🔄' },
+  { id: 9, key: 'export', emoji: '📥' },
+];
+
+// Définitions incluant Welcome (pour admin)
+export const ADMIN_STEP_DEFINITIONS = [WELCOME_STEP, ...STEP_DEFINITIONS];</code></pre>
 
         <h2>État de l'onboarding</h2>
 
@@ -225,18 +277,25 @@ export const STEP_DEFINITIONS = [
   hasCompleted: false,
   isSkipped: false,
   modals: {
-    welcome: false,
-    step1: false,    // edit_mode
-    step2: false,    // ai_generation
-    step5: false,    // ai_review
-    step7: false,    // optimization
-    step8: false,    // history
-    step9: false,    // export
-    completion: false,
+    welcome: { completed: false },
+    step1: { completed: false },    // edit_mode
+    step2: { completed: false },    // ai_generation
+    step5: { completed: false },    // ai_review
+    step7: { completed: false },    // optimization
+    step8: { completed: false },    // history
+    step9: { completed: false },    // export
+    completion: { completed: false },
   },
   tooltips: {
-    1: false, 2: false, 3: false, 4: false, 5: false,
-    6: false, 7: false, 8: false, 9: false,
+    "1": { closedManually: false },
+    "2": { closedManually: false },
+    "3": { closedManually: false },
+    "4": { closedManually: false },
+    "5": { closedManually: false },
+    "6": { closedManually: false },
+    "7": { closedManually: false },
+    "8": { closedManually: false },
+    "9": { closedManually: false },
   },
   timestamps: {
     startedAt: null,
@@ -347,6 +406,10 @@ dbEmitter.emit('onboarding:updated', {
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td><code>welcome</code> (étape 0)</td>
+              <td><code>welcome</code></td>
+            </tr>
             <tr>
               <td><code>edit_mode</code> (étape 1)</td>
               <td><code>step1</code></td>

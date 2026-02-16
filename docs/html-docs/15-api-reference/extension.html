@@ -36,6 +36,14 @@
           <p>Tous les endpoints <code>/api/ext/*</code> n&eacute;cessitent un header <code>Authorization: Bearer {jwt}</code>. Le JWT est obtenu via <code>/api/auth/extension-token</code> et v&eacute;rifi&eacute; par le middleware <code>withExtensionAuth</code> (<code>lib/api/withExtensionAuth.js</code>).</p>
         </div>
 
+        <h2>Authentification Extension (1 endpoint)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/extension-token/refresh</code></td><td>Renouveler un JWT extension existant (Bearer JWT requis)</td></tr>
+          </tbody>
+        </table>
+
         <h2>G&eacute;n&eacute;ration CV (1 endpoint)</h2>
         <table>
           <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>

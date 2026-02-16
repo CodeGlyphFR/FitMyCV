@@ -45,7 +45,7 @@ flowchart LR
     Puppeteer["Puppeteer setContent()"]
     PDF["page.pdf() → Buffer"]
     Response["Response (application/pdf)"]
-    Refund["refundFeatureUsage()"]
+    Refund["refundCredit()"]
 
     Request --> Auth --> Credits --> Prepare --> HTML --> Puppeteer --> PDF --> Response
     PDF -->|Erreur| Refund
@@ -96,7 +96,7 @@ flowchart LR
         <p>Le HTML envoyé à Puppeteer est construit par le pipeline partagé <code>lib/pdf/</code> :</p>
 
         <pre><code class="language-javascript">// 1. Préparer les données du CV
-const cvData = prepareCvData(cv, selections, sectionOrder);
+const cvData = prepareCvData(cv, selections);
 
 // 2. Créer le traducteur pour la langue du CV
 const translator = createTranslator(cv.meta?.language || 'fr');
@@ -104,8 +104,9 @@ const translator = createTranslator(cv.meta?.language || 'fr');
 // 3. Générer les styles (export = avec page-break)
 const styles = getBaseStyles() + getExportStyles();
 
-// 4. Générer le HTML des sections
-const sectionsHtml = generateSectionsHtml(cvData, translator, selections);
+// 4. Créer les générateurs et générer le HTML des sections
+const sectionGenerators = createSectionGenerators(cvData, language, selections, { isExport: true });
+const sectionsHtml = generateSectionsHtml(sectionGenerators, sectionOrder);
 
 // 5. Assembler le document complet
 const html = `&lt;html&gt;&lt;head&gt;&lt;style&gt;${styles}&lt;/style&gt;&lt;/head&gt;
@@ -191,7 +192,7 @@ const browser = await puppeteer.launch({
 });</code></pre>
 
         <div class="callout callout-warning">
-          <strong>PUPPETEER_EXECUTABLE_PATH</strong> — En production Docker, cette variable d'environnement pointe vers le Chromium installé dans l'image (<code>/usr/bin/chromium</code>). En développement local, Puppeteer utilise son Chromium intégré.
+          <strong>PUPPETEER_EXECUTABLE_PATH</strong> — En production Docker, cette variable d'environnement pointe vers le Chromium installé dans l'image (<code>/usr/bin/chromium-browser</code>). En développement local, Puppeteer utilise son Chromium intégré.
         </div>
 
         <h2>Styles CSS d'export (getExportStyles)</h2>

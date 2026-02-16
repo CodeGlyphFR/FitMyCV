@@ -161,7 +161,7 @@ export const authOptions = {
             <h4>Google OAuth</h4>
             <ul>
               <li>OAuth 2.0 (prompt: select_account)</li>
-              <li>Scope : email, profile</li>
+              <li>Scope : openid, email, profile</li>
               <li>Email auto-vérifié à la création</li>
               <li>Conditionnel (<code>GOOGLE_CLIENT_ID</code>)</li>
             </ul>
@@ -307,7 +307,7 @@ flowchart LR
             <tr>
               <td><code>/api/auth/extension-token</code></td>
               <td>POST</td>
-              <td>Login par email/password, retourne JWT extension</td>
+              <td>Login par email/password, retourne JWT extension (vérifie <code>emailVerified</code> + mode maintenance)</td>
             </tr>
             <tr>
               <td><code>/api/auth/extension-token/from-session</code></td>
@@ -317,7 +317,7 @@ flowchart LR
             <tr>
               <td><code>/api/auth/extension-token/refresh</code></td>
               <td>POST</td>
-              <td>Renouvelle un JWT extension encore valide</td>
+              <td>Renouvelle un JWT extension encore valide (vérifie mode maintenance)</td>
             </tr>
           </tbody>
         </table>
@@ -406,7 +406,7 @@ flowchart LR
             <li><strong>JWT</strong> : signés avec <code>NEXTAUTH_SECRET</code>, durée 7 jours</li>
             <li><strong>Cookies</strong> : <code>httpOnly</code>, <code>sameSite: lax</code>, <code>secure</code> en production (prefixe <code>__Secure-</code> / <code>__Host-</code>)</li>
             <li><strong>CSRF</strong> : protection automatique NextAuth + state token pour OAuth linking</li>
-            <li><strong>reCAPTCHA v3</strong> : sur register, login, resend-verification, link-oauth (score &ge; 0.5)</li>
+            <li><strong>reCAPTCHA v3</strong> : sur register, login, resend-verification, request-reset, link-oauth (score &ge; 0.5)</li>
             <li><strong>Password Policy</strong> : min 8 chars, majuscule, minuscule, chiffre, caractère spécial, max 128 chars, blacklist mots courants</li>
             <li><strong>XSS</strong> : sanitization via <code>stripHtml()</code>, <code>sanitizeEmail()</code></li>
             <li><strong>Rate limiting</strong> : 1 resend verification/min, 60s cooldown changement email</li>

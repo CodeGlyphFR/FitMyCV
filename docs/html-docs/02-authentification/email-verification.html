@@ -60,17 +60,18 @@ sequenceDiagram
     A->>F: { ok: true }
     F->>U: Redirection /auth/verify-email-required
 
-    Note over U,E: Étape 2 - Vérification
+    Note over U,E: Étape 2 - Vérification (Server Component)
     U->>E: Ouvre email, clic lien
     E->>F: /auth/verify-email?token=xxx
-    F->>A: GET /api/auth/verify-email?token=xxx
-    A->>DB: verifyToken(token) - valider et non expiré
-    A->>DB: UPDATE User SET emailVerified = NOW()
-    A->>DB: DELETE EmailVerificationToken
-    A->>F: { success: true, user: { id, email, name } }
+    F->>DB: verifyToken(token) - valider et non expiré
+    F->>DB: markEmailAsVerified(userId)
+    F->>DB: deleteVerificationToken(token)
+    F->>F: dbEmitter.emitEmailVerified(userId)
+    F->>E: sendWelcomeEmail(user)
+    F->>DB: createAutoSignInToken(userId)
+    F->>U: Redirect /auth/complete-signin?token=autoSignInToken
 
     Note over U,E: Étape 3 - Connexion automatique
-    F->>F: Redirection vers /auth/complete-signin?token=autoSignInToken
     F->>A: signIn('credentials', { autoSignInToken })
     A->>DB: verifyAutoSignInToken()
     A->>DB: DELETE AutoSignInToken (usage unique)
@@ -78,6 +79,17 @@ sequenceDiagram
     A->>F: Session créée
     F->>U: Redirection vers /
           </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Server Component et effets post-vérification</div>
+          <p>La vérification est effectuée par le <strong>Server Component</strong> <code>app/auth/verify-email/page.jsx</code>
+          (pas par l'API route). Après vérification réussie :</p>
+          <ul>
+            <li><strong>Événement SSE</strong> : <code>dbEmitter.emitEmailVerified(userId, { verified: true })</code> est émis pour notifier les autres onglets/devices en temps réel</li>
+            <li><strong>Email de bienvenue</strong> : <code>sendWelcomeEmail()</code> envoie un email de bienvenue au nouvel utilisateur</li>
+            <li><strong>Auto Sign-In</strong> : un <code>autoSignInToken</code> est créé et l'utilisateur est redirigé vers <code>/auth/complete-signin</code></li>
+          </ul>
         </div>
 
         <h2>Token de Vérification Email</h2>
@@ -404,7 +416,7 @@ events: {
             </tr>
             <tr>
               <td><code>EmailChangeRequest</code></td>
-              <td>userId, newEmail, token, createdAt</td>
+              <td>userId, newEmail, token, expires (24h), createdAt</td>
               <td>Demande de changement d'adresse email</td>
             </tr>
             <tr>
