@@ -95,10 +95,13 @@ export function useMatchScore({ currentVersion }) {
         setHasJobOffer(data.hasJobOffer || false);
         setHasScoreBreakdown(data.hasScoreBreakdown || false);
 
-        // Force un re-render en utilisant un timeout (workaround iOS)
-        setTimeout(() => {
-          setIsLoadingMatchScore(false);
-        }, 0);
+        // Ne pas arrêter le loading si le calcul est encore en cours
+        // (le SSE cv:updated du beforeRun arrive avant la fin du calcul)
+        if (finalStatus !== 'inprogress') {
+          setTimeout(() => {
+            setIsLoadingMatchScore(false);
+          }, 0);
+        }
       } else {
         setIsLoadingMatchScore(false);
       }

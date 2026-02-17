@@ -71,6 +71,8 @@ _*/
 # Git worktrees managed by worktree-manager
 .worktrees/
 
-# Extension browser (builds et dépendances)
+# Extension browser (builds, dépendances et artéfacts de publication)
 extension/dist/
 extension/node_modules/
+extension/*.zip
+extension/store-description.txt

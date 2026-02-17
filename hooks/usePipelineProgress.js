@@ -101,6 +101,12 @@ export function usePipelineProgress() {
   // Mise à jour de la progression pour une offre spécifique
   const updateOfferProgress = useCallback((taskId, offerId, offerIndex, update) => {
     setProgressMap(prev => {
+      const isNewTask = !prev[taskId];
+      if (isNewTask && typeof window !== 'undefined') {
+        // Nouvelle tâche détectée via SSE (vient d'un autre device/onglet)
+        setTimeout(() => window.dispatchEvent(new Event('realtime:task:updated')), 0);
+      }
+
       const task = prev[taskId] || { offers: {}, status: 'running' };
       const offer = task.offers[offerId] || { offerIndex, completedSteps: {}, runningSteps: {} };
 
@@ -372,6 +378,12 @@ export function usePipelineProgress() {
           const { taskId, stage, step, status, current, total, itemType } = data;
 
           setProgressMap(prev => {
+            const isNewTask = !prev[taskId];
+            if (isNewTask && typeof window !== 'undefined') {
+              // Nouvelle tâche détectée via SSE (vient d'un autre device/onglet)
+              setTimeout(() => window.dispatchEvent(new Event('realtime:task:updated')), 0);
+            }
+
             const task = prev[taskId] || { stages: {}, completedSteps: {}, status: 'running', type: 'cv_improvement' };
             const completedSteps = { ...task.completedSteps };
 
@@ -491,6 +503,34 @@ export function usePipelineProgress() {
     return () => clearInterval(interval);
   }, [isAuthenticated, progressMap]);
 
+  // Hydratation du progressMap depuis les données serveur (rechargement page)
+  const hydrateFromServer = useCallback((tasksWithProgress) => {
+    setProgressMap(prev => {
+      const next = { ...prev };
+      tasksWithProgress.forEach(task => {
+        if (!task.progress || next[task.id]) return; // Ne pas écraser les données SSE
+        next[task.id] = {
+          offers: task.progress.offers,
+          completedOffers: task.progress.completedOffers || [],
+          failedOffers: task.progress.failedOffers || [],
+          totalOffers: Object.keys(task.progress.offers).length,
+          status: 'running',
+          lastUpdate: Date.now(),
+        };
+      });
+      return next;
+    });
+  }, []);
+
+  // Écouter les données de progression du serveur pour hydratation initiale
+  useEffect(() => {
+    const handler = (event) => {
+      hydrateFromServer(event.detail.tasks);
+    };
+    window.addEventListener('tasks:progress-hydrate', handler);
+    return () => window.removeEventListener('tasks:progress-hydrate', handler);
+  }, [hydrateFromServer]);
+
   // Récupérer la progression pour une tâche spécifique
   const getProgress = useCallback((taskId) => {
     return progressMap[taskId] || null;
@@ -519,6 +559,7 @@ export function usePipelineProgress() {
     getOffersArray,
     calculateOfferProgress,
     allProgress: progressMap,
+    hydrateFromServer,
   };
 }
 

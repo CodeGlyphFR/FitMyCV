@@ -96,6 +96,14 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
 
       const tasksFromServer = normaliseTasks(result.tasks)
 
+      // Émettre l'hydratation de la progression pour les tâches enrichies
+      const tasksWithProgress = (result.tasks || []).filter(t => t.progress)
+      if (tasksWithProgress.length > 0 && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('tasks:progress-hydrate', {
+          detail: { tasks: tasksWithProgress }
+        }))
+      }
+
       // Préserver les tâches optimistes lors du merge
       setTasks(prevTasks => {
         const optimisticTasks = prevTasks.filter(task => task.isOptimistic)

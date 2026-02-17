@@ -225,7 +225,10 @@ export default function Header(props){
     const handleTaskCompleted = (event) => {
       const task = event.detail?.task;
       if (task?.type === 'calculate-match-score') {
-        fetchMatchScore();
+        // Délai pour laisser le temps à updateCvFile de persister le score en DB
+        // Le task:completed SSE arrive via BackgroundTask.status, mais le score
+        // est écrit séparément via updateCvFile dans handleResult
+        setTimeout(() => fetchMatchScore(), 500);
       }
     };
 

@@ -11,7 +11,7 @@
     }
   },
   "name": "FitMyCV - Job Offer Extractor",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Extract job offers and generate tailored CVs with FitMyCV.io",
   "permissions": [
     "storage",
@@ -24,6 +24,7 @@
     "https://dev.fitmycv.io/*"
   ],
   "background": {
+    "scripts": ["background/service-worker.js"],
     "service_worker": "background/service-worker.js",
     "type": "module"
   },
