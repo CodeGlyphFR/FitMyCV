@@ -69,29 +69,29 @@
 graph TB
     subgraph EXT["Extension Navigateur"]
         SW["Service Worker<br/>(orchestrateur)"]
-        DET["Detecteur<br/>d offres"]
+        DET["Détecteur<br/>d'offres"]
         EXTR["Extracteur<br/>de contenu"]
-        AUTH["Recepteur<br/>authentification"]
+        AUTH["Récepteur<br/>authentification"]
         POP["Interface<br/>Popup"]
     end
 
     subgraph SAAS["SaaS FitMyCV.io"]
         API_AUTH["Authentification"]
-        API_CV["CVs et credits"]
-        API_GEN["Generation de CV"]
-        API_SYNC["Suivi des taches"]
+        API_CV["CVs et crédits"]
+        API_GEN["Génération de CV"]
+        API_SYNC["Suivi des tâches"]
     end
 
-    subgraph SITES["Sites d emploi (14+)"]
+    subgraph SITES["Sites d'emploi (14+)"]
         S1["LinkedIn, Indeed, APEC..."]
         S2["France Travail, Glassdoor..."]
         S3["+ tout site inconnu"]
     end
 
     SITES --> DET
-    DET -->|"offre detectee"| SW
-    DET -->|"extraction demandee"| EXTR
-    AUTH -->|"jeton recu"| SW
+    DET -->|"offre détectée"| SW
+    DET -->|"extraction demandée"| EXTR
+    AUTH -->|"jeton reçu"| SW
     POP -->|"actions utilisateur"| SW
 
     POP --> API_CV
@@ -130,14 +130,14 @@ graph TB
           <div class="diagram-title">Processus de détection en 2 phases</div>
           <div class="mermaid">
 flowchart TD
-    START["Page web chargee"] --> P1["Phase 1 : Pre-detection rapide<br/>(~1 ms)"]
-    P1 --> P1A["Metadonnees structurees<br/>Schema JobPosting"]
+    START["Page web chargée"] --> P1["Phase 1 : Pré-détection<br/>rapide (~1 ms)"]
+    P1 --> P1A["Métadonnées structurées<br/>Schéma JobPosting"]
     P1 --> P1B["Marqueurs de genre dans<br/>les titres (H/F, m/w/d)"]
-    P1 --> P1C["Segments d URL typiques<br/>(jobs, careers, emplois)"]
+    P1 --> P1C["Segments d'URL typiques<br/>(jobs, careers, emplois)"]
 
-    P1A -->|"trouve"| FOUND["Offre detectee"]
-    P1B -->|"trouve"| FOUND
-    P1C -->|"trouve"| FOUND
+    P1A -->|"trouvé"| FOUND["Offre détectée"]
+    P1B -->|"trouvé"| FOUND
+    P1C -->|"trouvé"| FOUND
 
     P1A -->|"rien"| P2["Phase 2 : Scoring<br/>heuristique (~5-10 ms)"]
     P1B -->|"rien"| P2
@@ -147,7 +147,7 @@ flowchart TD
     SCORE -->|"Oui"| FOUND
     SCORE -->|"Non"| NOTFOUND["Pas une offre"]
 
-    FOUND --> BADGE["Icone activee +<br/>bouton injecte"]
+    FOUND --> BADGE["Icône activée +<br/>bouton injecté"]
 
     style START fill:#64748b,stroke:#475569,color:#fff
     style P1 fill:#0ea5e9,stroke:#0284c7,color:#fff
@@ -324,15 +324,15 @@ flowchart TD
           <div class="diagram-title">Double stratégie d'extraction</div>
           <div class="mermaid">
 flowchart TD
-    START["Extraction demandee"] --> M1["Strategie 1 :<br/>Algorithme de contenu principal"]
-    START --> M2["Strategie 2 :<br/>Selecteurs cibles par site"]
+    START["Extraction demandée"] --> M1["Stratégie 1 :<br/>Algorithme de contenu<br/>principal"]
+    START --> M2["Stratégie 2 :<br/>Sélecteurs ciblés<br/>par site"]
 
-    M1 --> COMPARE["Comparaison<br/>des resultats"]
+    M1 --> COMPARE["Comparaison<br/>des résultats"]
     M2 --> COMPARE
 
-    COMPARE --> BEST["Meilleur contenu<br/>selectionne"]
-    BEST --> SCORE["Scoring qualite<br/>0-100"]
-    SCORE --> RESULT["Titre + contenu structure<br/>+ URL + score"]
+    COMPARE --> BEST["Meilleur contenu<br/>sélectionné"]
+    BEST --> SCORE["Scoring qualité<br/>0-100"]
+    SCORE --> RESULT["Titre + contenu structuré<br/>+ URL + score"]
 
     style START fill:#0ea5e9,stroke:#0284c7,color:#fff
     style M1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -459,17 +459,17 @@ sequenceDiagram
     participant SRV as Serveur FitMyCV
     participant IA as Pipeline IA
 
-    U->>EXT: Capture l offre (clic bouton)
-    EXT->>EXT: Extraction du contenu en texte structure
-    EXT->>EXT: Scoring qualite (0-100)
-    U->>EXT: Selectionne un CV source + lance la generation
-    EXT->>SRV: Envoie le contenu structure de l offre
-    SRV->>SRV: Extraction IA des donnees structurees (JSON)
-    SRV->>IA: Lance le pipeline de generation de CV
-    IA-->>SRV: CV adapte genere
-    SRV-->>EXT: Progression en temps reel (polling)
-    EXT-->>U: Suivi de la progression dans l interface
-    U->>EXT: Clic sur le CV termine
+    U->>EXT: Capture l'offre (clic bouton)
+    EXT->>EXT: Extraction du contenu en texte structuré
+    EXT->>EXT: Scoring qualité (0-100)
+    U->>EXT: Sélectionne un CV source + lance la génération
+    EXT->>SRV: Envoie le contenu structuré de l'offre
+    SRV->>SRV: Extraction IA des données structurées (JSON)
+    SRV->>IA: Lance le pipeline de génération de CV
+    IA-->>SRV: CV adapté généré
+    SRV-->>EXT: Progression en temps réel (polling)
+    EXT-->>U: Suivi de la progression dans l'interface
+    U->>EXT: Clic sur le CV terminé
     EXT->>SRV: Ouvre le CV dans le SaaS
           </div>
         </div>

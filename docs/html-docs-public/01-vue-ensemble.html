@@ -90,32 +90,32 @@
           <div class="diagram-title">Vue globale de l'architecture</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Presentation["PRESENTATION"]
+    subgraph Presentation["PRÉSENTATION"]
         RC["175+ composants d'interface"]
         TW["Styles et animations"]
     end
 
     subgraph APILayer["COUCHE API"]
-        AR["123 points d'acces<br/>repartis en 7 domaines"]
+        AR["123 points d'accès<br/>répartis en 7 domaines"]
     end
 
-    subgraph Business["LOGIQUE METIER"]
+    subgraph Business["LOGIQUE MÉTIER"]
         subgraph Modules["34 MODULES"]
             CVC["Moteur CV"]
             OAI["Intelligence Artificielle"]
             FEAT["5 pipelines IA"]
-            SUB["Abonnements et Credits"]
-            BJ["Taches asynchrones"]
+            SUB["Abonnements<br/>et Crédits"]
+            BJ["Tâches asynchrones"]
         end
     end
 
-    subgraph Data["ACCES AUX DONNEES"]
+    subgraph Data["ACCÈS AUX DONNÉES"]
         PR["Couche de persistance"]
-        Models["34 entites en 9 domaines"]
+        Models["34 entités en 9 domaines"]
     end
 
     subgraph Infra["SERVICES EXTERNES"]
-        PG[("Base de donnees")]
+        PG[("Base de données")]
         OpenAI["Moteur IA"]
         Stripe["Paiements"]
         Email["Service d'emails"]
@@ -194,21 +194,21 @@ flowchart TB
 sequenceDiagram
     participant C as Interface utilisateur
     participant A as Couche API
-    participant L as Modules metier
-    participant D as Couche de donnees
-    participant DB as Base de donnees
+    participant L as Modules métier
+    participant D as Couche de données
+    participant DB as Base de données
     participant E as Services externes
 
-    C->>A: Requete
+    C->>A: Requête
     A->>A: Authentification et validation
-    A->>L: Logique metier
-    L->>D: Lecture / ecriture
-    D->>DB: Requete
-    DB-->>D: Resultat
+    A->>L: Logique métier
+    L->>D: Lecture / écriture
+    D->>DB: Requête
+    DB-->>D: Résultat
     L->>E: IA / Paiement / Email
-    E-->>L: Reponse
-    L-->>A: Donnees traitees
-    A-->>C: Reponse
+    E-->>L: Réponse
+    L-->>A: Données traitées
+    A-->>C: Réponse
           </div>
         </div>
 
@@ -271,16 +271,16 @@ flowchart LR
     auth["Authentification"] --> subscription["Abonnements"]
     auth --> email["Communication"]
 
-    cv["Moteur CV"] --> data["Donnees"]
+    cv["Moteur CV"] --> data["Données"]
 
     features["Pipelines IA"] --> ai["Intelligence Artificielle"]
     features --> cv
     features --> offers["Offres d'emploi"]
 
     subscription --> data
-    subscription --> events["Evenements"]
+    subscription --> events["Événements"]
 
-    jobs["Taches asynchrones"] --> subscription
+    jobs["Tâches asynchrones"] --> subscription
     jobs --> features
 
     ai --> monitoring["Monitoring"]
@@ -327,10 +327,10 @@ flowchart LR
 flowchart TB
     subgraph Factory["Structure d'une erreur"]
         direction TB
-        Key["Cle de traduction"]
+        Key["Clé de traduction"]
         Status["Code de statut HTTP"]
-        Params["Parametres dynamiques"]
-        Action["Action suggeree et<br/>redirection"]
+        Params["Paramètres dynamiques"]
+        Action["Action suggérée<br/>et redirection"]
     end
 
     subgraph Domains["8 DOMAINES"]
@@ -338,7 +338,7 @@ flowchart TB
         Auth["Authentification"]
         Cv["CV"]
         Sub["Abonnement"]
-        Bg["Taches"]
+        Bg["Tâches"]
         Ext["Extension"]
         Acct["Compte"]
         Other["Autres"]
@@ -390,10 +390,10 @@ flowchart TB
           <div class="diagram-title">Cycle de vie d'une tâche asynchrone</div>
           <div class="mermaid">
 flowchart TD
-    START(("*")) -->|"Creation"| pending["En attente"]
-    pending -->|"Demarrage"| running["En cours"]
-    running -->|"Succes"| completed["Termine"]
-    running -->|"Echec"| failed["En echec"]
+    START(("*")) -->|"Création"| pending["En attente"]
+    pending -->|"Démarrage"| running["En cours"]
+    running -->|"Succès"| completed["Terminé"]
+    running -->|"Échec"| failed["En échec"]
     failed -->|"Nouvel essai (max 3)"| running
     completed --> END(("*"))
     failed -->|"Maximum atteint"| END
@@ -425,10 +425,10 @@ flowchart TD
           <div class="diagram-title">Pipeline de déploiement automatisé</div>
           <div class="mermaid">
 flowchart LR
-    PR["Demande de fusion"] --> PreProd["Pre-production<br/>avec copie de la base"]
-    PreProd --> Test["Tests en conditions<br/>reelles"]
-    Merge["Fusion validee"] --> Bump["Versioning<br/>automatique"]
-    Bump --> Deploy["Deploiement<br/>en production"]
+    PR["Demande de fusion"] --> PreProd["Pré-production<br/>avec copie de la base"]
+    PreProd --> Test["Tests en conditions<br/>réelles"]
+    Merge["Fusion validée"] --> Bump["Versioning<br/>automatique"]
+    Bump --> Deploy["Déploiement<br/>en production"]
     Deploy --> Sync["Synchronisation<br/>de toutes les branches"]
 
     style PR fill:#0ea5e9,stroke:#0284c7,color:#fff

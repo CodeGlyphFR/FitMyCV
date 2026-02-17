@@ -36,30 +36,30 @@
           <div class="diagram-title">Hiérarchie des 8 sections du CV</div>
           <div class="mermaid">
 graph TD
-    CV["CV Structure"]
-    CV --> H["En-tete *"]
-    CV --> S["Resume professionnel *"]
-    CV --> SK["Competences *"]
-    CV --> EX["Experiences *"]
+    CV["CV structuré"]
+    CV --> H["En-tête *"]
+    CV --> S["Résumé professionnel *"]
+    CV --> SK["Compétences *"]
+    CV --> EX["Expériences *"]
     CV --> ED["Formation"]
     CV --> LA["Langues"]
-    CV --> XT["Informations complementaires"]
+    CV --> XT["Informations complémentaires"]
     CV --> PR["Projets"]
 
     H --> FN["Nom complet"]
     H --> CT["Poste actuel"]
-    H --> CO["Coordonnees<br/>(email, telephone,<br/>liens, localisation)"]
+    H --> CO["Coordonnées<br/>(email, téléphone,<br/>liens, localisation)"]
 
-    SK --> HS["Competences techniques"]
+    SK --> HS["Compétences techniques"]
     SK --> TO["Outils"]
-    SK --> ME["Methodologies"]
-    SK --> SS["Qualites personnelles"]
+    SK --> ME["Méthodologies"]
+    SK --> SS["Qualités personnelles"]
 
     EX --> EXI["Poste"]
     EXI --> TI["Titre, entreprise, dates"]
-    EXI --> RE["Responsabilites"]
-    EXI --> DE["Realisations"]
-    EXI --> SU["Competences utilisees"]
+    EXI --> RE["Responsabilités"]
+    EXI --> DE["Réalisations"]
+    EXI --> SU["Compétences utilisées"]
 
     style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
     style H fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -185,15 +185,15 @@ graph TD
           <div class="diagram-title">Cycle de vie des versions</div>
           <div class="mermaid">
 flowchart TD
-    A["CV actuel<br/>version N"] -->|"Optimisation IA"| B["Version N sauvegardee<br/>automatiquement"]
-    B --> C["CV mis a jour<br/>version N+1"]
+    A["CV actuel<br/>version N"] -->|"Optimisation IA"| B["Version N sauvegardée<br/>automatiquement"]
+    B --> C["CV mis à jour<br/>version N+1"]
     C --> D["Rotation automatique<br/>(5 versions max)"]
 
-    C -->|"Restauration prudente"| E["Sauvegarde de l etat actuel<br/>puis retour a la version cible"]
-    E --> F["Historique complet<br/>preserve"]
+    C -->|"Restauration prudente"| E["Sauvegarde de l'état actuel<br/>puis retour à la version cible"]
+    E --> F["Historique complet<br/>préservé"]
 
-    C -->|"Restauration destructive"| G["Retour a la version cible"]
-    G --> H["Versions ulterieures<br/>supprimees"]
+    C -->|"Restauration destructive"| G["Retour à la version cible"]
+    G --> H["Versions ultérieures<br/>supprimées"]
 
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -256,11 +256,11 @@ flowchart TD
           <div class="mermaid">
 flowchart LR
     A["1. Envoi et<br/>validation"] --> B["2. Conversion<br/>en images"]
-    B --> C["3. Analyse visuelle<br/>par l IA"]
-    C --> D["4. Reconstruction<br/>du CV structure"]
-    D --> E{"Resultat<br/>valide ?"}
-    E -->|"Oui"| F["CV cree et<br/>disponible"]
-    E -->|"Non"| G["Credits<br/>rembourses"]
+    B --> C["3. Analyse visuelle<br/>par l'IA"]
+    C --> D["4. Reconstruction<br/>du CV structuré"]
+    D --> E{"Résultat<br/>valide ?"}
+    E -->|"Oui"| F["CV créé et<br/>disponible"]
+    E -->|"Non"| G["Crédits<br/>remboursés"]
 
     style A fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -299,7 +299,7 @@ flowchart LR
           <div class="mermaid">
 flowchart LR
     A["CV original"] --> B["Choix de la<br/>langue cible"]
-    B --> C["Traduction IA<br/>(en tache de fond)"]
+    B --> C["Traduction IA<br/>(en tâche de fond)"]
     C --> D["Nouveau CV traduit<br/>(original intact)"]
 
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff
@@ -394,9 +394,9 @@ flowchart LR
           <div class="diagram-title">Parcours d'export</div>
           <div class="mermaid">
 flowchart LR
-    A["Selectionner les sections<br/>et elements a inclure"] --> B["Personnaliser<br/>l ordre des sections"]
+    A["Sélectionner les sections<br/>et éléments à inclure"] --> B["Personnaliser<br/>l'ordre des sections"]
     B --> C["Choisir le format<br/>(PDF ou Word)"]
-    C --> D["Telecharger<br/>le fichier"]
+    C --> D["Télécharger<br/>le fichier"]
 
     style A fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff

@@ -61,7 +61,7 @@
           <div class="diagram-title">Pipeline complet d'adaptation de CV &mdash; 10 &eacute;tapes</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTREE"]
+    subgraph Input["ENTRÉE"]
         CV["CV source"]
         Offre["Offre d'emploi<br/>(URL / PDF / Extension)"]
     end
@@ -71,27 +71,27 @@ flowchart TB
     end
 
     subgraph Phase05["CLASSIFICATION"]
-        Classify["Analyser chaque<br/>experience et projet"]
-        Decision{"Conserver /<br/>Supprimer /<br/>Deplacer"}
+        Classify["Analyser chaque<br/>expérience et projet"]
+        Decision{"Conserver /<br/>Supprimer /<br/>Déplacer"}
     end
 
-    subgraph Phase1["ADAPTATION PARALLELE"]
+    subgraph Phase1["ADAPTATION PARALLÈLE"]
         direction TB
-        subgraph Parallel["6 TRAITEMENTS SIMULTANES"]
-            BatchExp["Experiences"]
+        subgraph Parallel["6 TRAITEMENTS SIMULTANÉS"]
+            BatchExp["Expériences"]
             BatchProj["Projets"]
             BatchExtras["Extras"]
             BatchEdu["Formation"]
             BatchLang["Langues"]
-            BatchSkills["Competences"]
+            BatchSkills["Compétences"]
         end
-        BatchSummary["Resume professionnel<br/>(sequentiel, apres<br/>les 6 traitements)"]
+        BatchSummary["Résumé professionnel<br/>(séquentiel, après<br/>les 6 traitements)"]
     end
 
     subgraph Phase2["RECOMPOSITION"]
         Recompose["Assembler le CV final"]
         Review["Initialiser le suivi<br/>des modifications"]
-        FinalCV["CV adapte"]
+        FinalCV["CV adapté"]
     end
 
     Offre --> Extract
@@ -228,24 +228,24 @@ flowchart TB
           <div class="diagram-title">Orchestration des traitements parall&egrave;les avec cache IA</div>
           <div class="mermaid">
 flowchart LR
-    subgraph CacheA["CACHE A &mdash; Contexte Offre"]
-        CA["Titre du poste<br/>Competences requises<br/>Responsabilites cles"]
+    subgraph CacheA["CACHE A — Contexte Offre"]
+        CA["Titre du poste<br/>Compétences requises<br/>Responsabilités clés"]
     end
 
-    subgraph Batches["6 TRAITEMENTS PARALLELES"]
-        B1["Experiences"]
+    subgraph Batches["6 TRAITEMENTS PARALLÈLES"]
+        B1["Expériences"]
         B2["Projets"]
         B3["Extras"]
         B4["Formation"]
         B5["Langues"]
-        B6["Competences"]
+        B6["Compétences"]
     end
 
-    subgraph CacheB["CACHE B &mdash; Contexte Enrichi"]
-        CB["Cache A<br/>+ Resultats adaptes<br/>(experiences, projets,<br/>competences)"]
+    subgraph CacheB["CACHE B — Contexte Enrichi"]
+        CB["Cache A<br/>+ Résultats adaptés<br/>(expériences, projets,<br/>compétences)"]
     end
 
-    Summary["Resume<br/>professionnel"]
+    Summary["Résumé<br/>professionnel"]
 
     CacheA --> Batches
     Batches --> CacheB
@@ -415,7 +415,7 @@ flowchart LR
     IA["Classification<br/>par l'IA"]
     Keep["Conserver<br/>Adapter dans<br/>les batches"]
     Remove["Supprimer<br/>Non pertinent<br/>pour le poste"]
-    Move["Deplacer<br/>Convertir en<br/>projet"]
+    Move["Déplacer<br/>Convertir en<br/>projet"]
 
     Input --> IA
     IA -->|"Pertinent"| Keep
@@ -550,9 +550,9 @@ flowchart LR
 flowchart LR
     Queue["En file<br/>d'attente"]
     Running["En cours<br/>de traitement"]
-    Success["Termine<br/>avec succes"]
-    Failed["Echec"]
-    Cancelled["Annule"]
+    Success["Terminé<br/>avec succès"]
+    Failed["Échec"]
+    Cancelled["Annulé"]
     Refund["Remboursement<br/>automatique"]
 
     Queue --> Running

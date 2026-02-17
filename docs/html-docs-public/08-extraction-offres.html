@@ -43,31 +43,31 @@
           <div class="diagram-title">Trois sources d'entr&eacute;e &rarr; un format de sortie unique</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["3 CANAUX D ENTREE"]
+    subgraph Input["3 CANAUX D'ENTRÉE"]
         URL["URL de site d'emploi"]
-        PDF["PDF uploade"]
+        PDF["PDF uploadé"]
         Ext["Extension navigateur"]
     end
 
-    subgraph Fetch["RECUPERATION"]
-        Direct["Acces direct"]
-        Nav["Navigation intelligente<br/>anti-detection"]
+    subgraph Fetch["RÉCUPÉRATION"]
+        Direct["Accès direct"]
+        Nav["Navigation intelligente<br/>anti-détection"]
         TextPDF["Extraction textuelle"]
     end
 
     subgraph IA["EXTRACTION IA"]
-        Analyse["Analyse par l'IA<br/>avec schema strict"]
-        LangDetect["Detection automatique<br/>de la langue"]
+        Analyse["Analyse par l'IA<br/>avec schéma strict"]
+        LangDetect["Détection automatique<br/>de la langue"]
     end
 
-    subgraph Cache["DEDUPLICATION"]
+    subgraph Cache["DÉDUPLICATION"]
         NormURL["Normalisation URL"]
         HashPDF["Empreinte de contenu"]
-        Unique["Unicite par utilisateur"]
+        Unique["Unicité par utilisateur"]
     end
 
     subgraph Output["SORTIE UNIQUE"]
-        JSON["Offre d'emploi structuree<br/>13 champs &mdash; format identique"]
+        JSON["Offre d'emploi structurée<br/>13 champs — format identique"]
     end
 
     subgraph Usage["UTILISATION"]
@@ -76,7 +76,7 @@ flowchart TB
     end
 
     URL --> Direct
-    Direct -->|"site protege ?"| Nav
+    Direct -->|"site protégé ?"| Nav
     URL --> Nav
     PDF --> TextPDF
     Ext --> IA
@@ -264,20 +264,20 @@ flowchart TB
           <div class="mermaid">
 flowchart TB
     URL["URL de l'offre"]
-    Cache{"Deja en<br/>cache ?"}
-    CacheHit["Retour instantane<br/>zero credit"]
-    Strategy{"Site<br/>protege ?"}
-    Direct["Acces direct"]
-    Furtif["Navigation furtive<br/>anti-detection"]
-    Blocked{"Acces<br/>bloque ?"}
-    Clean["Nettoyage du contenu<br/>Suppression navigation,<br/>publicites, footers"]
-    Expired{"Offre<br/>expiree ?"}
-    ExpiredMsg["Rejet sans<br/>debit de credit"]
-    IA["Extraction IA<br/>avec schema strict"]
+    Cache{"Déjà en<br/>cache ?"}
+    CacheHit["Retour instantané<br/>zéro crédit"]
+    Strategy{"Site<br/>protégé ?"}
+    Direct["Accès direct"]
+    Furtif["Navigation furtive<br/>anti-détection"]
+    Blocked{"Accès<br/>bloqué ?"}
+    Clean["Nettoyage du contenu<br/>Suppression navigation,<br/>publicités, footers"]
+    Expired{"Offre<br/>expirée ?"}
+    ExpiredMsg["Rejet sans<br/>débit de crédit"]
+    IA["Extraction IA<br/>avec schéma strict"]
     Valid{"Offre<br/>valide ?"}
-    InvalidMsg["Rejet sans<br/>debit de credit"]
-    Lang["Detection langue"]
-    Store["Stockage et<br/>deduplication"]
+    InvalidMsg["Rejet sans<br/>débit de crédit"]
+    Lang["Détection langue"]
+    Store["Stockage et<br/>déduplication"]
 
     URL --> Cache
     Cache -->|"Oui"| CacheHit
@@ -515,12 +515,12 @@ flowchart TB
           <div class="mermaid">
 flowchart LR
     Page["Page d'offre<br/>dans le navigateur"]
-    Ext["Extension<br/>detecte l'offre"]
-    Extract["Extraction<br/>cote client"]
-    MD["Texte structure<br/>(Markdown)"]
+    Ext["Extension<br/>détecte l'offre"]
+    Extract["Extraction<br/>côté client"]
+    MD["Texte structuré<br/>(Markdown)"]
     Server["Serveur<br/>FitMyCV"]
-    IA["Extraction IA<br/>schema strict"]
-    JSON["Offre structuree<br/>13 champs"]
+    IA["Extraction IA<br/>schéma strict"]
+    JSON["Offre structurée<br/>13 champs"]
 
     Page --> Ext --> Extract --> MD --> Server --> IA --> JSON
 

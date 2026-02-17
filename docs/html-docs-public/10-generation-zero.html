@@ -72,23 +72,23 @@ flowchart TB
 
     subgraph Pipeline1["PIPELINE OFFRE"]
         Extract["Extraction et<br/>structuration de l'offre"]
-        Format["Decomposition en<br/>10 categories"]
-        Gen1["Generation du CV<br/>par l'IA"]
+        Format["Décomposition en<br/>10 catégories"]
+        Gen1["Génération du CV<br/>par l'IA"]
     end
 
     subgraph Pipeline2["PIPELINE TITRE"]
-        Prep["Preparation du<br/>schema et des instructions"]
-        Gen2["Generation du CV<br/>par l'IA"]
+        Prep["Préparation du<br/>schéma et des instructions"]
+        Gen2["Génération du CV<br/>par l'IA"]
     end
 
     subgraph Common["SOCLE COMMUN"]
-        Schema["Schema CV<br/>structure"]
-        Async["Execution en<br/>tache de fond"]
-        Cost["Suivi des couts<br/>et consommation IA"]
+        Schema["Schéma CV<br/>structuré"]
+        Async["Exécution en<br/>tâche de fond"]
+        Cost["Suivi des coûts<br/>et consommation IA"]
     end
 
-    subgraph Output["RESULTAT"]
-        CV["CV professionnel<br/>complet au format structure"]
+    subgraph Output["RÉSULTAT"]
+        CV["CV professionnel<br/>complet au format structuré"]
     end
 
     URL --> Extract --> Format --> Gen1
@@ -304,25 +304,25 @@ flowchart TB
 flowchart TB
     subgraph E1["1. EXTRACTION"]
         URL["URL ou PDF<br/>de l'offre"]
-        Extract["Recuperation et<br/>analyse du contenu"]
-        Cache["Reutilisation du<br/>cache si disponible"]
+        Extract["Récupération et<br/>analyse du contenu"]
+        Cache["Réutilisation du<br/>cache si disponible"]
     end
 
     subgraph E2["2. STRUCTURATION"]
-        Format["Decomposition en<br/>10 categories"]
-        Cat["Entreprise, contrat,<br/>competences, missions,<br/>formation, langues..."]
+        Format["Décomposition en<br/>10 catégories"]
+        Cat["Entreprise, contrat,<br/>compétences, missions,<br/>formation, langues..."]
     end
 
-    subgraph E3["3. GENERATION IA"]
-        Schema["Schema CV<br/>structure"]
-        AI["Generation du<br/>profil fictif complet"]
-        AICache["Cache IA de<br/>derniere generation"]
+    subgraph E3["3. GÉNÉRATION IA"]
+        Schema["Schéma CV<br/>structuré"]
+        AI["Génération du<br/>profil fictif complet"]
+        AICache["Cache IA de<br/>dernière génération"]
     end
 
     subgraph E4["4. FINALISATION"]
-        Valid["Normalisation<br/>du resultat"]
+        Valid["Normalisation<br/>du résultat"]
         Track["Suivi de la<br/>consommation IA"]
-        Result["CV professionnel<br/>pret a l'emploi"]
+        Result["CV professionnel<br/>prêt à l'emploi"]
     end
 
     URL --> Extract

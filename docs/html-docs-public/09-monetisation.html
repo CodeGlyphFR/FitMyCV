@@ -116,19 +116,19 @@ flowchart TB
         Premium["Premium"]
     end
 
-    subgraph Verif["VERIFICATION"]
+    subgraph Verif["VÉRIFICATION"]
         Limits["Limites mensuelles<br/>du plan"]
         Check{"Limite<br/>atteinte ?"}
     end
 
-    subgraph Credits["EXTENSION CREDITS"]
-        Balance["Solde de credits"]
-        CredCheck{"Credits<br/>suffisants ?"}
+    subgraph Credits["EXTENSION CRÉDITS"]
+        Balance["Solde de crédits"]
+        CredCheck{"Crédits<br/>suffisants ?"}
     end
 
-    subgraph Result["RESULTAT"]
-        OK["Fonctionnalite<br/>accessible"]
-        Blocked["Proposition d upgrade<br/>ou d achat de credits"]
+    subgraph Result["RÉSULTAT"]
+        OK["Fonctionnalité<br/>accessible"]
+        Blocked["Proposition d'upgrade<br/>ou d'achat de crédits"]
     end
 
     Free & Pro & Premium --> Limits
@@ -163,22 +163,22 @@ flowchart TB
 flowchart TB
     subgraph Inscription["INSCRIPTION"]
         NewUser["Nouvel utilisateur"]
-        Welcome["Credits de bienvenue<br/>(montant configurable)"]
+        Welcome["Crédits de bienvenue<br/>(montant configurable)"]
     end
 
-    subgraph Verif["VERIFICATION"]
-        Cost{"Fonctionnalite<br/>gratuite ?"}
-        CredCheck{"Credits<br/>suffisants ?"}
+    subgraph Verif["VÉRIFICATION"]
+        Cost{"Fonctionnalité<br/>gratuite ?"}
+        CredCheck{"Crédits<br/>suffisants ?"}
     end
 
     subgraph Achat["RECHARGE"]
-        Packs["Achat de packs<br/>de credits"]
+        Packs["Achat de packs<br/>de crédits"]
     end
 
-    subgraph Result["RESULTAT"]
-        FreeOK["Acces gratuit"]
-        PaidOK["Acces autorise<br/>(credits debites)"]
-        Blocked["Proposition d achat<br/>de credits"]
+    subgraph Result["RÉSULTAT"]
+        FreeOK["Accès gratuit"]
+        PaidOK["Accès autorisé<br/>(crédits débités)"]
+        Blocked["Proposition d'achat<br/>de crédits"]
     end
 
     NewUser --> Welcome
@@ -244,12 +244,12 @@ flowchart TB
           <div class="diagram-title">Entonnoir de conversion</div>
           <div class="mermaid">
 flowchart LR
-    A["Inscription<br/>gratuite"] --> B["Decouverte<br/>du produit"]
+    A["Inscription<br/>gratuite"] --> B["Découverte<br/>du produit"]
     B --> C["Limite<br/>atteinte"]
     C --> D{"Choix<br/>utilisateur"}
     D -->|"Upgrade"| E["Plan Pro<br/>ou Premium"]
-    D -->|"Credits"| F["Achat de<br/>credits"]
-    E --> G["Retention<br/>long terme"]
+    D -->|"Crédits"| F["Achat de<br/>crédits"]
+    E --> G["Rétention<br/>long terme"]
     F --> G
 
     style A fill:#64748b,stroke:#475569,color:#fff
@@ -421,15 +421,15 @@ flowchart LR
 sequenceDiagram
     participant U as Utilisateur
     participant App as FitMyCV
-    participant Pay as Paiement securise
+    participant Pay as Paiement sécurisé
 
-    U->>App: Choisit un plan et une periode
+    U->>App: Choisit un plan et une période
     App->>Pay: Redirection vers la page de paiement
-    Note over Pay: Acceptation CGV<br/>Codes promo autorises<br/>Adresse facturation
+    Note over Pay: Acceptation CGV<br/>Codes promo autorisés<br/>Adresse facturation
     U->>Pay: Saisie des informations de paiement
     Pay-->>App: Confirmation du paiement
-    App->>App: Activation du plan et reinitialisation des compteurs
-    App-->>U: Redirection et acces immediat
+    App->>App: Activation du plan et réinitialisation des compteurs
+    App-->>U: Redirection et accès immédiat
           </div>
         </div>
 
@@ -489,14 +489,14 @@ sequenceDiagram
 sequenceDiagram
     participant U as Utilisateur
     participant App as FitMyCV
-    participant Pay as Paiement securise
+    participant Pay as Paiement sécurisé
 
-    U->>App: Choisit un pack de credits
+    U->>App: Choisit un pack de crédits
     App->>Pay: Redirection vers la page de paiement
     U->>Pay: Paiement unique
     Pay-->>App: Confirmation du paiement
-    App->>App: Credits credites instantanement
-    App-->>U: Solde mis a jour en temps reel
+    App->>App: Crédits crédités instantanément
+    App-->>U: Solde mis à jour en temps réel
     App->>U: Email de confirmation + facture
           </div>
         </div>

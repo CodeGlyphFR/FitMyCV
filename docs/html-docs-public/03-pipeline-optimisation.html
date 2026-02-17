@@ -85,30 +85,30 @@
           <div class="diagram-title">Processus complet de calcul du score</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTREES"]
+    subgraph Input["ENTRÉES"]
         CV["CV"]
         Offre["Offre d'emploi"]
     end
 
-    subgraph Prepare["PREPARATION"]
-        Lang{"Langues<br/>differentes ?"}
+    subgraph Prepare["PRÉPARATION"]
+        Lang{"Langues<br/>différentes ?"}
         Translate["Ajouter instruction<br/>de traduction"]
     end
 
     subgraph IA["ANALYSE IA"]
-        Call["Analyse par l'IA<br/>Temperature basse<br/>pour determinisme"]
+        Call["Analyse par l'IA<br/>Température basse<br/>pour déterminisme"]
     end
 
     subgraph Calculate["RECALCUL"]
         Sub["Extraire les<br/>4 sous-scores"]
-        Formula["Appliquer la formule<br/>de ponderation"]
+        Formula["Appliquer la formule<br/>de pondération"]
     end
 
-    subgraph Output["RESULTATS"]
-        Score["Score global<br/>(0 a 100)"]
-        Sugg["Suggestions<br/>d'amelioration"]
-        Missing["Competences<br/>manquantes"]
-        Matching["Competences<br/>correspondantes"]
+    subgraph Output["RÉSULTATS"]
+        Score["Score global<br/>(0 à 100)"]
+        Sugg["Suggestions<br/>d'amélioration"]
+        Missing["Compétences<br/>manquantes"]
+        Matching["Compétences<br/>correspondantes"]
     end
 
     CV --> Lang
@@ -195,17 +195,17 @@ flowchart TB
           <div class="mermaid">
 flowchart LR
     subgraph Scoring["SCORING"]
-        Calc["Calculer le score<br/>et generer les<br/>suggestions"]
+        Calc["Calculer le score<br/>et générer les<br/>suggestions"]
     end
 
     subgraph UI["INTERFACE"]
         Display["Affichage des<br/>suggestions"]
-        Select["Selection par<br/>l'utilisateur"]
+        Select["Sélection par<br/>l'utilisateur"]
         Context["Ajout de contexte<br/>personnel"]
     end
 
     subgraph Pipeline["OPTIMISATION"]
-        Run["Pipeline<br/>d'amelioration"]
+        Run["Pipeline<br/>d'amélioration"]
         Review["Revue des<br/>modifications"]
     end
 
@@ -243,31 +243,31 @@ flowchart LR
           <div class="diagram-title">Pipeline d'optimisation &mdash; 4 &eacute;tapes</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTREES"]
-        Sug["Suggestions selectionnees<br/>+ contexte utilisateur"]
-        Skills["Competences manquantes<br/>a ajouter + niveau"]
+    subgraph Input["ENTRÉES"]
+        Sug["Suggestions sélectionnées<br/>+ contexte utilisateur"]
+        Skills["Compétences manquantes<br/>à ajouter + niveau"]
         CV["CV existant"]
         Job["Offre d'emploi"]
     end
 
-    subgraph S12["ETAPE 1 &amp; 2 &mdash; EN PARALLELE"]
-        S1["Classification<br/>des competences<br/>par categorie"]
-        S2["Analyse raisonnee<br/>des suggestions<br/>Routage par cible"]
+    subgraph S12["ÉTAPE 1 & 2 — EN PARALLÈLE"]
+        S1["Classification<br/>des compétences<br/>par catégorie"]
+        S2["Analyse raisonnée<br/>des suggestions<br/>Routage par cible"]
     end
 
-    subgraph S3["ETAPE 3 &mdash; AMELIORATIONS PARALLELES"]
-        S3E["Ameliorer<br/>les experiences"]
-        S3P["Ameliorer ou creer<br/>des projets"]
-        S3L["Ameliorer<br/>les langues"]
-        S3X["Ameliorer<br/>les extras"]
+    subgraph S3["ÉTAPE 3 — AMÉLIORATIONS PARALLÈLES"]
+        S3E["Améliorer<br/>les expériences"]
+        S3P["Améliorer ou créer<br/>des projets"]
+        S3L["Améliorer<br/>les langues"]
+        S3X["Améliorer<br/>les extras"]
     end
 
-    subgraph S4["ETAPE 4 &mdash; RESUME"]
-        S4S["Ameliorer le resume<br/>professionnel"]
+    subgraph S4["ÉTAPE 4 — RÉSUMÉ"]
+        S4S["Améliorer le résumé<br/>professionnel"]
     end
 
     subgraph Output["SORTIE"]
-        Result["CV ameliore<br/>+ Modifications detaillees"]
+        Result["CV amélioré<br/>+ Modifications détaillées"]
     end
 
     Skills --> S1
@@ -479,13 +479,13 @@ flowchart TB
           <div class="diagram-title">Cycle de vie d'une modification</div>
           <div class="mermaid">
 flowchart LR
-    Gen["Traitement IA<br/>termine"]
+    Gen["Traitement IA<br/>terminé"]
     Init["Initialisation<br/>de la revue"]
-    Review{"Decisions<br/>utilisateur"}
-    Accept["Accepte"]
-    Reject["Rejete"]
-    Apply["Appliquer les<br/>decisions"]
-    Version["Nouvelle<br/>version creee"]
+    Review{"Décisions<br/>utilisateur"}
+    Accept["Accepté"]
+    Reject["Rejeté"]
+    Apply["Appliquer les<br/>décisions"]
+    Version["Nouvelle<br/>version créée"]
 
     Gen --> Init --> Review
     Review -->|"Accepter"| Accept --> Apply

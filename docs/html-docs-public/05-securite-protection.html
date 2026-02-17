@@ -102,21 +102,21 @@
           <div class="diagram-title">Trois piliers de sécurité applicative</div>
           <div class="mermaid">
 graph TB
-    subgraph Security["Modules de securite"]
-        FV["Validation des fichiers<br/>importes"]
-        SL["Protection des journaux<br/>(masquage des donnees<br/>personnelles)"]
-        XSS["Nettoyage des entrees<br/>(protection contre<br/>les injections)"]
+    subgraph Security["Modules de sécurité"]
+        FV["Validation des fichiers<br/>importés"]
+        SL["Protection des journaux<br/>(masquage des données<br/>personnelles)"]
+        XSS["Nettoyage des entrées<br/>(protection contre<br/>les injections)"]
     end
 
     UPLOAD["Import de fichier"] --> FV
-    FV -->|"Fichier valide"| STORE["Stockage securise"]
-    FV -->|"Fichier invalide"| REJECT["Rejet immediat"]
+    FV -->|"Fichier valide"| STORE["Stockage sécurisé"]
+    FV -->|"Fichier invalide"| REJECT["Rejet immédiat"]
 
-    LOGS["Operations du<br/>systeme"] --> SL
-    SL --> CONSOLE["Journaux assainis<br/>(donnees masquees)"]
+    LOGS["Opérations du<br/>système"] --> SL
+    SL --> CONSOLE["Journaux assainis<br/>(données masquées)"]
 
-    INPUT["Donnees utilisateur<br/>(CV, formulaires)"] --> XSS
-    XSS --> DB["Base de donnees<br/>(donnees saines)"]
+    INPUT["Données utilisateur<br/>(CV, formulaires)"] --> XSS
+    XSS --> DB["Base de données<br/>(données saines)"]
 
     style FV fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style SL fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -143,11 +143,11 @@ graph TB
           <div class="diagram-title">Pipeline de validation d'un fichier importé</div>
           <div class="mermaid">
 graph LR
-    A["1. Presence<br/>du fichier"] --> B["2. Nom<br/>valide"]
-    B --> C["3. Type<br/>autorise"]
+    A["1. Présence<br/>du fichier"] --> B["2. Nom<br/>valide"]
+    B --> C["3. Type<br/>autorisé"]
     C --> D["4. Taille<br/>conforme"]
-    D --> E["5. Signature<br/>binaire verifiee"]
-    E --> F["Fichier<br/>accepte"]
+    D --> E["5. Signature<br/>binaire vérifiée"]
+    E --> F["Fichier<br/>accepté"]
 
     B -.->|"Rejet"| R1["X"]
     C -.->|"Rejet"| R2["X"]
@@ -269,14 +269,14 @@ graph LR
           <div class="diagram-title">Trois niveaux de sanitisation</div>
           <div class="mermaid">
 graph TB
-    INPUT["Donnees utilisateur"]
+    INPUT["Données utilisateur"]
 
-    INPUT --> S1["Niveau 1 :<br/>Echapper les caracteres<br/>HTML dangereux"]
-    INPUT --> S2["Niveau 2 :<br/>Liste blanche<br/>(10 balises autorisees)"]
+    INPUT --> S1["Niveau 1 :<br/>Échapper les caractères<br/>HTML dangereux"]
+    INPUT --> S2["Niveau 2 :<br/>Liste blanche<br/>(10 balises autorisées)"]
     INPUT --> S3["Niveau 3 :<br/>Supprimer tout<br/>le HTML"]
 
     S1 --> O1["Code visible<br/>mais inoffensif"]
-    S2 --> O2["Mise en forme conservee<br/>scripts supprimes"]
+    S2 --> O2["Mise en forme conservée<br/>scripts supprimés"]
     S3 --> O3["Texte brut uniquement"]
 
     style INPUT fill:#0ea5e9,stroke:#0284c7,color:#fff
@@ -393,10 +393,10 @@ graph TB
           <div class="diagram-title">Chaîne de traitement des requêtes</div>
           <div class="mermaid">
 flowchart LR
-    Req["Requete<br/>entrante"] --> CORS["Verification<br/>CORS"]
-    CORS --> RL["Limitation<br/>de debit"]
-    RL --> Headers["En-tetes de<br/>securite"]
-    Headers --> Route["Transmission<br/>a la route"]
+    Req["Requête<br/>entrante"] --> CORS["Vérification<br/>CORS"]
+    CORS --> RL["Limitation<br/>de débit"]
+    RL --> Headers["En-têtes de<br/>sécurité"]
+    Headers --> Route["Transmission<br/>à la route"]
 
     style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
     style CORS fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -630,7 +630,7 @@ flowchart LR
           <div class="diagram-title">4 tâches de rétention automatisée</div>
           <div class="mermaid">
 flowchart LR
-    CRON["Planificateur<br/>automatique"] --> Runner["Lancer toutes les<br/>taches de retention"]
+    CRON["Planificateur<br/>automatique"] --> Runner["Lancer toutes les<br/>tâches de rétention"]
 
     Runner --> J1["Nettoyer les journaux<br/>d'emails"]
     Runner --> J2["Nettoyer les journaux<br/>de consentement"]
@@ -640,7 +640,7 @@ flowchart LR
     J1 -->|"> 12 mois"| D1["Suppression"]
     J2 -->|"> 6 mois"| D2["Suppression"]
     J3 -->|"35 mois"| D3["Email d'avertissement"]
-    J4 -->|"> 3 ans"| D4["Suppression complete"]
+    J4 -->|"> 3 ans"| D4["Suppression complète"]
 
     style CRON fill:#0ea5e9,stroke:#0284c7,color:#fff
     style Runner fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -704,8 +704,8 @@ gantt
     axisFormat  %Y
 
     section Compte actif
-    Derniere connexion           :milestone, m1, 2023-01-01, 0d
-    Periode d'activite normale   :active, a1, 2023-01-01, 730d
+    Dernière connexion           :milestone, m1, 2023-01-01, 0d
+    Période d'activité normale   :active, a1, 2023-01-01, 730d
 
     section Avertissement
     Email d'avertissement (35 mois) :crit, w1, 2025-12-01, 30d

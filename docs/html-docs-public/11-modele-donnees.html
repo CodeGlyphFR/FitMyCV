@@ -44,27 +44,27 @@
           <div class="mermaid">
 flowchart TB
     subgraph Frontend["FRONTEND"]
-        Next["Framework React<br/>derniere generation"]
-        UI["Interface reactive<br/>composants modulaires"]
-        Style["Systeme de style<br/>utility-first"]
+        Next["Framework React<br/>dernière génération"]
+        UI["Interface réactive<br/>composants modulaires"]
+        Style["Système de style<br/>utility-first"]
         Lang["Traduction<br/>4 langues"]
     end
 
     subgraph Backend["BACKEND"]
-        API["123 points d acces<br/>API RESTful"]
+        API["123 points d'accès<br/>API RESTful"]
         AuthB["Authentification<br/>multi-provider"]
         ORM["ORM type-safe<br/>pour PostgreSQL"]
     end
 
     subgraph External["SERVICES EXTERNES"]
-        AI["Intelligence Artificielle<br/>generation et analyse"]
-        Pay["Paiements<br/>abonnements et credits"]
+        AI["Intelligence Artificielle<br/>génération et analyse"]
+        Pay["Paiements<br/>abonnements et crédits"]
         Mail["Emails<br/>transactionnels"]
     end
 
-    subgraph Data["DONNEES"]
-        PG[("PostgreSQL<br/>34 entites")]
-        CV["CV au format JSON<br/>structure"]
+    subgraph Data["DONNÉES"]
+        PG[("PostgreSQL<br/>34 entités")]
+        CV["CV au format JSON<br/>structuré"]
     end
 
     Frontend --> Backend
@@ -229,54 +229,54 @@ flowchart TB
     subgraph CVGroup["CV ET DOCUMENTS"]
         CvFile["CV"]
         CvVersion["Historique des versions"]
-        ExportTpl["Configurations d export"]
+        ExportTpl["Configurations d'export"]
     end
 
-    subgraph OfferGroup["OFFRES D EMPLOI"]
-        JobOffer["Offre d emploi"]
+    subgraph OfferGroup["OFFRES D'EMPLOI"]
+        JobOffer["Offre d'emploi"]
     end
 
-    subgraph PipelineGroup["PIPELINE DE GENERATION"]
-        GenTask["Tache de generation"]
-        GenOffer["Offre a traiter"]
-        GenSubtask["Sous-tache IA"]
+    subgraph PipelineGroup["PIPELINE DE GÉNÉRATION"]
+        GenTask["Tâche de génération"]
+        GenOffer["Offre à traiter"]
+        GenSubtask["Sous-tâche IA"]
     end
 
-    subgraph BillingGroup["ABONNEMENTS ET CREDITS"]
+    subgraph BillingGroup["ABONNEMENTS ET CRÉDITS"]
         Sub["Abonnement"]
         Plan["Plan"]
-        Limits["Limites par fonctionnalite"]
-        Balance["Solde de credits"]
+        Limits["Limites par fonctionnalité"]
+        Balance["Solde de crédits"]
         Tx["Transactions"]
     end
 
     subgraph AuthGroup["AUTHENTIFICATION"]
-        Account["Comptes OAuth lies"]
+        Account["Comptes OAuth liés"]
     end
 
-    subgraph SystemGroup["SYSTEME"]
-        BgTask["Taches asynchrones"]
+    subgraph SystemGroup["SYSTÈME"]
+        BgTask["Tâches asynchrones"]
     end
 
-    User -->|"possede"| CvFile
-    User -->|"cree"| JobOffer
+    User -->|"possède"| CvFile
+    User -->|"crée"| JobOffer
     User -->|"souscrit"| Sub
-    User -->|"possede"| Balance
+    User -->|"possède"| Balance
     User -->|"effectue"| Tx
-    User -->|"lie"| Account
+    User -->|"lié"| Account
     User -->|"lance"| BgTask
-    User -->|"genere"| GenTask
+    User -->|"génère"| GenTask
     User -->|"configure"| ExportTpl
 
     CvFile -->|"historique"| CvVersion
-    CvFile -->|"adapte pour"| JobOffer
-    JobOffer -->|"CV generes"| CvFile
+    CvFile -->|"adapté pour"| JobOffer
+    JobOffer -->|"CV générés"| CvFile
 
     GenTask -->|"contient"| GenOffer
-    GenOffer -->|"execute"| GenSubtask
+    GenOffer -->|"exécute"| GenSubtask
 
     Sub -->|"plan choisi"| Plan
-    Plan -->|"definit"| Limits
+    Plan -->|"définit"| Limits
 
     style User fill:#0ea5e9,stroke:#0284c7,color:#fff
     style CvFile fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -411,41 +411,41 @@ flowchart TB
           <div class="mermaid">
 flowchart TB
     subgraph EmailGroup["EMAIL ET NOTIFICATIONS"]
-        Trigger["Declencheurs<br/>evenements systeme"]
-        Template["Templates<br/>editables en ligne"]
-        Log["Journal d envois<br/>statut et tracabilite"]
+        Trigger["Déclencheurs<br/>événements système"]
+        Template["Templates<br/>éditables en ligne"]
+        Log["Journal d'envois<br/>statut et traçabilité"]
     end
 
     subgraph MonitorGroup["MONITORING IA"]
-        Usage["Usage agrege<br/>par jour et fonctionnalite"]
-        Call["Appels individuels<br/>cout et duree"]
+        Usage["Usage agrégé<br/>par jour et fonctionnalité"]
+        Call["Appels individuels<br/>coût et durée"]
     end
 
-    subgraph AnalyticsGroup["TELEMETRIE ET ANALYTICS"]
-        Telemetry["Evenements<br/>tracking utilisateur"]
-        FeatUsage["Usage<br/>par fonctionnalite"]
+    subgraph AnalyticsGroup["TÉLÉMÉTRIE ET ANALYTICS"]
+        Telemetry["Événements<br/>tracking utilisateur"]
+        FeatUsage["Usage<br/>par fonctionnalité"]
         FeatCounter["Compteurs<br/>mensuels"]
         FeedbackN["Retours<br/>utilisateurs"]
     end
 
-    subgraph RGPDGroup["CONFORMITE RGPD"]
+    subgraph RGPDGroup["CONFORMITÉ RGPD"]
         Consent["Consentements<br/>historique complet"]
-        Links["Historique<br/>liens visites"]
+        Links["Historique<br/>liens visités"]
     end
 
     UserRef["Utilisateur"]
 
-    Trigger -->|"templates associes"| Template
+    Trigger -->|"templates associés"| Template
     Template -->|"envois"| Log
 
-    UserRef -->|"usage agrege"| Usage
+    UserRef -->|"usage agrégé"| Usage
     UserRef -->|"appels IA"| Call
-    UserRef -->|"evenements"| Telemetry
+    UserRef -->|"événements"| Telemetry
     UserRef -->|"utilisation"| FeatUsage
     UserRef -->|"compteurs"| FeatCounter
     UserRef -->|"retours"| FeedbackN
     UserRef -->|"consentements"| Consent
-    UserRef -->|"liens visites"| Links
+    UserRef -->|"liens visités"| Links
 
     style UserRef fill:#0ea5e9,stroke:#0284c7,color:#fff
     style Trigger fill:#6366f1,stroke:#4f46e5,color:#fff

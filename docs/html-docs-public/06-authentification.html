@@ -42,7 +42,7 @@
           <div class="diagram-title">Quatre voies d'accès au compte FitMyCV</div>
           <div class="mermaid">
 flowchart LR
-    subgraph Methods["METHODES DE CONNEXION"]
+    subgraph Methods["MÉTHODES DE CONNEXION"]
         Email["Email et<br/>mot de passe"]
         Google["Google"]
         GitHub["GitHub"]
@@ -54,7 +54,7 @@ flowchart LR
     GitHub --> Account
     Apple --> Account
 
-    Account --> Session["Session securisee<br/>(7 jours)"]
+    Account --> Session["Session sécurisée<br/>(7 jours)"]
 
     style Email fill:#6366f1,stroke:#4f46e5,color:#fff
     style Google fill:#6366f1,stroke:#4f46e5,color:#fff
@@ -110,12 +110,12 @@ sequenceDiagram
     participant E as Service d'emails
 
     U->>F: 1. Remplit le formulaire (nom, email, mot de passe)
-    F->>F: 2. Verification anti-bot + validation du mot de passe
-    F->>F: 3. Creation du compte (email non verifie)
-    F->>E: 4. Envoi de l'email de verification (lien valide 24h)
-    E->>U: 5. Clic sur le lien de verification
-    U->>F: 6. Email verifie, connexion automatique securisee
-    Note over F: Plan gratuit attribue + email de bienvenue
+    F->>F: 2. Vérification anti-bot + validation du mot de passe
+    F->>F: 3. Création du compte (email non vérifié)
+    F->>E: 4. Envoi de l'email de vérification (lien valide 24h)
+    E->>U: 5. Clic sur le lien de vérification
+    U->>F: 6. Email vérifié, connexion automatique sécurisée
+    Note over F: Plan gratuit attribué + email de bienvenue
           </div>
         </div>
 
@@ -178,10 +178,10 @@ sequenceDiagram
     U->>F: 1. Clic sur le bouton du fournisseur
     F->>P: Redirection vers la page de consentement
     P->>U: Demande d'autorisation
-    U->>P: 2. Autorise l'acces
-    P->>F: Profil et email verifies
-    F->>F: 3. Compte cree, plan gratuit attribue, session active
-    Note over F: Email de bienvenue envoye
+    U->>P: 2. Autorise l'accès
+    P->>F: Profil et email vérifiés
+    F->>F: 3. Compte créé, plan gratuit attribué, session active
+    Note over F: Email de bienvenue envoyé
     F->>U: Redirection vers l'accueil
           </div>
         </div>
@@ -239,9 +239,9 @@ sequenceDiagram
           <div class="diagram-title">Réinitialisation du mot de passe oublié</div>
           <div class="mermaid">
 flowchart LR
-    A["1. Demande de<br/>reinitialisation<br/>(email + anti-bot)"] --> B["2. Email avec lien<br/>(jeton valide 1h)"]
+    A["1. Demande de<br/>réinitialisation<br/>(email + anti-bot)"] --> B["2. Email avec lien<br/>(jeton valide 1h)"]
     B --> C["3. Formulaire de<br/>nouveau mot de passe"]
-    C --> D["4. Validation et<br/>mise a jour"]
+    C --> D["4. Validation et<br/>mise à jour"]
 
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -311,13 +311,13 @@ flowchart LR
           <div class="mermaid">
 flowchart LR
     subgraph Login["OBTENTION DU JETON"]
-        A["Email et<br/>mot de passe"] -->|"Connexion directe"| B["Jeton d'acces<br/>(7 jours)"]
+        A["Email et<br/>mot de passe"] -->|"Connexion directe"| B["Jeton d'accès<br/>(7 jours)"]
         C["Session web<br/>existante"] -->|"Depuis le navigateur"| B
     end
 
     subgraph Usage["UTILISATION"]
-        B -->|"Envoi automatique"| D["Verification"]
-        D --> E["Acces a l'API<br/>de l'extension"]
+        B -->|"Envoi automatique"| D["Vérification"]
+        D --> E["Accès à l'API<br/>de l'extension"]
     end
 
     subgraph Refresh["RENOUVELLEMENT"]
