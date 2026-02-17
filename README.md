@@ -14,7 +14,15 @@
 
 **[app.fitmycv.io](https://app.fitmycv.io)** · **[fitmycv.io](https://www.fitmycv.io)**
 
-🇫🇷 Français | [🇬🇧 English](README.en.md)
+<img src="public/icons/fr.svg" alt="Français" width="32" height="32">&nbsp;&nbsp;<a href="README.en.md"><img src="public/icons/gb.svg" alt="English" width="32" height="32"></a>
+
+</div>
+
+<div align="center">
+
+### [Documentation technique complète](https://app.fitmycv.io/docs)
+
+Architecture · 113 endpoints API · 34 modèles de données · 138 composants React
 
 </div>
 
@@ -24,7 +32,7 @@
 
 J'ai construit FitMyCV comme un projet end-to-end pour développer et démontrer mes compétences en **AI Engineering** dans un contexte de production réel — pas un PoC, pas un notebook, mais un SaaS complet avec des utilisateurs, des paiements et une infrastructure de déploiement.
 
-Le produit adapte des CV à des offres d'emploi via des pipelines LLM multi-étapes. La contrainte centrale : **l'IA ne fabrique rien** — elle reformule et réorganise uniquement le parcours existant du candidat, avec des garde-fous anti-hallucination appliqués dans le code.
+Le produit adapte des CV à des offres d'emploi via des pipelines LLM multi-étapes. La contrainte centrale : **chaque élément généré par l'IA doit être justifiable par le CV réel de l'utilisateur** — le système reformule, réorganise et déduit des compétences, mais ne peut jamais halluciner d'expériences ou de qualifications inexistantes, grâce à des garde-fous appliqués dans le code.
 
 ---
 
@@ -142,44 +150,17 @@ Chaque appel OpenAI est tracé individuellement et agrégé quotidiennement :
 
 Au-delà de l'IA, le projet couvre l'ensemble du spectre SaaS :
 
-| Domaine | Implémentation |
-|---------|---------------|
-| **Frontend** | Next.js 16 (App Router), React 19, Tailwind CSS 4 — 138 composants |
-| **Backend** | 113 routes API, Prisma 6, 34 modèles de données |
-| **Auth** | NextAuth.js — email/password, Google, GitHub, Apple OAuth |
-| **Paiements** | Stripe — crédits à la carte, sans abonnement |
-| **Extension navigateur** | Chrome / Firefox Manifest V3 — extraction d'offres depuis 11 sites d'emploi |
-| **Import / Export** | Vision API (PDF→JSON), export PDF et DOCX avec templates |
-| **Multi-langues** | Français, Anglais, Allemand, Espagnol |
-| **Infrastructure** | Docker, GitHub Actions (CI/CD automatisé), Caddy, Cloudflare |
-| **Versioning** | Historique complet des CV, restauration en un clic |
-
----
-
-## Stack technique
-
-| Couche | Technologies |
-|--------|-------------|
-| **Application** | Next.js 16, React 19, Tailwind CSS 4, JavaScript ES2024 |
-| **Base de données** | PostgreSQL, Prisma 6 (34 modèles) |
-| **IA** | OpenAI API — GPT-4.1, GPT-4o, o4-mini, GPT-4.1-mini (Vision) |
-| **Auth** | NextAuth.js (Google, GitHub, Apple) |
-| **Paiements** | Stripe |
-| **Extension** | Vite, Manifest V3, Readability, Turndown |
-| **Infra** | Docker, GitHub Actions, Caddy, Cloudflare |
-
----
-
-## Documentation
-
-La documentation technique complète est disponible dans [`docs/`](./docs/) :
-
-| Document | Contenu |
-|----------|---------|
-| [Architecture](./docs/architecture.md) | Architecture système |
-| [API Reference](./docs/api-reference.md) | 113 endpoints |
-| [Data Models](./docs/data-models.md) | 34 modèles Prisma |
-| [Components](./docs/components.md) | 138 composants React |
+| Couche | Technologies | Périmètre |
+|--------|-------------|-----------|
+| **Frontend** | Next.js 16 (App Router), React 19, Tailwind CSS 4 | 138 composants |
+| **Backend** | Next.js API Routes, Prisma 6, PostgreSQL | 113 endpoints, 34 modèles |
+| **IA** | OpenAI API — GPT-4.1, GPT-4o, o4-mini, GPT-4.1-mini (Vision) | 2 pipelines, 12 phases |
+| **Auth** | NextAuth.js — email/password, Google, GitHub, Apple OAuth | JWT, sessions 7j |
+| **Paiements** | Stripe | Crédits à la carte, sans abonnement |
+| **Extension** | Vite, Manifest V3, Readability, Turndown | Chrome + Firefox, 11 sites d'emploi |
+| **Import / Export** | Vision API (PDF→JSON), PDF et DOCX | Templates personnalisés |
+| **Multi-langues** | 4 langues (FR, EN, DE, ES) | Politique de langue par prompt |
+| **Infra** | Docker, GitHub Actions, Caddy, Cloudflare | CI/CD automatisé, déploiement continu |
 
 ---
 
