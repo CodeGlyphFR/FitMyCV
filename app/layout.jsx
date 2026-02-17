@@ -68,7 +68,7 @@ export default async function RootLayout(props){
   }
 
   return (
-    <html lang="fr" className={oswald.variable}>
+    <html lang="fr" className={oswald.variable} suppressHydrationWarning>
       <head>
         {/* Préchargement des ressources critiques pour LCP */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
