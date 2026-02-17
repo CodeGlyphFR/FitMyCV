@@ -1256,9 +1256,9 @@ function initDiagramZoom() {
       lightbox.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      // Fit après que le SVG soit rendu (double RAF pour laisser le layout se stabiliser)
+      // Centrer à 100% après que le SVG soit rendu (double RAF pour laisser le layout se stabiliser)
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => fitToScreen());
+        requestAnimationFrame(() => resetZoom());
       });
     };
   }
