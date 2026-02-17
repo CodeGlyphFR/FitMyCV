@@ -14,13 +14,13 @@
 
 **[app.fitmycv.io](https://app.fitmycv.io)** · **[fitmycv.io](https://www.fitmycv.io)**
 
-<img src="public/icons/fr.svg" alt="Français" width="32" height="32">&nbsp;&nbsp;<a href="README.en.md"><img src="public/icons/gb.svg" alt="English" width="32" height="32"></a>
+<img src="public/icons/fr.svg" alt="Français" width="24" height="24">&nbsp;&nbsp;<a href="README.en.md"><img src="public/icons/gb.svg" alt="English" width="24" height="24"></a>
 
 </div>
 
 <div align="center">
 
-### [Documentation technique complète](https://app.fitmycv.io/docs)
+### [Documentation](https://app.fitmycv.io/docs)
 
 Architecture · 113 endpoints API · 34 modèles de données · 138 composants React
 
@@ -32,7 +32,7 @@ Architecture · 113 endpoints API · 34 modèles de données · 138 composants R
 
 J'ai construit FitMyCV comme un projet end-to-end pour développer et démontrer mes compétences en **AI Engineering** dans un contexte de production réel — pas un PoC, pas un notebook, mais un SaaS complet avec des utilisateurs, des paiements et une infrastructure de déploiement.
 
-Le produit adapte des CV à des offres d'emploi via des pipelines LLM multi-étapes. La contrainte centrale : **chaque élément généré par l'IA doit être justifiable par le CV réel de l'utilisateur** — le système reformule, réorganise et déduit des compétences, mais ne peut jamais halluciner d'expériences ou de qualifications inexistantes, grâce à des garde-fous appliqués dans le code.
+Le produit adapte des CV à des offres d'emploi via des pipelines LLM multi-étapes. La contrainte centrale : **chaque élément généré par l'IA doit être justifiable par le CV de l'utilisateur** — le système reformule, réorganise et déduit des compétences, mais ne peut jamais halluciner d'expériences ou de qualifications inexistantes, grâce à des garde-fous appliqués dans le code.
 
 ---
 
@@ -51,6 +51,8 @@ Chaque phase du pipeline utilise un modèle choisi pour ses caractéristiques sp
 | Amélioration ciblée des expériences | `gpt-4.1` | Qualité maximale pour les réécritures critiques |
 | Import PDF (multi-pages) | `gpt-4.1-mini` (Vision) | Extraction multi-modale page par page |
 | Score de matching | `gpt-4.1-mini` | Scoring structuré + suggestions |
+
+**Pourquoi OpenAI** : la diversité de la gamme (raisonnement, vision, mini, full) permet d'affecter le bon modèle à chaque phase avec un rapport qualité/prix maîtrisé. Le projet est conçu pour être évolutif — intégrer d'autres foundation models comme Gemini ou Mistral serait une prochaine étape facilement envisageable.
 
 **Ce que ça démontre** : la capacité à sélectionner et configurer le bon modèle pour chaque tâche selon le compromis coût / qualité / latence, plutôt que d'utiliser un modèle unique pour tout.
 
@@ -161,6 +163,12 @@ Au-delà de l'IA, le projet couvre l'ensemble du spectre SaaS :
 | **Import / Export** | Vision API (PDF→JSON), PDF et DOCX | Templates personnalisés |
 | **Multi-langues** | 4 langues (FR, EN, DE, ES) | Politique de langue par prompt |
 | **Infra** | Docker, GitHub Actions, Caddy, Cloudflare | CI/CD automatisé, déploiement continu |
+
+---
+
+## Prochaine étape : RAG
+
+Le mode révision collecte déjà les décisions des utilisateurs (acceptation ou refus de chaque modification IA). Ces données constituent une base idéale pour implémenter un système de Retrieval-Augmented Generation qui enrichirait les futures générations à partir des préférences réelles des utilisateurs.
 
 ---
 

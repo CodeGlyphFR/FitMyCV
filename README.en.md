@@ -52,6 +52,8 @@ Each pipeline phase uses a model chosen for its specific characteristics. Assign
 | PDF import (multi-page) | `gpt-4.1-mini` (Vision) | Multi-modal page-by-page extraction |
 | Match scoring | `gpt-4.1-mini` | Structured scoring + suggestions |
 
+**Why OpenAI**: the breadth of the model lineup (reasoning, vision, mini, full) allows assigning the right model to each phase with a controlled quality/cost ratio. The project is designed to be extensible — integrating other foundation models like Gemini or Mistral would be a straightforward next step.
+
 **What this demonstrates**: the ability to select and configure the right model per task based on cost / quality / latency tradeoffs, rather than using a single model for everything.
 
 ---
@@ -161,6 +163,12 @@ Beyond AI, the project covers the entire SaaS spectrum:
 | **Import / Export** | Vision API (PDF→JSON), PDF and DOCX | Custom templates |
 | **Multi-language** | 4 languages (FR, EN, DE, ES) | Language policy per prompt |
 | **Infra** | Docker, GitHub Actions, Caddy, Cloudflare | Automated CI/CD, continuous deployment |
+
+---
+
+## Next step: RAG
+
+The review mode already collects user decisions (acceptance or rejection of each AI modification). This data is an ideal foundation for implementing a Retrieval-Augmented Generation system that would enrich future generations based on real user preferences.
 
 ---
 
