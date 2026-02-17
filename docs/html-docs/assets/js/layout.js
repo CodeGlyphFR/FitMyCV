@@ -32,6 +32,15 @@ function fixSidebarLinks() {
     // Ajouter le préfixe pour remonter à la racine
     link.setAttribute('href', prefix + href);
   });
+
+  // Corriger aussi les chemins des images
+  sidebar.querySelectorAll('img').forEach(img => {
+    const src = img.getAttribute('src');
+    if (!src || src.startsWith('http') || src.startsWith('/') || src.startsWith('../') || src.startsWith('data:')) {
+      return;
+    }
+    img.setAttribute('src', prefix + src);
+  });
 }
 
 // Charger et injecter le layout (sidebar + header)

@@ -527,6 +527,16 @@ flowchart TD
     REFETCH -->|"401"| CLEAR
     CLEAR --> EXPIRED["AuthError: Session expirée"]
     EXPIRED --> LOGIN["Retour vue login"]
+    style REQ fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style FRESH fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style REFRESH fill:#f59e0b,stroke:#d97706,color:#fff
+    style FETCH fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OK fill:#22c55e,stroke:#16a34a,color:#fff
+    style RETRY fill:#f59e0b,stroke:#d97706,color:#fff
+    style REFETCH fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CLEAR fill:#ef4444,stroke:#dc2626,color:#fff
+    style EXPIRED fill:#ef4444,stroke:#dc2626,color:#fff
+    style LOGIN fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 

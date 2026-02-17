@@ -40,38 +40,53 @@
 flowchart TB
     subgraph App["APPLICATION"]
         Plans["SubscriptionPlan"]
-        Sub["Subscription"]
-        Balance["CreditBalance"]
+        SubN["Subscription"]
+        BalanceN["CreditBalance"]
         Packs["CreditPack"]
         Counters["FeatureUsageCounter"]
     end
 
     subgraph Stripe["STRIPE"]
         Products["Products"]
-        Prices["Prices<br/>(monthly + yearly)"]
+        Prices["Prices<br/>monthly + yearly"]
         Customers["Customers"]
         Subscriptions["Subscriptions"]
         Checkout["Checkout Sessions"]
-        Schedules["Subscription Schedules<br/>(downgrades)"]
+        Schedules["Subscription Schedules<br/>downgrades"]
     end
 
     subgraph Sync["SYNCHRONISATION"]
         SyncScript["stripeSync.js"]
         Webhooks["Webhook Handler<br/>/api/webhooks/stripe"]
-        Log["StripeWebhookLog<br/>(idempotence)"]
+        LogN["StripeWebhookLog<br/>idempotence"]
     end
 
     Plans <-->|"sync products/prices"| SyncScript
     SyncScript <--> Products
     SyncScript <--> Prices
 
-    Sub --> Subscriptions
+    SubN --> Subscriptions
     Packs --> Products
-    Checkout --> Balance
+    Checkout --> BalanceN
 
     Stripe -->|"9 events"| Webhooks
-    Webhooks --> Log
+    Webhooks --> LogN
     Webhooks --> App
+
+    style Plans fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SubN fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BalanceN fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Packs fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Counters fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Products fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Prices fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Customers fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Subscriptions fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Checkout fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Schedules fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SyncScript fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Webhooks fill:#6366f1,stroke:#4f46e5,color:#fff
+    style LogN fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 
@@ -168,36 +183,63 @@ flowchart TB
           <div class="diagram-title">Algorithme canUseFeature()</div>
           <div class="mermaid">
 flowchart TD
-    Start["canUseFeature(userId, featureName)"] --> BalCheck{"Balance < 0 ?"}
-    BalCheck -->|"Oui"| Blocked["BLOQU&Eacute; : balance n&eacute;gative"]
+    Start["canUseFeature"] --> BalCheck{"Balance < 0 ?"}
+    BalCheck -->|"Oui"| Blocked["BLOQUE : balance negative"]
     BalCheck -->|"Non"| ModeCheck{"Mode abonnement ?"}
 
-    ModeCheck -->|"Non (cr&eacute;dits-only)"| CostCheck{"Co&ucirc;t = 0 ?"}
-    CostCheck -->|"Oui"| FreeOK["AUTORIS&Eacute; : gratuit"]
-    CostCheck -->|"Non"| CredCheck{"Cr&eacute;dits >= co&ucirc;t ?"}
-    CredCheck -->|"Oui"| UseCredit["AUTORIS&Eacute; : useCredit=true"]
-    CredCheck -->|"Non"| NoCred["BLOQU&Eacute; : cr&eacute;dits insuffisants"]
+    ModeCheck -->|"Non - credits-only"| CostCheck{"Cout = 0 ?"}
+    CostCheck -->|"Oui"| FreeOK["AUTORISE : gratuit"]
+    CostCheck -->|"Non"| CredCheck{"Credits >= cout ?"}
+    CredCheck -->|"Oui"| UseCredit["AUTORISE : useCredit=true"]
+    CredCheck -->|"Non"| NoCred["BLOQUE : credits insuffisants"]
 
     ModeCheck -->|"Oui"| SubCheck{"Abonnement actif ?"}
-    SubCheck -->|"Non"| NoSub["BLOQU&Eacute;"]
+    SubCheck -->|"Non"| NoSub["BLOQUE"]
     SubCheck -->|"Oui"| PremCheck{"premiumRequired ?"}
 
     PremCheck -->|"Oui"| IsPrem{"Plan Premium ?"}
-    IsPrem -->|"Oui"| PremOK["AUTORIS&Eacute; : Premium inclus"]
-    IsPrem -->|"Non"| PremBlock["BLOQU&Eacute; : Premium requis"]
+    IsPrem -->|"Oui"| PremOK["AUTORISE : Premium inclus"]
+    IsPrem -->|"Non"| PremBlock["BLOQUE : Premium requis"]
 
     PremCheck -->|"Non"| EnabledCheck{"Feature enabled ?"}
-    EnabledCheck -->|"Non"| CredFallback{"Cr&eacute;dits >= co&ucirc;t ?"}
-    CredFallback -->|"Oui"| UseCredit2["AUTORIS&Eacute; : useCredit"]
-    CredFallback -->|"Non"| BlockedFeat["BLOQU&Eacute;"]
+    EnabledCheck -->|"Non"| CredFallback{"Credits >= cout ?"}
+    CredFallback -->|"Oui"| UseCredit2["AUTORISE : useCredit"]
+    CredFallback -->|"Non"| BlockedFeat["BLOQUE"]
 
     EnabledCheck -->|"Oui"| LimitCheck{"usageLimit = -1 ?"}
-    LimitCheck -->|"Oui"| Unlimited["AUTORIS&Eacute; : illimit&eacute;"]
+    LimitCheck -->|"Oui"| Unlimited["AUTORISE : illimite"]
     LimitCheck -->|"Non"| CounterCheck{"compteur < limite ?"}
-    CounterCheck -->|"Oui"| UnderLimit["AUTORIS&Eacute; : sous la limite"]
-    CounterCheck -->|"Non"| OverLimit{"Cr&eacute;dits >= co&ucirc;t ?"}
-    OverLimit -->|"Oui"| UseCredit3["AUTORIS&Eacute; : useCredit"]
-    OverLimit -->|"Non"| LimitReached["BLOQU&Eacute; : limite atteinte"]
+    CounterCheck -->|"Oui"| UnderLimit["AUTORISE : sous la limite"]
+    CounterCheck -->|"Non"| OverLimit{"Credits >= cout ?"}
+    OverLimit -->|"Oui"| UseCredit3["AUTORISE : useCredit"]
+    OverLimit -->|"Non"| LimitReached["BLOQUE : limite atteinte"]
+
+    style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BalCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style Blocked fill:#ef4444,stroke:#dc2626,color:#fff
+    style ModeCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style CostCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style FreeOK fill:#22c55e,stroke:#16a34a,color:#fff
+    style CredCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style UseCredit fill:#22c55e,stroke:#16a34a,color:#fff
+    style NoCred fill:#ef4444,stroke:#dc2626,color:#fff
+    style SubCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style NoSub fill:#ef4444,stroke:#dc2626,color:#fff
+    style PremCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style IsPrem fill:#f59e0b,stroke:#d97706,color:#fff
+    style PremOK fill:#22c55e,stroke:#16a34a,color:#fff
+    style PremBlock fill:#ef4444,stroke:#dc2626,color:#fff
+    style EnabledCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style CredFallback fill:#f59e0b,stroke:#d97706,color:#fff
+    style UseCredit2 fill:#22c55e,stroke:#16a34a,color:#fff
+    style BlockedFeat fill:#ef4444,stroke:#dc2626,color:#fff
+    style LimitCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style Unlimited fill:#22c55e,stroke:#16a34a,color:#fff
+    style CounterCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style UnderLimit fill:#22c55e,stroke:#16a34a,color:#fff
+    style OverLimit fill:#f59e0b,stroke:#d97706,color:#fff
+    style UseCredit3 fill:#22c55e,stroke:#16a34a,color:#fff
+    style LimitReached fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 

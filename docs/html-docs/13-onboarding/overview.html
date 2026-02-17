@@ -34,50 +34,68 @@
         <div class="diagram">
           <div class="diagram-title">Flux d'onboarding</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Client["CLIENT (React)"]
-        Hook["useOnboarding() hook"]
-        Modal["Modal / Carousel"]
-        Tooltip["Tooltip guidé"]
-        Actions["Actions utilisateur"]
+graph TB
+    subgraph ClientBlock["CLIENT React"]
+        Hook["useOnboarding hook"]
+        OnbModal["Modal / Carousel"]
+        TooltipGuide["Tooltip guide"]
+        UserActions["Actions utilisateur"]
     end
 
-    subgraph API["API (/api/user/onboarding/)"]
-        GET["GET — Lire l'état"]
-        PUT["PUT — Mettre à jour l'état"]
-        PATCH["PATCH — Mise à jour partielle"]
-        POST["POST — Actions (complete/skip/reset)"]
-        Cache["Cache en mémoire (TTL 1000ms)"]
-        AntiRegress["Protection anti-régression (409)"]
+    subgraph APIBlock["API /api/user/onboarding/"]
+        GetState["GET - Lire etat"]
+        PutState["PUT - Mettre a jour etat"]
+        PatchState["PATCH - Mise a jour partielle"]
+        PostAction["POST - Actions complete/skip/reset"]
+        MemCache["Cache en memoire TTL 1000ms"]
+        AntiRegress["Protection anti-regression 409"]
     end
 
-    subgraph State["ÉTAT (lib/onboarding/)"]
-        Config["onboardingConfig.js — Timings, API"]
-        Constants["onboardingConstants.js — 9 étapes"]
-        Steps["onboardingSteps.js — Factory i18n"]
-        StateLib["onboardingState.js — Mutations"]
+    subgraph StateBlock["ETAT lib/onboarding/"]
+        Config["onboardingConfig.js - Timings, API"]
+        Constants["onboardingConstants.js - 9 etapes"]
+        StepsFactory["onboardingSteps.js - Factory i18n"]
+        StateLib["onboardingState.js - Mutations"]
     end
 
-    subgraph DB["BASE DE DONNÉES"]
-        User["User.onboardingState (JSON)"]
+    subgraph DBBlock["BASE DE DONNEES"]
+        UserDB["User.onboardingState JSON"]
     end
 
-    subgraph SSE["TEMPS RÉEL"]
-        Emitter["dbEmitter.emit('onboarding:updated')"]
-        Stream["SSE /api/events/stream"]
+    subgraph SSEBlock["TEMPS REEL"]
+        SSEEmitter["dbEmitter.emit onboarding:updated"]
+        SSEStream["SSE /api/events/stream"]
     end
 
-    Hook --> GET
-    Actions --> PUT
-    Actions --> POST
-    GET --> Cache --> User
-    PUT --> AntiRegress --> User
-    POST --> User
-    User --> Emitter --> Stream --> Hook
+    Hook --> GetState
+    UserActions --> PutState
+    UserActions --> PostAction
+    GetState --> MemCache --> UserDB
+    PutState --> AntiRegress --> UserDB
+    PostAction --> UserDB
+    UserDB --> SSEEmitter --> SSEStream --> Hook
 
-    Config --> Steps
-    Constants --> Steps
-    StateLib --> API
+    Config --> StepsFactory
+    Constants --> StepsFactory
+    StateLib --> APIBlock
+
+    style Hook fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style OnbModal fill:#6366f1,stroke:#4f46e5,color:#fff
+    style TooltipGuide fill:#6366f1,stroke:#4f46e5,color:#fff
+    style UserActions fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style GetState fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PutState fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PatchState fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PostAction fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style MemCache fill:#f59e0b,stroke:#d97706,color:#fff
+    style AntiRegress fill:#ef4444,stroke:#dc2626,color:#fff
+    style Config fill:#64748b,stroke:#475569,color:#fff
+    style Constants fill:#64748b,stroke:#475569,color:#fff
+    style StepsFactory fill:#6366f1,stroke:#4f46e5,color:#fff
+    style StateLib fill:#6366f1,stroke:#4f46e5,color:#fff
+    style UserDB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SSEEmitter fill:#22c55e,stroke:#16a34a,color:#fff
+    style SSEStream fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

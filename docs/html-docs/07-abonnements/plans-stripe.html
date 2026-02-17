@@ -101,14 +101,14 @@ export function comparePlans(currentPlan, targetPlan) {
           <div class="diagram-title">Flux de synchronisation</div>
           <div class="mermaid">
 flowchart LR
-    subgraph DB["BASE DE DONN&Eacute;ES"]
+    subgraph DB["BASE DE DONNEES"]
         Plans["SubscriptionPlan"]
         Packs["CreditPack"]
     end
 
-    subgraph Sync["syncStripeProductsInternal()"]
-        PlanSync["Pour chaque plan payant :<br/>1. Cr&eacute;er/r&eacute;cup&eacute;rer Product<br/>2. Cr&eacute;er/v&eacute;rifier Price mensuel<br/>3. Cr&eacute;er/v&eacute;rifier Price annuel<br/>4. Archiver anciens prix"]
-        PackSync["Pour chaque pack actif :<br/>1. Cr&eacute;er/r&eacute;cup&eacute;rer Product<br/>2. Cr&eacute;er/v&eacute;rifier Price<br/>3. D&eacute;finir default_price<br/>4. Archiver ancien prix"]
+    subgraph Sync["syncStripeProductsInternal"]
+        PlanSync["Pour chaque plan payant :<br/>1. Creer/recuperer Product<br/>2. Creer/verifier Price mensuel<br/>3. Creer/verifier Price annuel<br/>4. Archiver anciens prix"]
+        PackSync["Pour chaque pack actif :<br/>1. Creer/recuperer Product<br/>2. Creer/verifier Price<br/>3. Definir default_price<br/>4. Archiver ancien prix"]
     end
 
     subgraph Stripe["STRIPE"]
@@ -122,6 +122,13 @@ flowchart LR
     PlanSync --> Prices
     PackSync --> Products
     PackSync --> Prices
+
+    style Plans fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Packs fill:#14b8a6,stroke:#0d9488,color:#fff
+    style PlanSync fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PackSync fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Products fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Prices fill:#6366f1,stroke:#4f46e5,color:#fff
           </div>
         </div>
 

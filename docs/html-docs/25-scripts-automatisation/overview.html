@@ -104,6 +104,13 @@ graph LR
     EXPORT --> PREVIEW
     BUMP --> MIGRATE
     MIGRATE --> SYNC
+
+    style EXPORT fill:#64748b,stroke:#475569,color:#fff
+    style PREVIEW fill:#64748b,stroke:#475569,color:#fff
+    style BUMP fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style MIGRATE fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SYNC fill:#6366f1,stroke:#4f46e5,color:#fff
+    style STAGING_STRIPE fill:#6366f1,stroke:#4f46e5,color:#fff
           </div>
         </div>
 
@@ -183,6 +190,21 @@ graph TD
     K --> L["Mettre à jour package.json + package-lock.json"]
     L --> M["Scan dynamique : grep -rl ancienne version"]
     M --> N["sed -i remplacement dans tous les fichiers"]
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#f59e0b,stroke:#d97706,color:#fff
+    style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style F fill:#f59e0b,stroke:#d97706,color:#fff
+    style G fill:#ef4444,stroke:#dc2626,color:#fff
+    style H fill:#22c55e,stroke:#16a34a,color:#fff
+    style I fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style J fill:#64748b,stroke:#475569,color:#fff
+    style K fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style L fill:#14b8a6,stroke:#0d9488,color:#fff
+    style M fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style N fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
@@ -224,6 +246,15 @@ graph TD
     F -->|"Succès"| G["INSERT dans _data_migrations"]
     G --> D
     F -->|"Erreur"| H["process.exit(1)"]
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D fill:#f59e0b,stroke:#d97706,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style F fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style G fill:#22c55e,stroke:#16a34a,color:#fff
+    style H fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 
@@ -340,6 +371,11 @@ graph LR
     P1["Phase 1<br/>Products &amp; Prices<br/>Live → Test"] --> P2["Phase 2<br/>Update DB<br/>Stripe Test → DB"]
     P2 --> P3["Phase 3<br/>Coupons<br/>Live → Test"]
     P3 --> P4["Phase 4<br/>Promo Codes<br/>Live → Test"]
+
+    style P1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style P2 fill:#14b8a6,stroke:#0d9488,color:#fff
+    style P3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style P4 fill:#8b5cf6,stroke:#7c3aed,color:#fff
           </div>
         </div>
 
@@ -463,6 +499,11 @@ graph LR
     DB["DB: EmailTemplate<br/>+ EmailTrigger"] --> QUERY["findMany<br/>(include trigger)"]
     QUERY --> SLUG["Slugify nom<br/>+ trigger name"]
     SLUG --> WRITE["Écrire fichier JSON<br/>prisma/email-templates/"]
+
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style QUERY fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SLUG fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style WRITE fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

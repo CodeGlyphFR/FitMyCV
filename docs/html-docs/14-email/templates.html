@@ -100,22 +100,32 @@ export const CATEGORY_LABELS = {
         <div class="diagram">
           <div class="diagram-title">Résolution du template email</div>
           <div class="mermaid">
-flowchart TD
-    Start["createEmailSender() appelé"]
+graph TD
+    StartSender["createEmailSender appele"]
     LoadDB["Charger EmailTemplate par triggerName"]
-    HasTemplate{"Template trouvé en DB ?"}
+    HasTemplate{"Template trouve en DB ?"}
     HasDesign{"designJson existe ?"}
     RenderMaily["Rendre via moteur Maily"]
     UseHtml["Utiliser htmlContent brut"]
-    Substitute["Substituer variables {{...}}"]
+    SubstituteVars["Substituer variables"]
     UseFallback["Utiliser fallbackTemplates.js"]
-    Send["Envoyer l'email"]
+    SendEmail["Envoyer email"]
 
-    Start --> LoadDB --> HasTemplate
-    HasTemplate -->|Oui| HasDesign
-    HasTemplate -->|Non| UseFallback --> Send
-    HasDesign -->|Oui| RenderMaily --> Substitute --> Send
-    HasDesign -->|Non| UseHtml --> Substitute --> Send
+    StartSender --> LoadDB --> HasTemplate
+    HasTemplate -->|"Oui"| HasDesign
+    HasTemplate -->|"Non"| UseFallback --> SendEmail
+    HasDesign -->|"Oui"| RenderMaily --> SubstituteVars --> SendEmail
+    HasDesign -->|"Non"| UseHtml --> SubstituteVars
+
+    style StartSender fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style LoadDB fill:#6366f1,stroke:#4f46e5,color:#fff
+    style HasTemplate fill:#f59e0b,stroke:#d97706,color:#fff
+    style HasDesign fill:#f59e0b,stroke:#d97706,color:#fff
+    style RenderMaily fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style UseHtml fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SubstituteVars fill:#6366f1,stroke:#4f46e5,color:#fff
+    style UseFallback fill:#64748b,stroke:#475569,color:#fff
+    style SendEmail fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

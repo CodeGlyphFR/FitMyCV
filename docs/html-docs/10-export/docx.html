@@ -36,17 +36,25 @@
         <div class="diagram">
           <div class="diagram-title">Flux d'export DOCX</div>
           <div class="mermaid">
-flowchart LR
+graph LR
     Request["POST /api/export-word"]
     Auth["Authentification"]
-    Credits["incrementFeatureCounter()"]
+    Credits["incrementFeatureCounter"]
     Build["Construction Document docx"]
-    Pack["Packer.toBuffer()"]
-    Response["Response (application/vnd.openxmlformats)"]
-    Refund["refundCredit()"]
+    Pack["Packer.toBuffer"]
+    Response["Response DOCX"]
+    Refund["refundCredit"]
 
     Request --> Auth --> Credits --> Build --> Pack --> Response
-    Pack -->|Erreur| Refund
+    Pack -->|"Erreur"| Refund
+
+    style Request fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Auth fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Credits fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Build fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Pack fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Response fill:#22c55e,stroke:#16a34a,color:#fff
+    style Refund fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 
@@ -239,19 +247,31 @@ export async function POST(request) {
         <div class="diagram">
           <div class="diagram-title">Structure du document Word généré</div>
           <div class="mermaid">
-flowchart TD
+graph TD
     Doc["Document"]
     Doc --> Section["Section unique"]
-    Section --> Props["Properties<br/>(marges, orientation)"]
-    Section --> Children["Children (paragraphes)"]
+    Section --> Props["Properties<br/>marges, orientation"]
+    Section --> Children["Children - paragraphes"]
 
-    Children --> Header["En-tête<br/>(Heading1: nom, titre)"]
-    Children --> Contact["Contact<br/>(email, tél, lieu)"]
-    Children --> Summary["Résumé<br/>(Paragraph normal)"]
-    Children --> Exp["Expériences<br/>(Heading2 + bullets)"]
-    Children --> Edu["Formation<br/>(Heading2 + paragraphs)"]
-    Children --> Skills["Compétences<br/>(catégories en gras)"]
-    Children --> Lang["Langues<br/>(niveaux CECRL)"]
+    Children --> Header["En-tete<br/>Heading1: nom, titre"]
+    Children --> Contact["Contact<br/>email, tel, lieu"]
+    Children --> Summary["Resume<br/>Paragraph normal"]
+    Children --> Exp["Experiences<br/>Heading2 + bullets"]
+    Children --> Edu["Formation<br/>Heading2 + paragraphs"]
+    Children --> Skills["Competences<br/>categories en gras"]
+    Children --> Lang["Langues<br/>niveaux CECRL"]
+
+    style Doc fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Section fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Props fill:#64748b,stroke:#475569,color:#fff
+    style Children fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Header fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Contact fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Summary fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Exp fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Edu fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Skills fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Lang fill:#6366f1,stroke:#4f46e5,color:#fff
           </div>
         </div>
 

@@ -34,33 +34,33 @@
         <div class="diagram">
           <div class="diagram-title">Flux d'export PDF et DOCX</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Client["CLIENT (React)"]
-        Preview["Prévisualisation CV"]
-        SelectSections["Sélection sections/items"]
+graph TB
+    subgraph Client["CLIENT - React"]
+        Preview["Previsualisation CV"]
+        SelectSections["Selection sections/items"]
         ExportBtn["Bouton Export PDF / DOCX"]
     end
 
-    subgraph Shared["PIPELINE HTML PARTAGÉ (lib/pdf/)"]
-        PrepareData["prepareCvData()"]
-        Styles["getExportStyles() / getPreviewStyles()"]
-        Sections["generateSectionsHtml()"]
-        HTML["HTML complet généré"]
+    subgraph Shared["PIPELINE HTML PARTAGE - lib/pdf/"]
+        PrepareData["prepareCvData"]
+        Styles["getExportStyles /<br/>getPreviewStyles"]
+        Sections["generateSectionsHtml"]
+        HTML["HTML complet genere"]
     end
 
-    subgraph PDF["EXPORT PDF (app/api/export-pdf/)"]
-        Puppeteer["Puppeteer (headless Chrome)"]
-        PdfBuffer["Buffer PDF (A4, marges 15mm/12mm)"]
+    subgraph PDFExport["EXPORT PDF - app/api/export-pdf/"]
+        Puppeteer["Puppeteer headless Chrome"]
+        PdfBuffer["Buffer PDF<br/>A4, marges 15mm/12mm"]
     end
 
-    subgraph DOCX["EXPORT DOCX (app/api/export-word/)"]
-        DocxLib["Bibliothèque docx (Packer)"]
+    subgraph DOCXExport["EXPORT DOCX - app/api/export-word/"]
+        DocxLib["Bibliotheque docx Packer"]
         DocxBuffer["Buffer DOCX"]
     end
 
-    subgraph Credits["CRÉDITS"]
-        Debit["incrementFeatureCounter()"]
-        Refund["refundCredit()"]
+    subgraph CreditsBlock["CREDITS"]
+        Debit["incrementFeatureCounter"]
+        Refund["refundCredit"]
     end
 
     Client --> ExportBtn
@@ -68,8 +68,22 @@ flowchart TB
     Debit --> PrepareData --> Styles --> Sections --> HTML
     HTML --> Puppeteer --> PdfBuffer
     HTML --> DocxLib --> DocxBuffer
-    PdfBuffer -->|Erreur| Refund
-    DocxBuffer -->|Erreur| Refund
+    PdfBuffer -->|"Erreur"| Refund
+    DocxBuffer -->|"Erreur"| Refund
+
+    style Preview fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SelectSections fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ExportBtn fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PrepareData fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Styles fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Sections fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style HTML fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Puppeteer fill:#6366f1,stroke:#4f46e5,color:#fff
+    style PdfBuffer fill:#14b8a6,stroke:#0d9488,color:#fff
+    style DocxLib fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DocxBuffer fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Debit fill:#f59e0b,stroke:#d97706,color:#fff
+    style Refund fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 

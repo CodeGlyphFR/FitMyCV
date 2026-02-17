@@ -39,49 +39,63 @@
         <div class="diagram">
           <div class="diagram-title">Flux de gestion des utilisateurs</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Admin["INTERFACE ADMIN"]
+graph TB
+    subgraph AdminUI["INTERFACE ADMIN"]
         UsersTab["UsersTab"]
         AddModal["AddUserModal"]
         EditModal["EditUserModal"]
     end
 
-    subgraph API["API /api/admin/users"]
-        GET["GET<br/>Liste pagin&eacute;e + KPIs"]
-        POST["POST<br/>Cr&eacute;ation utilisateur"]
-        PATCH["PATCH /[userId]<br/>Modification"]
-        DELETE["DELETE /[userId]<br/>Suppression"]
+    subgraph APIUsers["API /api/admin/users"]
+        GetUsers["GET<br/>Liste paginee + KPIs"]
+        PostUser["POST<br/>Creation utilisateur"]
+        PatchUser["PATCH userId<br/>Modification"]
+        DeleteUser["DELETE userId<br/>Suppression"]
     end
 
-    subgraph Actions["ACTIONS PATCH"]
+    subgraph PatchActions["ACTIONS PATCH"]
         UpdateRole["updateRole<br/>USER / ADMIN"]
         UpdateEmail["updateEmail<br/>+ reset emailVerified"]
         ValidateEmail["validateEmail<br/>Validation manuelle"]
     end
 
-    subgraph DB["BASE DE DONN&Eacute;ES"]
-        User[(User)]
-        CvFile[(CvFile)]
-        Files["Fichiers S3/disque"]
+    subgraph DBBlock["BASE DE DONNEES"]
+        UserTable[("User")]
+        CvFileTable[("CvFile")]
+        FilesStorage["Fichiers S3/disque"]
     end
 
-    UsersTab -->|"Recherche, filtres"| GET
-    AddModal -->|"email, name, password, role"| POST
-    EditModal --> PATCH
-    UsersTab -->|"Supprimer"| DELETE
+    UsersTab -->|"Recherche, filtres"| GetUsers
+    AddModal -->|"email, name, password, role"| PostUser
+    EditModal --> PatchUser
+    UsersTab -->|"Supprimer"| DeleteUser
 
-    PATCH --> UpdateRole
-    PATCH --> UpdateEmail
-    PATCH --> ValidateEmail
+    PatchUser --> UpdateRole
+    PatchUser --> UpdateEmail
+    PatchUser --> ValidateEmail
 
-    GET --> User
-    POST --> User
-    UpdateRole --> User
-    UpdateEmail --> User
-    ValidateEmail --> User
-    DELETE -->|"Cascade compl&egrave;te"| User
-    DELETE -->|"Nettoyage"| CvFile
-    DELETE -->|"Nettoyage"| Files
+    GetUsers --> UserTable
+    PostUser --> UserTable
+    UpdateRole --> UserTable
+    UpdateEmail --> UserTable
+    ValidateEmail --> UserTable
+    DeleteUser -->|"Cascade complete"| UserTable
+    DeleteUser -->|"Nettoyage"| CvFileTable
+    DeleteUser -->|"Nettoyage"| FilesStorage
+
+    style UsersTab fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style AddModal fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style EditModal fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style GetUsers fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PostUser fill:#22c55e,stroke:#16a34a,color:#fff
+    style PatchUser fill:#f59e0b,stroke:#d97706,color:#fff
+    style DeleteUser fill:#ef4444,stroke:#dc2626,color:#fff
+    style UpdateRole fill:#6366f1,stroke:#4f46e5,color:#fff
+    style UpdateEmail fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ValidateEmail fill:#6366f1,stroke:#4f46e5,color:#fff
+    style UserTable fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CvFileTable fill:#14b8a6,stroke:#0d9488,color:#fff
+    style FilesStorage fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 

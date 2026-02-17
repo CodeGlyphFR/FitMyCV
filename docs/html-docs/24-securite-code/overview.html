@@ -52,6 +52,17 @@ graph TB
 
     INPUT["Données utilisateur<br/>(CV, formulaires)"] --> XSS
     XSS --> DB["Base de données<br/>(données saines)"]
+
+    style FV fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SL fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style XSS fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style UPLOAD fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style STORE fill:#22c55e,stroke:#16a34a,color:#fff
+    style REJECT fill:#ef4444,stroke:#dc2626,color:#fff
+    style LOGS fill:#64748b,stroke:#475569,color:#fff
+    style CONSOLE fill:#64748b,stroke:#475569,color:#fff
+    style INPUT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 
@@ -104,6 +115,17 @@ graph LR
     C -.->|"❌"| R2["Rejet"]
     D -.->|"❌"| R3["Rejet"]
     E -.->|"❌"| R4["Rejet"]
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D fill:#f59e0b,stroke:#d97706,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style F fill:#22c55e,stroke:#16a34a,color:#fff
+    style R1 fill:#ef4444,stroke:#dc2626,color:#fff
+    style R2 fill:#ef4444,stroke:#dc2626,color:#fff
+    style R3 fill:#ef4444,stroke:#dc2626,color:#fff
+    style R4 fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 
@@ -408,6 +430,14 @@ graph TB
     S1 --> O1["&amp;lt;script&amp;gt; → visible<br/>mais inoffensif"]
     S2 --> O2["&lt;b&gt;, &lt;em&gt; conservés<br/>&lt;script&gt; supprimé"]
     S3 --> O3["Texte brut uniquement"]
+
+    style INPUT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style S1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style O1 fill:#22c55e,stroke:#16a34a,color:#fff
+    style O2 fill:#22c55e,stroke:#16a34a,color:#fff
+    style O3 fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

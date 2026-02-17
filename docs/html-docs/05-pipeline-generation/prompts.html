@@ -1017,22 +1017,22 @@ async function processIncludeDirectives(content, useCache) {
           <div class="diagram-title">Cha&icirc;ne d'inclusion des prompts partag&eacute;s</div>
           <div class="mermaid">
 flowchart TD
-    subgraph Shared["lib/prompts-shared/"]
-        SB["system-base.md<br/>(rôle expert + profils)"]
-        CAR["cv-adaptation-rules.md<br/>(7 sections de règles)"]
-        LP["language-policy.md<br/>(politique multilingue)"]
-        RF["response-format.md<br/>(JSON strict)"]
-        JI["json-instructions.md<br/>(template JSON CV)"]
-        SR["scoring-rules.md<br/>(4 catégories pondérées)"]
+    subgraph SharedPrompts["lib/prompts-shared/"]
+        SB["system-base.md<br/>role expert + profils"]
+        CAR["cv-adaptation-rules.md<br/>7 sections de regles"]
+        LP["language-policy.md<br/>politique multilingue"]
+        RF["response-format.md<br/>JSON strict"]
+        JI["json-instructions.md<br/>template JSON CV"]
+        SR["scoring-rules.md<br/>4 categories ponderees"]
     end
 
-    subgraph Pipeline["Prompts system du pipeline"]
+    subgraph PipelinePrompts["Prompts system du pipeline"]
         CS["classify-system.md"]
         BES["batch-experience-system.md"]
         BPS["batch-project-system.md"]
         BSS["batch-skills-system.md"]
         BSU["batch-summary-system.md"]
-        Others["... (autres system prompts)"]
+        OthersPrompt["autres system prompts"]
     end
 
     SB -->|"INCLUDE"| CS
@@ -1040,11 +1040,24 @@ flowchart TD
     SB -->|"INCLUDE"| BPS
     SB -->|"INCLUDE"| BSS
     SB -->|"INCLUDE"| BSU
-    SB -->|"INCLUDE"| Others
+    SB -->|"INCLUDE"| OthersPrompt
 
     SB -->|"inclut en cascade"| CAR
     LP -.->|"inclus selon besoin"| BES
-    LP -.->|"inclus selon besoin"| Others
+    LP -.->|"inclus selon besoin"| OthersPrompt
+
+    style SB fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CAR fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style LP fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style RF fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style JI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SR fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CS fill:#6366f1,stroke:#4f46e5,color:#fff
+    style BES fill:#6366f1,stroke:#4f46e5,color:#fff
+    style BPS fill:#6366f1,stroke:#4f46e5,color:#fff
+    style BSS fill:#6366f1,stroke:#4f46e5,color:#fff
+    style BSU fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OthersPrompt fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 

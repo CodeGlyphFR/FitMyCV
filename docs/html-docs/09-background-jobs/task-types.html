@@ -279,15 +279,19 @@ const { schedule, run } = createJobRunner({
         <div class="diagram">
           <div class="diagram-title">Cycle de vie d'une BackgroundTask</div>
           <div class="mermaid">
-stateDiagram-v2
-    [*] --> queued : Route API crée la tâche
-    queued --> running : processQueue() dépile
-    running --> completed : Job terminé avec succès
-    running --> failed : Erreur / timeout
-    running --> cancelled : Utilisateur annule
-    failed --> [*] : refundFeatureUsage()
-    cancelled --> [*] : refundFeatureUsage()
-    completed --> [*]
+graph TD
+    START(("Debut")) --> QUEUED["queued<br/>Route API cree la tache"]
+    QUEUED -->|"processQueue depile"| RUNNING["running"]
+    RUNNING -->|"Job termine avec succes"| COMPLETED["completed"]
+    RUNNING -->|"Erreur / timeout"| FAILED["failed<br/>refundFeatureUsage"]
+    RUNNING -->|"Utilisateur annule"| CANCELLED["cancelled<br/>refundFeatureUsage"]
+
+    style START fill:#64748b,stroke:#475569,color:#fff
+    style QUEUED fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RUNNING fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style COMPLETED fill:#22c55e,stroke:#16a34a,color:#fff
+    style FAILED fill:#ef4444,stroke:#dc2626,color:#fff
+    style CANCELLED fill:#f59e0b,stroke:#d97706,color:#fff
           </div>
         </div>
 

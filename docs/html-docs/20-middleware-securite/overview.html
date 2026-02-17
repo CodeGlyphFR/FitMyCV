@@ -56,6 +56,23 @@ flowchart TB
     CorsAdd -->|"Oui"| AddCors["Ajouter CORS headers"]
     CorsAdd -->|"Non"| Done["NextResponse.next()"]
     AddCors --> Done
+    style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style HMR fill:#f59e0b,stroke:#d97706,color:#fff
+    style Bypass fill:#64748b,stroke:#475569,color:#fff
+    style CORS fill:#f59e0b,stroke:#d97706,color:#fff
+    style Preflight fill:#f59e0b,stroke:#d97706,color:#fff
+    style CorsOK fill:#22c55e,stroke:#16a34a,color:#fff
+    style Cors403 fill:#ef4444,stroke:#dc2626,color:#fff
+    style Email fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style EmailCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style Redirect fill:#ef4444,stroke:#dc2626,color:#fff
+    style RateLimit fill:#f59e0b,stroke:#d97706,color:#fff
+    style RLCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style RL429 fill:#ef4444,stroke:#dc2626,color:#fff
+    style Headers fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CorsAdd fill:#f59e0b,stroke:#d97706,color:#fff
+    style AddCors fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Done fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
@@ -133,6 +150,14 @@ flowchart LR
     Inc --> Limit{"count > maxRequests ?"}
     Limit -->|"Oui"| Block["429 + Retry-After"]
     Limit -->|"Non"| Pass["Requête autorisée"]
+    style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Key fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Check fill:#f59e0b,stroke:#d97706,color:#fff
+    style Reset fill:#64748b,stroke:#475569,color:#fff
+    style Inc fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Limit fill:#f59e0b,stroke:#d97706,color:#fff
+    style Block fill:#ef4444,stroke:#dc2626,color:#fff
+    style Pass fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
@@ -412,6 +437,13 @@ flowchart TB
     Connected -->|"Oui"| Verified{"emailVerified ?"}
     Verified -->|"Oui"| Pass
     Verified -->|"Non"| Redirect["302 → /auth/verify-email-required"]
+    style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Public fill:#f59e0b,stroke:#d97706,color:#fff
+    style Pass fill:#22c55e,stroke:#16a34a,color:#fff
+    style Token fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Connected fill:#f59e0b,stroke:#d97706,color:#fff
+    style Verified fill:#f59e0b,stroke:#d97706,color:#fff
+    style Redirect fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 

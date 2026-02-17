@@ -38,38 +38,38 @@
           <div class="diagram-title">Ex&eacute;cution d&eacute;taill&eacute;e du pipeline d'am&eacute;lioration</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Stage12["STAGE 1 &amp; 2 - Promise.all()"]
+    subgraph Stage12["STAGE 1 &amp; 2 - Promise.all"]
         direction LR
-        S1["Stage 1: classifySkills()<br/>gpt-4o-mini<br/>Classification des missingSkills"]
-        S2["Stage 2: preprocessSuggestions()<br/>Chain-of-Thought<br/>Routing des suggestions"]
+        S1["Stage 1: classifySkills<br/>gpt-4o-mini<br/>Classification des missingSkills"]
+        S2["Stage 2: preprocessSuggestions<br/>Chain-of-Thought<br/>Routing des suggestions"]
     end
 
     subgraph Apply1["APPLICATION STAGE 1"]
         ClassResult["Classification result"]
         AddSkills["Ajouter skills au workingCv<br/>par categorie + niveau"]
-        TrackSkills["Tracker changements<br/>allChangesMade[]"]
+        TrackSkills["Tracker changements<br/>allChangesMade"]
     end
 
-    subgraph Stage3["STAGE 3 - Promise.all + pLimit(5)"]
+    subgraph Stage3["STAGE 3 - Promise.all + pLimit 5"]
         direction TB
-        ExpTasks["experienceTasks[]<br/>improveExperience() par exp"]
-        ProjTasks["projectTasks[]<br/>improveProject() par projet"]
-        NewProjTasks["newProjectTasks[]<br/>improveProject(null)"]
-        LangTask["languageTask<br/>improveLanguages()"]
-        ExtrasTasks["extrasTasks[]<br/>improveExtras() par extra"]
+        ExpTasks["experienceTasks<br/>improveExperience par exp"]
+        ProjTasks["projectTasks<br/>improveProject par projet"]
+        NewProjTasks["newProjectTasks<br/>improveProject - nouveau"]
+        LangTask["languageTask<br/>improveLanguages"]
+        ExtrasTasks["extrasTasks<br/>improveExtras par extra"]
     end
 
     subgraph Apply3["APPLICATION STAGE 3"]
-        ApplyExp["applyExperienceModifications()"]
-        ApplyProj["applyProjectModifications()"]
-        ApplyLang["applyLanguageModifications()"]
-        ApplyExtras["applyExtrasModifications()"]
+        ApplyExp["applyExperienceModifications"]
+        ApplyProj["applyProjectModifications"]
+        ApplyLang["applyLanguageModifications"]
+        ApplyExtras["applyExtrasModifications"]
     end
 
     subgraph Stage4["STAGE 4 - CONDITIONNEL"]
         Check{"improvedExperiences &gt; 0<br/>OU<br/>improvedProjects &gt; 0 ?"}
-        Summary["improveSummary()<br/>applySummaryDiff()"]
-        Skip["Skip summary"]
+        SummaryN["improveSummary<br/>applySummaryDiff"]
+        SkipN["Skip summary"]
     end
 
     subgraph Output["SORTIE"]
@@ -87,12 +87,31 @@ flowchart TB
 
     ApplyExp --> Check
     ApplyProj --> Check
-    Check -->|Oui| Summary
-    Check -->|Non| Skip
-    Summary --> Result
-    Skip --> Result
+    Check -->|"Oui"| SummaryN
+    Check -->|"Non"| SkipN
+    SummaryN --> Result
+    SkipN --> Result
     ApplyLang --> Result
     ApplyExtras --> Result
+
+    style S1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ClassResult fill:#14b8a6,stroke:#0d9488,color:#fff
+    style AddSkills fill:#6366f1,stroke:#4f46e5,color:#fff
+    style TrackSkills fill:#14b8a6,stroke:#0d9488,color:#fff
+    style ExpTasks fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ProjTasks fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style NewProjTasks fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style LangTask fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ExtrasTasks fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ApplyExp fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ApplyProj fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ApplyLang fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ApplyExtras fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Check fill:#f59e0b,stroke:#d97706,color:#fff
+    style SummaryN fill:#22c55e,stroke:#16a34a,color:#fff
+    style SkipN fill:#64748b,stroke:#475569,color:#fff
+    style Result fill:#0ea5e9,stroke:#0284c7,color:#fff
           </div>
         </div>
 

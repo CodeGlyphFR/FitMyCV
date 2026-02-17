@@ -34,40 +34,63 @@
         <div class="diagram">
           <div class="diagram-title">Modules du panneau admin et flux de donn&eacute;es</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Dashboard["PANNEAU ADMIN (11 onglets)"]
-        Overview["OverviewTab<br/>KPIs + MRR"]
-        Users["UsersTab<br/>Gestion utilisateurs"]
-        Revenue["RevenueTab<br/>Revenus + marges"]
-        Plans["SubscriptionPlansTab<br/>Plans + feature limits"]
-        OpenAI["OpenAICostsTab<br/>Monitoring IA"]
-        Email["EmailManagementTab<br/>Templates + triggers"]
-        Settings["SettingsTab<br/>Configuration"]
-        Onboarding["OnboardingTab<br/>Funnel analytics"]
-        Features["FeaturesTab<br/>Feature flags"]
-        Errors["ErrorsTab<br/>Logs erreurs"]
-        Feedback["FeedbackTab<br/>Retours users"]
+graph TB
+    subgraph DashboardBlock["PANNEAU ADMIN - 11 onglets"]
+        OverviewT["OverviewTab<br/>KPIs + MRR"]
+        UsersT["UsersTab<br/>Gestion utilisateurs"]
+        RevenueT["RevenueTab<br/>Revenus + marges"]
+        PlansT["SubscriptionPlansTab<br/>Plans + feature limits"]
+        OpenAIT["OpenAICostsTab<br/>Monitoring IA"]
+        EmailT["EmailManagementTab<br/>Templates + triggers"]
+        SettingsT["SettingsTab<br/>Configuration"]
+        OnboardingT["OnboardingTab<br/>Funnel analytics"]
+        FeaturesT["FeaturesTab<br/>Feature flags"]
+        ErrorsT["ErrorsTab<br/>Logs erreurs"]
+        FeedbackT["FeedbackTab<br/>Retours users"]
     end
 
-    subgraph API["65 ENDPOINTS /api/admin/* + /api/analytics/*"]
-        UsersAPI["users<br/>users/:id"]
-        SettingsAPI["settings<br/>settings/:id<br/>settings/history"]
+    subgraph APIBlock["65 ENDPOINTS /api/admin/* + /api/analytics/*"]
+        UsersAPI["users<br/>users/id"]
+        SettingsAPI["settings<br/>settings/id<br/>settings/history"]
         PlansAPI["subscription-plans<br/>subscription-mode"]
-        CreditsAPI["credit-packs<br/>credit-packs/:id"]
-        OpenAIAPI["openai-pricing<br/>openai-balance<br/>openai-alerts<br/>openai-alerts/triggered"]
-        EmailAPI["email-templates<br/>email-triggers<br/>email-logs<br/>email-stats<br/>email-test"]
+        CreditsAPI["credit-packs<br/>credit-packs/id"]
+        OpenAIAPI["openai-pricing<br/>openai-balance<br/>openai-alerts"]
+        EmailAPI["email-templates<br/>email-triggers<br/>email-logs<br/>email-stats"]
         RevenueAPI["revenue<br/>plan-costs"]
         MaintAPI["maintenance<br/>cancel-all-subscriptions<br/>telemetry/cleanup"]
-        OnboardingAPI["onboarding/analytics<br/>onboarding/config<br/>onboarding/stats"]
-        AnalyticsAPI["analytics/cv<br/>analytics/features<br/>analytics/conversions<br/>analytics/errors"]
+        OnboardingAPI["onboarding/analytics<br/>onboarding/config"]
+        AnalyticsAPI["analytics/cv<br/>analytics/features<br/>analytics/conversions"]
     end
 
-    subgraph DB["BASE DE DONNEES (9 modeles admin)"]
-        Models["Setting | SubscriptionPlan<br/>CreditPack | OpenAIPricing<br/>OpenAIAlert | OpenAIUsage<br/>EmailTrigger | EmailTemplate<br/>EmailLog"]
+    subgraph DBAdmin["BASE DE DONNEES - 9 modeles admin"]
+        AdminModels["Setting - SubscriptionPlan<br/>CreditPack - OpenAIPricing<br/>OpenAIAlert - OpenAIUsage<br/>EmailTrigger - EmailTemplate<br/>EmailLog"]
     end
 
-    Dashboard --> API
-    API --> DB
+    DashboardBlock --> APIBlock
+    APIBlock --> DBAdmin
+
+    style OverviewT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style UsersT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RevenueT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PlansT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style OpenAIT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style EmailT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SettingsT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style OnboardingT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style FeaturesT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ErrorsT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style FeedbackT fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style UsersAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SettingsAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PlansAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreditsAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style OpenAIAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style EmailAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style RevenueAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style MaintAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style OnboardingAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style AnalyticsAPI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style AdminModels fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 

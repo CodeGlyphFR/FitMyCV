@@ -81,63 +81,90 @@
           <div class="diagram-title">Processus complet de la phase Recomposition</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Inputs["ENTREES (batchResults)"]
+    subgraph InputBatch["ENTREES - batchResults"]
         direction LR
-        BR_EXP["batch-experiences<br/>(experiences[])"]
-        BR_PROJ["batch-projects<br/>(projects[])"]
-        BR_SKILLS["batch-skills<br/>(skills{} + _raw)"]
-        BR_SUMMARY["batch-summary<br/>(summary{})"]
-        BR_EXTRAS["batch-extras<br/>(extras[] + extras_modifications[])"]
-        BR_EDU["batch-education<br/>(education[] + education_modifications[])"]
-        BR_LANG["batch-languages<br/>(languages[] + language_modifications[])"]
+        BR_EXP["batch-experiences<br/>experiences[]"]
+        BR_PROJ["batch-projects<br/>projects[]"]
+        BR_SKILLS["batch-skills<br/>skills + _raw"]
+        BR_SUMMARY["batch-summary<br/>summary"]
+        BR_EXTRAS["batch-extras<br/>extras[] + extras_modifications[]"]
+        BR_EDU["batch-education<br/>education[] + education_modifications[]"]
+        BR_LANG["batch-languages<br/>languages[] + language_modifications[]"]
     end
 
-    subgraph Source["CV SOURCE"]
-        SRC_CV["sourceCv<br/>(CvFile.content)"]
+    subgraph SourceCV["CV SOURCE"]
+        SRC_CV["sourceCv<br/>CvFile.content"]
         SRC_NAME["sourceCvFileName"]
     end
 
-    subgraph Assembly["ASSEMBLAGE (algorithmique)"]
+    subgraph AssemblyStep["ASSEMBLAGE algorithmique"]
         direction TB
         A1["1. header = sourceCv.header<br/>+ current_title = jobOffer.title"]
         A2["2. summary = batchResults.summary"]
-        A3["3. experience = batchResults.experiences<br/>(KEEP uniquement)"]
-        A4["4. projects = batchResults.projects<br/>(KEEP + MOVE_TO_PROJECTS)"]
-        A5["5. skills = cleanSkills<br/>(sans _raw)"]
+        A3["3. experience = batchResults.experiences<br/>KEEP uniquement"]
+        A4["4. projects = batchResults.projects<br/>KEEP + MOVE_TO_PROJECTS"]
+        A5["5. skills = cleanSkills<br/>sans _raw"]
         A6["6. education = batchResults.education"]
         A7["7. languages = batchResults.languages"]
         A8["8. extras = batchResults.extras"]
         A1 --> A2 --> A3 --> A4 --> A5 --> A6 --> A7 --> A8
     end
 
-    subgraph Sanitize["SANITIZE"]
-        SAN["sanitizeForPostgres()<br/>Supprime \\u0000"]
+    subgraph SanitizeStep["SANITIZE"]
+        SAN["sanitizeForPostgres<br/>Supprime null bytes"]
     end
 
-    subgraph DB["PERSISTENCE"]
+    subgraph DBPersist["PERSISTENCE"]
         direction TB
-        CF["CvFile.create()<br/>createdBy = 'generate-cv'"]
-        CV0["CvVersion.create()<br/>version = 0, changeType = 'import'"]
-        UPD["CvGenerationOffer.update()<br/>generatedCvFileId"]
+        CF["CvFile.create<br/>createdBy = generate-cv"]
+        CV0["CvVersion.create<br/>version = 0, changeType = import"]
+        UPD["CvGenerationOffer.update<br/>generatedCvFileId"]
     end
 
-    subgraph ChangeTracking["CHANGE TRACKING"]
+    subgraph ChangeTrack["CHANGE TRACKING"]
         direction TB
-        EXTRACT["extractChangesFromBatchResults()<br/>Modifications IA (before/after/reason)"]
-        DIFF["computeCvDiff()<br/>Diff programmatique (removed + added)"]
-        DEDUP["Deduplication<br/>(aiChangeKeys, modifiedBeforeValues...)"]
-        MERGE["mergeTranslationPairs()<br/>Fusionne removed+added traductions"]
-        INIT["initializeReviewState()<br/>Stocke dans CvFile.pendingChanges"]
-        EXTRACT --> DEDUP
-        DIFF --> DEDUP
-        DEDUP --> MERGE --> INIT
+        EXTRACTCH["extractChangesFromBatchResults<br/>Modifications IA before/after/reason"]
+        DIFFCH["computeCvDiff<br/>Diff programmatique removed + added"]
+        DEDUPCH["Deduplication<br/>aiChangeKeys, modifiedBeforeValues"]
+        MERGECH["mergeTranslationPairs<br/>Fusionne removed+added traductions"]
+        INITCH["initializeReviewState<br/>Stocke dans CvFile.pendingChanges"]
+        EXTRACTCH --> DEDUPCH
+        DIFFCH --> DEDUPCH
+        DEDUPCH --> MERGECH --> INITCH
     end
 
-    Inputs --> Assembly
-    Source --> Assembly
-    Assembly --> Sanitize
-    Sanitize --> DB
-    DB --> ChangeTracking
+    InputBatch --> AssemblyStep
+    SourceCV --> AssemblyStep
+    AssemblyStep --> SanitizeStep
+    SanitizeStep --> DBPersist
+    DBPersist --> ChangeTrack
+
+    style BR_EXP fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_PROJ fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_SKILLS fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_SUMMARY fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_EXTRAS fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_EDU fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_LANG fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SRC_CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SRC_NAME fill:#64748b,stroke:#475569,color:#fff
+    style A1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A4 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A5 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A6 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A7 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A8 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SAN fill:#64748b,stroke:#475569,color:#fff
+    style CF fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CV0 fill:#14b8a6,stroke:#0d9488,color:#fff
+    style UPD fill:#14b8a6,stroke:#0d9488,color:#fff
+    style EXTRACTCH fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DIFFCH fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DEDUPCH fill:#f59e0b,stroke:#d97706,color:#fff
+    style MERGECH fill:#f59e0b,stroke:#d97706,color:#fff
+    style INITCH fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
@@ -442,28 +469,34 @@ const cleanSkills = batchResults.skills ? {
           <div class="mermaid">
 flowchart LR
     subgraph Step1["Etape 1"]
-        EXTRACT["extractChangesFromBatchResults()<br/>Modifications IA<br/>(before/after/reason)"]
+        EXTRACT2["extractChangesFromBatchResults<br/>Modifications IA<br/>before/after/reason"]
     end
 
     subgraph Step2["Etape 2"]
-        DIFF["computeCvDiff()<br/>Diff programmatique<br/>(removed + added)"]
+        DIFF2["computeCvDiff<br/>Diff programmatique<br/>removed + added"]
     end
 
     subgraph Step3["Etape 3"]
-        DEDUP["Deduplication<br/>aiChangeKeys<br/>modifiedBeforeValues<br/>removedOriginalNames<br/>consolidatedOriginalKeys<br/>modifiedObjectBeforeNames"]
+        DEDUP2["Deduplication<br/>aiChangeKeys<br/>modifiedBeforeValues<br/>removedOriginalNames<br/>consolidatedOriginalKeys"]
     end
 
     subgraph Step4["Etape 4"]
-        MERGE["mergeTranslationPairs()<br/>Fusionne removed+added<br/>= traductions"]
+        MERGE2["mergeTranslationPairs<br/>Fusionne removed+added<br/>= traductions"]
     end
 
     subgraph Step5["Etape 5"]
-        INIT["initializeReviewState()<br/>CvFile.pendingChanges"]
+        INIT2["initializeReviewState<br/>CvFile.pendingChanges"]
     end
 
     Step1 --> Step3
     Step2 --> Step3
     Step3 --> Step4 --> Step5
+
+    style EXTRACT2 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DIFF2 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DEDUP2 fill:#f59e0b,stroke:#d97706,color:#fff
+    style MERGE2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style INIT2 fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

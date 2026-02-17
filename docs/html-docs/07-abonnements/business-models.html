@@ -47,46 +47,59 @@
           <div class="diagram-title">Flux du mod&egrave;le Abonnement</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Plans["PLANS D'ABONNEMENT"]
-        Free["Gratuit<br/>tier 0 - 0&euro;"]
+    subgraph Plans["PLANS D ABONNEMENT"]
+        Free["Gratuit<br/>tier 0 - 0 EUR"]
         Pro["Pro<br/>tier 1"]
         Premium["Premium<br/>tier 2"]
     end
 
-    subgraph Limits["SYST&Egrave;ME DE LIMITES"]
+    subgraph Limits["SYSTEME DE LIMITES"]
         FL["SubscriptionPlanFeatureLimit"]
-        Counter["FeatureUsageCounter<br/>(reset mensuel auto)"]
+        CounterN["FeatureUsageCounter<br/>reset mensuel auto"]
     end
 
-    subgraph Usage["V&Eacute;RIFICATION"]
-        Check{"canUseFeature()"}
+    subgraph Usage["VERIFICATION"]
+        CheckN{"canUseFeature"}
         Premium2{"premiumRequired ?"}
     end
 
-    subgraph Credits["EXTENSION CR&Eacute;DITS"]
-        Buy["Achat pack cr&eacute;dits"]
-        Balance["CreditBalance"]
+    subgraph Credits["EXTENSION CREDITS"]
+        Buy["Achat pack credits"]
+        BalanceN["CreditBalance"]
     end
 
-    subgraph Action["R&Eacute;SULTAT"]
-        Execute["Ex&eacute;cuter + incr&eacute;menter compteur"]
-        Block["Bloquer + Proposer upgrade/cr&eacute;dits"]
-        PremExec["Ex&eacute;cuter sans cr&eacute;dit"]
+    subgraph Action["RESULTAT"]
+        Execute["Executer + incrementer compteur"]
+        BlockN["Bloquer + Proposer upgrade/credits"]
+        PremExec["Executer sans credit"]
     end
 
     Free & Pro & Premium --> FL
-    FL --> Counter --> Check
+    FL --> CounterN --> CheckN
 
-    Check -->|"Limite non atteinte"| Execute
-    Check -->|"Limite atteinte"| Balance
-    Check -->|"Feature disabled"| Balance
-    Balance -->|"Cr&eacute;dits OK"| Execute
-    Balance -->|"Insuffisant"| Block
-    Block --> Buy --> Balance
+    CheckN -->|"Limite non atteinte"| Execute
+    CheckN -->|"Limite atteinte"| BalanceN
+    CheckN -->|"Feature disabled"| BalanceN
+    BalanceN -->|"Credits OK"| Execute
+    BalanceN -->|"Insuffisant"| BlockN
+    BlockN --> Buy --> BalanceN
 
-    Check -->|"premiumRequired"| Premium2
+    CheckN -->|"premiumRequired"| Premium2
     Premium2 -->|"Plan Premium"| PremExec
-    Premium2 -->|"Autre plan"| Block
+    Premium2 -->|"Autre plan"| BlockN
+
+    style Free fill:#64748b,stroke:#475569,color:#fff
+    style Pro fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Premium fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FL fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CounterN fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CheckN fill:#f59e0b,stroke:#d97706,color:#fff
+    style Premium2 fill:#f59e0b,stroke:#d97706,color:#fff
+    style Buy fill:#6366f1,stroke:#4f46e5,color:#fff
+    style BalanceN fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Execute fill:#22c55e,stroke:#16a34a,color:#fff
+    style BlockN fill:#ef4444,stroke:#dc2626,color:#fff
+    style PremExec fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
@@ -158,36 +171,47 @@ await prisma.creditBalance.create({
 flowchart TB
     subgraph Register["INSCRIPTION"]
         NewUser["Nouvel utilisateur"]
-        Welcome["Cr&eacute;dits de bienvenue<br/>(setting: welcome_credits)"]
+        Welcome["Credits de bienvenue<br/>setting: welcome_credits"]
     end
 
     subgraph Usage["UTILISATION"]
-        Balance["CreditBalance"]
-        CostLookup["getCreditCostForFeature()"]
-        Check{"Co&ucirc;t = 0 ?"}
-        CredCheck{"Cr&eacute;dits >= co&ucirc;t ?"}
+        BalanceC["CreditBalance"]
+        CostLookup["getCreditCostForFeature"]
+        CheckC{"Cout = 0 ?"}
+        CredCheckC{"Credits >= cout ?"}
     end
 
     subgraph Purchase["ACHAT"]
-        Packs["Packs de cr&eacute;dits<br/>(CreditPack)"]
+        Packs["Packs de credits<br/>CreditPack"]
     end
 
-    subgraph Action["R&Eacute;SULTAT"]
-        FreeExec["Ex&eacute;cuter (gratuit)"]
-        PaidExec["Ex&eacute;cuter + D&eacute;biter"]
-        Block["Bloquer + Proposer achat"]
+    subgraph Action["RESULTAT"]
+        FreeExec["Executer - gratuit"]
+        PaidExec["Executer + Debiter"]
+        BlockC["Bloquer + Proposer achat"]
     end
 
-    NewUser --> Welcome --> Balance
-    Balance --> CostLookup --> Check
+    NewUser --> Welcome --> BalanceC
+    BalanceC --> CostLookup --> CheckC
 
-    Check -->|"Oui"| FreeExec
-    Check -->|"Non"| CredCheck
+    CheckC -->|"Oui"| FreeExec
+    CheckC -->|"Non"| CredCheckC
 
-    CredCheck -->|"Oui"| PaidExec
-    CredCheck -->|"Non"| Block
+    CredCheckC -->|"Oui"| PaidExec
+    CredCheckC -->|"Non"| BlockC
 
-    Block --> Packs --> Balance
+    BlockC --> Packs --> BalanceC
+
+    style NewUser fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Welcome fill:#22c55e,stroke:#16a34a,color:#fff
+    style BalanceC fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CostLookup fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CheckC fill:#f59e0b,stroke:#d97706,color:#fff
+    style CredCheckC fill:#f59e0b,stroke:#d97706,color:#fff
+    style Packs fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FreeExec fill:#22c55e,stroke:#16a34a,color:#fff
+    style PaidExec fill:#22c55e,stroke:#16a34a,color:#fff
+    style BlockC fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 

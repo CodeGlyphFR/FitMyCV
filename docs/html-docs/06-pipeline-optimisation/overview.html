@@ -44,43 +44,43 @@
           <div class="mermaid">
 flowchart TB
     subgraph Input["ENTREE"]
-        CV["CV existant<br/>(CvFile.content)"]
-        Score["Score + Suggestions<br/>(depuis scoring)"]
-        User["Selections utilisateur<br/>(suggestions + skills)"]
+        CV["CV existant<br/>CvFile.content"]
+        Score["Score + Suggestions<br/>depuis scoring"]
+        UserSel["Selections utilisateur<br/>suggestions + skills"]
     end
 
     subgraph API["API ENTRY POINT"]
         Improve["POST /api/cv/improve<br/>route.js"]
-        Schedule["scheduleImproveCvJob()"]
+        Schedule["scheduleImproveCvJob"]
     end
 
-    subgraph Stage12["STAGE 1 &amp; 2 (PARALLELE)"]
+    subgraph Stage12["STAGE 1 &amp; 2 - PARALLELE"]
         direction LR
-        S1["Stage 1<br/>classifySkills()<br/>Classification skills manquants"]
-        S2["Stage 2<br/>preprocessSuggestions()<br/>Chain-of-Thought routing"]
+        S1["Stage 1<br/>classifySkills<br/>Classification skills manquants"]
+        S2["Stage 2<br/>preprocessSuggestions<br/>Chain-of-Thought routing"]
     end
 
-    subgraph Stage3["STAGE 3 - AMELIORATIONS (pLimit 5)"]
+    subgraph Stage3["STAGE 3 - AMELIORATIONS - pLimit 5"]
         direction TB
-        Exp["improveExperience()<br/>Responsabilites, deliverables"]
-        Proj["improveProject()<br/>Modifier ou creer projets"]
-        Lang["improveLanguages()<br/>Niveaux, certifications"]
-        Extras["improveExtras()<br/>Certifications, extras"]
+        Exp["improveExperience<br/>Responsabilites, deliverables"]
+        Proj["improveProject<br/>Modifier ou creer projets"]
+        Lang["improveLanguages<br/>Niveaux, certifications"]
+        Extras["improveExtras<br/>Certifications, extras"]
     end
 
     subgraph Stage4["STAGE 4 - SUMMARY"]
-        Summary["improveSummary()<br/>Sequentiel si exp/proj changes"]
+        SummaryN["improveSummary<br/>Sequentiel si exp/proj changes"]
     end
 
     subgraph Output["SORTIE"]
         FinalCV["CV Ameliore"]
-        Changes["allChangesMade[]"]
+        Changes["allChangesMade"]
         Metrics["stageMetrics"]
     end
 
     CV --> Improve
     Score --> Improve
-    User --> Improve
+    UserSel --> Improve
     Improve --> Schedule
 
     Schedule --> S1
@@ -97,6 +97,22 @@ flowchart TB
     Stage4 --> FinalCV
     Stage4 --> Changes
     Stage4 --> Metrics
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Score fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style UserSel fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Improve fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Schedule fill:#6366f1,stroke:#4f46e5,color:#fff
+    style S1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Exp fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Proj fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Lang fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Extras fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SummaryN fill:#22c55e,stroke:#16a34a,color:#fff
+    style FinalCV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Changes fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Metrics fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 

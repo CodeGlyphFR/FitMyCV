@@ -185,32 +185,47 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...</code></pre>
         <div class="diagram">
           <div class="diagram-title">Architecture des endpoints API</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Public["PUBLIC (aucune auth)"]
-        Health["health"]
-        Auth["auth/*"]
-        Recaptcha["recaptcha"]
-        Webhooks["webhooks/stripe"]
+graph TB
+    subgraph PublicBlock["PUBLIC aucune auth"]
+        HealthEndpoint["health"]
+        AuthEndpoint["auth/*"]
+        RecaptchaEndpoint["recaptcha"]
+        WebhooksEndpoint["webhooks/stripe"]
     end
 
-    subgraph Session["SESSION (cookie NextAuth)"]
-        CV["cv/* cvs/*"]
-        BG["background-tasks/*"]
-        Sub["subscription/*"]
-        Cred["credits/*"]
-        Export["export-*"]
-        Account["account/*"]
-        Others["feedback, settings,<br/>events, consent,<br/>link-history,<br/>telemetry, onboarding"]
+    subgraph SessionBlock["SESSION cookie NextAuth"]
+        CvEndpoint["cv/* cvs/*"]
+        BgEndpoint["background-tasks/*"]
+        SubEndpoint["subscription/*"]
+        CredEndpoint["credits/*"]
+        ExportEndpoint["export-*"]
+        AccountEndpoint["account/*"]
+        OthersEndpoint["feedback, settings,<br/>events, consent,<br/>link-history,<br/>telemetry, onboarding"]
     end
 
-    subgraph AdminG["ADMIN (role ADMIN)"]
-        AdminAPI["admin/*"]
-        Analytics["analytics/*"]
+    subgraph AdminBlock["ADMIN role ADMIN"]
+        AdminEndpoint["admin/*"]
+        AnalyticsEndpoint["analytics/*"]
     end
 
-    subgraph Extension["EXTENSION (JWT Bearer)"]
-        Ext["ext/*"]
+    subgraph ExtBlock["EXTENSION JWT Bearer"]
+        ExtEndpoint["ext/*"]
     end
+
+    style HealthEndpoint fill:#22c55e,stroke:#16a34a,color:#fff
+    style AuthEndpoint fill:#22c55e,stroke:#16a34a,color:#fff
+    style RecaptchaEndpoint fill:#22c55e,stroke:#16a34a,color:#fff
+    style WebhooksEndpoint fill:#22c55e,stroke:#16a34a,color:#fff
+    style CvEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BgEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SubEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CredEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ExportEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style AccountEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style OthersEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style AdminEndpoint fill:#ef4444,stroke:#dc2626,color:#fff
+    style AnalyticsEndpoint fill:#ef4444,stroke:#dc2626,color:#fff
+    style ExtEndpoint fill:#f59e0b,stroke:#d97706,color:#fff
           </div>
         </div>
 

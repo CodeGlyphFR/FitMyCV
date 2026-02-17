@@ -39,30 +39,40 @@
           <div class="mermaid">
 flowchart LR
     subgraph Scoring["SCORING"]
-        Calc["calculateMatchScoreWithAnalysis()"]
-        Store["Stockage en DB<br/>(CvFile.improvementSuggestions)"]
+        Calc["calculateMatchScoreWithAnalysis"]
+        Store["Stockage en DB<br/>CvFile.improvementSuggestions"]
     end
 
     subgraph UI["INTERFACE UTILISATEUR"]
         Display["Affichage des suggestions"]
-        Select["Selection par l'utilisateur"]
-        Context["Ajout de contexte (optionnel)"]
+        SelectN["Selection par utilisateur"]
+        Context["Ajout de contexte"]
         Skills["Selection des missingSkills"]
     end
 
     subgraph API["API IMPROVE"]
-        Parse["Parse suggestions<br/>(legacy ou nouveau format)"]
+        Parse["Parse suggestions<br/>legacy ou nouveau format"]
         Improve["POST /api/cv/improve"]
     end
 
     subgraph Pipeline["PIPELINE"]
-        Run["runImprovementPipeline()"]
+        Run["runImprovementPipeline"]
     end
 
     Calc --> Store --> Display
-    Display --> Select --> Context --> Improve
+    Display --> SelectN --> Context --> Improve
     Display --> Skills --> Improve
     Improve --> Parse --> Run
+
+    style Calc fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Store fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Display fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SelectN fill:#f59e0b,stroke:#d97706,color:#fff
+    style Context fill:#64748b,stroke:#475569,color:#fff
+    style Skills fill:#f59e0b,stroke:#d97706,color:#fff
+    style Parse fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Improve fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Run fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
@@ -360,32 +370,32 @@ flowchart LR
           <div class="diagram-title">Architecture du pipeline 4 stages</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTRÉES"]
-        Sug["suggestions[]<br/>(sélectionnées par l'user)"]
-        Skills["missingSkillsToAdd[]<br/>(skills manquants + niveau)"]
-        CV["workingCv<br/>(CV JSON complet)"]
-        Job["jobOffer<br/>(offre d'emploi)"]
+    subgraph Input["ENTREES"]
+        Sug["suggestions<br/>selectionnees par utilisateur"]
+        Skills["missingSkillsToAdd<br/>skills manquants + niveau"]
+        CV["workingCv<br/>CV JSON complet"]
+        Job["jobOffer<br/>offre d emploi"]
     end
 
-    subgraph S12["STAGE 1 &amp; 2 (PARALLÈLE)"]
-        S1["Stage 1: classifySkills()<br/>gpt-4o-mini<br/>→ {hard_skills, tools, soft_skills, methodologies}"]
-        S2["Stage 2: preprocessSuggestions()<br/>Chain-of-Thought IA<br/>→ routage par cible"]
+    subgraph S12["STAGE 1 &amp; 2 - PARALLELE"]
+        S1["Stage 1: classifySkills<br/>gpt-4o-mini<br/>hard_skills, tools, soft_skills, methodologies"]
+        S2["Stage 2: preprocessSuggestions<br/>Chain-of-Thought IA<br/>routage par cible"]
     end
 
-    subgraph S3["STAGE 3 (PARALLÈLE avec pLimit=5)"]
-        S3E["improveExperience()<br/>×N expériences ciblées"]
-        S3P["improveProject()<br/>×N projets ciblés"]
-        S3NP["improveProject(null)<br/>×N nouveaux projets"]
-        S3L["improveLanguages()<br/>(si langues à modifier)"]
-        S3X["improveExtras()<br/>(si extras à modifier)"]
+    subgraph S3["STAGE 3 - PARALLELE avec pLimit=5"]
+        S3E["improveExperience<br/>xN experiences ciblees"]
+        S3P["improveProject<br/>xN projets cibles"]
+        S3NP["improveProject nouveau<br/>xN nouveaux projets"]
+        S3L["improveLanguages<br/>si langues a modifier"]
+        S3X["improveExtras<br/>si extras a modifier"]
     end
 
-    subgraph S4["STAGE 4 (SÉQUENTIEL)"]
-        S4S["improveSummary()<br/>Mise à jour du résumé<br/>basée sur modifications Stage 3"]
+    subgraph S4["STAGE 4 - SEQUENTIEL"]
+        S4S["improveSummary<br/>Mise a jour du resume<br/>basee sur modifications Stage 3"]
     end
 
     subgraph Output["SORTIE"]
-        Result["workingCv modifié<br/>+ allChangesMade[]<br/>+ stageMetrics"]
+        Result["workingCv modifie<br/>+ allChangesMade<br/>+ stageMetrics"]
     end
 
     Skills --> S1
@@ -394,6 +404,20 @@ flowchart TB
     CV & Job --> S3
     S3E & S3P & S3NP & S3L & S3X --> S4
     S4 --> Output
+
+    style Sug fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Skills fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Job fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style S1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3P fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3NP fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3L fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3X fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S4S fill:#22c55e,stroke:#16a34a,color:#fff
+    style Result fill:#0ea5e9,stroke:#0284c7,color:#fff
           </div>
         </div>
 

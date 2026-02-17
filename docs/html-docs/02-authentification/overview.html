@@ -88,6 +88,25 @@ flowchart TB
 
     ExtToken --> ExtMiddleware
     Security -.-> Providers_Detail
+
+    style Login fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ExtPage fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Account fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Providers fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Callbacks fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Events fill:#64748b,stroke:#475569,color:#fff
+    style Creds fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Google fill:#6366f1,stroke:#4f46e5,color:#fff
+    style GitHub fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Apple fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ExtToken fill:#f59e0b,stroke:#d97706,color:#fff
+    style ExtMiddleware fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style JWT fill:#f59e0b,stroke:#d97706,color:#fff
+    style ReCaptcha fill:#64748b,stroke:#475569,color:#fff
+    style PasswordPolicy fill:#64748b,stroke:#475569,color:#fff
+    style XSS fill:#64748b,stroke:#475569,color:#fff
+    style CSRF fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 
@@ -292,6 +311,13 @@ flowchart LR
     subgraph Refresh["Renouvellement"]
         B -->|POST .../refresh| F["Nouveau JWT<br/>(7 jours)"]
     end
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#f59e0b,stroke:#d97706,color:#fff
+    style C fill:#64748b,stroke:#475569,color:#fff
+    style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style E fill:#6366f1,stroke:#4f46e5,color:#fff
+    style F fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

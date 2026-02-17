@@ -326,17 +326,30 @@ export async function refundCredit(userId, originalTransactionId,
           <div class="diagram-title">Flux de remboursement avec idempotence</div>
           <div class="mermaid">
 flowchart TD
-    Start["refundCredit(userId, txId)"] --> PreCheck{"Transaction d&eacute;j&agrave;<br/>rembours&eacute;e ?<br/>(hors transaction)"}
+    Start["refundCredit - userId, txId"] --> PreCheck{"Transaction deja<br/>remboursee ?<br/>hors transaction"}
     PreCheck -->|"Oui"| AlreadyDone["Retourner success + alreadyRefunded"]
-    PreCheck -->|"Non"| StartTx["D&eacute;marrer $transaction"]
-    StartTx --> FindTx["R&eacute;cup&eacute;rer transaction originale"]
-    FindTx --> Validate{"Validations:<br/>- Existe ?<br/>- M&ecirc;me userId ?<br/>- refunded = false ?<br/>- amount < 0 ?"}
-    Validate -->|"&Eacute;chec"| Error["Retourner erreur"]
-    Validate -->|"OK"| CreateRefund["Cr&eacute;er CreditTransaction<br/>(type: refund, amount: +N)"]
-    CreateRefund --> MarkRefunded["Marquer originale:<br/>refunded = true"]
-    MarkRefunded --> UpdateBal["Incr&eacute;menter balance<br/>+ totalRefunded"]
-    UpdateBal --> EmitSSE["dbEmitter.emitCreditsUpdate()"]
-    EmitSSE --> Done["Retourner success"]
+    PreCheck -->|"Non"| StartTx["Demarrer $transaction"]
+    StartTx --> FindTx["Recuperer transaction originale"]
+    FindTx --> Validate{"Validations :<br/>- Existe ?<br/>- Meme userId ?<br/>- refunded = false ?<br/>- amount &lt; 0 ?"}
+    Validate -->|"Echec"| ErrorN["Retourner erreur"]
+    Validate -->|"OK"| CreateRefund["Creer CreditTransaction<br/>type: refund, amount: +N"]
+    CreateRefund --> MarkRefunded["Marquer originale :<br/>refunded = true"]
+    MarkRefunded --> UpdateBal["Incrementer balance<br/>+ totalRefunded"]
+    UpdateBal --> EmitSSE["dbEmitter.emitCreditsUpdate"]
+    EmitSSE --> DoneN["Retourner success"]
+
+    style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PreCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style AlreadyDone fill:#64748b,stroke:#475569,color:#fff
+    style StartTx fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FindTx fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Validate fill:#f59e0b,stroke:#d97706,color:#fff
+    style ErrorN fill:#ef4444,stroke:#dc2626,color:#fff
+    style CreateRefund fill:#22c55e,stroke:#16a34a,color:#fff
+    style MarkRefunded fill:#6366f1,stroke:#4f46e5,color:#fff
+    style UpdateBal fill:#6366f1,stroke:#4f46e5,color:#fff
+    style EmitSSE fill:#14b8a6,stroke:#0d9488,color:#fff
+    style DoneN fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

@@ -38,26 +38,36 @@
 
         <div class="mermaid">
 flowchart TD
-    A["CvFile (contentVersion = N)"] -->|"Optimisation IA"| B["createCvVersion()"]
-    B --> C["Sauvegarde contenu actuel<br>comme CvVersion N"]
-    C --> D["Incremente contentVersion<br>a N+1"]
-    D --> E["Rotation : suppression<br>versions > max"]
-    E --> F["CvFile (contentVersion = N+1)<br>Contenu IA applique"]
+    A["CvFile<br/>contentVersion = N"] -->|"Optimisation IA"| B["createCvVersion"]
+    B --> C["Sauvegarde contenu actuel<br/>comme CvVersion N"]
+    C --> D["Incremente contentVersion<br/>a N+1"]
+    D --> E["Rotation : suppression<br/>versions au-dela du max"]
+    E --> F["CvFile<br/>contentVersion = N+1<br/>Contenu IA applique"]
 
-    F -->|"Restauration safe"| G["restoreCvVersion()"]
-    G --> G1["Sauvegarde contenu actuel<br>comme nouvelle version"]
-    G1 --> G2["Ecrase contenu avec<br>version cible"]
+    F -->|"Restauration safe"| G["restoreCvVersion"]
+    G --> G1["Sauvegarde contenu actuel<br/>comme nouvelle version"]
+    G1 --> G2["Ecrase contenu avec<br/>version cible"]
     G2 --> G3["Historique conserve"]
 
-    F -->|"Restauration destructive"| H["restoreCvVersionDestructive()"]
-    H --> H1["Ecrase contenu + scores<br>avec version cible"]
-    H1 --> H2["contentVersion = cible<br>pendingChanges = vide"]
-    H2 --> H3["Supprime version cible<br>+ versions plus recentes"]
+    F -->|"Restauration destructive"| H["restoreCvVersionDestructive"]
+    H --> H1["Ecrase contenu + scores<br/>avec version cible"]
+    H1 --> H2["contentVersion = cible<br/>pendingChanges = vide"]
+    H2 --> H3["Supprime version cible<br/>+ versions plus recentes"]
 
-    style A fill:#e0e7ff,stroke:#4f46e5,color:#1e1b4b
-    style F fill:#dcfce7,stroke:#16a34a,color:#14532d
-    style G3 fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
-    style H3 fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#14b8a6,stroke:#0d9488,color:#fff
+    style D fill:#6366f1,stroke:#4f46e5,color:#fff
+    style E fill:#64748b,stroke:#475569,color:#fff
+    style F fill:#22c55e,stroke:#16a34a,color:#fff
+    style G fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style G1 fill:#14b8a6,stroke:#0d9488,color:#fff
+    style G2 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style G3 fill:#22c55e,stroke:#16a34a,color:#fff
+    style H fill:#ef4444,stroke:#dc2626,color:#fff
+    style H1 fill:#ef4444,stroke:#dc2626,color:#fff
+    style H2 fill:#f59e0b,stroke:#d97706,color:#fff
+    style H3 fill:#ef4444,stroke:#dc2626,color:#fff
         </div>
 
         <!-- ============================================================ -->

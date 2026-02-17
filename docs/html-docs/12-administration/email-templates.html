@@ -39,34 +39,43 @@
         <div class="diagram">
           <div class="diagram-title">Flux d'envoi d'un email transactionnel</div>
           <div class="mermaid">
-flowchart LR
-    subgraph Event["&Eacute;V&Eacute;NEMENT"]
-        Action["Action utilisateur<br/>(inscription, g&eacute;n&eacute;ration CV,<br/>reset password...)"]
+graph LR
+    subgraph EventBlock["EVENEMENT"]
+        UserAction["Action utilisateur<br/>inscription, generation CV,<br/>reset password..."]
     end
 
-    subgraph Trigger["TRIGGER"]
-        ET[(EmailTrigger<br/>name, variables,<br/>category, isSystem)]
+    subgraph TriggerBlock["TRIGGER"]
+        ET[("EmailTrigger<br/>name, variables,<br/>category, isSystem")]
     end
 
-    subgraph Template["TEMPLATE"]
-        Active["Template Actif<br/>(isActive: true)"]
-        Inactive1["Template v2<br/>(inactif)"]
-        Inactive2["Template v3<br/>(inactif)"]
+    subgraph TemplateBlock["TEMPLATE"]
+        ActiveTpl["Template Actif<br/>isActive: true"]
+        InactiveTpl1["Template v2<br/>inactif"]
+        InactiveTpl2["Template v3<br/>inactif"]
     end
 
-    subgraph Send["ENVOI"]
-        Variables["Injection variables<br/>(user.name, app.url...)"]
-        Provider{{"SMTP ou Resend"}}
-        Log[(EmailLog<br/>status, provider,<br/>recipientEmail)]
+    subgraph SendBlock["ENVOI"]
+        InjectVars["Injection variables<br/>user.name, app.url..."]
+        MailProvider{{"SMTP ou Resend"}}
+        MailLog[("EmailLog<br/>status, provider,<br/>recipientEmail")]
     end
 
-    Action --> ET
-    ET --> Active
-    ET -.-> Inactive1
-    ET -.-> Inactive2
-    Active --> Variables
-    Variables --> Provider
-    Provider --> Log
+    UserAction --> ET
+    ET --> ActiveTpl
+    ET -.-> InactiveTpl1
+    ET -.-> InactiveTpl2
+    ActiveTpl --> InjectVars
+    InjectVars --> MailProvider
+    MailProvider --> MailLog
+
+    style UserAction fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ET fill:#14b8a6,stroke:#0d9488,color:#fff
+    style ActiveTpl fill:#22c55e,stroke:#16a34a,color:#fff
+    style InactiveTpl1 fill:#64748b,stroke:#475569,color:#fff
+    style InactiveTpl2 fill:#64748b,stroke:#475569,color:#fff
+    style InjectVars fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style MailProvider fill:#f59e0b,stroke:#d97706,color:#fff
+    style MailLog fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 

@@ -39,25 +39,25 @@
           <div class="mermaid">
 flowchart TB
     subgraph Input["ENTREES"]
-        CV["CV JSON<br/>(CvFile.content)"]
-        JO["Offre d'emploi<br/>(JobOffer.content ou<br/>jobOfferSnapshot.content)"]
+        CV["CV JSON<br/>CvFile.content"]
+        JO["Offre d emploi<br/>JobOffer.content ou<br/>jobOfferSnapshot.content"]
     end
 
     subgraph Prepare["PREPARATION"]
         Parse["Parser CV JSON"]
-        Format["formatJobOfferForAnalysis()<br/>Sections avec emojis"]
-        Lang["detectCvLanguage() /<br/>cvData.language"]
+        Format["formatJobOfferForAnalysis<br/>Sections avec emojis"]
+        LangN["detectCvLanguage /<br/>cvData.language"]
         Trans{"Langues<br/>differentes ?"}
         Instruction["Ajouter instruction<br/>de traduction"]
     end
 
     subgraph Prompts["PROMPTS"]
-        System["lib/scoring/prompts/system.md<br/>+ cvLanguage + translationInstruction"]
-        User["lib/scoring/prompts/user.md<br/>+ cvContent + jobOfferContent"]
+        SystemP["lib/scoring/prompts/system.md<br/>+ cvLanguage + translationInstruction"]
+        UserP["lib/scoring/prompts/user.md<br/>+ cvContent + jobOfferContent"]
     end
 
     subgraph OpenAI["APPEL OPENAI"]
-        Call["client.chat.completions.create()<br/>model: model_match_score<br/>response_format: json_object<br/>temperature: 0.1"]
+        Call["client.chat.completions.create<br/>model: model_match_score<br/>response_format: json_object<br/>temperature: 0.1"]
     end
 
     subgraph Calculate["RECALCUL"]
@@ -67,23 +67,23 @@ flowchart TB
     end
 
     subgraph Output["SORTIE"]
-        Score["matchScore (recalcule)"]
+        Score["matchScore recalcule"]
         SB["scoreBreakdown"]
-        Sugg["suggestions[]"]
-        Missing["missingSkills[]"]
-        Matching["matchingSkills[]"]
+        Sugg["suggestions"]
+        Missing["missingSkills"]
+        Matching["matchingSkills"]
     end
 
     CV --> Parse
     JO --> Format
-    Parse --> Lang
+    Parse --> LangN
     Format --> Trans
-    Lang --> Trans
-    Trans -->|Oui| Instruction
-    Trans -->|Non| Prompts
+    LangN --> Trans
+    Trans -->|"Oui"| Instruction
+    Trans -->|"Non"| Prompts
     Instruction --> Prompts
-    System --> Call
-    User --> Call
+    SystemP --> Call
+    UserP --> Call
     Call --> Breakdown
     Breakdown --> Clamp --> Formula
     Formula --> Score
@@ -91,6 +91,25 @@ flowchart TB
     Call --> Sugg
     Call --> Missing
     Call --> Matching
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style JO fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Parse fill:#64748b,stroke:#475569,color:#fff
+    style Format fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style LangN fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Trans fill:#f59e0b,stroke:#d97706,color:#fff
+    style Instruction fill:#64748b,stroke:#475569,color:#fff
+    style SystemP fill:#14b8a6,stroke:#0d9488,color:#fff
+    style UserP fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Call fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Breakdown fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Formula fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Clamp fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Score fill:#22c55e,stroke:#16a34a,color:#fff
+    style SB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Sugg fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Missing fill:#ef4444,stroke:#dc2626,color:#fff
+    style Matching fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

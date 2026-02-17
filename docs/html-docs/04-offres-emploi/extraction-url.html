@@ -38,24 +38,41 @@
           <div class="diagram-title">Pipeline d'extraction URL</div>
           <div class="mermaid">
 flowchart TB
-    URL["URL Offre"] --> Normalize["normalizeJobUrl()&lt;br/&gt;Supprime tracking params"]
-    Normalize --> Cache{"Cache?&lt;br/&gt;@@unique userId+sourceValue"}
-    Cache -->|Hit| Return["Retour cache"]
-    Cache -->|Miss| Strategy{"shouldUsePuppeteerFirst()?"}
-    Strategy -->|Sites proteges/SPA| PuppeteerFirst["Puppeteer + Stealth&lt;br/&gt;waitForContent + autoScroll"]
-    Strategy -->|Autres| SimpleFetch["Simple HTTP Fetch"]
-    SimpleFetch -->|Antibot detecte| PuppeteerFallback["Puppeteer fallback"]
-    SimpleFetch -->|OK| Convert
+    URL["URL Offre"] --> Normalize["normalizeJobUrl<br/>Supprime tracking params"]
+    Normalize --> CacheCheck{"Cache?<br/>unique userId+sourceValue"}
+    CacheCheck -->|"Hit"| ReturnCache["Retour cache"]
+    CacheCheck -->|"Miss"| Strategy{"shouldUsePuppeteerFirst?"}
+    Strategy -->|"Sites proteges/SPA"| PuppeteerFirst["Puppeteer + Stealth<br/>waitForContent + autoScroll"]
+    Strategy -->|"Autres"| SimpleFetch["Simple HTTP Fetch"]
+    SimpleFetch -->|"Antibot detecte"| PuppeteerFallback["Puppeteer fallback"]
+    SimpleFetch -->|"OK"| Convert
     PuppeteerFirst --> Convert
     PuppeteerFallback --> Convert
-    Convert["HTML &rarr; Markdown&lt;br/&gt;Readability + Turndown"]
-    Convert --> Expired{"Page expiree?&lt;br/&gt;detectExpiredOrDeletedPage()"}
-    Expired -->|Oui| Error["Erreur: offre expiree"]
-    Expired -->|Non| Extract["OpenAI Structured Outputs&lt;br/&gt;jobOfferExtractionSchema.json"]
-    Extract --> Validate{"isJobOfferValid()?"}
-    Validate -->|Non| ErrorNoJob["Erreur: pas d'offre detectee"]
-    Validate -->|Oui| LangDetect["detectJobOfferLanguageWithOpenAI()"]
-    LangDetect --> Store["storeJobOffer()&lt;br/&gt;Upsert dans JobOffer"]
+    Convert["HTML vers Markdown<br/>Readability + Turndown"]
+    Convert --> Expired{"Page expiree?<br/>detectExpiredOrDeletedPage"}
+    Expired -->|"Oui"| ErrorExp["Erreur: offre expiree"]
+    Expired -->|"Non"| Extract["OpenAI Structured Outputs<br/>jobOfferExtractionSchema.json"]
+    Extract --> ValidateOffer{"isJobOfferValid?"}
+    ValidateOffer -->|"Non"| ErrorNoJob["Erreur: pas d offre detectee"]
+    ValidateOffer -->|"Oui"| LangDetect["detectJobOfferLanguageWithOpenAI"]
+    LangDetect --> Store["storeJobOffer<br/>Upsert dans JobOffer"]
+
+    style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Normalize fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CacheCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style ReturnCache fill:#22c55e,stroke:#16a34a,color:#fff
+    style Strategy fill:#f59e0b,stroke:#d97706,color:#fff
+    style PuppeteerFirst fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SimpleFetch fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PuppeteerFallback fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Convert fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Expired fill:#f59e0b,stroke:#d97706,color:#fff
+    style ErrorExp fill:#ef4444,stroke:#dc2626,color:#fff
+    style Extract fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ValidateOffer fill:#f59e0b,stroke:#d97706,color:#fff
+    style ErrorNoJob fill:#ef4444,stroke:#dc2626,color:#fff
+    style LangDetect fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Store fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 

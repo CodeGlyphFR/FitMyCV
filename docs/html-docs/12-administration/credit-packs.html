@@ -107,46 +107,46 @@
         <div class="diagram">
           <div class="diagram-title">Cycle de vie complet d'un pack de cr&eacute;dits</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Creation["CR&Eacute;ATION"]
-        AdminCreate["Admin cr&eacute;e le pack<br/>POST /api/admin/credit-packs"]
-        Validate{"creditAmount<br/>unique ?"}
-        GenName["G&eacute;n&eacute;rer nom :<br/>{creditAmount} Cr&eacute;dits"]
+graph TB
+    subgraph CreationBlock["CREATION"]
+        AdminCreate["Admin cree le pack<br/>POST /api/admin/credit-packs"]
+        ValidateAmount{"creditAmount<br/>unique ?"}
+        GenName["Generer nom :<br/>creditAmount Credits"]
         SaveDB["Sauvegarder en DB"]
     end
 
-    subgraph Stripe["SYNCHRONISATION STRIPE"]
-        SyncStart["syncStripeProductsInternal()"]
-        CreateProduct["Cr&eacute;er Product Stripe"]
-        CreatePrice["Cr&eacute;er Price Stripe<br/>(type: one_time)"]
-        SetDefault["D&eacute;finir default_price"]
+    subgraph StripeSync["SYNCHRONISATION STRIPE"]
+        SyncStart["syncStripeProductsInternal"]
+        CreateProduct["Creer Product Stripe"]
+        CreatePrice["Creer Price Stripe<br/>type: one_time"]
+        SetDefault["Definir default_price"]
         SaveStripeIds["Sauvegarder stripeProductId<br/>et stripePriceId"]
     end
 
-    subgraph Active["UTILISATION"]
-        Visible["Pack visible dans<br/>l'interface utilisateur"]
-        Checkout["Utilisateur clique Acheter"]
-        StripeCheckout["Stripe Checkout<br/>(mode: payment)"]
-        Webhook["Webhook checkout.session.completed"]
-        Grant["grantCredits(userId, amount, 'purchase')"]
+    subgraph ActiveBlock["UTILISATION"]
+        Visible["Pack visible dans<br/>interface utilisateur"]
+        UserCheckout["Utilisateur clique Acheter"]
+        StripeCheckout["Stripe Checkout<br/>mode: payment"]
+        WebhookEvent["Webhook checkout.session.completed"]
+        GrantCredits["grantCredits userId, amount, purchase"]
     end
 
-    subgraph Modification["MODIFICATION"]
-        AdminPatch["Admin modifie le pack<br/>PATCH /api/admin/credit-packs/[id]"]
-        PriceChanged{"Prix chang&eacute; ?"}
+    subgraph ModifBlock["MODIFICATION"]
+        AdminPatch["Admin modifie le pack<br/>PATCH /api/admin/credit-packs/id"]
+        PriceChanged{"Prix change ?"}
         ArchivePrice["Archiver ancien Price"]
-        NewPrice["Cr&eacute;er nouveau Price"]
+        NewPrice["Creer nouveau Price"]
     end
 
-    subgraph Suppression["SUPPRESSION"]
-        AdminDelete["Admin supprime le pack<br/>DELETE /api/admin/credit-packs/[id]"]
+    subgraph DeleteBlock["SUPPRESSION"]
+        AdminDelete["Admin supprime le pack<br/>DELETE /api/admin/credit-packs/id"]
         DeleteDB["Supprimer de la DB"]
         ArchiveStripe["Archiver sur Stripe"]
     end
 
-    AdminCreate --> Validate
-    Validate -->|"Non"| Error["Erreur 409"]
-    Validate -->|"Oui"| GenName
+    AdminCreate --> ValidateAmount
+    ValidateAmount -->|"Non"| PackError["Erreur 409"]
+    ValidateAmount -->|"Oui"| GenName
     GenName --> SaveDB
     SaveDB --> SyncStart
 
@@ -156,10 +156,10 @@ flowchart TB
     SetDefault --> SaveStripeIds
 
     SaveStripeIds --> Visible
-    Visible --> Checkout
-    Checkout --> StripeCheckout
-    StripeCheckout --> Webhook
-    Webhook --> Grant
+    Visible --> UserCheckout
+    UserCheckout --> StripeCheckout
+    StripeCheckout --> WebhookEvent
+    WebhookEvent --> GrantCredits
 
     AdminPatch --> PriceChanged
     PriceChanged -->|"Oui"| ArchivePrice
@@ -169,6 +169,29 @@ flowchart TB
 
     AdminDelete --> DeleteDB
     AdminDelete --> ArchiveStripe
+
+    style AdminCreate fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ValidateAmount fill:#f59e0b,stroke:#d97706,color:#fff
+    style GenName fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SaveDB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SyncStart fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreateProduct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreatePrice fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SetDefault fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SaveStripeIds fill:#22c55e,stroke:#16a34a,color:#fff
+    style Visible fill:#22c55e,stroke:#16a34a,color:#fff
+    style UserCheckout fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style StripeCheckout fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style WebhookEvent fill:#6366f1,stroke:#4f46e5,color:#fff
+    style GrantCredits fill:#22c55e,stroke:#16a34a,color:#fff
+    style AdminPatch fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PriceChanged fill:#f59e0b,stroke:#d97706,color:#fff
+    style ArchivePrice fill:#ef4444,stroke:#dc2626,color:#fff
+    style NewPrice fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style AdminDelete fill:#ef4444,stroke:#dc2626,color:#fff
+    style DeleteDB fill:#ef4444,stroke:#dc2626,color:#fff
+    style ArchiveStripe fill:#64748b,stroke:#475569,color:#fff
+    style PackError fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 
@@ -307,40 +330,53 @@ flowchart TB
         <div class="diagram">
           <div class="diagram-title">Synchronisation Pack &harr; Stripe</div>
           <div class="mermaid">
-flowchart LR
-    subgraph DB["BASE DE DONN&Eacute;ES"]
-        Pack["CreditPack<br/>creditAmount, price,<br/>isActive"]
+graph LR
+    subgraph DBBlock["BASE DE DONNEES"]
+        CreditPackDB["CreditPack<br/>creditAmount, price,<br/>isActive"]
     end
 
-    subgraph Sync["syncStripeProductsInternal()"]
+    subgraph SyncBlock["syncStripeProductsInternal"]
         CheckActive{"Pack actif ?"}
         FindProduct["Chercher Product<br/>par stripeProductId"]
-        CreateProduct["Cr&eacute;er Product<br/>(name, metadata)"]
-        CheckPrice{"Price &agrave; jour ?<br/>(montant identique)"}
-        CreatePrice["Cr&eacute;er Price<br/>(type: one_time)"]
-        SetDefault["D&eacute;finir default_price"]
+        CreateProduct["Creer Product<br/>name, metadata"]
+        CheckPrice{"Price a jour ?<br/>montant identique"}
+        CreatePrice["Creer Price<br/>type: one_time"]
+        SetDefault["Definir default_price"]
         ArchiveOld["Archiver ancien Price"]
         SaveIds["Sauvegarder IDs<br/>en DB"]
     end
 
-    subgraph Stripe["STRIPE"]
-        Product["Product"]
-        Price["Price (one_time)"]
+    subgraph StripeBlock["STRIPE"]
+        StripeProduct["Product"]
+        StripePrice["Price one_time"]
     end
 
-    Pack --> CheckActive
-    CheckActive -->|"Non"| Skip["Ignor&eacute;"]
+    CreditPackDB --> CheckActive
+    CheckActive -->|"Non"| SkipPack["Ignore"]
     CheckActive -->|"Oui"| FindProduct
     FindProduct -->|"Existe"| CheckPrice
-    FindProduct -->|"N'existe pas"| CreateProduct
+    FindProduct -->|"N existe pas"| CreateProduct
     CreateProduct --> CheckPrice
-    CheckPrice -->|"Montant chang&eacute;"| CreatePrice
+    CheckPrice -->|"Montant change"| CreatePrice
     CreatePrice --> SetDefault
     SetDefault --> ArchiveOld
     ArchiveOld --> SaveIds
     CheckPrice -->|"OK"| SaveIds
-    SaveIds --> Product
-    SaveIds --> Price
+    SaveIds --> StripeProduct
+    SaveIds --> StripePrice
+
+    style CreditPackDB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CheckActive fill:#f59e0b,stroke:#d97706,color:#fff
+    style FindProduct fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CreateProduct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CheckPrice fill:#f59e0b,stroke:#d97706,color:#fff
+    style CreatePrice fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SetDefault fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ArchiveOld fill:#ef4444,stroke:#dc2626,color:#fff
+    style SaveIds fill:#22c55e,stroke:#16a34a,color:#fff
+    style SkipPack fill:#64748b,stroke:#475569,color:#fff
+    style StripeProduct fill:#14b8a6,stroke:#0d9488,color:#fff
+    style StripePrice fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 

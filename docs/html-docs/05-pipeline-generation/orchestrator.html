@@ -38,36 +38,49 @@
           <div class="diagram-title">Modules de l'orchestrateur et leurs relations</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Orchestrator["ORCHESTRATOR"]
-        TaskRunner["taskRunner.js<br/>startSingleOfferGeneration()<br/>startMultiOfferGeneration()"]
-        OfferProcessor["offerProcessor.js<br/>processOffer()<br/>runBatchesPhase()"]
-        CreditManager["creditManager.js<br/>refundCreditForOffer()"]
-        ProgressEmitter["progressEmitter.js<br/>emitProgress()"]
-        RetryHandler["retryHandler.js<br/>withRetry()"]
+    subgraph OrchestratorMod["ORCHESTRATOR"]
+        TaskRunner["taskRunner.js<br/>startSingleOfferGeneration<br/>startMultiOfferGeneration"]
+        OfferProcessor["offerProcessor.js<br/>processOffer<br/>runBatchesPhase"]
+        CreditManager["creditManager.js<br/>refundCreditForOffer"]
+        ProgressEmitter["progressEmitter.js<br/>emitProgress"]
+        RetryHandler["retryHandler.js<br/>withRetry"]
     end
 
-    subgraph Phases["PHASES"]
+    subgraph PhasesGroup["PHASES"]
         P0["extract.js"]
         P05["classify.js"]
-        P1["batch-*.js (x7)"]
+        P1["batch-*.js x7"]
         P2["recompose.js"]
     end
 
-    subgraph DB["PRISMA"]
-        Task[(CvGenerationTask)]
-        Offer[(CvGenerationOffer)]
-        Subtask[(CvGenerationSubtask)]
+    subgraph DBLayer["PRISMA"]
+        TaskDB[(CvGenerationTask)]
+        OfferDB[(CvGenerationOffer)]
+        SubtaskDB[(CvGenerationSubtask)]
     end
 
     TaskRunner -->|"offerId"| OfferProcessor
-    OfferProcessor -->|"chaque phase"| Phases
+    OfferProcessor -->|"chaque phase"| PhasesGroup
     OfferProcessor -->|"wrap fn"| RetryHandler
     TaskRunner -->|"refund on fail"| CreditManager
     OfferProcessor -->|"phase, step, status"| ProgressEmitter
 
-    Phases --> Subtask
-    TaskRunner --> Task
-    OfferProcessor --> Offer
+    PhasesGroup --> SubtaskDB
+    TaskRunner --> TaskDB
+    OfferProcessor --> OfferDB
+
+    style TaskRunner fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style OfferProcessor fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreditManager fill:#f59e0b,stroke:#d97706,color:#fff
+    style ProgressEmitter fill:#6366f1,stroke:#4f46e5,color:#fff
+    style RetryHandler fill:#64748b,stroke:#475569,color:#fff
+    style P0 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style P05 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style P1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style P2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style TaskDB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style OfferDB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SubtaskDB fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 
@@ -137,23 +150,33 @@ activeControllers.delete(taskId);</code></pre>
           <div class="diagram-title">Ex&eacute;cution parall&egrave;le des 7 batches</div>
           <div class="mermaid">
 flowchart TB
-    Apply["applyClassification()<br/>Filtrage KEEP / MOVE_TO_PROJECTS"]
+    ApplyClass["applyClassification<br/>Filtrage KEEP / MOVE_TO_PROJECTS"]
 
-    subgraph Parallel["Promise.all &mdash; 6 Batches"]
+    subgraph ParallelBatches["Promise.all - 6 Batches"]
         Exp["executeBatchExperiences"]
         Proj["executeBatchProjects"]
         Extras["executeBatchExtras"]
         Edu["executeBatchEducation"]
         Lang["executeBatchLanguages"]
-        Skills["executeBatchSkills"]
+        SkillsBatch["executeBatchSkills"]
     end
 
-    Summary["executeBatchSummary<br/>(sequentiel apres Promise.all)"]
-    PostSkills["processSkillsResponse()<br/>Post-traitement skills"]
+    Summary["executeBatchSummary<br/>sequentiel apres Promise.all"]
+    PostSkills["processSkillsResponse<br/>Post-traitement skills"]
 
-    Apply --> Parallel
-    Parallel --> PostSkills
-    Parallel --> Summary
+    ApplyClass --> ParallelBatches
+    ParallelBatches --> PostSkills
+    ParallelBatches --> Summary
+
+    style ApplyClass fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Exp fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Proj fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Extras fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Edu fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Lang fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SkillsBatch fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Summary fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PostSkills fill:#f59e0b,stroke:#d97706,color:#fff
           </div>
         </div>
 
@@ -339,23 +362,35 @@ export function emitProgress(userId, context, phase, step, status, extra = {}) {
         <div class="diagram">
           <div class="diagram-title">&Eacute;tats d'une CvGenerationTask / CvGenerationOffer</div>
           <div class="mermaid">
-stateDiagram-v2
-    [*] --> queued: API Route cr&eacute;e la t&acirc;che
-    queued --> running: enqueueJob() d&eacute;marre
-    running --> extraction: Phase 0
-    extraction --> classification: Phase 0.5
-    classification --> batches: Phase 1 (6 parall&egrave;les + 1 s&eacute;quentiel)
-    batches --> recomposition: Phase 2
-    recomposition --> completed: Succ&egrave;s
-    running --> failed: Erreur + refund
-    extraction --> failed: Erreur extraction
-    classification --> failed: Erreur classification
-    batches --> failed: Erreur batch
-    recomposition --> failed: Erreur recomposition
-    running --> cancelled: AbortController.abort()
-    completed --> [*]
-    failed --> [*]
-    cancelled --> [*]
+graph TD
+    START_NODE(("Start")) --> QUEUED["queued<br/>API Route cree la tache"]
+    QUEUED --> RUNNING["running<br/>enqueueJob demarre"]
+    RUNNING --> EXTRACTION["extraction<br/>Phase 0"]
+    EXTRACTION --> CLASSIFICATION["classification<br/>Phase 0.5"]
+    CLASSIFICATION --> BATCHES["batches<br/>Phase 1 - 6 paralleles + 1 sequentiel"]
+    BATCHES --> RECOMPOSITION["recomposition<br/>Phase 2"]
+    RECOMPOSITION --> COMPLETED["completed<br/>Succes"]
+    RUNNING -->|"Erreur + refund"| FAILED["failed"]
+    EXTRACTION -->|"Erreur extraction"| FAILED
+    CLASSIFICATION -->|"Erreur classification"| FAILED
+    BATCHES -->|"Erreur batch"| FAILED
+    RECOMPOSITION -->|"Erreur recomposition"| FAILED
+    RUNNING -->|"AbortController.abort"| CANCELLED["cancelled"]
+    COMPLETED --> END_NODE(("End"))
+    FAILED --> END_NODE
+    CANCELLED --> END_NODE
+
+    style START_NODE fill:#64748b,stroke:#475569,color:#fff
+    style QUEUED fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RUNNING fill:#6366f1,stroke:#4f46e5,color:#fff
+    style EXTRACTION fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CLASSIFICATION fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BATCHES fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style RECOMPOSITION fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style COMPLETED fill:#22c55e,stroke:#16a34a,color:#fff
+    style FAILED fill:#ef4444,stroke:#dc2626,color:#fff
+    style CANCELLED fill:#f59e0b,stroke:#d97706,color:#fff
+    style END_NODE fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 

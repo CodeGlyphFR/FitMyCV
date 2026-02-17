@@ -39,41 +39,52 @@
         <div class="diagram">
           <div class="diagram-title">Flux de donn&eacute;es du monitoring OpenAI</div>
           <div class="mermaid">
-flowchart TB
+graph TB
     subgraph Calls["APPELS API"]
-        Feature["Feature IA<br/>(g&eacute;n&eacute;ration, import, scoring...)"]
-        API["Appel OpenAI API"]
+        FeatureIA["Feature IA<br/>generation, import, scoring"]
+        APICall["Appel OpenAI API"]
     end
 
     subgraph Logging["JOURNALISATION"]
-        OAICall[(OpenAICall<br/>userId, model, tokens,<br/>estimatedCost, duration)]
-        OAIUsage[(OpenAIUsage<br/>agr&eacute;gation journali&egrave;re<br/>par user+feature+model)]
+        OAICall[("OpenAICall<br/>userId, model, tokens,<br/>estimatedCost, duration")]
+        OAIUsage[("OpenAIUsage<br/>agregation journaliere<br/>par user+feature+model")]
     end
 
     subgraph Pricing["TARIFICATION"]
-        OAIPricing[(OpenAIPricing<br/>inputPrice, outputPrice,<br/>cachePrice, priority)]
-        PriorityMode{{"Mode Priorit&eacute;<br/>actif ?"}}
+        OAIPricing[("OpenAIPricing<br/>inputPrice, outputPrice,<br/>cachePrice, priority")]
+        PriorityMode{"Mode Priorite<br/>actif ?"}
     end
 
     subgraph Alerts["ALERTES"]
-        AlertConfig[(OpenAIAlert<br/>type, threshold,<br/>enabled)]
-        Triggered["Alertes D&eacute;clench&eacute;es<br/>actualValue vs threshold"]
+        AlertConfig[("OpenAIAlert<br/>type, threshold,<br/>enabled")]
+        Triggered["Alertes Declenchees<br/>actualValue vs threshold"]
     end
 
-    subgraph Balance["SOLDE COMPTE"]
-        BalanceAPI["API OpenAI<br/>/dashboard/billing"]
-        Cache["Cache 5 min"]
+    subgraph BalanceBlock["SOLDE COMPTE"]
+        BalanceAPI["API OpenAI<br/>dashboard/billing"]
+        BalanceCache["Cache 5 min"]
     end
 
-    Feature --> API
-    API --> OAICall
+    FeatureIA --> APICall
+    APICall --> OAICall
     OAICall --> OAIUsage
     OAIPricing --> PriorityMode
     PriorityMode -->|"Oui"| OAICall
     PriorityMode -->|"Non"| OAICall
     OAIUsage --> Triggered
     AlertConfig --> Triggered
-    BalanceAPI --> Cache
+    BalanceAPI --> BalanceCache
+
+    style FeatureIA fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style APICall fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style OAICall fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OAIUsage fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OAIPricing fill:#14b8a6,stroke:#0d9488,color:#fff
+    style PriorityMode fill:#f59e0b,stroke:#d97706,color:#fff
+    style AlertConfig fill:#ef4444,stroke:#dc2626,color:#fff
+    style Triggered fill:#ef4444,stroke:#dc2626,color:#fff
+    style BalanceAPI fill:#64748b,stroke:#475569,color:#fff
+    style BalanceCache fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 

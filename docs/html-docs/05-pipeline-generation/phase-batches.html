@@ -43,24 +43,24 @@
           <div class="diagram-title">Orchestration des 7 batches &mdash; Parall&eacute;lisation et d&eacute;pendances</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTREES (depuis Classification)"]
+    subgraph InputData["ENTREES depuis Classification"]
         Experiences["experiences KEEP"]
         Projects["projects KEEP +<br/>MOVE_TO_PROJECTS"]
         Extras["extras du CV source"]
-        Education["education du CV source"]
-        Languages["languages du CV source"]
-        Skills["skills du CV source<br/>(4 categories)"]
+        EducationData["education du CV source"]
+        LanguagesData["languages du CV source"]
+        SkillsData["skills du CV source<br/>4 categories"]
     end
 
-    subgraph CacheA["CACHE A (Job Offer)"]
-        CA["generateCacheA()<br/>Responsabilites (top 5)"]
+    subgraph CacheALayer["CACHE A - Job Offer"]
+        CA["generateCacheA<br/>Responsabilites top 5"]
     end
 
-    subgraph Parallel["6 BATCHES EN Promise.all"]
+    subgraph ParallelBatches["6 BATCHES EN Promise.all"]
         direction TB
         subgraph BatchExp["1a: Experiences"]
             direction LR
-            Exp1["1ere experience seule<br/>(etablit cache OpenAI)"]
+            Exp1["1ere experience seule<br/>etablit cache OpenAI"]
             ExpDelay["500ms delay"]
             ExpN["Experiences restantes<br/>en Promise.all"]
             Exp1 --> ExpDelay --> ExpN
@@ -79,40 +79,40 @@ flowchart TB
         end
 
         subgraph BatchLang["1e: Languages"]
-            LangAll["1 seul appel OpenAI<br/>extractLanguageRequirements()"]
+            LangAll["1 seul appel OpenAI<br/>extractLanguageRequirements"]
         end
 
         subgraph BatchSkills["1f: Skills"]
             direction LR
-            Methods["methodologies<br/>(etablit cache)"]
+            Methods["methodologies<br/>etablit cache"]
             SkDelay["500ms staggered"]
             SkPar["hard_skills +<br/>soft_skills + tools<br/>en staggeredParallel"]
             Methods --> SkDelay --> SkPar
         end
     end
 
-    subgraph Post["POST-TRAITEMENT"]
-        ProcessSkills["processSkillsResponse()<br/>buildSkillsResult()"]
+    subgraph PostProcess["POST-TRAITEMENT"]
+        ProcessSkills["processSkillsResponse<br/>buildSkillsResult"]
     end
 
-    subgraph CacheB["CACHE B (Job Offer + Sections adaptees)"]
-        CB["generateCacheB()<br/>Cache A + experiences + projects"]
+    subgraph CacheBLayer["CACHE B - Job Offer + Sections adaptees"]
+        CB["generateCacheB<br/>Cache A + experiences + projects"]
     end
 
-    subgraph Sequential["BATCH SEQUENTIEL"]
+    subgraph SequentialBatch["BATCH SEQUENTIEL"]
         BatchSummary["1g: Summary<br/>1 seul appel OpenAI<br/>apres TOUS les batches"]
     end
 
-    subgraph Output["RESULTATS"]
+    subgraph OutputResults["RESULTATS"]
         Results["batchResults =<br/>experiences + projects + extras +<br/>education + languages + skills + summary"]
     end
 
     Experiences --> BatchExp
     Projects --> BatchProj
     Extras --> BatchExtras
-    Education --> BatchEdu
-    Languages --> BatchLang
-    Skills --> BatchSkills
+    EducationData --> BatchEdu
+    LanguagesData --> BatchLang
+    SkillsData --> BatchSkills
 
     CA --> BatchExp
     CA --> BatchProj
@@ -136,6 +136,28 @@ flowchart TB
     BatchLang --> Results
     ProcessSkills --> Results
     BatchSummary --> Results
+
+    style Experiences fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Projects fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extras fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style EducationData fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style LanguagesData fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SkillsData fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CA fill:#f59e0b,stroke:#d97706,color:#fff
+    style Exp1 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ExpDelay fill:#64748b,stroke:#475569,color:#fff
+    style ExpN fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ProjAll fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ExtAll fill:#6366f1,stroke:#4f46e5,color:#fff
+    style EduAll fill:#6366f1,stroke:#4f46e5,color:#fff
+    style LangAll fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Methods fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SkDelay fill:#64748b,stroke:#475569,color:#fff
+    style SkPar fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ProcessSkills fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CB fill:#f59e0b,stroke:#d97706,color:#fff
+    style BatchSummary fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Results fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

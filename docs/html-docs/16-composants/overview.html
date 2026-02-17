@@ -60,34 +60,46 @@
         <div class="diagram">
           <div class="diagram-title">Hi&eacute;rarchie des providers (RootProviders.jsx)</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Root["PROVIDERS RACINE"]
-        SP["SessionProvider<br/>(NextAuth)"]
-        RP["RecaptchaProvider<br/>(Google reCAPTCHA)"]
-        SetP["SettingsProvider<br/>(param&egrave;tres globaux)"]
-        CCP["CreditCostsProvider<br/>(co&ucirc;ts par feature)"]
-        LP["LanguageProvider<br/>(i18n FR/EN)"]
-        NP["NotificationProvider<br/>(toasts)"]
-        AP["AdminProvider<br/>(contexte admin)"]
-        OP["OnboardingProvider<br/>(flux onboarding)"]
+graph TB
+    subgraph RootProviders["PROVIDERS RACINE"]
+        SP["SessionProvider<br/>NextAuth"]
+        RP["RecaptchaProvider<br/>Google reCAPTCHA"]
+        SetP["SettingsProvider<br/>parametres globaux"]
+        CCP["CreditCostsProvider<br/>couts par feature"]
+        LangP["LanguageProvider<br/>i18n FR/EN"]
+        NotifP["NotificationProvider<br/>toasts"]
+        AdminP["AdminProvider<br/>contexte admin"]
+        OnbP["OnboardingProvider<br/>flux onboarding"]
     end
 
-    subgraph Conditional["PROVIDERS CONDITIONNELS (authentifi&eacute;)"]
-        RRP["RealtimeRefreshProvider<br/>(SSE events)"]
-        BTP["BackgroundTasksProvider<br/>(file de t&acirc;ches)"]
-        PPP["PipelineProgressProvider<br/>(progression g&eacute;n&eacute;ration)"]
+    subgraph ConditionalProviders["PROVIDERS CONDITIONNELS authentifie"]
+        RRP["RealtimeRefreshProvider<br/>SSE events"]
+        BTP["BackgroundTasksProvider<br/>file de taches"]
+        PPP["PipelineProgressProvider<br/>progression generation"]
     end
 
     SP --> RP
     RP --> SetP
     SetP --> CCP
-    CCP --> LP
-    LP --> NP
-    NP --> AP
-    AP --> OP
-    OP -->|"Si authentifi&eacute;"| RRP
+    CCP --> LangP
+    LangP --> NotifP
+    NotifP --> AdminP
+    AdminP --> OnbP
+    OnbP -->|"Si authentifie"| RRP
     RRP --> BTP
     BTP --> PPP
+
+    style SP fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RP fill:#22c55e,stroke:#16a34a,color:#fff
+    style SetP fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CCP fill:#f59e0b,stroke:#d97706,color:#fff
+    style LangP fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style NotifP fill:#22c55e,stroke:#16a34a,color:#fff
+    style AdminP fill:#ef4444,stroke:#dc2626,color:#fff
+    style OnbP fill:#6366f1,stroke:#4f46e5,color:#fff
+    style RRP fill:#14b8a6,stroke:#0d9488,color:#fff
+    style BTP fill:#14b8a6,stroke:#0d9488,color:#fff
+    style PPP fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 
@@ -753,6 +765,21 @@ flowchart TB
     CvProvider --> TopBarCV
     TopBarCV --> TB
     TB --> Modals
+
+    style CvPage fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CvProvider fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Reducer fill:#6366f1,stroke:#4f46e5,color:#fff
+    style AutoSave fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Sections fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Panel fill:#22c55e,stroke:#16a34a,color:#fff
+    style Score fill:#22c55e,stroke:#16a34a,color:#fff
+    style Suggestions fill:#22c55e,stroke:#16a34a,color:#fff
+    style ReviewP fill:#f59e0b,stroke:#d97706,color:#fff
+    style Highlights fill:#f59e0b,stroke:#d97706,color:#fff
+    style Diff fill:#f59e0b,stroke:#d97706,color:#fff
+    style Actions fill:#f59e0b,stroke:#d97706,color:#fff
+    style TB fill:#64748b,stroke:#475569,color:#fff
+    style Modals fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 

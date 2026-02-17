@@ -263,45 +263,60 @@
         <div class="diagram">
           <div class="diagram-title">Flux de synchronisation Plan &harr; Stripe</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Admin["ACTION ADMIN"]
-        Create["Cr&eacute;er / Modifier plan"]
+graph TB
+    subgraph AdminAction["ACTION ADMIN"]
+        CreatePlan["Creer / Modifier plan"]
     end
 
-    subgraph Sync["syncStripeProductsInternal()"]
+    subgraph SyncBlock["syncStripeProductsInternal"]
         CheckPlan{"Plan gratuit ?"}
         FindProduct["Chercher Product Stripe<br/>par stripeProductId"]
-        CreateProduct["Cr&eacute;er Product Stripe"]
-        CheckPriceM{"Price mensuel<br/>&agrave; jour ?"}
-        CheckPriceY{"Price annuel<br/>&agrave; jour ?"}
-        CreatePriceM["Cr&eacute;er Price mensuel"]
-        CreatePriceY["Cr&eacute;er Price annuel"]
+        CreateProduct["Creer Product Stripe"]
+        CheckPriceM{"Price mensuel<br/>a jour ?"}
+        CheckPriceY{"Price annuel<br/>a jour ?"}
+        CreatePriceM["Creer Price mensuel"]
+        CreatePriceY["Creer Price annuel"]
         ArchiveOld["Archiver ancien Price"]
         SaveIds["Sauvegarder IDs Stripe<br/>en base"]
     end
 
-    subgraph Stripe["STRIPE"]
-        Product["Product"]
-        PriceM["Price (monthly)"]
-        PriceY["Price (yearly)"]
+    subgraph StripeBlock["STRIPE"]
+        StripeProduct["Product"]
+        StripePriceM["Price monthly"]
+        StripePriceY["Price yearly"]
     end
 
-    Create --> CheckPlan
-    CheckPlan -->|"Oui"| Skip["Ignor&eacute;"]
+    CreatePlan --> CheckPlan
+    CheckPlan -->|"Oui"| SkipPlan["Ignore"]
     CheckPlan -->|"Non"| FindProduct
     FindProduct -->|"Existe"| CheckPriceM
-    FindProduct -->|"N'existe pas"| CreateProduct
+    FindProduct -->|"N existe pas"| CreateProduct
     CreateProduct --> CheckPriceM
-    CheckPriceM -->|"Montant chang&eacute;"| ArchiveOld
+    CheckPriceM -->|"Montant change"| ArchiveOld
     ArchiveOld --> CreatePriceM
     CheckPriceM -->|"OK"| CheckPriceY
     CreatePriceM --> CheckPriceY
-    CheckPriceY -->|"Montant chang&eacute;"| CreatePriceY
+    CheckPriceY -->|"Montant change"| CreatePriceY
     CheckPriceY -->|"OK"| SaveIds
     CreatePriceY --> SaveIds
-    SaveIds --> Product
-    SaveIds --> PriceM
-    SaveIds --> PriceY
+    SaveIds --> StripeProduct
+    SaveIds --> StripePriceM
+    SaveIds --> StripePriceY
+
+    style CreatePlan fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CheckPlan fill:#f59e0b,stroke:#d97706,color:#fff
+    style FindProduct fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CreateProduct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CheckPriceM fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckPriceY fill:#f59e0b,stroke:#d97706,color:#fff
+    style CreatePriceM fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreatePriceY fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ArchiveOld fill:#ef4444,stroke:#dc2626,color:#fff
+    style SaveIds fill:#22c55e,stroke:#16a34a,color:#fff
+    style SkipPlan fill:#64748b,stroke:#475569,color:#fff
+    style StripeProduct fill:#14b8a6,stroke:#0d9488,color:#fff
+    style StripePriceM fill:#14b8a6,stroke:#0d9488,color:#fff
+    style StripePriceY fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 

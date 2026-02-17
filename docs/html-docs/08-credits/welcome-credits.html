@@ -70,25 +70,42 @@
           <div class="diagram-title">Flux assignDefaultPlan() &agrave; l'inscription</div>
           <div class="mermaid">
 flowchart TD
-    Start["assignDefaultPlan(userId)"] --> ModeCheck{"subscription_mode_enabled ?"}
+    Start["assignDefaultPlan"] --> ModeCheck{"subscription_mode_enabled ?"}
 
-    ModeCheck -->|"false"| CreditsOnly["MODE CR&Eacute;DITS-ONLY"]
-    CreditsOnly --> GetWelcome["getNumericSettingValue('welcome_credits', 0)"]
-    GetWelcome --> BalCheck{"CreditBalance<br/>existe d&eacute;j&agrave; ?"}
-    BalCheck -->|"Oui"| SkipCredits["Ignorer (balance existante)"]
-    BalCheck -->|"Non"| CreateBalance["Cr&eacute;er CreditBalance<br/>(balance = welcomeCredits,<br/>totalGifted = welcomeCredits)"]
+    ModeCheck -->|"false"| CreditsOnly["MODE CREDITS-ONLY"]
+    CreditsOnly --> GetWelcome["getNumericSettingValue"]
+    GetWelcome --> BalCheck{"CreditBalance<br/>existe deja ?"}
+    BalCheck -->|"Oui"| SkipCredits["Ignorer - balance existante"]
+    BalCheck -->|"Non"| CreateBalance["Creer CreditBalance<br/>balance = welcomeCredits"]
     CreateBalance --> WelcomeCheck{"welcomeCredits > 0 ?"}
-    WelcomeCheck -->|"Oui"| CreateTx["Cr&eacute;er CreditTransaction<br/>(type: 'gift',<br/>metadata: welcome_bonus)"]
-    WelcomeCheck -->|"Non"| Done["Termin&eacute;"]
-    CreateTx --> Done
+    WelcomeCheck -->|"Oui"| CreateTx["Creer CreditTransaction<br/>type: gift, source: welcome_bonus"]
+    WelcomeCheck -->|"Non"| DoneN["Termine"]
+    CreateTx --> DoneN
 
     ModeCheck -->|"true"| SubMode["MODE ABONNEMENT"]
-    SubMode --> FindFree["Trouver plan Gratuit<br/>(priceMonthly=0, priceYearly=0)"]
-    FindFree --> SubCheck{"Subscription<br/>existe d&eacute;j&agrave; ?"}
-    SubCheck -->|"Oui"| SkipSub["Ignorer (abonnement existant)"]
-    SubCheck -->|"Non"| CreateSub["Cr&eacute;er Subscription<br/>(plan Gratuit, status: active,<br/>period: 10 ans)"]
-    CreateSub --> CreateBal0["Cr&eacute;er CreditBalance<br/>(balance = 0)"]
-    CreateBal0 --> Done
+    SubMode --> FindFree["Trouver plan Gratuit<br/>priceMonthly=0, priceYearly=0"]
+    FindFree --> SubCheck{"Subscription<br/>existe deja ?"}
+    SubCheck -->|"Oui"| SkipSub["Ignorer - abonnement existant"]
+    SubCheck -->|"Non"| CreateSub["Creer Subscription<br/>plan Gratuit, status: active"]
+    CreateSub --> CreateBal0["Creer CreditBalance<br/>balance = 0"]
+    CreateBal0 --> DoneN
+
+    style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ModeCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style CreditsOnly fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style GetWelcome fill:#6366f1,stroke:#4f46e5,color:#fff
+    style BalCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style SkipCredits fill:#64748b,stroke:#475569,color:#fff
+    style CreateBalance fill:#22c55e,stroke:#16a34a,color:#fff
+    style WelcomeCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style CreateTx fill:#14b8a6,stroke:#0d9488,color:#fff
+    style DoneN fill:#22c55e,stroke:#16a34a,color:#fff
+    style SubMode fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FindFree fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SubCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style SkipSub fill:#64748b,stroke:#475569,color:#fff
+    style CreateSub fill:#22c55e,stroke:#16a34a,color:#fff
+    style CreateBal0 fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
@@ -214,23 +231,23 @@ await prisma.creditBalance.create({
 sequenceDiagram
     participant U as Utilisateur
     participant NA as NextAuth
-    participant DB as Base de donn&eacute;es
-    participant AP as assignDefaultPlan()
+    participant DB as Base de donnees
+    participant AP as assignDefaultPlan
 
-    U->>NA: Premi&egrave;re connexion (OAuth ou email)
+    U->>NA: Premiere connexion - OAuth ou email
 
     rect rgb(240, 249, 255)
-    Note over NA,DB: &Eacute;v&eacute;nement createUser (nouvel utilisateur uniquement)
-    NA->>DB: Cr&eacute;er le User
-    NA->>AP: assignDefaultPlan(user.id)
-    AP->>DB: Cr&eacute;er Subscription ou CreditBalance
+    Note over NA,DB: Evenement createUser - nouvel utilisateur uniquement
+    NA->>DB: Creer le User
+    NA->>AP: assignDefaultPlan - user.id
+    AP->>DB: Creer Subscription ou CreditBalance
     end
 
     rect rgb(240, 255, 240)
-    Note over NA,DB: Callback signIn (&agrave; chaque connexion)
-    NA->>AP: assignDefaultPlan(user.id)
-    Note right of AP: Idempotent : ignore si d&eacute;j&agrave; fait
-    AP-->>NA: { success: true }
+    Note over NA,DB: Callback signIn - a chaque connexion
+    NA->>AP: assignDefaultPlan - user.id
+    Note right of AP: Idempotent : ignore si deja fait
+    AP-->>NA: success: true
     end
           </div>
         </div>

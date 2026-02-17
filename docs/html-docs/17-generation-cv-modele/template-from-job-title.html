@@ -146,8 +146,21 @@ flowchart TB
     Prompts --> Call
     Schema --> Call
     Call --> Parse --> Check
-    Check -->|Oui| Track --> Result
-    Check -->|Non| Error
+    Check -->|"Oui"| Track --> Result
+    Check -->|"Non"| Error
+    style Title fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Lang fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Credits fill:#f59e0b,stroke:#d97706,color:#fff
+    style Model fill:#64748b,stroke:#475569,color:#fff
+    style Validate fill:#64748b,stroke:#475569,color:#fff
+    style Schema fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Prompts fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Call fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Parse fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Check fill:#f59e0b,stroke:#d97706,color:#fff
+    style Track fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Result fill:#22c55e,stroke:#16a34a,color:#fff
+    style Error fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 

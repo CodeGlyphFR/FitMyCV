@@ -64,32 +64,32 @@
         <div class="diagram">
           <div class="diagram-title">Changement de mode de mon&eacute;tisation</div>
           <div class="mermaid">
-flowchart TB
-    Admin["Admin clique sur le toggle"]
-    Check{"Mode actuel ?"}
+graph TB
+    AdminToggle["Admin clique sur le toggle"]
+    CheckMode{"Mode actuel ?"}
 
     subgraph Activation["ACTIVATION ABONNEMENT"]
-        EnableReq["POST /api/admin/subscription-mode<br/>{ enabled: true }"]
-        EnableDB["Setting subscription_mode_enabled = true"]
-        EnableEffect["Affichage plans + checkout subscription"]
+        EnableReq["POST /api/admin/subscription-mode<br/>enabled: true"]
+        EnableDB["Setting<br/>subscription_mode_enabled = true"]
+        EnableEffect["Affichage plans +<br/>checkout subscription"]
     end
 
-    subgraph Desactivation["D&Eacute;SACTIVATION ABONNEMENT"]
-        DisableReq["POST /api/admin/subscription-mode<br/>{ enabled: false }"]
-        CountPaid{"Compter les abonn&eacute;s<br/>payants actifs"}
-        Warning["Afficher avertissement :<br/>N abonn&eacute;s seront impact&eacute;s"]
-        DisableDB["Setting subscription_mode_enabled = false"]
-        DisableEffect["Affichage packs cr&eacute;dits uniquement"]
+    subgraph Desactivation["DESACTIVATION ABONNEMENT"]
+        DisableReq["POST /api/admin/subscription-mode<br/>enabled: false"]
+        CountPaid{"Compter les abonnes<br/>payants actifs"}
+        Warning["Afficher avertissement :<br/>N abonnes seront impactes"]
+        DisableDB["Setting<br/>subscription_mode_enabled = false"]
+        DisableEffect["Affichage packs<br/>credits uniquement"]
     end
 
-    SSE["dbEmitter &rarr; settings:updated<br/>Rafra&icirc;chissement temps r&eacute;el"]
+    SSE["dbEmitter settings:updated<br/>Rafraichissement temps reel"]
 
-    Admin --> Check
-    Check -->|"Cr&eacute;dits-only &rarr; Abonnement"| EnableReq
+    AdminToggle --> CheckMode
+    CheckMode -->|"Credits-only vers Abonnement"| EnableReq
     EnableReq --> EnableDB
     EnableDB --> SSE
 
-    Check -->|"Abonnement &rarr; Cr&eacute;dits-only"| DisableReq
+    CheckMode -->|"Abonnement vers Credits-only"| DisableReq
     DisableReq --> CountPaid
     CountPaid --> Warning
     Warning -->|"Confirmation"| DisableDB
@@ -97,6 +97,18 @@ flowchart TB
 
     EnableDB --> EnableEffect
     DisableDB --> DisableEffect
+
+    style AdminToggle fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CheckMode fill:#f59e0b,stroke:#d97706,color:#fff
+    style EnableReq fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style EnableDB fill:#6366f1,stroke:#4f46e5,color:#fff
+    style EnableEffect fill:#22c55e,stroke:#16a34a,color:#fff
+    style DisableReq fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CountPaid fill:#f59e0b,stroke:#d97706,color:#fff
+    style Warning fill:#ef4444,stroke:#dc2626,color:#fff
+    style DisableDB fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DisableEffect fill:#22c55e,stroke:#16a34a,color:#fff
+    style SSE fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 

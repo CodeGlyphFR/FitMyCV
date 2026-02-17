@@ -38,31 +38,31 @@
           <div class="diagram-title">Flux de gestion des cr&eacute;dits</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Sources["SOURCES DE CR&Eacute;DITS"]
-        Welcome["Cr&eacute;dits bienvenue<br/>(mode cr&eacute;dits-only)"]
-        Purchase["Achat pack<br/>(grantCredits)"]
-        Refund["Remboursement<br/>(refundCredit)"]
-        Admin["Attribution admin<br/>(grantCredits type=gift)"]
+    subgraph Sources["SOURCES DE CREDITS"]
+        Welcome["Credits bienvenue<br/>mode credits-only"]
+        Purchase["Achat pack<br/>grantCredits"]
+        Refund["Remboursement<br/>refundCredit"]
+        Admin["Attribution admin<br/>grantCredits type=gift"]
     end
 
     subgraph Balance["SOLDE"]
-        CB[(CreditBalance<br/>balance, totalPurchased,<br/>totalUsed, totalRefunded,<br/>totalGifted)]
+        CB[("CreditBalance<br/>balance, totalPurchased,<br/>totalUsed, totalRefunded,<br/>totalGifted")]
     end
 
     subgraph Usage["UTILISATION"]
-        Check{{"canUseFeature()"}}
-        Increment["incrementFeatureCounter()"]
-        Debit["debitCredit()"]
-        Action["Action ex&eacute;cut&eacute;e"]
+        Check{{"canUseFeature"}}
+        Increment["incrementFeatureCounter"]
+        Debit["debitCredit"]
+        Action["Action executee"]
     end
 
-    subgraph Tracking["TRA&Ccedil;ABILIT&Eacute;"]
-        CT[(CreditTransaction<br/>type, amount, featureName,<br/>stripePaymentIntentId)]
-        SSE["dbEmitter<br/>(SSE temps r&eacute;el)"]
+    subgraph Tracking["TRACABILITE"]
+        CT[("CreditTransaction<br/>type, amount, featureName,<br/>stripePaymentIntentId")]
+        SSE["dbEmitter<br/>SSE temps reel"]
     end
 
     subgraph Protection["PROTECTION"]
-        Chargeback["debitCredits()<br/>(forc&eacute;, balance n&eacute;gative)"]
+        Chargeback["debitCredits<br/>force, balance negative"]
     end
 
     Sources --> CB
@@ -72,9 +72,22 @@ flowchart TB
     Debit --> Action
     Debit --> CT
     CT --> SSE
-    Action -->|"&Eacute;chec task"| Refund
+    Action -->|"Echec task"| Refund
     Chargeback --> CB
     Chargeback --> CT
+
+    style Welcome fill:#22c55e,stroke:#16a34a,color:#fff
+    style Purchase fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Refund fill:#22c55e,stroke:#16a34a,color:#fff
+    style Admin fill:#64748b,stroke:#475569,color:#fff
+    style CB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Check fill:#f59e0b,stroke:#d97706,color:#fff
+    style Increment fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Debit fill:#ef4444,stroke:#dc2626,color:#fff
+    style Action fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CT fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SSE fill:#64748b,stroke:#475569,color:#fff
+    style Chargeback fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 

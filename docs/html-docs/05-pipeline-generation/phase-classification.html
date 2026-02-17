@@ -59,34 +59,46 @@
           <div class="diagram-title">Du CV source aux d&eacute;cisions de classification</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTREE"]
-        CV["CvFile.content<br/>(experiences + projects)"]
-        Job["JobOffer.content<br/>(skills, responsibilities)"]
+    subgraph InputSection["ENTREE"]
+        CV["CvFile.content<br/>experiences + projects"]
+        Job["JobOffer.content<br/>skills, responsibilities"]
     end
 
-    subgraph Core["classifyCore()"]
+    subgraph CoreSection["classifyCore"]
         Prompt["Chargement prompts<br/>classify-system.md<br/>classify-user.md"]
         Schema["classificationSchema.json<br/>Structured Outputs"]
         OpenAI["OpenAI API<br/>model_cv_classify"]
     end
 
-    subgraph Decision{"DECISIONS"}
+    subgraph DecisionSection["DECISIONS"]
         Keep["KEEP<br/>Experience pertinente"]
         Remove["REMOVE<br/>Non pertinent"]
-        Move["MOVE_TO_PROJECTS<br/>Exp courte → Projet"]
+        Move["MOVE_TO_PROJECTS<br/>Exp courte vers Projet"]
     end
 
-    subgraph Apply["applyClassification()"]
+    subgraph ApplySection["applyClassification"]
         FilterExp["Experiences KEEP"]
-        ConvertProj["Conversion inline<br/>MOVE_TO_PROJECTS → Projets"]
+        ConvertProj["Conversion inline<br/>MOVE_TO_PROJECTS vers Projets"]
         Stats["Statistiques"]
     end
 
     CV --> Prompt
     Job --> Prompt
     Prompt --> Schema --> OpenAI
-    OpenAI --> Decision
-    Decision --> Apply
+    OpenAI --> DecisionSection
+    DecisionSection --> ApplySection
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Job fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Prompt fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Schema fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OpenAI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Keep fill:#22c55e,stroke:#16a34a,color:#fff
+    style Remove fill:#ef4444,stroke:#dc2626,color:#fff
+    style Move fill:#f59e0b,stroke:#d97706,color:#fff
+    style FilterExp fill:#22c55e,stroke:#16a34a,color:#fff
+    style ConvertProj fill:#f59e0b,stroke:#d97706,color:#fff
+    style Stats fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 

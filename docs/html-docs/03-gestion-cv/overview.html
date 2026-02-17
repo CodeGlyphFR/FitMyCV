@@ -44,12 +44,12 @@
           <div class="diagram-title">Flux de gestion des CV</div>
           <div class="mermaid">
 flowchart TD
-    Manual["Creation manuelle<br/><code>POST /api/cvs/create</code>"]
-    Import["Import PDF<br/><code>GPT-4o Vision</code>"]
-    Generate["Generation IA<br/><code>Pipeline generate-cv</code>"]
-    Extension["Extension navigateur<br/><code>Markdown pre-extrait</code>"]
+    Manual["Creation manuelle<br/>POST /api/cvs/create"]
+    Import["Import PDF<br/>GPT-4o Vision"]
+    Generate["Generation IA<br/>Pipeline generate-cv"]
+    Extension["Extension navigateur<br/>Markdown pre-extrait"]
 
-    Validate["Validation AJV<br/><code>data/schema.json</code>"]
+    Validate["Validation AJV<br/>data/schema.json"]
     Storage[("CvFile<br/>PostgreSQL")]
     Version[("CvVersion<br/>Historique")]
 
@@ -59,7 +59,7 @@ flowchart TD
     Review["Review changes"]
     Export["Export"]
 
-    PDF["PDF<br/>(Puppeteer)"]
+    PDF["PDF<br/>Puppeteer"]
     Preview["Preview HTML"]
 
     Manual --> Validate
@@ -75,6 +75,21 @@ flowchart TD
     Storage --> Export
     Export --> PDF
     Export --> Preview
+
+    style Manual fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Import fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Generate fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extension fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Validate fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Storage fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Version fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Edit fill:#64748b,stroke:#475569,color:#fff
+    style Optimize fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Translate fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Review fill:#f59e0b,stroke:#d97706,color:#fff
+    style Export fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PDF fill:#22c55e,stroke:#16a34a,color:#fff
+    style Preview fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

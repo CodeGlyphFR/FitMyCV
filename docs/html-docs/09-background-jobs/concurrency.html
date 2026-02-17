@@ -71,29 +71,40 @@
         <div class="diagram">
           <div class="diagram-title">Logique de canStartTaskType()</div>
           <div class="mermaid">
-flowchart TD
-    Start["canStartTaskType(userId, taskType)"]
-    CheckActive["Utilisateur a des tâches actives ?"]
-    CheckType{"taskType === cv_generation ?"}
-    CheckCvCount["currentCount >= 3 ?"]
-    CheckSingleCount["currentCount > 0 pour ce type ?"]
-    CheckTypesLimit["Nombre de types actifs >= 3 ?"]
-    Allowed["{ allowed: true }"]
-    DeniedCvMax["{ allowed: false, reason: max_cv_generation_reached }"]
-    DeniedRunning["{ allowed: false, reason: task_type_already_running }"]
-    DeniedTypes["{ allowed: false, reason: max_concurrent_types_reached }"]
+graph TD
+    Start["canStartTaskType<br/>userId, taskType"]
+    CheckActive{"Utilisateur a des<br/>taches actives ?"}
+    CheckType{"taskType ===<br/>cv_generation ?"}
+    CheckCvCount{"currentCount >= 3 ?"}
+    CheckSingleCount{"currentCount > 0<br/>pour ce type ?"}
+    CheckTypesLimit{"Nombre de types<br/>actifs >= 3 ?"}
+    Allowed["allowed: true"]
+    DeniedCvMax["allowed: false<br/>max_cv_generation_reached"]
+    DeniedRunning["allowed: false<br/>task_type_already_running"]
+    DeniedTypes["allowed: false<br/>max_concurrent_types_reached"]
 
     Start --> CheckActive
-    CheckActive -->|Non| Allowed
-    CheckActive -->|Oui| CheckType
-    CheckType -->|Oui| CheckCvCount
-    CheckType -->|Non| CheckSingleCount
-    CheckCvCount -->|Oui| DeniedCvMax
-    CheckCvCount -->|Non| Allowed
-    CheckSingleCount -->|Oui| DeniedRunning
-    CheckSingleCount -->|Non| CheckTypesLimit
-    CheckTypesLimit -->|Oui| DeniedTypes
-    CheckTypesLimit -->|Non| Allowed
+    CheckActive -->|"Non"| Allowed
+    CheckActive -->|"Oui"| CheckType
+    CheckType -->|"Oui"| CheckCvCount
+    CheckType -->|"Non"| CheckSingleCount
+    CheckCvCount -->|"Oui"| DeniedCvMax
+    CheckCvCount -->|"Non"| Allowed
+    CheckSingleCount -->|"Oui"| DeniedRunning
+    CheckSingleCount -->|"Non"| CheckTypesLimit
+    CheckTypesLimit -->|"Oui"| DeniedTypes
+    CheckTypesLimit -->|"Non"| Allowed
+
+    style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CheckActive fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckType fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckCvCount fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckSingleCount fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckTypesLimit fill:#f59e0b,stroke:#d97706,color:#fff
+    style Allowed fill:#22c55e,stroke:#16a34a,color:#fff
+    style DeniedCvMax fill:#ef4444,stroke:#dc2626,color:#fff
+    style DeniedRunning fill:#ef4444,stroke:#dc2626,color:#fff
+    style DeniedTypes fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 

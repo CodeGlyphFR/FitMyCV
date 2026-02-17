@@ -124,6 +124,19 @@ flowchart TB
     end
 
     Factory --> Domains
+
+    style Key fill:#64748b,stroke:#475569,color:#fff
+    style Status fill:#64748b,stroke:#475569,color:#fff
+    style Params fill:#64748b,stroke:#475569,color:#fff
+    style Action fill:#64748b,stroke:#475569,color:#fff
+    style Common fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Auth fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Cv fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Sub fill:#f59e0b,stroke:#d97706,color:#fff
+    style Bg fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Ext fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Acct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Other fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 
@@ -238,14 +251,21 @@ const cvFiles = await listUserCvFiles(userId);
         <div class="diagram">
           <div class="diagram-title">Cycle de vie d'une tâche asynchrone</div>
           <div class="mermaid">
-stateDiagram-v2
-    [*] --> pending: Création tâche
-    pending --> running: Job démarré
-    running --> completed: Succès
-    running --> failed: Échec
-    failed --> running: Retry (max 3)
-    completed --> [*]
-    failed --> [*]: Max retries
+flowchart TD
+    START(("*")) -->|"Création tâche"| pending["pending"]
+    pending -->|"Job démarré"| running["running"]
+    running -->|"Succès"| completed["completed"]
+    running -->|"Échec"| failed["failed"]
+    failed -->|"Retry max 3"| running
+    completed --> END(("*"))
+    failed -->|"Max retries"| END
+
+    style START fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style pending fill:#f59e0b,stroke:#d97706,color:#fff
+    style running fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style completed fill:#22c55e,stroke:#16a34a,color:#fff
+    style failed fill:#ef4444,stroke:#dc2626,color:#fff
+    style END fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 
@@ -474,6 +494,14 @@ flowchart LR
     Merge["Merge main"] --> Bump["Bump version<br/>auto"]
     Bump --> Deploy["Deploy prod<br/>app.fitmycv.io:3000"]
     Deploy --> Sync["Sync branches<br/>release + dev"]
+
+    style PR fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PreProd fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Test fill:#f59e0b,stroke:#d97706,color:#fff
+    style Merge fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Bump fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Deploy fill:#22c55e,stroke:#16a34a,color:#fff
+    style Sync fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
       </div>

@@ -41,58 +41,74 @@
           <div class="diagram-title">Architecture compl&egrave;te du syst&egrave;me d'offres d'emploi</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTR&Eacute;E"]
+    subgraph Input["ENTREE"]
         URL["URL offre"]
         PDF["PDF offre"]
-        Extension["Extension navigateur<br/>(Markdown pr&eacute;-extrait)"]
+        Extension["Extension navigateur<br/>Markdown pre-extrait"]
     end
 
-    subgraph Fetch["R&Eacute;CUP&Eacute;RATION"]
+    subgraph Fetch["RECUPERATION"]
         SimpleFetch["Simple HTTP Fetch"]
-        Puppeteer["Puppeteer + Stealth"]
-        PdfParse["pdf-parse<br/>(texte)"]
+        PuppeteerNode["Puppeteer + Stealth"]
+        PdfParse["pdf-parse<br/>texte"]
     end
 
     subgraph Extract["EXTRACTION IA"]
         OpenAI["OpenAI Structured Outputs"]
         Schema["jobOfferExtractionSchema.json"]
-        LangDetect["D&eacute;tection langue"]
+        LangDetect["Detection langue"]
     end
 
-    subgraph Cache["CACHE"]
+    subgraph CacheLayer["CACHE"]
         Normalize["Normalisation URL"]
         HashPdf["Hash SHA256 PDF"]
-        Dedup["D&eacute;duplication<br/>@@unique userId+sourceValue"]
+        Dedup["Deduplication<br/>unique userId+sourceValue"]
     end
 
     subgraph Storage["STOCKAGE"]
-        JobOffer["JobOffer<br/>(content JSON)"]
+        JobOffer["JobOffer<br/>content JSON"]
     end
 
     subgraph Usage["UTILISATION"]
-        Generation["Pipeline G&eacute;n&eacute;ration CV"]
+        Generation["Pipeline Generation CV"]
         Optimization["Pipeline Optimisation CV"]
     end
 
     URL --> SimpleFetch
-    SimpleFetch -->|antibot?| Puppeteer
-    URL --> Puppeteer
+    SimpleFetch -->|"antibot?"| PuppeteerNode
+    URL --> PuppeteerNode
     PDF --> PdfParse
     Extension --> Extract
 
     SimpleFetch --> Extract
-    Puppeteer --> Extract
+    PuppeteerNode --> Extract
     PdfParse --> Extract
 
     Extract --> OpenAI
     OpenAI --> Schema
     Schema --> LangDetect
-    LangDetect --> Cache
-    Cache --> Normalize
-    Cache --> HashPdf
-    Cache --> Dedup
+    LangDetect --> CacheLayer
+    CacheLayer --> Normalize
+    CacheLayer --> HashPdf
+    CacheLayer --> Dedup
     Dedup --> JobOffer
     JobOffer --> Usage
+
+    style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PDF fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extension fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SimpleFetch fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PuppeteerNode fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PdfParse fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style OpenAI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Schema fill:#6366f1,stroke:#4f46e5,color:#fff
+    style LangDetect fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Normalize fill:#f59e0b,stroke:#d97706,color:#fff
+    style HashPdf fill:#f59e0b,stroke:#d97706,color:#fff
+    style Dedup fill:#f59e0b,stroke:#d97706,color:#fff
+    style JobOffer fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Generation fill:#22c55e,stroke:#16a34a,color:#fff
+    style Optimization fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 

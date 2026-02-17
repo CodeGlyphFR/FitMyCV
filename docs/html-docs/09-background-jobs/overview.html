@@ -35,43 +35,43 @@
         <div class="diagram">
           <div class="diagram-title">Flux de traitement des background jobs</div>
           <div class="mermaid">
-flowchart TB
-    subgraph API["API LAYER (app/api/background-tasks/*)"]
-        Request["POST requête utilisateur"]
-        Auth["Auth + canStartTaskType()"]
-        Feature["incrementFeatureCounter()"]
-        CreateTask["Créer BackgroundTask en DB (status: queued)"]
-        Schedule["schedule(jobInput)"]
+graph TB
+    subgraph API["API LAYER"]
+        Request["POST requete utilisateur"]
+        Auth["Auth + canStartTaskType"]
+        Feature["incrementFeatureCounter"]
+        CreateTask["Creer BackgroundTask<br/>status: queued"]
+        Schedule["schedule jobInput"]
     end
 
-    subgraph Queue["JOB QUEUE (lib/background-jobs/jobQueue.js)"]
-        Enqueue["enqueueJob(jobRunner)"]
-        Check["activeJobs < MAX_CONCURRENT_JOBS ? (3)"]
-        Execute["Exécuter le job"]
-        Release["activeJobs-- + setImmediate(processQueue)"]
+    subgraph Queue["JOB QUEUE"]
+        Enqueue["enqueueJob"]
+        Check{"activeJobs < 3 ?"}
+        Execute["Executer le job"]
+        Release["activeJobs-- +<br/>setImmediate processQueue"]
     end
 
-    subgraph Runner["JOB RUNNER (lib/background-jobs/jobRunner.js)"]
-        PreCheck["Vérifier status != cancelled"]
-        Abort["Setup AbortController + registerAbortController()"]
-        BeforeRun["beforeRun() hook"]
-        Service["getService() → prepareInput() → service()"]
-        HandleResult["handleResult() → afterRun()"]
-        Track["trackSuccess() / trackError()"]
-        Cleanup["cleanup() + clearRegisteredProcess()"]
+    subgraph Runner["JOB RUNNER"]
+        PreCheck["Verifier status != cancelled"]
+        Abort["Setup AbortController"]
+        BeforeRun["beforeRun hook"]
+        Service["getService / prepareInput / service"]
+        HandleResult["handleResult / afterRun"]
+        Track["trackSuccess / trackError"]
+        Cleanup["cleanup + clearRegisteredProcess"]
     end
 
-    subgraph Events["TEMPS RÉEL"]
-        UpdateTask["updateBackgroundTask() → prismaWithEvents"]
-        Emitter["dbEmitter.emit('task:updated')"]
+    subgraph Events["TEMPS REEL"]
+        UpdateTask["updateBackgroundTask"]
+        Emitter["dbEmitter.emit task:updated"]
         SSE["SSE /api/events/stream"]
         Client["Client React"]
     end
 
     Request --> Auth --> Feature --> CreateTask --> Schedule
     Schedule --> Enqueue --> Check
-    Check -->|Oui| Execute
-    Check -->|Non| Queue
+    Check -->|"Oui"| Execute
+    Check -->|"Non - en attente"| Queue
 
     Execute --> PreCheck --> Abort --> BeforeRun --> Service --> HandleResult --> Track --> Cleanup
     Cleanup --> Release
@@ -79,7 +79,28 @@ flowchart TB
     HandleResult --> UpdateTask
     UpdateTask --> Emitter --> SSE --> Client
 
-    Service -->|Erreur ou annulation| Track
+    Service -->|"Erreur ou annulation"| Track
+
+    style Request fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Auth fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Feature fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreateTask fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Schedule fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Enqueue fill:#64748b,stroke:#475569,color:#fff
+    style Check fill:#f59e0b,stroke:#d97706,color:#fff
+    style Execute fill:#22c55e,stroke:#16a34a,color:#fff
+    style Release fill:#64748b,stroke:#475569,color:#fff
+    style PreCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style Abort fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BeforeRun fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Service fill:#6366f1,stroke:#4f46e5,color:#fff
+    style HandleResult fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Track fill:#64748b,stroke:#475569,color:#fff
+    style Cleanup fill:#64748b,stroke:#475569,color:#fff
+    style UpdateTask fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Emitter fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SSE fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Client fill:#0ea5e9,stroke:#0284c7,color:#fff
           </div>
         </div>
 
@@ -111,16 +132,20 @@ flowchart TB
         <div class="diagram">
           <div class="diagram-title">États d'une BackgroundTask</div>
           <div class="mermaid">
-stateDiagram-v2
-    [*] --> queued : Création
-    queued --> running : Job dépilé de la queue
-    running --> completed : handleResult() réussi
-    running --> failed : Erreur ou quota dépassé
-    running --> cancelled : AbortController.abort()
-    queued --> cancelled : Annulation avant exécution
-    failed --> [*]
-    completed --> [*]
-    cancelled --> [*]
+graph TD
+    START(("Debut")) --> QUEUED["queued<br/>Creation"]
+    QUEUED -->|"Job depile de la queue"| RUNNING["running"]
+    RUNNING -->|"handleResult reussi"| COMPLETED["completed"]
+    RUNNING -->|"Erreur ou quota depasse"| FAILED["failed"]
+    RUNNING -->|"AbortController.abort"| CANCELLED["cancelled"]
+    QUEUED -->|"Annulation avant execution"| CANCELLED
+
+    style START fill:#64748b,stroke:#475569,color:#fff
+    style QUEUED fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RUNNING fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style COMPLETED fill:#22c55e,stroke:#16a34a,color:#fff
+    style FAILED fill:#ef4444,stroke:#dc2626,color:#fff
+    style CANCELLED fill:#f59e0b,stroke:#d97706,color:#fff
           </div>
         </div>
 

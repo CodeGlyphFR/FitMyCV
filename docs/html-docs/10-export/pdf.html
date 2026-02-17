@@ -36,19 +36,29 @@
         <div class="diagram">
           <div class="diagram-title">Flux d'export PDF</div>
           <div class="mermaid">
-flowchart LR
+graph LR
     Request["POST /api/export-pdf"]
     Auth["Authentification"]
-    Credits["incrementFeatureCounter()"]
-    Prepare["prepareCvData()"]
-    HTML["Génération HTML + CSS"]
-    Puppeteer["Puppeteer setContent()"]
-    PDF["page.pdf() → Buffer"]
-    Response["Response (application/pdf)"]
-    Refund["refundCredit()"]
+    Credits["incrementFeatureCounter"]
+    Prepare["prepareCvData"]
+    HTML["Generation HTML + CSS"]
+    Puppeteer["Puppeteer setContent"]
+    PDF["page.pdf - Buffer"]
+    Response["Response<br/>application/pdf"]
+    Refund["refundCredit"]
 
     Request --> Auth --> Credits --> Prepare --> HTML --> Puppeteer --> PDF --> Response
-    PDF -->|Erreur| Refund
+    PDF -->|"Erreur"| Refund
+
+    style Request fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Auth fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Credits fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Prepare fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style HTML fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Puppeteer fill:#6366f1,stroke:#4f46e5,color:#fff
+    style PDF fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Response fill:#22c55e,stroke:#16a34a,color:#fff
+    style Refund fill:#ef4444,stroke:#dc2626,color:#fff
           </div>
         </div>
 

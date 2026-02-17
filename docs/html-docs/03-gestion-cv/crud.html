@@ -38,35 +38,35 @@
           <div class="diagram-title">Flux CRUD des CV</div>
           <div class="mermaid">
 flowchart LR
-    Client["Client (Browser)"]
+    Client["Client - Browser"]
 
     subgraph API["API Routes /api/cvs/*"]
         Create["POST /create"]
         List["GET /"]
-        Read["GET /read"]
+        ReadRoute["GET /read"]
         Delete["POST /delete"]
         DeleteBulk["POST /delete-bulk"]
     end
 
-    subgraph Storage["Storage Layer (Prisma)"]
-        Write["writeUserCvFile()"]
-        ReadFn["readUserCvFile()"]
-        ListFn["listUserCvFiles()"]
-        DeleteFn["deleteUserCvFile()"]
+    subgraph Storage["Storage Layer - Prisma"]
+        Write["writeUserCvFile"]
+        ReadFn["readUserCvFile"]
+        ListFn["listUserCvFiles"]
+        DeleteFn["deleteUserCvFile"]
     end
 
-    DB[(PostgreSQL<br/>CvFile)]
+    DB[("PostgreSQL<br/>CvFile")]
 
-    Client -->|"{ full_name, title, email }"| Create
+    Client -->|"full_name, title, email"| Create
     Client --> List
-    Client -->|"?file=xxx.json"| Read
-    Client -->|"{ file }"| Delete
-    Client -->|"{ files[] }"| DeleteBulk
+    Client -->|"?file=xxx.json"| ReadRoute
+    Client -->|"file"| Delete
+    Client -->|"files[]"| DeleteBulk
 
     Create --> Write
     List --> ListFn
     List --> ReadFn
-    Read --> ReadFn
+    ReadRoute --> ReadFn
     Delete --> DeleteFn
     DeleteBulk --> DeleteFn
 
@@ -74,6 +74,18 @@ flowchart LR
     ReadFn --> DB
     ListFn --> DB
     DeleteFn --> DB
+
+    style Client fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Create fill:#6366f1,stroke:#4f46e5,color:#fff
+    style List fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ReadRoute fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Delete fill:#ef4444,stroke:#dc2626,color:#fff
+    style DeleteBulk fill:#ef4444,stroke:#dc2626,color:#fff
+    style Write fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ReadFn fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ListFn fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style DeleteFn fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 

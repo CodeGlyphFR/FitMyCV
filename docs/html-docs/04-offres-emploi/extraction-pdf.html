@@ -48,16 +48,28 @@
           <div class="diagram-title">Pipeline d'extraction PDF</div>
           <div class="mermaid">
 flowchart TB
-    Upload["Upload PDF"] --> Validate["Validation<br/>Type MIME + Taille"]
-    Validate --> Hash["computeContentHash()<br/>SHA256"]
-    Hash --> Cache{"Cache?<br/>@@unique userId+contentHash"}
-    Cache -->|Hit| Return["Retour cache"]
-    Cache -->|Miss| Extract["extractTextFromPdf()<br/>pdf-parse"]
+    Upload["Upload PDF"] --> ValidateFile["Validation<br/>Type MIME + Taille"]
+    ValidateFile --> Hash["computeContentHash<br/>SHA256"]
+    Hash --> CacheCheck{"Cache?<br/>unique userId+contentHash"}
+    CacheCheck -->|"Hit"| ReturnCache["Retour cache"]
+    CacheCheck -->|"Miss"| Extract["extractTextFromPdf<br/>pdf-parse"]
     Extract --> AI["OpenAI Structured Outputs<br/>jobOfferExtractionSchema.json"]
-    AI --> ValidateResult{"isJobOfferValid()?"}
-    ValidateResult -->|Non| Error["Erreur"]
-    ValidateResult -->|Oui| LangDetect["Detection langue"]
-    LangDetect --> Store["storeJobOffer()<br/>Upsert JobOffer"]
+    AI --> ValidateResult{"isJobOfferValid?"}
+    ValidateResult -->|"Non"| ErrorNode["Erreur"]
+    ValidateResult -->|"Oui"| LangDetect["Detection langue"]
+    LangDetect --> Store["storeJobOffer<br/>Upsert JobOffer"]
+
+    style Upload fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ValidateFile fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Hash fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CacheCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style ReturnCache fill:#22c55e,stroke:#16a34a,color:#fff
+    style Extract fill:#6366f1,stroke:#4f46e5,color:#fff
+    style AI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ValidateResult fill:#f59e0b,stroke:#d97706,color:#fff
+    style ErrorNode fill:#ef4444,stroke:#dc2626,color:#fff
+    style LangDetect fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Store fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 
