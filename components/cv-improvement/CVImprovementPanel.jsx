@@ -104,6 +104,11 @@ export default function CVImprovementPanel({ cvFile }) {
     setMounted(true);
   }, []);
 
+  // Réinitialiser les données lors d'un changement de CV
+  useEffect(() => {
+    setCvData(null);
+  }, [cvFile]);
+
   // Fonction pour charger les données
   const fetchCvData = useCallback(async () => {
     if (!cvFile) return;
@@ -131,8 +136,18 @@ export default function CVImprovementPanel({ cvFile }) {
     const handleRealtimeCvUpdate = () => {
       fetchCvData();
     };
+    const handleTaskCompleted = (event) => {
+      const task = event.detail?.task;
+      if (task?.type === 'calculate-match-score') {
+        fetchCvData();
+      }
+    };
     window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvUpdate);
-    return () => window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvUpdate);
+    window.addEventListener('task:completed', handleTaskCompleted);
+    return () => {
+      window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvUpdate);
+      window.removeEventListener('task:completed', handleTaskCompleted);
+    };
   }, [fetchCvData]);
 
   // Écouter l'événement onboarding pour ouvrir le panel
