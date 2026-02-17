@@ -21,6 +21,7 @@ import { registerTaskTypeStart, enqueueJob } from '@/lib/background-jobs/jobQueu
 import { startSingleOfferGeneration } from '@/lib/features/cv-adaptation';
 import { incrementFeatureCounter, refundFeatureUsage } from '@/lib/subscription/featureUsage';
 import { ExtensionErrors, CommonErrors } from '@/lib/api/apiErrors';
+import { normalizeJobUrl } from '@/lib/utils/normalizeJobUrl';
 
 function extractDomain(url) {
   try {
@@ -103,6 +104,27 @@ export const POST = withExtensionAuth(async (request, { userId }) => {
     }
 
     console.log(`[generate-cv-from-content] ${createdTasks.length} task(s) created for user ${userId}`);
+
+    // Sauvegarder les sourceUrl dans LinkHistory (comme le fait le modal SaaS)
+    const sourceUrls = offers
+      .map(o => o.sourceUrl)
+      .filter(url => url && typeof url === 'string' && url.startsWith('http'));
+
+    if (sourceUrls.length > 0) {
+      try {
+        for (const url of sourceUrls) {
+          const normalizedUrl = normalizeJobUrl(url.trim());
+          await prisma.linkHistory.upsert({
+            where: { userId_url: { userId, url: normalizedUrl } },
+            update: { createdAt: new Date() },
+            create: { userId, url: normalizedUrl },
+          });
+        }
+      } catch (err) {
+        // Non-bloquant : l'historique est un confort, pas critique
+        console.warn('[generate-cv-from-content] Failed to save link history:', err.message);
+      }
+    }
 
     return NextResponse.json({
       success: true,
