@@ -371,6 +371,8 @@ export default function Header(props){
             <div className="absolute bottom-0 right-2">
               <CVImprovementPanel
                 cvFile={currentCvFile}
+                matchScoreStatus={matchScoreStatus}
+                optimiseStatus={optimiseStatus}
               />
             </div>
           )}

@@ -71,7 +71,7 @@ const parseJson = (jsonString, defaultValue = null) => {
   }
 };
 
-export default function CVImprovementPanel({ cvFile }) {
+export default function CVImprovementPanel({ cvFile, matchScoreStatus: parentMatchScoreStatus, optimiseStatus: parentOptimiseStatus }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cvData, setCvData] = useState(null);
@@ -103,11 +103,6 @@ export default function CVImprovementPanel({ cvFile }) {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Réinitialiser les données lors d'un changement de CV
-  useEffect(() => {
-    setCvData(null);
-  }, [cvFile]);
 
   // Fonction pour charger les données
   const fetchCvData = useCallback(async () => {
@@ -199,9 +194,9 @@ export default function CVImprovementPanel({ cvFile }) {
     : matchingSkills.slice(0, SKILLS_VISIBLE_DEFAULT);
   const hiddenMatchingCount = matchingSkills.length - SKILLS_VISIBLE_DEFAULT;
 
-  // États dérivés
-  const shouldDisableButton = cvData?.matchScoreStatus === 'inprogress' || cvData?.optimiseStatus === 'inprogress';
-  const canOptimize = cvData?.optimiseStatus !== 'inprogress';
+  // États dérivés — le bouton utilise les props du Header (source de vérité, mis à jour au changement de CV)
+  const shouldDisableButton = parentMatchScoreStatus === 'inprogress' || parentOptimiseStatus === 'inprogress';
+  const canOptimize = parentOptimiseStatus !== 'inprogress';
   const hasSelection = selectedSuggestions.size > 0 || selectedMissingSkills.size > 0;
   const selectedCount = selectedSuggestions.size + selectedMissingSkills.size;
 
