@@ -98,6 +98,11 @@ export default function Header(props){
   // Ref pour tracker le dernier CV chargé (pour éviter le reset inutile sur focus)
   const lastLoadedCvRef = React.useRef(null);
 
+  // Garde : ne fetch rien tant que TopBar n'a pas validé le CV actuel via cv:selected
+  // (évite les 404 quand le cookie cvFile pointe vers un CV qui n'existe plus en DB,
+  //  ex. cookie posé par l'extension pour un CV d'un autre environnement)
+  const cvValidatedRef = React.useRef(false);
+
   // Handler pour ouvrir le modal des détails de l'offre
   const handleOpenJobOfferModal = async () => {
     setIsJobOfferModalOpen(true);
@@ -156,49 +161,55 @@ export default function Header(props){
     );
   });
 
-  // Fetch au montage + initialisation du tracking CV
+  // Initialiser le tracking CV (sans fetch — on attend cv:selected de TopBar)
   React.useEffect(() => {
-    fetchSourceInfo();
-    // Initialiser le tracking avec le CV actuel (depuis le cookie)
     const cookies = document.cookie.split(';');
     const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
     if (cvFileCookie) {
       lastLoadedCvRef.current = decodeURIComponent(cvFileCookie.split('=')[1]);
     }
-  }, [fetchSourceInfo]);
+  }, []);
 
-  // Refetch le score quand on change de version
+  // Refetch le score quand on change de version (skip avant validation initiale)
   React.useEffect(() => {
+    if (!cvValidatedRef.current) return;
     fetchMatchScore();
   }, [currentVersion, fetchMatchScore]);
 
   // Écouter les événements de synchronisation temps réel
   React.useEffect(() => {
     const handleRealtimeCvUpdate = (event) => {
+      if (!cvValidatedRef.current) return;
       fetchMatchScore();
     };
 
     // Écouter les changements de métadonnées (status, score, etc.)
     const handleRealtimeCvMetadataUpdate = (event) => {
+      if (!cvValidatedRef.current) return;
       fetchMatchScore();
     };
 
     // WORKAROUND iOS: Forcer le refresh si MatchScore détecte une incohérence
     const handleForceRefresh = (event) => {
+      if (!cvValidatedRef.current) return;
       fetchMatchScore();
     };
 
     // Écouter les changements de CV pour recharger les infos de source
+    // C'est aussi le point d'entrée initial : TopBar dispatch cv:selected
+    // après avoir validé le CV actuel via reload()
     const handleCvSelected = (event) => {
       const selectedFile = event?.detail?.file;
+      const isInitialLoad = !cvValidatedRef.current;
+      cvValidatedRef.current = true;
+
       const cvActuallyChanged = selectedFile && selectedFile !== lastLoadedCvRef.current;
 
-      // Ne refetch que si le CV a réellement changé
-      // (évite le flash visuel et la disparition temporaire des icônes score/offre)
-      if (cvActuallyChanged) {
+      // Au premier chargement OU quand le CV change réellement → fetch complet
+      if (isInitialLoad || cvActuallyChanged) {
         fetchSourceInfo();
         lastLoadedCvRef.current = selectedFile;
-        resetJobOfferDetails();
+        if (!isInitialLoad) resetJobOfferDetails();
       } else if (isJobOfferModalOpen && !jobOfferDetails) {
         // Si le modal est ouvert mais sans données, refetch
         fetchJobOfferDetails();
@@ -207,6 +218,7 @@ export default function Header(props){
 
     // Écouter les mises à jour des tokens (depuis la search bar)
     const handleTokensUpdated = (event) => {
+      if (!cvValidatedRef.current) return;
       fetchMatchScore();
     };
 
