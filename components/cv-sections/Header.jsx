@@ -222,11 +222,19 @@ export default function Header(props){
       fetchMatchScore();
     };
 
+    const handleTaskCompleted = (event) => {
+      const task = event.detail?.task;
+      if (task?.type === 'calculate-match-score') {
+        fetchMatchScore();
+      }
+    };
+
     window.addEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
     window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
     window.addEventListener('matchscore:force-refresh', handleForceRefresh);
     window.addEventListener('cv:selected', handleCvSelected);
     window.addEventListener('tokens:updated', handleTokensUpdated);
+    window.addEventListener('task:completed', handleTaskCompleted);
 
     return () => {
       window.removeEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
@@ -234,6 +242,7 @@ export default function Header(props){
       window.removeEventListener('matchscore:force-refresh', handleForceRefresh);
       window.removeEventListener('cv:selected', handleCvSelected);
       window.removeEventListener('tokens:updated', handleTokensUpdated);
+      window.removeEventListener('task:completed', handleTaskCompleted);
     };
   }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails, isJobOfferModalOpen, jobOfferDetails, fetchJobOfferDetails]);
 
