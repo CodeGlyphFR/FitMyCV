@@ -90,6 +90,11 @@ export const SITE_SELECTORS = {
     '.job-offer-details',
     '.cc-job-offer',
   ],
+  'myworkdayjobs.com': [
+    '[data-automation-id="jobPostingDescription"]',
+    '[data-automation-id="job-posting-details"]',
+    '[data-automation-id="jobPostingPage"]',
+  ],
 };
 
 export const SITE_TITLE_SELECTORS = {
@@ -152,6 +157,10 @@ export const SITE_TITLE_SELECTORS = {
   'meteojob.com': [
     'h1 .cc-job-offer-title',
     'h1.cc-font-size-base',
+  ],
+  'myworkdayjobs.com': [
+    'h2[data-automation-id="jobPostingHeader"]',
+    '[data-automation-id="jobPostingHeader"]',
   ],
 };
 

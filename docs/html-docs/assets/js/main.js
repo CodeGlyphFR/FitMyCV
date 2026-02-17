@@ -106,7 +106,37 @@ const searchIndex = [
   { title: "Endpoints Admin", path: "15-api-reference/admin.html", section: "API", keywords: "api admin endpoints" },
 
   // Composants
-  { title: "Composants React", path: "16-composants/overview.html", section: "Composants", keywords: "composants react ui components" }
+  { title: "Composants React", path: "16-composants/overview.html", section: "Composants", keywords: "composants react ui components" },
+
+  // Extension Navigateur
+  { title: "Extension Navigateur", path: "18-extension/overview.html", section: "Extension Navigateur", keywords: "extension navigateur chrome firefox manifest v3 vite service worker content script popup détection extraction readability turndown" },
+  { title: "Auth & Intégration SaaS", path: "18-extension/auth-integration.html", section: "Extension Navigateur", keywords: "authentification jwt extension token refresh withExtensionAuth credentials oauth polling sync" },
+  { title: "Détection & Extraction Offres", path: "18-extension/detection-extraction.html", section: "Extension Navigateur", keywords: "détection extraction offres emploi json-ld dom scoring readability markdown sélecteurs css job boards linkedin indeed glassdoor" },
+  { title: "Interface Popup", path: "18-extension/popup-ui.html", section: "Extension Navigateur", keywords: "popup interface dark mode vues login cv-selector offer-list progress routing i18n crédits" },
+
+  // Déploiement
+  { title: "Déploiement & Infrastructure", path: "19-deploiement/overview.html", section: "Déploiement", keywords: "docker dockerfile multi-stage github actions ci cd pre-prod staging production versioning bump puppeteer chromium health check" },
+
+  // Middleware & Sécurité
+  { title: "Middleware & Sécurité", path: "20-middleware-securite/overview.html", section: "Middleware & Sécurité", keywords: "proxy cors extension rate limiting security headers csp hsts email verification cleanup" },
+
+  // RGPD
+  { title: "RGPD & Consentement", path: "21-rgpd-consentement/overview.html", section: "RGPD & Consentement", keywords: "rgpd consentement cookies analytics broadcastchannel storage revocation registre consentlog audit rétention données suppression compte" },
+
+  // SSE
+  { title: "Événements SSE", path: "22-evenements-sse/overview.html", section: "Événements SSE", keywords: "sse server-sent events dbemitter eventemitter prisma temps réel realtime userealtimesync hook broadcast" },
+
+  // i18n
+  { title: "Internationalisation (i18n)", path: "23-i18n/overview.html", section: "Internationalisation", keywords: "i18n internationalisation langues locales json traductions fr en es de compétences cv extension" },
+
+  // Sécurité Code
+  { title: "Sécurité du Code", path: "24-securite-code/overview.html", section: "Sécurité du Code", keywords: "sécurité filevalidation magic numbers mime xss sanitisation securelogger masquage pii escape html whitelist upload validation" },
+
+  // Scripts
+  { title: "Scripts d'Automatisation", path: "25-scripts-automatisation/overview.html", section: "Scripts d'Automatisation", keywords: "scripts bash node versioning bump-version conventional commits migrations données run-data-migrations stripe sync export email templates" },
+
+  // API Extension
+  { title: "Endpoints Extension", path: "15-api-reference/extension.html", section: "API", keywords: "api ext extension endpoints jwt bearer authentication refresh generate-cv task sync background-tasks credits balance cvs polling" }
 ];
 
 // ========================================
@@ -136,10 +166,33 @@ function initSearch() {
       return;
     }
 
-    const results = searchIndex.filter(item => {
-      const searchText = `${item.title} ${item.section} ${item.keywords}`.toLowerCase();
-      return searchText.includes(query);
-    }).slice(0, 8);
+    // Séparer la requête en mots individuels
+    const queryWords = query.split(/\s+/).filter(w => w.length > 0);
+
+    const results = searchIndex
+      .map(item => {
+        const title = item.title.toLowerCase();
+        const section = item.section.toLowerCase();
+        const keywords = item.keywords.toLowerCase();
+        const searchText = `${title} ${section} ${keywords}`;
+
+        // Vérifier que TOUS les mots de la requête sont présents
+        const allMatch = queryWords.every(word => searchText.includes(word));
+        if (!allMatch) return null;
+
+        // Scoring : prioriser les correspondances dans le titre
+        let score = 0;
+        queryWords.forEach(word => {
+          if (title.includes(word)) score += 3;
+          if (section.includes(word)) score += 2;
+          if (keywords.includes(word)) score += 1;
+        });
+
+        return { ...item, score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
 
     if (results.length === 0) {
       resultsContainer.innerHTML = '<div class="search-result-item"><div class="search-result-title">Aucun résultat</div></div>';
@@ -514,6 +567,9 @@ function reinitContentElements() {
 
   // Réinitialiser Mermaid avec la méthode complète
   reinitMermaid();
+
+  // Réinitialiser le zoom des diagrammes
+  initDiagramZoom();
 
   // Réinitialiser les liens internes (breadcrumb, liens vers autres pages)
   initContentLinks();
@@ -959,6 +1015,31 @@ function getMermaidTheme() {
   };
 }
 
+// Ajuste la taille des SVG Mermaid après rendu :
+// - Utilise la largeur naturelle du diagramme au lieu de 100%
+// - Cap à max-width: 100% pour éviter les débordements
+function adjustMermaidSvgSizes() {
+  document.querySelectorAll('.mermaid svg').forEach(svg => {
+    const inlineMaxWidth = svg.style.maxWidth;
+    if (inlineMaxWidth && inlineMaxWidth !== '100%') {
+      // Utiliser la largeur naturelle calculée par Mermaid
+      svg.style.width = inlineMaxWidth;
+      svg.style.maxWidth = '100%';
+    } else {
+      // Fallback : lire le viewBox pour déterminer la largeur naturelle
+      const viewBox = svg.getAttribute('viewBox');
+      if (viewBox) {
+        const parts = viewBox.split(/[\s,]+/);
+        const vbWidth = parseFloat(parts[2]);
+        if (vbWidth && vbWidth > 0) {
+          svg.style.width = vbWidth + 'px';
+          svg.style.maxWidth = '100%';
+        }
+      }
+    }
+  });
+}
+
 function initMermaid() {
   if (typeof mermaid !== 'undefined') {
     // IMPORTANT: Stocker le code original AVANT tout rendu
@@ -980,8 +1061,10 @@ function initMermaid() {
       }
     });
 
-    // Rendre manuellement les diagrammes
-    mermaid.run();
+    // Rendre manuellement les diagrammes puis ajuster les tailles
+    mermaid.run().then(() => {
+      adjustMermaidSvgSizes();
+    }).catch(() => {});
   }
 }
 
@@ -1007,8 +1090,303 @@ function reinitMermaid() {
       el.removeAttribute('data-processed');
       el.innerHTML = code;
     });
-    mermaid.run();
+    mermaid.run().then(() => {
+      adjustMermaidSvgSizes();
+    }).catch(() => {});
   }
+}
+
+// ========================================
+// DIAGRAM ZOOM (Lightbox)
+// ========================================
+
+function initDiagramZoom() {
+  // Créer le lightbox une seule fois
+  let lightbox = document.querySelector('.diagram-lightbox');
+  if (!lightbox) {
+    lightbox = document.createElement('div');
+    lightbox.className = 'diagram-lightbox';
+    lightbox.innerHTML = `
+      <div class="diagram-lightbox-viewport">
+        <div class="diagram-lightbox-content"></div>
+      </div>
+      <button class="diagram-lightbox-close" title="Fermer (Échap)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="diagram-lightbox-controls">
+        <button class="diagram-lightbox-btn" data-action="zoom-out" title="Dézoomer">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/></svg>
+        </button>
+        <div class="diagram-lightbox-zoom-level">100%</div>
+        <button class="diagram-lightbox-btn" data-action="zoom-in" title="Zoomer">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
+        </button>
+        <div class="diagram-lightbox-separator"></div>
+        <button class="diagram-lightbox-btn" data-action="fit" title="Ajuster à l'écran">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </button>
+        <button class="diagram-lightbox-btn" data-action="reset" title="Taille réelle (100%)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9V5h4M5 15v4h4M15 5h4v4M15 19h4v-4"/></svg>
+        </button>
+      </div>
+    `;
+    document.body.appendChild(lightbox);
+
+    const viewport = lightbox.querySelector('.diagram-lightbox-viewport');
+    const content = lightbox.querySelector('.diagram-lightbox-content');
+    const zoomLabel = lightbox.querySelector('.diagram-lightbox-zoom-level');
+
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let hasDragged = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let panStartX = 0;
+    let panStartY = 0;
+
+    const MIN_SCALE = 0.1;
+    const MAX_SCALE = 8;
+
+    function updateTransform() {
+      content.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      zoomLabel.textContent = Math.round(scale * 100) + '%';
+    }
+
+    function fitToScreen() {
+      const svg = content.querySelector('svg');
+      if (!svg) return;
+
+      // Utiliser les dimensions du viewBox pour un calcul fiable
+      const viewBox = svg.getAttribute('viewBox');
+      let svgW, svgH;
+      if (viewBox) {
+        const parts = viewBox.split(/[\s,]+/);
+        svgW = parseFloat(parts[2]);
+        svgH = parseFloat(parts[3]);
+      } else {
+        svgW = parseFloat(svg.getAttribute('width')) || 800;
+        svgH = parseFloat(svg.getAttribute('height')) || 400;
+      }
+
+      const vpW = viewport.clientWidth;
+      const vpH = viewport.clientHeight;
+      const padding = 60;
+
+      scale = Math.min((vpW - padding) / svgW, (vpH - padding) / svgH, 2);
+      panX = (vpW - svgW * scale) / 2;
+      panY = (vpH - svgH * scale) / 2;
+      updateTransform();
+    }
+
+    function resetZoom() {
+      const svg = content.querySelector('svg');
+      if (!svg) return;
+      scale = 1;
+      const vpW = viewport.clientWidth;
+      const vpH = viewport.clientHeight;
+      const svgW = svg.getAttribute('width') ? parseFloat(svg.getAttribute('width')) : svg.viewBox.baseVal.width || 800;
+      const svgH = svg.getAttribute('height') ? parseFloat(svg.getAttribute('height')) : svg.viewBox.baseVal.height || 400;
+      panX = (vpW - svgW) / 2;
+      panY = (vpH - svgH) / 2;
+      updateTransform();
+    }
+
+    function zoomAtPoint(delta, clientX, clientY) {
+      const rect = viewport.getBoundingClientRect();
+      const mouseX = clientX - rect.left;
+      const mouseY = clientY - rect.top;
+
+      const prevScale = scale;
+      scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * delta));
+
+      // Zoom vers le point de la souris
+      panX = mouseX - (mouseX - panX) * (scale / prevScale);
+      panY = mouseY - (mouseY - panY) * (scale / prevScale);
+      updateTransform();
+    }
+
+    // Mouse wheel zoom
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      zoomAtPoint(delta, e.clientX, e.clientY);
+    }, { passive: false });
+
+    // Pan with drag
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isDragging = true;
+      hasDragged = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      panStartX = panX;
+      panStartY = panY;
+      viewport.classList.add('dragging');
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      // Marquer comme drag si mouvement > 5px
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        hasDragged = true;
+      }
+      panX = panStartX + dx;
+      panY = panStartY + dy;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+      viewport.classList.remove('dragging');
+    });
+
+    // Sécurité : arrêter le drag si la souris quitte la fenêtre
+    viewport.addEventListener('mouseleave', () => {
+      if (isDragging) {
+        isDragging = false;
+        viewport.classList.remove('dragging');
+      }
+    });
+
+    // Touch support (pinch zoom + pan)
+    let lastTouchDist = 0;
+    let lastTouchCenter = { x: 0, y: 0 };
+
+    viewport.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        dragStartX = e.touches[0].clientX;
+        dragStartY = e.touches[0].clientY;
+        panStartX = panX;
+        panStartY = panY;
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDist = Math.hypot(dx, dy);
+        lastTouchCenter = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+        };
+      }
+    }, { passive: true });
+
+    viewport.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && isDragging) {
+        panX = panStartX + (e.touches[0].clientX - dragStartX);
+        panY = panStartY + (e.touches[0].clientY - dragStartY);
+        updateTransform();
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        if (lastTouchDist > 0) {
+          const delta = dist / lastTouchDist;
+          const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          zoomAtPoint(delta, cx, cy);
+        }
+        lastTouchDist = dist;
+      }
+    }, { passive: false });
+
+    viewport.addEventListener('touchend', () => {
+      isDragging = false;
+      lastTouchDist = 0;
+    }, { passive: true });
+
+    // Control buttons
+    lightbox.querySelectorAll('.diagram-lightbox-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        const vpW = viewport.clientWidth;
+        const vpH = viewport.clientHeight;
+        if (action === 'zoom-in') zoomAtPoint(1.3, vpW / 2, vpH / 2);
+        else if (action === 'zoom-out') zoomAtPoint(1 / 1.3, vpW / 2, vpH / 2);
+        else if (action === 'fit') fitToScreen();
+        else if (action === 'reset') resetZoom();
+      });
+    });
+
+    // Close handlers
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    lightbox.querySelector('.diagram-lightbox-close').addEventListener('click', closeLightbox);
+
+    // Close on click background — uniquement si c'est un vrai clic (pas un drag)
+    viewport.addEventListener('click', (e) => {
+      if (hasDragged) {
+        hasDragged = false;
+        return;
+      }
+      closeLightbox();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+        closeLightbox();
+      }
+    });
+
+    // Open function
+    lightbox._open = function(svgElement) {
+      const svgClone = svgElement.cloneNode(true);
+      // Supprimer les contraintes de taille
+      svgClone.style.maxWidth = 'none';
+      svgClone.style.maxHeight = 'none';
+      svgClone.removeAttribute('width');
+      svgClone.removeAttribute('height');
+
+      // Utiliser le viewBox pour dimensionner correctement
+      const viewBox = svgClone.getAttribute('viewBox');
+      if (viewBox) {
+        const parts = viewBox.split(/\s+/);
+        const vbW = parseFloat(parts[2]);
+        const vbH = parseFloat(parts[3]);
+        svgClone.setAttribute('width', vbW);
+        svgClone.setAttribute('height', vbH);
+      }
+
+      content.innerHTML = '';
+      content.appendChild(svgClone);
+
+      scale = 1;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      // Centrer à 100% après que le SVG soit rendu (double RAF pour laisser le layout se stabiliser)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resetZoom());
+      });
+    };
+  }
+
+  // Attacher les click handlers à tous les diagrammes Mermaid
+  document.querySelectorAll('.mermaid').forEach(el => {
+    if (el.dataset.zoomBound) return;
+    el.dataset.zoomBound = 'true';
+
+    el.addEventListener('click', () => {
+      const svg = el.querySelector('svg');
+      if (svg) {
+        document.querySelector('.diagram-lightbox')._open(svg);
+      }
+    });
+  });
 }
 
 // ========================================
@@ -1026,6 +1404,7 @@ function initAll() {
   initMobileMenu();
   initCodeCopy();
   initMermaid();
+  initDiagramZoom();
   injectPageNavigation();
 }
 

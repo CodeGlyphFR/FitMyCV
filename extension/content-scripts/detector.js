@@ -260,6 +260,9 @@ const SITE_BUTTON_STYLES = {
   'monster.fr': {
     fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'inline-flex',
   },
+  'myworkdayjobs.com': {
+    fontSize: '13px', padding: '5px 12px', margin: '8px 0 0 0', display: 'block', width: 'fit-content',
+  },
 };
 
 // ─── Button: create DOM element ──────────────────────────────────────

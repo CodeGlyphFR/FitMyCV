@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scripts d'Automatisation | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Scripts d'Automatisation</span>
+        </div>
+
+        <h1>Scripts d'Automatisation</h1>
+        <p class="lead">
+          Le dossier <code>scripts/</code> contient 6 scripts d'automatisation couvrant le versioning (Conventional Commits 4 parties), les migrations de données, la synchronisation Stripe (production et staging), et la gestion des templates email.
+        </p>
+
+        <!-- ─── Vue d'ensemble ─── -->
+
+        <h2>Vue d'ensemble</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Script</th>
+              <th>Langage</th>
+              <th>Contexte</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>bump-version.sh</code></td>
+              <td>Bash</td>
+              <td>CI/CD (GitHub Actions)</td>
+              <td>Incrémentation automatique de version 4 parties via Conventional Commits</td>
+            </tr>
+            <tr>
+              <td><code>run-data-migrations.js</code></td>
+              <td>Node.js (CJS)</td>
+              <td>Déploiement</td>
+              <td>Exécution des scripts de migration de données post-Prisma</td>
+            </tr>
+            <tr>
+              <td><code>sync-stripe.mjs</code></td>
+              <td>Node.js (ESM)</td>
+              <td>Production</td>
+              <td>Synchronisation des plans et packs avec Stripe (prod)</td>
+            </tr>
+            <tr>
+              <td><code>sync-staging-stripe.js</code></td>
+              <td>Node.js (CJS)</td>
+              <td>Staging</td>
+              <td>Synchronisation complète Live &rarr; Test (4 phases)</td>
+            </tr>
+            <tr>
+              <td><code>export-email-templates.js</code></td>
+              <td>Node.js (CJS)</td>
+              <td>Développement</td>
+              <td>Export des templates email depuis la DB vers des fichiers JSON</td>
+            </tr>
+            <tr>
+              <td><code>preview-emails.js</code></td>
+              <td>Node.js (CJS)</td>
+              <td>Développement</td>
+              <td>Serveur HTTP de prévisualisation des emails (dark/light mode)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="diagram">
+          <div class="diagram-title">Scripts dans le cycle de vie du projet</div>
+          <div class="mermaid">
+graph LR
+    subgraph DEV["Developpement"]
+        EXPORT["Export des modèles<br/>d'email"]
+        PREVIEW["Prévisualisation<br/>des emails"]
+    end
+
+    subgraph CICD["CI/CD (merge sur main)"]
+        BUMP["Incrémentation<br/>de version"]
+        MIGRATE["Migrations de<br/>données"]
+        SYNC["Synchronisation<br/>Stripe"]
+    end
+
+    subgraph STAGING["Pre-production (PR)"]
+        STAGING_STRIPE["Synchronisation<br/>Stripe staging"]
+    end
+
+    EXPORT --> PREVIEW
+    BUMP --> MIGRATE
+    MIGRATE --> SYNC
+
+    style EXPORT fill:#64748b,stroke:#475569,color:#fff
+    style PREVIEW fill:#64748b,stroke:#475569,color:#fff
+    style BUMP fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style MIGRATE fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SYNC fill:#6366f1,stroke:#4f46e5,color:#fff
+    style STAGING_STRIPE fill:#6366f1,stroke:#4f46e5,color:#fff
+          </div>
+        </div>
+
+        <!-- ─── bump-version.sh ─── -->
+
+        <h2>bump-version.sh &mdash; Versioning 4 parties</h2>
+
+        <p>Script Bash exécuté automatiquement par GitHub Actions lors du merge sur <code>main</code>. Il scanne tous les commits depuis le dernier tag et incrémente la version selon les préfixes Conventional Commits.</p>
+
+        <h3>Format de version</h3>
+
+        <pre><code class="language-bash"># Format : X.X.X.X (Major.Minor.Patch.Build)
+# Exemple : 1.3.2.7</code></pre>
+
+        <h3>Règles de bump</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Préfixe de commit</th>
+              <th>Partie incrémentée</th>
+              <th>Exemple</th>
+              <th>Résultat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>feat!:</code> ou <code>BREAKING CHANGE:</code></td>
+              <td><strong>1er</strong> (Major)</td>
+              <td><code>feat!: supprimer API v1</code></td>
+              <td><code>1.3.2.7</code> &rarr; <code>2.0.0.0</code></td>
+            </tr>
+            <tr>
+              <td><code>feat:</code></td>
+              <td><strong>2e</strong> (Minor)</td>
+              <td><code>feat: ajouter export PDF</code></td>
+              <td><code>1.3.2.7</code> &rarr; <code>1.4.0.0</code></td>
+            </tr>
+            <tr>
+              <td><code>fix:</code></td>
+              <td><strong>3e</strong> (Patch)</td>
+              <td><code>fix: corriger affichage mobile</code></td>
+              <td><code>1.3.2.7</code> &rarr; <code>1.3.3.0</code></td>
+            </tr>
+            <tr>
+              <td>Autre (<code>chore:</code>, <code>docs:</code>...)</td>
+              <td><strong>4e</strong> (Build)</td>
+              <td><code>chore: mettre à jour CI</code></td>
+              <td><code>1.3.2.7</code> &rarr; <code>1.3.2.8</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Le plus haut niveau gagne</strong> &mdash; Si une PR contient à la fois un <code>fix:</code> et un <code>feat:</code>, c'est le <code>feat:</code> (Minor) qui s'applique. Le script retient toujours le niveau le plus élevé parmi tous les commits.
+        </div>
+
+        <h3>Algorithme</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'exécution de bump-version.sh</div>
+          <div class="mermaid">
+graph TD
+    A["Lire la version<br/>actuelle"] --> B["Découper en 4 parties<br/>(Major.Minor.Patch.Build)"]
+    B --> C["Vérifier le format<br/>de la version"]
+    C --> D["Trouver le dernier<br/>tag Git"]
+    D --> E["Lister les commits<br/>depuis le tag"]
+    E --> F{"Scanner les préfixes"}
+    F -->|"feat!: trouve"| G["Incrémenter<br/>le numéro Major"]
+    F -->|"feat: trouve"| H["Incrémenter<br/>le numéro Minor"]
+    F -->|"fix: trouve"| I["Incrémenter<br/>le numéro Patch"]
+    F -->|"Aucun"| J["Incrémenter<br/>le numéro Build"]
+    G --> K["Calculer la nouvelle version"]
+    H --> K
+    I --> K
+    J --> K
+    K --> L["Mettre à jour<br/>les fichiers de config"]
+    L --> M["Chercher l'ancienne version<br/>dans tous les fichiers"]
+    M --> N["Remplacer par la<br/>nouvelle version"]
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#f59e0b,stroke:#d97706,color:#fff
+    style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style F fill:#f59e0b,stroke:#d97706,color:#fff
+    style G fill:#ef4444,stroke:#dc2626,color:#fff
+    style H fill:#22c55e,stroke:#16a34a,color:#fff
+    style I fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style J fill:#64748b,stroke:#475569,color:#fff
+    style K fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style L fill:#14b8a6,stroke:#0d9488,color:#fff
+    style M fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style N fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Propagation de la version</h3>
+
+        <p>Après mise à jour de <code>package.json</code>, le script scanne dynamiquement <strong>tous les fichiers</strong> du projet (hors <code>.git</code>, <code>node_modules</code>, <code>.next</code>, <code>dist</code>) et remplace l'ancienne version par la nouvelle :</p>
+
+        <pre><code class="language-bash"># Scan dynamique
+EXCLUDE_DIRS=("--exclude-dir=.git" "--exclude-dir=node_modules" ...)
+FILES_TO_UPDATE=$(grep -rl "${EXCLUDE_DIRS[@]}" "$OLD_VERSION" . || true)
+
+# Remplacement dans chaque fichier trouvé
+for FILE in $FILES_TO_UPDATE; do
+    sed -i "s/$OLD_VERSION/$NEW_VERSION/g" "$FILE"
+done</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Fichiers impactés</strong> &mdash; La version est propagée dans <code>docs/</code>, <code>README.md</code>, les fichiers de configuration, et tout fichier contenant le numéro de version. Les <code>package.json</code> et <code>package-lock.json</code> sont traités séparément via Node.js pour préserver le formatage JSON.
+        </div>
+
+        <!-- ─── run-data-migrations ─── -->
+
+        <h2>run-data-migrations.js &mdash; Migrations de données</h2>
+
+        <p>Exécute les scripts de migration de données stockés dans <code>prisma/data-migrations/</code>. Complémentaire aux migrations Prisma (schéma), ce script gère les transformations de <strong>données</strong> (renommage, nettoyage, calculs).</p>
+
+        <h3>Fonctionnement</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'exécution des migrations de données</div>
+          <div class="mermaid">
+graph TD
+    A["Créer la table de suivi<br/>(si inexistante)"] --> B["Lire les scripts<br/>de migration"]
+    B --> C["Trier par ordre<br/>chronologique"]
+    C --> D{"Pour chaque fichier"}
+    D --> E["Vérifier si déjà<br/>appliqué"]
+    E -->|"Deja applique"| D
+    E -->|"Non applique"| F["Exécuter la migration"]
+    F -->|"Succes"| G["Enregistrer dans<br/>la table de suivi"]
+    G --> D
+    F -->|"Erreur"| H["Arrêter avec erreur"]
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D fill:#f59e0b,stroke:#d97706,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style F fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style G fill:#22c55e,stroke:#16a34a,color:#fff
+    style H fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <h3>Table de suivi</h3>
+
+        <pre><code class="language-sql">-- Table créée automatiquement au premier lancement
+CREATE TABLE IF NOT EXISTS "_data_migrations" (
+  "id"         SERIAL PRIMARY KEY,
+  "name"       TEXT UNIQUE NOT NULL,
+  "applied_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+
+        <h3>Format d'un script de migration</h3>
+
+        <pre><code class="language-javascript">// prisma/data-migrations/20240215_1430_normalize_skill_levels.js
+module.exports = async (prisma) => {
+  // Normaliser les niveaux de compétence en valeurs numériques
+  const skills = await prisma.skill.findMany({
+    where: { level: { not: null } }
+  });
+
+  for (const skill of skills) {
+    const numericLevel = normalizeToNumber(skill.level);
+    if (numericLevel !== null && numericLevel !== skill.level) {
+      await prisma.skill.update({
+        where: { id: skill.id },
+        data: { level: numericLevel }
+      });
+    }
+  }
+};</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Convention de nommage</strong> &mdash; Les fichiers suivent le format <code>YYYYMMDD_HHMM_description.js</code>. Le tri alphabétique garantit l'ordre chronologique d'exécution.
+        </div>
+
+        <div class="callout callout-warning">
+          <strong>Exécution unique</strong> &mdash; Chaque migration n'est exécutée qu'une seule fois grâce à la table de suivi. En cas d'erreur, le script s'arrête immédiatement (<code>process.exit(1)</code>) pour éviter les effets de bord.
+        </div>
+
+        <!-- ─── sync-stripe.mjs ─── -->
+
+        <h2>sync-stripe.mjs &mdash; Synchronisation Stripe (Production)</h2>
+
+        <p>Script ESM qui synchronise les plans d'abonnement et packs de crédits entre la base de données et Stripe en <strong>production</strong>.</p>
+
+        <h3>Usage</h3>
+
+        <pre><code class="language-bash"># Synchronisation avec sortie détaillée
+node scripts/sync-stripe.mjs
+
+# Mode silencieux (CI/CD)
+node scripts/sync-stripe.mjs --quiet</code></pre>
+
+        <h3>Prérequis</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Variable d'environnement</th>
+              <th>Obligatoire</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>STRIPE_SECRET_KEY</code></td>
+              <td>Oui</td>
+              <td>Clé secrète Stripe (détecte automatiquement mode TEST vs LIVE)</td>
+            </tr>
+            <tr>
+              <td><code>DATABASE_URL</code></td>
+              <td>Oui</td>
+              <td>URL de connexion PostgreSQL</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Résultat</h3>
+
+        <p>Le script délègue à <code>syncStripeProductsInternal()</code> de <code>lib/subscription/stripeSync.js</code> et affiche un résumé :</p>
+
+        <pre><code class="language-bash">🔄 Synchronisation Stripe en cours...
+
+📊 Database: fitmycv_prod
+🔑 Stripe: Mode LIVE
+
+✅ Synchronisation terminée!
+
+📋 Résultats:
+─────────────────────────────────
+Plans d'abonnement:
+  • Créés: 0
+  • Mis à jour: 3
+  • Ignorés: 1
+Packs de crédits:
+  • Créés: 0
+  • Mis à jour: 2
+  • Ignorés: 0
+─────────────────────────────────</code></pre>
+
+        <!-- ─── sync-staging-stripe ─── -->
+
+        <h2>sync-staging-stripe.js &mdash; Synchronisation Stripe (Staging)</h2>
+
+        <p>Script complet de synchronisation pour l'environnement de pre-production. Il clone la configuration Stripe Live vers Test en <strong>4 phases</strong>.</p>
+
+        <h3>Les 4 phases</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline de synchronisation Staging</div>
+          <div class="mermaid">
+graph LR
+    P1["Phase 1<br/>Produits et prix<br/>Live → Test"] --> P2["Phase 2<br/>Mettre à jour la base<br/>Stripe Test"]
+    P2 --> P3["Phase 3<br/>Coupons<br/>Live → Test"]
+    P3 --> P4["Phase 4<br/>Codes promo<br/>Live → Test"]
+
+    style P1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style P2 fill:#14b8a6,stroke:#0d9488,color:#fff
+    style P3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style P4 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Source</th>
+              <th>Destination</th>
+              <th>Données</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>Stripe Live</td>
+              <td>Stripe Test</td>
+              <td>Produits + Prix (montant, devise, intervalle)</td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>Stripe Test</td>
+              <td>Base de données staging</td>
+              <td>SubscriptionPlan (monthly/yearly IDs) + CreditPack (price ID)</td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>Stripe Live</td>
+              <td>Stripe Test</td>
+              <td>Coupons (%, montant, durée)</td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td>Stripe Live</td>
+              <td>Stripe Test</td>
+              <td>Codes promo associés aux coupons</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Variables d'environnement</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Obligatoire</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>STRIPE_SECRET_KEY</code></td>
+              <td>Oui</td>
+              <td>Clé Stripe <strong>TEST</strong> (staging)</td>
+            </tr>
+            <tr>
+              <td><code>DATABASE_URL</code></td>
+              <td>Oui</td>
+              <td>URL de la DB staging</td>
+            </tr>
+            <tr>
+              <td><code>STRIPE_LIVE_SECRET_KEY</code></td>
+              <td>Non</td>
+              <td>Clé Stripe <strong>LIVE</strong> (pour phases 1, 3, 4). Sans cette clé, seule la phase 2 s'exécute.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Matching des produits</h3>
+
+        <p>Le script fait correspondre les produits Stripe avec la DB via le <strong>nom du produit</strong> :</p>
+
+        <pre><code class="language-javascript">// Phase 1 : Match par nom de produit (Live → Test)
+const testProductsByName = new Map(
+  testProducts.data.map(p => [p.name, p])
+);
+
+// Phase 1 : Match des prix par montant + devise + type + intervalle
+const exists = testPrices.data.some(tp =>
+  tp.unit_amount === livePrice.unit_amount &&
+  tp.currency === livePrice.currency &&
+  tp.type === livePrice.type &&
+  (livePrice.type !== 'recurring' ||
+    tp.recurring?.interval === livePrice.recurring?.interval)
+);
+
+// Phase 2 : Match DB ↔ Stripe par nom
+const dbNames = new Set([
+  ...dbPlans.map(p => p.name),
+  ...dbPacks.map(p => p.name)
+]);</code></pre>
+
+        <h3>Résumé de sortie</h3>
+
+        <pre><code class="language-bash">═══════════════════════════════════════════
+📊 Sync Summary:
+   Products:       2
+   Prices:         4
+   Plans (DB):     3
+   Credit Packs:   2
+   Coupons:        1
+   Promo Codes:    2
+═══════════════════════════════════════════</code></pre>
+
+        <!-- ─── export-email-templates ─── -->
+
+        <h2>export-email-templates.js &mdash; Export Templates Email</h2>
+
+        <p>Exporte les templates email depuis la base de données vers des fichiers JSON dans <code>prisma/email-templates/</code>. Utilisé pour versionner les templates et permettre leur prévisualisation.</p>
+
+        <h3>Fonctionnement</h3>
+
+        <pre><code class="language-bash"># Exécution
+node scripts/export-email-templates.js</code></pre>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'export des templates</div>
+          <div class="mermaid">
+graph LR
+    DB["Base de données<br/>(modèles d'email)"] --> QUERY["Récupérer les modèles<br/>et déclencheurs"]
+    QUERY --> SLUG["Générer le nom<br/>de fichier"]
+    SLUG --> WRITE["Écrire le fichier JSON<br/>dans le dossier export"]
+
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style QUERY fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SLUG fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style WRITE fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Format de sortie</h3>
+
+        <p>Chaque template est exporté dans un fichier nommé <code>{triggerName}--{slug}.json</code> :</p>
+
+        <pre><code class="language-json">// prisma/email-templates/welcome--bienvenue-sur-fitmycv.json
+{
+  "name": "Bienvenue sur FitMyCV",
+  "triggerName": "welcome",
+  "subject": "Bienvenue sur FitMyCV.io !",
+  "variables": ["userName", "loginUrl", "welcomeCredits"],
+  "htmlContent": "&lt;!DOCTYPE html&gt;...",
+  "designJson": { ... },
+  "isActive": true,
+  "isDefault": true
+}</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Slugification</strong> &mdash; Le nom du template est converti en slug (minuscules, sans accents, tirets) via la fonction interne <code>slugify()</code> : <code>"Bienvenue sur FitMyCV"</code> &rarr; <code>"bienvenue-sur-fitmycv"</code>.
+        </div>
+
+        <!-- ─── preview-emails ─── -->
+
+        <h2>preview-emails.js &mdash; Prévisualisation Emails</h2>
+
+        <p>Lance un serveur HTTP local pour prévisualiser les templates email avec support du <strong>dark/light mode</strong> et substitution de variables de test.</p>
+
+        <h3>Usage</h3>
+
+        <pre><code class="language-bash"># Lancer le serveur (port 3001 par défaut)
+node scripts/preview-emails.js
+
+# Changer le port
+node scripts/preview-emails.js --port 4000</code></pre>
+
+        <h3>Fonctionnalités</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonctionnalité</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Index HTML</strong></td>
+              <td>Page d'accueil listant tous les templates avec liens vers chaque mode</td>
+            </tr>
+            <tr>
+              <td><strong>Mode Auto</strong></td>
+              <td>Respecte <code>prefers-color-scheme</code> du système</td>
+            </tr>
+            <tr>
+              <td><strong>Mode Light</strong></td>
+              <td>Force l'affichage clair</td>
+            </tr>
+            <tr>
+              <td><strong>Mode Dark</strong></td>
+              <td>Injecte des styles CSS dark mode (classes FitMyCV)</td>
+            </tr>
+            <tr>
+              <td><strong>Variables de test</strong></td>
+              <td>Substitution automatique des <code>{{placeholders}}</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Variables de test par template</h3>
+
+        <pre><code class="language-javascript">const TEST_VARIABLES = {
+  email_verification: {
+    userName: 'Jean Dupont',
+    verificationUrl: 'https://app.fitmycv.io/auth/verify-email?token=abc123xyz',
+  },
+  welcome: {
+    userName: 'Marie Martin',
+    loginUrl: 'https://app.fitmycv.io/auth/signin',
+    welcomeCredits: '5',
+  },
+  password_reset: {
+    userName: 'Pierre Bernard',
+    resetUrl: 'https://app.fitmycv.io/auth/reset-password?token=reset123xyz',
+  },
+  email_change: {
+    userName: 'Sophie Durand',
+    verificationUrl: 'https://app.fitmycv.io/auth/verify-email-change?token=...',
+    newEmail: 'sophie.new@example.com',
+  },
+  purchase_credits: {
+    userName: 'Lucas Petit',
+    creditsAmount: '50',
+    totalPrice: '9,99 €',
+    invoiceUrl: 'https://pay.stripe.com/invoice/abc123',
+  },
+};</code></pre>
+
+        <h3>URLs générées</h3>
+
+        <p>Pour chaque template, 3 fichiers HTML sont générés dans <code>.email-preview/</code> :</p>
+
+        <pre><code class="language-bash">http://localhost:3001/                     # Index (liste tous les templates)
+http://localhost:3001/welcome.html          # Mode Auto
+http://localhost:3001/welcome-light.html    # Mode Light forcé
+http://localhost:3001/welcome-dark.html     # Mode Dark forcé
+http://localhost:3001/email_verification.html
+http://localhost:3001/password_reset.html
+http://localhost:3001/email_change.html
+http://localhost:3001/purchase_credits.html</code></pre>
+
+        <div class="callout callout-success">
+          <strong>Workflow recommandé</strong> &mdash; Exécuter d'abord <code>export-email-templates.js</code> pour récupérer les templates depuis la DB, puis <code>preview-emails.js</code> pour les prévisualiser dans le navigateur.
+        </div>
+
+        <!-- ─── Récapitulatif ─── -->
+
+        <h2>Récapitulatif des commandes</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Commande</th>
+              <th>Contexte</th>
+              <th>Quand l'utiliser</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>bash scripts/bump-version.sh</code></td>
+              <td>CI/CD uniquement</td>
+              <td>Automatique au merge sur <code>main</code> (ne pas lancer manuellement)</td>
+            </tr>
+            <tr>
+              <td><code>npm run db:migrate-data</code></td>
+              <td>Déploiement</td>
+              <td>Après <code>npx prisma migrate deploy</code>, automatique en CI/CD</td>
+            </tr>
+            <tr>
+              <td><code>node scripts/sync-stripe.mjs</code></td>
+              <td>Production</td>
+              <td>Après modification des plans/packs en DB</td>
+            </tr>
+            <tr>
+              <td><code>node scripts/sync-staging-stripe.js</code></td>
+              <td>Staging</td>
+              <td>Avant tests de paiement sur <code>dev.fitmycv.io</code></td>
+            </tr>
+            <tr>
+              <td><code>node scripts/export-email-templates.js</code></td>
+              <td>Dev</td>
+              <td>Après modification d'un template email en DB</td>
+            </tr>
+            <tr>
+              <td><code>node scripts/preview-emails.js</code></td>
+              <td>Dev</td>
+              <td>Pour valider visuellement les emails (dark/light)</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

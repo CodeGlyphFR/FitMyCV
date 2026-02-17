@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -32,105 +32,173 @@
 
         <h1>Gestion CV</h1>
         <p class="lead">
-          Le système de gestion CV permet de créer, modifier, stocker et versionner les CV au format JSON. Le contenu est stocké en base de données dans la table <code>CvFile</code>.
+          Le systeme de gestion CV permet de creer, modifier, stocker et versionner les CV au format JSON.
+          Les donnees sont stockees dans PostgreSQL via Prisma (modele <code>CvFile</code>), avec un historique
+          de versions dans <code>CvVersion</code>. La validation utilise AJV contre un JSON Schema centralisé
+          (<code>data/schema.json</code>).
         </p>
 
-        <h2>Architecture du Système CV</h2>
+        <h2>Architecture du Systeme CV</h2>
 
         <div class="diagram">
           <div class="diagram-title">Flux de gestion des CV</div>
           <div class="mermaid">
 flowchart TD
     Manual["Création manuelle"]
-    Import["Import PDF"]
-    Generate["Génération IA"]
+    Import["Import PDF<br/>via IA (Vision)"]
+    Generate["Génération par IA"]
+    Extension["Extension navigateur<br/>contenu pré-extrait"]
 
-    Validate["Validation Zod"]
-    Storage[("CvFile")]
-    Version[("CvVersion")]
+    Validate["Validation du format"]
+    Storage[("CV en base<br/>PostgreSQL")]
+    Version[("Historique<br/>des versions")]
 
-    Edit["Édition"]
+    Edit["Édition manuelle"]
     Optimize["Optimisation IA"]
     Translate["Traduction"]
+    Review["Revue des modifications"]
     Export["Export"]
 
-    PDF["PDF"]
-    DOCX["DOCX"]
+    PDF["Export PDF"]
+    Preview["Aperçu HTML"]
 
     Manual --> Validate
     Import --> Validate
     Generate --> Validate
+    Extension --> Generate
     Validate --> Storage
     Storage --> Version
     Storage --> Edit
     Storage --> Optimize
     Storage --> Translate
+    Optimize --> Review
     Storage --> Export
     Export --> PDF
-    Export --> DOCX
+    Export --> Preview
+
+    style Manual fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Import fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Generate fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extension fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Validate fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Storage fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Version fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Edit fill:#64748b,stroke:#475569,color:#fff
+    style Optimize fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Translate fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Review fill:#f59e0b,stroke:#d97706,color:#fff
+    style Export fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PDF fill:#22c55e,stroke:#16a34a,color:#fff
+    style Preview fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
-        <h2>Structure d'un CV</h2>
+        <h2>Structure JSON d'un CV</h2>
 
-        <p>Chaque CV est stocké au format JSON avec une structure standardisée :</p>
+        <p>
+          Chaque CV est stocke au format JSON avec <strong>8 sections</strong> standardisees. Les metadonnees
+          (langue, source, scores) sont stockees dans les colonnes <code>CvFile</code>, pas dans le JSON.
+        </p>
 
-        <pre><code>{
+        <pre><code class="language-json">{
+  "language": "fr",
   "header": {
-    "firstName": "Jean",
-    "lastName": "Dupont",
-    "email": "jean.dupont@email.com",
-    "phone": "+33 6 12 34 56 78",
-    "location": "Paris, France",
-    "linkedIn": "https://linkedin.com/in/jeandupont",
-    "portfolio": "https://jeandupont.dev"
-  },
-  "sections": {
-    "summary": {
-      "content": "Développeur Full Stack avec 5 ans d'expérience..."
-    },
-    "experiences": [
-      {
-        "id": "exp-1",
-        "title": "Développeur Senior",
-        "company": "TechCorp",
-        "location": "Paris",
-        "startDate": "2021-01",
-        "endDate": null,
-        "current": true,
-        "responsibilities": [
-          "Développement d'APIs REST avec Node.js",
-          "Architecture microservices"
-        ]
+    "full_name": "Jean Dupont",
+    "current_title": "Developpeur Full Stack Senior",
+    "contact": {
+      "email": "jean.dupont@email.com",
+      "phone": "+33 6 12 34 56 78",
+      "links": [
+        { "label": "LinkedIn", "url": "https://linkedin.com/in/jeandupont" },
+        { "label": "Portfolio", "url": "https://jeandupont.dev" }
+      ],
+      "location": {
+        "city": "Paris",
+        "region": "Ile-de-France",
+        "country_code": "FR"
       }
-    ],
-    "skills": {
-      "technical": ["JavaScript", "TypeScript", "React", "Node.js"],
-      "soft": ["Leadership", "Communication"],
-      "languages": [
-        { "language": "Français", "level": "Natif" },
-        { "language": "Anglais", "level": "Courant" }
-      ]
-    },
-    "education": [...],
-    "projects": [...],
-    "certifications": [...],
-    "extras": [...]
+    }
   },
-  "metadata": {
-    "language": "fr",
-    "templateId": "modern",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "updatedAt": "2024-01-20T14:22:00Z"
+  "summary": {
+    "description": "Developpeur Full Stack avec 5 ans d'experience..."
+  },
+  "skills": {
+    "hard_skills": [
+      { "name": "Backend development", "proficiency": 4 },
+      { "name": "API Design", "proficiency": 5 }
+    ],
+    "tools": [
+      { "name": "React", "proficiency": 5 },
+      { "name": "Node.js", "proficiency": 4 }
+    ],
+    "methodologies": ["Agile", "CI/CD", "TDD"],
+    "soft_skills": ["Leadership", "Communication"]
+  },
+  "experience": [
+    {
+      "title": "Lead Developer",
+      "company": "TechCorp",
+      "department_or_client": "Equipe Produit",
+      "start_date": "2021-03",
+      "end_date": "",
+      "location": { "city": "Paris", "country_code": "FR" },
+      "description": "Direction technique...",
+      "responsibilities": [
+        "Conception architecture microservices",
+        "Encadrement equipe de 5 developpeurs"
+      ],
+      "deliverables": ["Migration AWS", "Refonte API v2"],
+      "skills_used": ["Node.js", "React", "PostgreSQL"]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Ecole Polytechnique",
+      "degree": "Master",
+      "field_of_study": "Informatique",
+      "start_date": "2014-09",
+      "end_date": "2019-06",
+      "location": { "city": "Palaiseau", "country_code": "FR" }
+    }
+  ],
+  "languages": [
+    { "name": "Francais", "level": "Natif" },
+    { "name": "Anglais", "level": "Courant (TOEIC 950)" }
+  ],
+  "extras": [
+    { "name": "Certifications", "summary": "AWS Solutions Architect" },
+    { "name": "Benevolat", "summary": "Coach Code for Kids" }
+  ],
+  "projects": [
+    {
+      "name": "E-commerce Platform",
+      "role": "Lead Developer",
+      "start_date": "2023-01",
+      "end_date": "2023-06",
+      "summary": "Plateforme e-commerce avec paiement Stripe",
+      "tech_stack": ["Next.js", "Prisma", "Stripe"],
+      "url": "https://github.com/user/project",
+      "url_label": "GitHub"
+    }
+  ],
+  "order_hint": ["summary", "skills", "experience", "education", "languages", "extras", "projects"],
+  "section_titles": {
+    "summary": "Profil",
+    "skills": "Competences",
+    "experience": "Experience professionnelle",
+    "education": "Formation",
+    "languages": "Langues",
+    "extras": "Informations complementaires",
+    "projects": "Projets"
   }
 }</code></pre>
 
-        <h2>Modèles de Données</h2>
+        <h2>Modeles de Donnees (Prisma)</h2>
 
         <table>
           <thead>
             <tr>
-              <th>Modèle</th>
+              <th>Modele</th>
               <th>Description</th>
               <th>Champs principaux</th>
             </tr>
@@ -138,191 +206,123 @@ flowchart TD
           <tbody>
             <tr>
               <td><code>CvFile</code></td>
-              <td>CV principal</td>
-              <td>id, userId, filename, content (JSON), matchScore, isDefault, jobOfferId</td>
+              <td>CV principal (JSON + metadonnees)</td>
+              <td>
+                <code>id</code> (cuid), <code>userId</code>, <code>filename</code>, <code>content</code> (Json),
+                <code>contentVersion</code> (Int), <code>sourceType</code>, <code>sourceValue</code>,
+                <code>jobOfferId</code>, <code>jobOfferSnapshot</code> (Json),
+                <code>createdBy</code>, <code>originalCreatedBy</code> (String?),
+                <code>isTranslated</code>, <code>language</code>,
+                <code>matchScore</code>, <code>scoreBefore</code>, <code>scoreBreakdown</code>,
+                <code>matchScoreStatus</code>, <code>matchScoreUpdatedAt</code> (DateTime?),
+                <code>improvementSuggestions</code> (String?), <code>missingSkills</code> (String?),
+                <code>matchingSkills</code> (String?),
+                <code>optimiseStatus</code>, <code>optimiseUpdatedAt</code> (DateTime?),
+                <code>blocked</code>, <code>blockedAt</code> (DateTime?), <code>blockedReason</code> (String?),
+                <code>pendingChanges</code> (Json), <code>pendingSourceVersion</code> (Int?),
+                <code>createdWithCredit</code> (Boolean), <code>creditUsedAt</code> (DateTime?),
+                <code>creditTransactionId</code> (String? @unique),
+                <code>createdAt</code>, <code>updatedAt</code>
+              </td>
             </tr>
             <tr>
               <td><code>CvVersion</code></td>
-              <td>Historique des versions</td>
-              <td>cvFileId, versionNumber, content, origin, description</td>
-            </tr>
-            <tr>
-              <td><code>CvTemplate</code></td>
-              <td>Templates disponibles</td>
-              <td>name, description, structure, previewUrl</td>
+              <td>Historique des versions (optimisation IA)</td>
+              <td>
+                <code>id</code> (cuid), <code>cvFileId</code>, <code>version</code> (Int),
+                <code>content</code> (Json), <code>changelog</code>, <code>changeType</code>,
+                <code>sourceFile</code>, <code>matchScore</code>, <code>scoreBreakdown</code>,
+                <code>createdAt</code>
+              </td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Opérations CRUD</h2>
-
-        <h3>Créer un CV</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge input">POST</span>
-            <span class="data-flow-title">/api/cv</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Input</h5>
-            <pre><code>{
-  "filename": "cv-dev-fullstack.json",
-  "content": { /* Structure CV */ },
-  "isDefault": false
-}</code></pre>
-            <h5>Output</h5>
-            <pre><code>{
-  "data": {
-    "id": 42,
-    "filename": "cv-dev-fullstack.json",
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-}</code></pre>
-          </div>
+        <div class="callout callout-info">
+          <div class="callout-title">Contrainte unique</div>
+          <p>
+            <code>CvFile</code> : <code>@@unique([userId, filename])</code> — un utilisateur ne peut pas avoir deux CV avec le meme nom de fichier.<br>
+            <code>CvVersion</code> : <code>@@unique([cvFileId, version])</code> — une seule entree par numero de version et par CV.
+          </p>
         </div>
 
-        <h3>Lire un CV</h3>
+        <h2>Couche de Stockage</h2>
 
-        <pre><code>// lib/cv-core/storage.js
-import prisma from '@/lib/prisma';
+        <p>
+          Le module <code>lib/cv-core/storage.js</code> fournit une API de haut niveau pour les operations
+          CRUD sur les CV. Il a ete migre depuis le systeme de fichiers vers PostgreSQL, en conservant
+          les signatures d'origine pour la compatibilite.
+        </p>
 
-export async function readUserCvFile(userId, filename) {
-  const cvFile = await prisma.cvFile.findFirst({
-    where: {
-      userId,
-      filename
-    }
-  });
-
-  if (!cvFile) {
-    throw new Error('CV not found');
-  }
-
-  return cvFile.content; // JSON parsé automatiquement
-}
-
-export async function listUserCvFiles(userId) {
-  return prisma.cvFile.findMany({
-    where: { userId },
-    select: {
-      id: true,
-      filename: true,
-      matchScore: true,
-      isDefault: true,
-      createdAt: true,
-      updatedAt: true,
-      jobOffer: {
-        select: {
-          id: true,
-          title: true
-        }
-      }
-    },
-    orderBy: { updatedAt: 'desc' }
-  });
-}</code></pre>
-
-        <h3>Modifier un CV</h3>
-
-        <pre><code>// Mise à jour avec création de version
-export async function writeUserCvFile(userId, filename, content, options = {}) {
-  const { createVersion = true, origin = 'manual_edit', description = '' } = options;
-
-  const existingCv = await prisma.cvFile.findFirst({
-    where: { userId, filename }
-  });
-
-  if (!existingCv) {
-    throw new Error('CV not found');
-  }
-
-  // Transaction : update CV + créer version
-  return prisma.$transaction(async (tx) => {
-    // Créer version si demandé
-    if (createVersion) {
-      const lastVersion = await tx.cvVersion.findFirst({
-        where: { cvFileId: existingCv.id },
-        orderBy: { versionNumber: 'desc' }
-      });
-
-      await tx.cvVersion.create({
-        data: {
-          cvFileId: existingCv.id,
-          versionNumber: (lastVersion?.versionNumber || 0) + 1,
-          content: existingCv.content, // Sauvegarder l'ancien contenu
-          origin,
-          description
-        }
-      });
-    }
-
-    // Mettre à jour le CV
-    return tx.cvFile.update({
-      where: { id: existingCv.id },
-      data: { content }
-    });
-  });
-}</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Signature</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>listUserCvFiles</code></td>
+              <td><code>(userId) → string[]</code></td>
+              <td>Liste tous les noms de fichiers CV (tries par date desc)</td>
+            </tr>
+            <tr>
+              <td><code>readUserCvFile</code></td>
+              <td><code>(userId, filename) → string</code></td>
+              <td>Lit le contenu JSON stringifie d'un CV</td>
+            </tr>
+            <tr>
+              <td><code>readUserCvFileWithMeta</code></td>
+              <td><code>(userId, filename) → {content, language, contentVersion, createdAt, updatedAt}</code></td>
+              <td>Lit le CV avec ses metadonnees DB</td>
+            </tr>
+            <tr>
+              <td><code>writeUserCvFile</code></td>
+              <td><code>(userId, filename, content) → string</code></td>
+              <td>Ecrit/upsert le contenu (sanitise les null bytes)</td>
+            </tr>
+            <tr>
+              <td><code>cvFileExists</code></td>
+              <td><code>(userId, filename) → boolean</code></td>
+              <td>Verifie l'existence d'un CV</td>
+            </tr>
+            <tr>
+              <td><code>deleteUserCvFile</code></td>
+              <td><code>(userId, filename) → boolean</code></td>
+              <td>Supprime un CV (retourne false si inexistant)</td>
+            </tr>
+            <tr>
+              <td><code>detectNewFiles</code></td>
+              <td><code>(userId, before) → string[]</code></td>
+              <td>Detecte les nouveaux fichiers crees depuis une liste de reference</td>
+            </tr>
+          </tbody>
+        </table>
 
         <h2>Validation</h2>
 
-        <pre><code>// lib/cv-core/validation.js
-import { z } from 'zod';
+        <p>
+          La validation utilise <strong>AJV</strong> (pas Zod) avec un JSON Schema centralisé dans <code>data/schema.json</code>.
+          Le schema est charge et compile une seule fois (mise en cache).
+        </p>
 
-const HeaderSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  location: z.string().optional(),
-  linkedIn: z.string().url().optional(),
-  portfolio: z.string().url().optional()
-});
+        <pre><code class="language-javascript">// lib/cv-core/validation.js
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 
-const ExperienceSchema = z.object({
-  id: z.string(),
-  title: z.string().min(1),
-  company: z.string().min(1),
-  location: z.string().optional(),
-  startDate: z.string(),
-  endDate: z.string().nullable(),
-  current: z.boolean().default(false),
-  responsibilities: z.array(z.string())
-});
+async function loadSchema() {
+  const schemaPath = path.join(process.cwd(), 'data', 'schema.json');
+  const schemaRaw = await fs.readFile(schemaPath, 'utf-8');
+  return JSON.parse(schemaRaw);
+}
 
-const CvSchema = z.object({
-  header: HeaderSchema,
-  sections: z.object({
-    summary: z.object({ content: z.string() }).optional(),
-    experiences: z.array(ExperienceSchema).default([]),
-    skills: z.object({
-      technical: z.array(z.string()).default([]),
-      soft: z.array(z.string()).default([]),
-      languages: z.array(z.object({
-        language: z.string(),
-        level: z.string()
-      })).default([])
-    }).optional(),
-    education: z.array(z.any()).default([]),
-    projects: z.array(z.any()).default([]),
-    certifications: z.array(z.any()).default([]),
-    extras: z.array(z.any()).default([])
-  }),
-  metadata: z.object({
-    language: z.string().default('fr'),
-    templateId: z.string().optional(),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional()
-  }).optional()
-});
-
-export function validateCv(data) {
-  try {
-    const validated = CvSchema.parse(data);
-    return { valid: true, data: validated, errors: null };
-  } catch (error) {
-    return { valid: false, data: null, errors: error.errors };
-  }
+export async function validateCv(cv) {
+  const validate = await getValidator();
+  const valid = !!validate(cv);
+  const errors = valid ? [] : (validate.errors || []);
+  return { valid, errors };
 }</code></pre>
 
         <h2>API Endpoints CV</h2>
@@ -331,50 +331,139 @@ export function validateCv(data) {
           <thead>
             <tr>
               <th>Endpoint</th>
-              <th>Méthode</th>
+              <th>Methode</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>/api/cv</code></td>
-              <td>GET</td>
-              <td>Lister tous les CV de l'utilisateur</td>
+              <td><code>/api/cvs</code></td>
+              <td><span class="data-flow-badge input">GET</span></td>
+              <td>Lister tous les CV de l'utilisateur (avec metadonnees, tri, cookie <code>cvFile</code>)</td>
             </tr>
             <tr>
-              <td><code>/api/cv</code></td>
-              <td>POST</td>
-              <td>Créer un nouveau CV</td>
+              <td><code>/api/cvs/create</code></td>
+              <td><span class="data-flow-badge process">POST</span></td>
+              <td>Creer un CV vide (full_name, current_title, email)</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]</code></td>
-              <td>GET</td>
-              <td>Récupérer un CV par ID</td>
+              <td><code>/api/cvs/read</code></td>
+              <td><span class="data-flow-badge input">GET</span></td>
+              <td>Lire le contenu d'un CV (<code>?file=xxx.json</code>)</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]</code></td>
-              <td>PUT</td>
-              <td>Modifier un CV</td>
+              <td><code>/api/cvs/delete</code></td>
+              <td><span class="data-flow-badge process">POST</span></td>
+              <td>Supprimer un CV (retourne <code>nextFile</code>)</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]</code></td>
-              <td>DELETE</td>
-              <td>Supprimer un CV</td>
+              <td><code>/api/cvs/delete-bulk</code></td>
+              <td><span class="data-flow-badge process">POST</span></td>
+              <td>Suppression en masse de plusieurs CV</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]/duplicate</code></td>
-              <td>POST</td>
-              <td>Dupliquer un CV</td>
+              <td><code>/api/cvs/versions</code></td>
+              <td><span class="data-flow-badge input">GET</span></td>
+              <td>Lister les versions (<code>?file=</code>, <code>?version=</code>, <code>?includeContent=</code>)</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]/versions</code></td>
-              <td>GET</td>
-              <td>Lister les versions</td>
+              <td><code>/api/cvs/versions</code></td>
+              <td><span class="data-flow-badge process">POST</span></td>
+              <td>Restaurer une version (destructif)</td>
             </tr>
             <tr>
-              <td><code>/api/cv/[id]/versions/[versionId]/restore</code></td>
-              <td>POST</td>
-              <td>Restaurer une version</td>
+              <td><code>/api/cvs/restore</code></td>
+              <td><span class="data-flow-badge process">POST</span></td>
+              <td>Restaurer avec sauvegarde de la version courante</td>
+            </tr>
+            <tr>
+              <td><code>/api/cvs/changes</code></td>
+              <td><span class="data-flow-badge input">GET</span> / <span class="data-flow-badge process">POST</span></td>
+              <td>Review des modifications IA (lire/accepter/rejeter)</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/match-score</code></td>
+              <td><span class="data-flow-badge process">POST</span> / <span class="data-flow-badge input">GET</span></td>
+              <td>Calculer / recuperer le match score CV↔offre</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/source</code></td>
+              <td><span class="data-flow-badge input">GET</span></td>
+              <td>Obtenir la source d'un CV (URL, PDF, manuel)</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/metadata</code></td>
+              <td><span class="data-flow-badge input">GET</span></td>
+              <td>Obtenir les metadonnees d'un CV</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/improve</code></td>
+              <td><span class="data-flow-badge process">POST</span></td>
+              <td>Lancer l'optimisation IA d'un CV</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/apply-review</code></td>
+              <td><span class="data-flow-badge process">POST</span></td>
+              <td>Appliquer les choix de review (accept/reject)</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/can-edit</code></td>
+              <td><span class="data-flow-badge input">GET</span></td>
+              <td>Verifier si l'utilisateur peut editer (credits)</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv/debit-edit</code></td>
+              <td><span class="data-flow-badge process">POST</span></td>
+              <td>Debiter un credit d'edition</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Cles</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/cv-core/storage.js</code></td>
+              <td>CRUD CV (PostgreSQL via Prisma)</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/validation.js</code></td>
+              <td>Validation AJV contre <code>data/schema.json</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/versioning.js</code></td>
+              <td>Gestion des versions (creation, restauration, rotation)</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/constants.js</code></td>
+              <td>Ordre des sections, titres traduits (FR/EN/ES/DE), detection de langue</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/reconstruction.js</code></td>
+              <td>Reconstruction de CV a partir de donnees extraites</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/source.js</code></td>
+              <td>Tracking de l'origine du CV (link, pdf, manual)</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/modifications/</code></td>
+              <td>Application des modifications IA (diff, apply, utils)</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/review/</code></td>
+              <td>Systeme de review (state, actions, rollback)</td>
+            </tr>
+            <tr>
+              <td><code>data/schema.json</code></td>
+              <td>JSON Schema de reference pour la validation CV</td>
             </tr>
           </tbody>
         </table>
@@ -382,10 +471,10 @@ export function validateCv(data) {
         <h2>Prochaines Sections</h2>
 
         <ul>
-          <li><a href="./structure-cv.html">Structure JSON</a> - Détail de chaque section</li>
-          <li><a href="./crud.html">CRUD CV</a> - Opérations de gestion</li>
-          <li><a href="./versioning.html">Versioning</a> - Historique et rollback</li>
-          <li><a href="./import-pdf.html">Import PDF</a> - Pipeline d'import IA</li>
+          <li><a href="./structure-cv.html">Structure JSON</a> — Detail de chaque section du CV</li>
+          <li><a href="./crud.html">CRUD CV</a> — Operations de gestion (create, read, update, delete)</li>
+          <li><a href="./versioning.html">Versioning</a> — Historique, restauration, rotation</li>
+          <li><a href="./import-pdf.html">Import PDF</a> — Pipeline d'import via GPT-4o Vision</li>
         </ul>
       </div>
     </main>

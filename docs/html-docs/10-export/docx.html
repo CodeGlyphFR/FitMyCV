@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,50 +26,275 @@
           <span>Export DOCX</span>
         </div>
 
-
         <h1>Export DOCX</h1>
         <p class="lead">
-          Generation de fichiers Word (DOCX) a partir des CV.
+          Export de CV au format Word (DOCX) via la bibliothèque <code>docx</code> et son <code>Packer.toBuffer()</code>. Même pipeline de sélection que le PDF, avec gestion des crédits et remboursement automatique.
         </p>
 
-        <h2>Technologies</h2>
-        <ul>
-          <li><strong>docx</strong> : Generation de documents Word</li>
-          <li><strong>Templates</strong> : Styles et mise en page</li>
-        </ul>
+        <h2>Pipeline d'export</h2>
 
-        <h2>Implementation</h2>
+        <div class="diagram">
+          <div class="diagram-title">Flux d'export DOCX</div>
+          <div class="mermaid">
+graph LR
+    Request["Requête d'export Word"]
+    Auth["Authentification"]
+    Credits["Débiter les crédits"]
+    Build["Construction du document Word"]
+    Pack["Sérialiser en fichier"]
+    Response["Réponse DOCX"]
+    Refund["Rembourser les crédits"]
 
-        <pre><code>// lib/export/docx.js
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+    Request --> Auth --> Credits --> Build --> Pack --> Response
+    Pack -->|"Erreur"| Refund
 
-export async function exportToDocx(cvData) {
-  const doc = new Document({
-    sections: [{
-      children: [
-        // Header
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `{cvData.header.firstName} {cvData.header.lastName}`,
-              bold: true,
-              size: 32
-            })
-          ]
-        }),
-        // ... autres sections
-      ]
-    }]
-  });
+    style Request fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Auth fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Credits fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Build fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Pack fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Response fill:#22c55e,stroke:#16a34a,color:#fff
+    style Refund fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
 
-  const buffer = await Packer.toBuffer(doc);
-  return buffer;
+        <h2>Bibliothèque docx</h2>
+
+        <p>L'export DOCX utilise la bibliothèque <code>docx</code> (npm) qui permet de construire des documents Word de manière programmatique :</p>
+
+        <pre><code class="language-javascript">import { Document, Packer, Paragraph, TextRun, ... } from 'docx';
+
+// Construction du document
+const doc = new Document({
+  sections: [{
+    properties: { /* marges, orientation */ },
+    children: [
+      // Paragraphes, tableaux, listes...
+    ],
+  }],
+});
+
+// Sérialisation en buffer
+const buffer = await Packer.toBuffer(doc);</code></pre>
+
+        <h2>Endpoint API</h2>
+
+        <pre><code class="language-javascript">// app/api/export-word/route.js
+export async function POST(request) {
+  // 1. Authentification
+  const session = await auth();
+
+  // 2. Débit du crédit
+  const featureResult = await incrementFeatureCounter(
+    session.user.id,
+    'export_cv'
+  );
+
+  try {
+    // 3. Construire le document Word
+    const doc = generateWordDocument(cvData, selections, translator);
+
+    // 4. Sérialiser en buffer
+    const buffer = await Packer.toBuffer(doc);
+
+    // 5. Retourner le buffer DOCX
+    return new Response(buffer, {
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      },
+    });
+  } catch (error) {
+    // 6. Remboursement en cas d'erreur
+    if (featureResult?.usedCredit &amp;&amp; featureResult?.transactionId) {
+      await refundCredit(session.user.id, featureResult.transactionId,
+        `Échec export Word: ${error.message}`);
+    }
+    throw error;
+  }
 }</code></pre>
 
-        <h2>API Endpoint</h2>
+        <h2>Différences avec l'export PDF</h2>
 
-        <pre><code>// POST /api/cv/[id]/export/docx
-// Response: application/vnd.openxmlformats-officedocument.wordprocessingml.document</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>PDF (Puppeteer)</th>
+              <th>DOCX (bibliothèque docx)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Moteur de rendu</td>
+              <td>Chrome headless (HTML → PDF)</td>
+              <td>Construction programmatique (objets → DOCX)</td>
+            </tr>
+            <tr>
+              <td>Pipeline HTML partagé</td>
+              <td>Oui (<code>lib/pdf/</code>)</td>
+              <td>Non — construction directe</td>
+            </tr>
+            <tr>
+              <td>Styles</td>
+              <td>CSS complet</td>
+              <td>Styles Word natifs (paragraphes, runs)</td>
+            </tr>
+            <tr>
+              <td>Pagination</td>
+              <td>Automatique via CSS page-break</td>
+              <td>Gérée par Word à l'ouverture</td>
+            </tr>
+            <tr>
+              <td>Éditable</td>
+              <td>Non</td>
+              <td>Oui — l'utilisateur peut modifier le document</td>
+            </tr>
+            <tr>
+              <td>Dépendance système</td>
+              <td>Chrome/Chromium installé</td>
+              <td>Aucune — bibliothèque JS pure</td>
+            </tr>
+            <tr>
+              <td>Feature name (crédits)</td>
+              <td><code>export_cv</code></td>
+              <td><code>export_cv</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Gestion des erreurs</h2>
+
+        <p>Le même pattern de remboursement que l'export PDF s'applique :</p>
+
+        <ul>
+          <li>Les crédits sont débités <strong>avant</strong> la génération</li>
+          <li>En cas d'erreur, <code>refundCredit(userId, transactionId, message)</code> rembourse automatiquement</li>
+          <li>L'erreur est loguée et une réponse 500 est retournée au client</li>
+        </ul>
+
+        <div class="callout callout-success">
+          <strong>Avantage DOCX</strong> — L'export Word ne nécessite pas de browser headless, ce qui le rend plus léger et plus rapide que l'export PDF. Le document généré est éditable par l'utilisateur dans Word, Google Docs ou LibreOffice.
+        </div>
+
+        <h2>Code complet de l'endpoint</h2>
+
+        <pre><code class="language-javascript">// app/api/export-word/route.js
+
+export async function POST(request) {
+  const startTime = Date.now();
+  let creditTransactionId = null;
+  let creditUsed = false;
+  let userId = null;
+
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return CommonErrors.notAuthenticated();
+    userId = session.user.id;
+
+    const requestData = await request.json();
+    let filename = requestData.filename;
+    const language = requestData.language || 'fr';
+    const selections = requestData.selections || null;
+    const sectionsOrder = requestData.sectionsOrder
+      || ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'];
+
+    // Débit du crédit (feature: export_cv)
+    const usageResult = await incrementFeatureCounter(userId, 'export_cv');
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl
+      }, { status: 403 });
+    }
+    creditTransactionId = usageResult.transactionId;
+    creditUsed = usageResult.usedCredit;
+
+    // Chargement du CV (remboursement si introuvable)
+    const cvResult = await readUserCvFileWithMeta(userId, filename);
+
+    // Génération du document Word via documentBuilder.js
+    const doc = generateWordDocument(
+      cvResult.content, cvResult.language, selections, sectionsOrder
+    );
+    const docxBuffer = await Packer.toBuffer(doc);
+
+    // Tracking télémétrie
+    await trackCvExport({ userId, duration: Date.now() - startTime,
+                          status: 'success', format: 'word' });
+
+    // Retour avec Content-Disposition pour téléchargement
+    const { asciiSafe, encoded } = sanitizeFilenameForHeader(filename);
+    return new NextResponse(docxBuffer, {
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${asciiSafe}.docx"; filename*=UTF-8''${encoded}.docx`
+      }
+    });
+  } catch (error) {
+    // Remboursement automatique en cas d'erreur
+    if (creditUsed &amp;&amp; creditTransactionId &amp;&amp; userId) {
+      await refundCredit(userId, creditTransactionId,
+        `Échec export Word: ${error.message}`);
+    }
+    return NextResponse.json({ error: 'Erreur export Word' }, { status: 500 });
+  }
+}</code></pre>
+
+        <h2>Architecture du Document Word</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Structure du document Word généré</div>
+          <div class="mermaid">
+graph TD
+    Doc["Document"]
+    Doc --> Section["Section unique"]
+    Section --> Props["Propriétés<br/>marges, orientation"]
+    Section --> Children["Contenu - paragraphes"]
+
+    Children --> Header["En-tête<br/>Titre niveau 1 : nom, titre"]
+    Children --> Contact["Contact<br/>email, tel, lieu"]
+    Children --> Summary["Résumé<br/>Paragraphe normal"]
+    Children --> Exp["Expériences<br/>Titre niveau 2 + puces"]
+    Children --> Edu["Formation<br/>Titre niveau 2 + paragraphes"]
+    Children --> Skills["Compétences<br/>catégories en gras"]
+    Children --> Lang["Langues<br/>niveaux CECRL"]
+
+    style Doc fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Section fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Props fill:#64748b,stroke:#475569,color:#fff
+    style Children fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Header fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Contact fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Summary fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Exp fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Edu fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Skills fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Lang fill:#6366f1,stroke:#4f46e5,color:#fff
+          </div>
+        </div>
+
+        <h2>Sanitisation des noms de fichiers</h2>
+
+        <pre><code class="language-javascript">// app/api/export-word/route.js
+
+function sanitizeFilenameForHeader(filename) {
+  // ASCII-safe : retirer accents et caractères spéciaux
+  const asciiSafe = filename
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // Retirer diacritiques
+    .replace(/[^\x20-\x7E]/g, '_')   // Remplacer non-ASCII
+    .replace(/["\\]/g, '_');          // Remplacer quotes/backslash
+
+  // Encodage RFC 5987 pour les navigateurs modernes
+  const encoded = encodeURIComponent(filename).replace(/'/g, '%27');
+
+  return { asciiSafe, encoded };
+}
+// Résultat dans le header:
+// Content-Disposition: attachment; filename="Mon_CV.docx"; filename*=UTF-8''Mon%20CV.docx</code></pre>
+
       </div>
     </main>
   </div>
@@ -90,7 +309,6 @@ export async function exportToDocx(cvData) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

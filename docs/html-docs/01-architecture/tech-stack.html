@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -47,29 +47,42 @@ flowchart TB
         Next["Next.js 16<br/>App Router"]
         React["React 19"]
         Tailwind["Tailwind CSS 4"]
-        i18n["next-intl"]
+        i18n["Traduction<br/>(fr, en, de, es)"]
     end
 
     subgraph Backend["BACKEND"]
-        API["API Routes<br/>113 endpoints"]
-        Auth["NextAuth.js 5"]
+        API["Routes API<br/>123 points d'accès"]
+        Auth["NextAuth.js 4"]
         Prisma["Prisma 6"]
     end
 
     subgraph External["SERVICES EXTERNES"]
         OpenAI["OpenAI API"]
-        Stripe["Stripe<br/>Payments"]
+        Stripe["Stripe<br/>Paiements"]
         Resend["Resend<br/>Emails"]
     end
 
-    subgraph Data["DONNÉES"]
+    subgraph Data["DONNEES"]
         PG[(PostgreSQL)]
-        FS["File System<br/>CV JSON"]
+        CV["CV au format JSON<br/>en base"]
     end
 
     Frontend --> Backend
     Backend --> External
     Backend --> Data
+
+    style Next fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style React fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Tailwind fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style i18n fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style API fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Auth fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Prisma fill:#14b8a6,stroke:#0d9488,color:#fff
+    style OpenAI fill:#64748b,stroke:#475569,color:#fff
+    style Stripe fill:#f59e0b,stroke:#d97706,color:#fff
+    style Resend fill:#64748b,stroke:#475569,color:#fff
+    style PG fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CV fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 
@@ -88,33 +101,43 @@ flowchart TB
           <tbody>
             <tr>
               <td><strong>Next.js</strong></td>
-              <td>16.x</td>
-              <td>Framework React avec App Router, SSR, API Routes</td>
+              <td>^16.1.1</td>
+              <td>Framework React avec App Router, SSR, API Routes, Turbopack</td>
             </tr>
             <tr>
               <td><strong>React</strong></td>
-              <td>19.x</td>
+              <td>^19.2.3</td>
               <td>Bibliothèque UI avec Server Components</td>
             </tr>
             <tr>
               <td><strong>Tailwind CSS</strong></td>
-              <td>4.x</td>
-              <td>Framework CSS utility-first</td>
+              <td>^4.1.18</td>
+              <td>Framework CSS utility-first (via @tailwindcss/postcss)</td>
             </tr>
             <tr>
-              <td><strong>next-intl</strong></td>
-              <td>3.x</td>
-              <td>Internationalisation (fr, en, de, es)</td>
+              <td><strong>Framer Motion</strong></td>
+              <td>^12.25.0</td>
+              <td>Animations et transitions UI</td>
             </tr>
             <tr>
               <td><strong>Lucide React</strong></td>
-              <td>-</td>
+              <td>^0.562.0</td>
               <td>Icônes SVG</td>
             </tr>
             <tr>
               <td><strong>Recharts</strong></td>
-              <td>-</td>
+              <td>^3.6.0</td>
               <td>Graphiques (admin dashboard)</td>
+            </tr>
+            <tr>
+              <td><strong>@dnd-kit</strong></td>
+              <td>^6.3.1</td>
+              <td>Drag & drop (réorganisation sections CV)</td>
+            </tr>
+            <tr>
+              <td><strong>canvas-confetti</strong></td>
+              <td>^1.9.4</td>
+              <td>Effets de célébration</td>
             </tr>
           </tbody>
         </table>
@@ -132,28 +155,33 @@ flowchart TB
           <tbody>
             <tr>
               <td><strong>Next.js API Routes</strong></td>
-              <td>16.x</td>
-              <td>113 endpoints RESTful</td>
+              <td>^16.1.1</td>
+              <td>123 endpoints RESTful</td>
             </tr>
             <tr>
               <td><strong>NextAuth.js</strong></td>
-              <td>5.x</td>
-              <td>Authentification (credentials, Google, LinkedIn)</td>
+              <td>^4.24.13</td>
+              <td>Authentification (Credentials, Google, GitHub, Apple)</td>
             </tr>
             <tr>
               <td><strong>Prisma</strong></td>
-              <td>6.x</td>
+              <td>^6.19.1</td>
               <td>ORM pour PostgreSQL (34 modèles)</td>
             </tr>
             <tr>
-              <td><strong>Zod</strong></td>
-              <td>-</td>
-              <td>Validation de schémas</td>
+              <td><strong>ajv + ajv-formats</strong></td>
+              <td>^8.17.1</td>
+              <td>Validation de schémas JSON (structured output IA)</td>
             </tr>
             <tr>
-              <td><strong>bcrypt</strong></td>
-              <td>-</td>
+              <td><strong>bcryptjs</strong></td>
+              <td>^3.0.3</td>
               <td>Hachage des mots de passe</td>
+            </tr>
+            <tr>
+              <td><strong>luxon</strong></td>
+              <td>^3.7.2</td>
+              <td>Manipulation de dates (périodes, fuseaux)</td>
             </tr>
           </tbody>
         </table>
@@ -164,69 +192,122 @@ flowchart TB
           <thead>
             <tr>
               <th>Service</th>
+              <th>Version SDK</th>
               <th>Usage</th>
-              <th>Configuration</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>OpenAI API</strong></td>
-              <td>Génération et optimisation CV</td>
-              <td>Modèles configurables en DB (Setting)</td>
+              <td>^6.16.0</td>
+              <td>Génération, optimisation CV, import PDF, scoring</td>
             </tr>
             <tr>
               <td><strong>Stripe</strong></td>
-              <td>Paiements, abonnements</td>
-              <td>Webhooks pour sync</td>
+              <td>^20.1.2</td>
+              <td>Paiements, abonnements, webhooks</td>
             </tr>
             <tr>
               <td><strong>Resend</strong></td>
-              <td>Emails transactionnels</td>
-              <td>Templates en DB</td>
+              <td>^6.7.0</td>
+              <td>Emails transactionnels (templates en DB)</td>
             </tr>
             <tr>
               <td><strong>Puppeteer</strong></td>
-              <td>Export PDF</td>
-              <td>Headless Chrome</td>
+              <td>^24.34.0</td>
+              <td>Export PDF (Headless Chrome)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Export & Documents</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Technologie</th>
+              <th>Version</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Puppeteer</strong></td>
+              <td>^24.34.0</td>
+              <td>Export PDF avec rendu HTML</td>
+            </tr>
+            <tr>
+              <td><strong>docx</strong></td>
+              <td>^9.5.1</td>
+              <td>Export Word (.docx)</td>
+            </tr>
+            <tr>
+              <td><strong>sharp</strong></td>
+              <td>^0.34.5</td>
+              <td>Traitement d'images (optimisation)</td>
+            </tr>
+            <tr>
+              <td><strong>pdf-parse + pdf2pic</strong></td>
+              <td>^1.1.1 / ^3.2.0</td>
+              <td>Import et conversion PDF en images</td>
             </tr>
           </tbody>
         </table>
 
         <h2>Structure des Dossiers</h2>
 
-        <pre><code>fitmycv-app/
+        <pre><code class="language-bash">fitmycv-app/
 ├── app/                          # Next.js App Router
-│   ├── [locale]/                 # Routes i18n
-│   │   ├── (auth)/              # Routes authentification
-│   │   ├── (protected)/         # Routes protégées
-│   │   └── admin/               # Dashboard admin
-│   └── api/                     # 113 API Routes
-│       ├── auth/                # NextAuth endpoints
-│       ├── cv/                  # CRUD CV
-│       ├── admin/               # Endpoints admin
-│       ├── subscription/        # Stripe integration
-│       └── ...
-├── components/                   # 138 composants React
-│   ├── cv/                      # Éditeur CV
+│   ├── page.jsx                 # Page d'accueil
+│   ├── layout.jsx               # Layout racine
+│   ├── auth/                    # Pages authentification
+│   ├── account/                 # Pages compte utilisateur
 │   ├── admin/                   # Dashboard admin
+│   ├── extension-auth/          # Auth extension navigateur
+│   └── api/                     # 123 API Routes
+│       ├── auth/                # NextAuth + endpoints auth (12)
+│       ├── cv/ + cvs/           # CRUD CV (15)
+│       ├── admin/               # Endpoints admin (34)
+│       ├── analytics/           # Analytics (10)
+│       ├── subscription/        # Stripe integration (10)
+│       ├── background-tasks/    # Tâches async (7)
+│       ├── ext/                 # API extension (5)
+│       └── ...
+├── components/                   # 175+ composants React
+│   ├── cv-sections/             # Éditeur sections CV
+│   ├── cv-review/               # Review modifications IA
+│   ├── cv-improvement/          # Interface optimisation
+│   ├── admin/                   # Dashboard admin
+│   ├── subscription/            # Pages abonnement
+│   ├── onboarding/              # Flux onboarding
 │   ├── ui/                      # Composants UI réutilisables
-│   └── ...
-├── lib/                         # 31 modules métier
-│   ├── auth/                    # Authentification
-│   ├── cv-core/                 # Logique CV
+│   └── ...                      # (19 catégories au total)
+├── lib/                         # 34 modules métier
+│   ├── auth/                    # Authentification NextAuth 4
+│   ├── cv-core/                 # Logique CV (storage, versioning)
 │   ├── openai-core/             # Client OpenAI
-│   ├── cv-generation/           # Pipeline génération
-│   ├── cv-improvement/          # Pipeline optimisation
+│   ├── features/                # 5 pipelines IA
+│   │   ├── cv-adaptation/       # Adaptation CV ↔ offre
+│   │   ├── cv-improvement/      # Optimisation CV
+│   │   ├── import-pdf/          # Import PDF via IA
+│   │   ├── template-generation/ # Génération templates
+│   │   └── job-title-generation/# Génération depuis intitulé
 │   ├── subscription/            # Abonnements & crédits
+│   ├── background-jobs/         # Queue & runner
 │   └── ...
 ├── prisma/
-│   └── schema.prisma            # 34 modèles
-├── locales/                     # Traductions
-│   ├── fr.json
-│   ├── en.json
-│   ├── de.json
-│   └── es.json
-└── public/                      # Assets statiques</code></pre>
+│   ├── schema.prisma            # 34 modèles
+│   └── data-migrations/         # Scripts migration de données
+├── locales/                     # Traductions i18n
+│   ├── fr/                      # Français
+│   ├── en/                      # Anglais
+│   ├── de/                      # Allemand
+│   └── es/                      # Espagnol
+├── extension/                   # Extension navigateur Chrome/Firefox
+├── scripts/                     # Scripts d'automatisation
+├── hooks/                       # Custom React hooks
+├── public/                      # Assets statiques
+└── docs/                        # Documentation technique</code></pre>
 
         <h2>Configuration Environnement</h2>
 
@@ -271,6 +352,10 @@ flowchart TB
               <td><code>RESEND_API_KEY</code></td>
               <td>Clé API Resend (emails)</td>
             </tr>
+            <tr>
+              <td><code>RECAPTCHA_SECRET_KEY</code></td>
+              <td>Clé secrète Google reCAPTCHA v3</td>
+            </tr>
           </tbody>
         </table>
 
@@ -289,7 +374,7 @@ flowchart TB
           <tbody>
             <tr>
               <td><code>model_cv_generation</code></td>
-              <td>Pipeline génération CV</td>
+              <td>Pipeline adaptation CV</td>
               <td><code>gpt-4o</code></td>
             </tr>
             <tr>
@@ -309,37 +394,68 @@ flowchart TB
             </tr>
             <tr>
               <td><code>model_pdf_import</code></td>
-              <td>Import PDF</td>
+              <td>Import PDF (vision)</td>
               <td><code>gpt-4o</code></td>
             </tr>
           </tbody>
         </table>
 
+        <h2>Configuration Next.js</h2>
+
+        <pre><code class="language-javascript">// next.config.js - Points clés
+const nextConfig = {
+  output: 'standalone',         // Build Docker optimisé
+  turbopack: {},                // Turbopack activé par défaut (Next.js 16)
+  compress: true,               // Compression gzip
+
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+  },
+
+  // Packages serveur exclus du bundle client
+  serverExternalPackages: [
+    'puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'
+  ],
+
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'next-auth'],
+  },
+};</code></pre>
+
         <h2>Performances et Optimisations</h2>
 
         <div class="card-grid">
           <div class="card">
-            <h4>Cache OpenAI (CAG)</h4>
+            <h4>Cache OpenAI (Prompt Caching)</h4>
             <ul>
-              <li>Prompt caching actif</li>
-              <li>90% réduction coûts tokens cachés</li>
-              <li>TTL: 5 min (dev) / 24h (prod)</li>
+              <li>Prompt caching natif OpenAI actif</li>
+              <li>Réduction significative des coûts tokens cachés</li>
+              <li>Suivi via <code>cachedTokens</code> dans telemetry</li>
             </ul>
           </div>
           <div class="card">
             <h4>Parallélisation</h4>
             <ul>
-              <li>Batches exécutés en parallèle</li>
-              <li>Promise.allSettled pour résilience</li>
-              <li>Max 3 tâches concurrentes</li>
+              <li>Batches IA exécutés en parallèle</li>
+              <li><code>Promise.allSettled</code> pour résilience</li>
+              <li>p-limit pour contrôle de concurrence</li>
             </ul>
           </div>
           <div class="card">
             <h4>Background Jobs</h4>
             <ul>
-              <li>Queue in-memory</li>
+              <li>Queue in-memory avec processRegistry</li>
               <li>Tracking en base de données</li>
               <li>Retry automatique avec backoff</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Images & Build</h4>
+            <ul>
+              <li>AVIF/WebP avec <code>sharp</code></li>
+              <li>Turbopack (dev & build)</li>
+              <li>Standalone output pour Docker</li>
             </ul>
           </div>
         </div>

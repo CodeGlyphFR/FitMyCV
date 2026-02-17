@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administration &amp; Monitoring | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb"><a href="./index.html">Accueil</a><span>/</span><span>Administration &amp; Monitoring</span></div>
+
+        <h1>Administration &amp; Monitoring</h1>
+        <p class="lead">
+          Le panneau d'administration de FitMyCV.io centralise <strong>toute la gestion opérationnelle</strong> du SaaS en un seul endroit : métriques financières en temps réel, gestion des utilisateurs et abonnements, configuration dynamique des plans et tarifs, monitoring des coûts IA avec alertes automatiques, et gestion des emails transactionnels avec éditeur visuel. Le tout sans intervention technique ni redéploiement.
+        </p>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- DASHBOARD 11 MODULES -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Dashboard complet : 11 modules</h2>
+
+        <p>Le panneau d'administration regroupe <strong>11 modules fonctionnels</strong> couvrant l'ensemble des besoins opérationnels :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Les 11 modules du panneau d'administration</div>
+          <div class="mermaid">
+graph TB
+    subgraph Dashboard["PANNEAU D'ADMINISTRATION"]
+        Overview["Vue d'ensemble<br/>KPIs financiers"]
+        Users["Utilisateurs<br/>Gestion des comptes"]
+        Revenue["Revenus<br/>Chiffre d'affaires"]
+        Plans["Plans<br/>Configuration tarifs"]
+        OpenAI["Coûts IA<br/>Monitoring temps réel"]
+        Email["Emails<br/>Templates visuels"]
+        Settings["Paramètres<br/>Configuration système"]
+        Onboarding["Onboarding<br/>Analyse du parcours"]
+        Features["Fonctionnalités<br/>Activation à la volée"]
+        Errors["Erreurs<br/>Journaux applicatifs"]
+        Feedback["Retours<br/>Avis utilisateurs"]
+    end
+
+    style Overview fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Users fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Revenue fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Plans fill:#14b8a6,stroke:#0d9488,color:#fff
+    style OpenAI fill:#f59e0b,stroke:#d97706,color:#fff
+    style Email fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Settings fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Onboarding fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Features fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Errors fill:#64748b,stroke:#475569,color:#fff
+    style Feedback fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Vue d'ensemble</h4>
+            <p>Tableau de bord principal avec les indicateurs financiers clés : revenus récurrents, chiffre d'affaires, nombre d'utilisateurs et coûts IA synthétisés.</p>
+          </div>
+          <div class="card">
+            <h4>Utilisateurs</h4>
+            <p>Gestion complète des comptes : recherche, filtres par rôle et statut, création manuelle, modification des droits et validation des emails.</p>
+          </div>
+          <div class="card">
+            <h4>Revenus &amp; Marges</h4>
+            <p>Suivi du chiffre d'affaires par période, calcul des marges par plan d'abonnement et historique détaillé des revenus.</p>
+          </div>
+          <div class="card">
+            <h4>Plans d'abonnement</h4>
+            <p>Configuration dynamique des plans avec limites par fonctionnalité, gestion des tiers (Gratuit, Pro, Premium, Enterprise, Custom).</p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Coûts IA</h4>
+            <p>Monitoring des dépenses en temps réel par utilisateur, par fonctionnalité et globalement, avec alertes configurables sur les dépassements.</p>
+          </div>
+          <div class="card">
+            <h4>Emails transactionnels</h4>
+            <p>Gestion des templates avec éditeur visuel, activation atomique (un seul template actif par déclencheur), logs et statistiques d'envoi.</p>
+          </div>
+          <div class="card">
+            <h4>Paramètres système</h4>
+            <p>59 paramètres modifiables en temps réel, répartis en 7 catégories. Les changements sont propagés instantanément à tous les utilisateurs connectés.</p>
+          </div>
+          <div class="card">
+            <h4>Onboarding &amp; Analytics</h4>
+            <p>Analyse du parcours d'accueil : taux de complétion, taux d'abandon par étape, score de santé et configuration du flux.</p>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- KPIS FINANCIERS -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Métriques financières en temps réel</h2>
+
+        <p>Le dashboard fournit une vision complète de la santé financière du SaaS avec des indicateurs actualisés en continu :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Indicateurs suivis</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Revenus</strong></td>
+              <td>MRR (revenu récurrent mensuel), ARR (revenu récurrent annuel), ARPU (revenu moyen par utilisateur), revenus crédits, nombre d'abonnés actifs</td>
+            </tr>
+            <tr>
+              <td><strong>Utilisateurs</strong></td>
+              <td>Total, nouveaux, non vérifiés, nombre moyen de CV par utilisateur</td>
+            </tr>
+            <tr>
+              <td><strong>Coûts IA</strong></td>
+              <td>Coût journalier et mensuel, volume de données traitées, solde restant</td>
+            </tr>
+            <tr>
+              <td><strong>Par plan</strong></td>
+              <td>Distribution des utilisateurs par plan, coût moyen par plan, marge brute en pourcentage</td>
+            </tr>
+            <tr>
+              <td><strong>Onboarding</strong></td>
+              <td>Taux de complétion, taux d'abandon par étape, score de santé du parcours</td>
+            </tr>
+            <tr>
+              <td><strong>Emails</strong></td>
+              <td>Volume d'envois, quota disponible, taux d'échec</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- CONFIGURATION DYNAMIQUE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Configuration dynamique sans redéploiement</h2>
+
+        <p>
+          Toute la configuration de l'application est modifiable en temps réel via l'interface d'administration, <strong>sans redéploiement ni interruption de service</strong>. Les changements sont propagés instantanément à tous les utilisateurs connectés grâce à un système de notification en temps réel.
+        </p>
+
+        <h3>59 paramètres, 7 catégories</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Paramètres</th>
+              <th>Exemples</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Modèles IA</strong></td>
+              <td>24</td>
+              <td>Modèle par fonctionnalité, température, mode prioritaire</td>
+            </tr>
+            <tr>
+              <td><strong>Crédits</strong></td>
+              <td>10</td>
+              <td>Coût par fonctionnalité, bonus d'inscription, crédits gratuits</td>
+            </tr>
+            <tr>
+              <td><strong>Fonctionnalités</strong></td>
+              <td>12</td>
+              <td>Activation/désactivation de fonctionnalités à la volée</td>
+            </tr>
+            <tr>
+              <td><strong>Import PDF</strong></td>
+              <td>7</td>
+              <td>Modèle de vision IA, taille maximale, formats acceptés</td>
+            </tr>
+            <tr>
+              <td><strong>Système</strong></td>
+              <td>4</td>
+              <td>Maintenance, notifications globales</td>
+            </tr>
+            <tr>
+              <td><strong>Affichage CV</strong></td>
+              <td>1</td>
+              <td>Options de rendu des CV</td>
+            </tr>
+            <tr>
+              <td><strong>IA globale</strong></td>
+              <td>1</td>
+              <td>Configuration générale de l'IA</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Propagation instantanée</div>
+          <p>
+            Chaque modification de paramètre est propagée en temps réel à tous les utilisateurs connectés. Les caches internes (modèles IA, configuration PDF) sont automatiquement invalidés pour garantir la cohérence immédiate.
+          </p>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- MONITORING IA -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Maîtrise des coûts IA</h2>
+
+        <p>
+          Le système offre une <strong>maîtrise granulaire de la marge</strong> grâce au suivi détaillé des coûts de l'intelligence artificielle. Chaque appel est journalisé avec le modèle utilisé, le volume de données traitées, la durée et le coût estimé.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Monitoring des coûts IA : suivi et alertes</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Track["SUIVI"]
+        Call["Chaque appel IA<br/>est journalisé"]
+        Agg["Agrégation<br/>par jour, utilisateur<br/>et fonctionnalité"]
+    end
+
+    subgraph Alerts["ALERTES"]
+        Config["5 types d'alertes<br/>configurables"]
+        Detect["Détection de<br/>dépassement<br/>en temps réel"]
+    end
+
+    subgraph Action["ACTIONS"]
+        ID["Identification<br/>des utilisateurs<br/>concernés"]
+        Adjust["Ajustement<br/>des tarifs<br/>et limites"]
+    end
+
+    Call --> Agg --> Detect
+    Config --> Detect
+    Detect --> ID --> Adjust
+
+    style Call fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Agg fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Config fill:#f59e0b,stroke:#d97706,color:#fff
+    style Detect fill:#ef4444,stroke:#dc2626,color:#fff
+    style ID fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Adjust fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>5 types d'alertes configurables</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type d'alerte</th>
+              <th>Périmètre</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Utilisateur journalier</strong></td>
+              <td>Par utilisateur, par jour</td>
+              <td>Détecte un utilisateur qui dépasse un seuil de consommation IA quotidien</td>
+            </tr>
+            <tr>
+              <td><strong>Utilisateur mensuel</strong></td>
+              <td>Par utilisateur, par mois</td>
+              <td>Détecte une surconsommation IA mensuelle d'un utilisateur</td>
+            </tr>
+            <tr>
+              <td><strong>Global journalier</strong></td>
+              <td>Toute la plateforme, par jour</td>
+              <td>Alerte si les coûts IA globaux dépassent un seuil quotidien</td>
+            </tr>
+            <tr>
+              <td><strong>Global mensuel</strong></td>
+              <td>Toute la plateforme, par mois</td>
+              <td>Alerte si les coûts IA globaux dépassent un seuil mensuel</td>
+            </tr>
+            <tr>
+              <td><strong>Par fonctionnalité</strong></td>
+              <td>Par fonctionnalité IA, par jour</td>
+              <td>Détecte un pic de consommation sur une fonctionnalité spécifique</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>Chaque alerte identifie automatiquement les utilisateurs concernés, permettant d'agir rapidement pour ajuster les limites ou la tarification.</p>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- TARIFICATION DÉGRESSIVE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Gestion flexible des plans et crédits</h2>
+
+        <h3>Plans d'abonnement configurables</h3>
+
+        <p>Les plans sont entièrement configurables depuis l'interface admin, avec un système de <strong>5 niveaux</strong> (Gratuit, Pro, Premium, Enterprise, Custom). Chaque plan définit des limites par fonctionnalité (activée/désactivée, limite numérique ou illimitée), et les modifications sont synchronisées automatiquement avec le système de paiement.</p>
+
+        <h3>Tarification dégressive des packs crédits</h3>
+
+        <p>Les packs de crédits suivent une <strong>stratégie de tarification dégressive</strong> incitant à l'achat en volume :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Pack</th>
+              <th>Prix</th>
+              <th>Coût unitaire</th>
+              <th>Économie</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>15 crédits</strong></td>
+              <td>4,99 &euro;</td>
+              <td>0,33 &euro;/crédit</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td><strong>50 crédits</strong></td>
+              <td>14,99 &euro;</td>
+              <td>0,30 &euro;/crédit</td>
+              <td>-9%</td>
+            </tr>
+            <tr>
+              <td><strong>100 crédits</strong></td>
+              <td>26,99 &euro;</td>
+              <td>0,27 &euro;/crédit</td>
+              <td>-18%</td>
+            </tr>
+            <tr>
+              <td><strong>150 crédits</strong></td>
+              <td>35,99 &euro;</td>
+              <td>0,24 &euro;/crédit</td>
+              <td>-27%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>Plus le pack est volumineux, plus le coût par crédit diminue, créant une incitation naturelle à l'achat en volume.</p>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- EMAILS -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Emails transactionnels professionnels</h2>
+
+        <p>Le système d'emails transactionnels repose sur une architecture simple et flexible :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture des emails transactionnels</div>
+          <div class="mermaid">
+flowchart LR
+    Trigger["Déclencheur<br/>événement applicatif"]
+    Template["Template<br/>éditeur visuel"]
+    Send["Envoi<br/>double fournisseur"]
+    Log["Journal<br/>suivi et statistiques"]
+
+    Trigger --> Template --> Send --> Log
+
+    style Trigger fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Template fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Send fill:#22c55e,stroke:#16a34a,color:#fff
+    style Log fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Éditeur visuel</h4>
+            <p>Les templates d'emails sont conçus via un éditeur visuel intuitif. Aucune compétence technique n'est nécessaire pour créer ou modifier les emails transactionnels.</p>
+          </div>
+          <div class="card">
+            <h4>Activation atomique</h4>
+            <p>Un seul template est actif par déclencheur à un instant donné. L'activation d'un nouveau template désactive automatiquement le précédent, garantissant la cohérence.</p>
+          </div>
+          <div class="card">
+            <h4>Double fournisseur</h4>
+            <p>Le système utilise deux fournisseurs d'envoi en cascade. Si le fournisseur principal atteint sa limite, le second prend le relais automatiquement pour garantir la délivrabilité.</p>
+          </div>
+          <div class="card">
+            <h4>Logs et statistiques</h4>
+            <p>Chaque envoi est journalisé avec son statut. Les statistiques permettent de suivre les volumes, les taux d'échec et la performance du système d'emails.</p>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- SWITCH MODE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Bascule du modèle économique</h2>
+
+        <p>
+          L'administrateur peut basculer à tout moment entre le <strong>mode abonnement</strong> (plans mensuels/annuels) et le <strong>mode crédits uniquement</strong> (paiement à l'usage). Avant de désactiver les abonnements, le système affiche un avertissement avec le nombre d'abonnés payants actuels. La bascule est propagée instantanément à tous les utilisateurs connectés.
+        </p>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Bascule sécurisée</div>
+          <p>
+            Le passage du mode abonnement au mode crédits affiche un compteur des abonnés payants actifs avant confirmation. Cette mesure de sécurité évite toute bascule accidentelle qui affecterait les utilisateurs existants.
+          </p>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- RÉSUMÉ -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>En résumé</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>11 modules d'administration</h4>
+            <p>Un panneau unique couvrant utilisateurs, revenus, plans, coûts IA, emails, paramètres, onboarding et analytics.</p>
+          </div>
+          <div class="card">
+            <h4>KPIs financiers en temps réel</h4>
+            <p>MRR, ARR, ARPU, marges par plan et suivi des coûts IA synthétisés sur un seul tableau de bord.</p>
+          </div>
+          <div class="card">
+            <h4>59 paramètres configurables</h4>
+            <p>Toute la configuration modifiable en temps réel, sans redéploiement ni interruption de service.</p>
+          </div>
+          <div class="card">
+            <h4>5 types d'alertes IA</h4>
+            <p>Monitoring granulaire des coûts avec détection automatique des dépassements par utilisateur ou globalement.</p>
+          </div>
+          <div class="card">
+            <h4>Tarification dégressive</h4>
+            <p>Packs crédits avec coût unitaire dégressif, incitant à l'achat en volume.</p>
+          </div>
+          <div class="card">
+            <h4>Emails professionnels</h4>
+            <p>Éditeur visuel, double fournisseur pour la délivrabilité et journalisation de chaque envoi.</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="./assets/js/layout.js?v=1.0.5"></script>
+  <script src="./assets/js/main.js?v=1.0.7"></script>
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modèle de Données & Architecture Technique - FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="./index.html">Accueil</a>
+          <span>&rsaquo;</span>
+          <span>Modèle de Données &amp; Architecture Technique</span>
+        </div>
+
+        <h1>Modèle de Données & Architecture Technique</h1>
+        <p class="lead">
+          FitMyCV.io repose sur une stack technologique moderne et une base de données structurée en 34 entités réparties dans 9 domaines fonctionnels, couvrant l'ensemble du cycle de vie utilisateur.
+        </p>
+
+        <!-- ============================================================ -->
+        <!-- PARTIE 1 : STACK TECHNIQUE                                    -->
+        <!-- ============================================================ -->
+
+        <h2>Stack Technique</h2>
+
+        <p>
+          L'application est construite sur un écosystème technologique de dernière génération, chaque composant ayant été sélectionné pour répondre aux exigences spécifiques d'un SaaS avec traitement IA intensif.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture technologique</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Frontend["FRONTEND"]
+        Next["Framework React<br/>dernière génération"]
+        UI["Interface réactive<br/>composants modulaires"]
+        Style["Système de style<br/>utility-first"]
+        Lang["Traduction<br/>4 langues"]
+    end
+
+    subgraph Backend["BACKEND"]
+        API["123 points d'accès<br/>API RESTful"]
+        AuthB["Authentification<br/>multi-provider"]
+        ORM["ORM type-safe<br/>pour PostgreSQL"]
+    end
+
+    subgraph External["SERVICES EXTERNES"]
+        AI["Intelligence Artificielle<br/>génération et analyse"]
+        Pay["Paiements<br/>abonnements et crédits"]
+        Mail["Emails<br/>transactionnels"]
+    end
+
+    subgraph Data["DONNÉES"]
+        PG[("PostgreSQL<br/>34 entités")]
+        CV["CV au format JSON<br/>structuré"]
+    end
+
+    Frontend --> Backend
+    Backend --> External
+    Backend --> Data
+
+    style Next fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style UI fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Style fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Lang fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style API fill:#6366f1,stroke:#4f46e5,color:#fff
+    style AuthB fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ORM fill:#14b8a6,stroke:#0d9488,color:#fff
+    style AI fill:#64748b,stroke:#475569,color:#fff
+    style Pay fill:#f59e0b,stroke:#d97706,color:#fff
+    style Mail fill:#64748b,stroke:#475569,color:#fff
+    style PG fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CV fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <h3>Technologies principales</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Technologie</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Framework</strong></td>
+              <td>Next.js (App Router)</td>
+              <td>Framework React avec rendu hybride serveur/client et build optimisé</td>
+            </tr>
+            <tr>
+              <td><strong>Interface</strong></td>
+              <td>React (Server Components)</td>
+              <td>Bibliothèque UI avec composants serveur pour des performances optimales</td>
+            </tr>
+            <tr>
+              <td><strong>Styles</strong></td>
+              <td>Tailwind CSS</td>
+              <td>Framework CSS utility-first pour un design rapide et cohérent</td>
+            </tr>
+            <tr>
+              <td><strong>Base de données</strong></td>
+              <td>PostgreSQL via ORM type-safe</td>
+              <td>Stockage relationnel avec 34 entités et validation des types à la compilation</td>
+            </tr>
+            <tr>
+              <td><strong>Authentification</strong></td>
+              <td>NextAuth.js</td>
+              <td>Authentification multi-provider (email, Google, GitHub, Apple)</td>
+            </tr>
+            <tr>
+              <td><strong>Intelligence Artificielle</strong></td>
+              <td>OpenAI API</td>
+              <td>5 pipelines IA spécialisés avec sorties structurées et validées</td>
+            </tr>
+            <tr>
+              <td><strong>Paiements</strong></td>
+              <td>Stripe</td>
+              <td>Abonnements, crédits, webhooks et facturation automatisée</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Services complémentaires</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Service</th>
+              <th>Technologie</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Export PDF</strong></td>
+              <td>Moteur de rendu via navigateur headless</td>
+              <td>Génération de PDF haute fidélité à partir du rendu HTML</td>
+            </tr>
+            <tr>
+              <td><strong>Export Word</strong></td>
+              <td>Générateur de documents OOXML</td>
+              <td>Export au format Word compatible avec les ATS</td>
+            </tr>
+            <tr>
+              <td><strong>Emails</strong></td>
+              <td>Service d'emails transactionnels</td>
+              <td>Envoi d'emails avec templates dynamiques stockés en base</td>
+            </tr>
+            <tr>
+              <td><strong>Anti-bot</strong></td>
+              <td>reCAPTCHA v3</td>
+              <td>Protection invisible sur tous les points d'entrée sensibles</td>
+            </tr>
+            <tr>
+              <td><strong>Import PDF</strong></td>
+              <td>Extraction et conversion de documents</td>
+              <td>Import intelligent de CV existants via analyse IA</td>
+            </tr>
+            <tr>
+              <td><strong>Images</strong></td>
+              <td>Optimisation automatique</td>
+              <td>Conversion en formats nouvelle génération (AVIF/WebP)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================================ -->
+        <!-- PARTIE 2 : PERFORMANCES ET OPTIMISATIONS                     -->
+        <!-- ============================================================ -->
+
+        <h2>Performances et Optimisations</h2>
+
+        <p>
+          L'architecture intègre plusieurs mécanismes d'optimisation pour garantir des temps de réponse rapides et une maîtrise des coûts, particulièrement critiques pour les traitements IA intensifs.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Cache des instructions IA</h4>
+            <p>Le système exploite le cache natif des prompts IA, permettant de réutiliser les instructions entre les appels parallèles. Ce mécanisme réduit significativement les coûts d'API et accélère les traitements.</p>
+          </div>
+          <div class="card">
+            <h4>Exécution parallèle résiliente</h4>
+            <p>Les traitements IA sont exécutés en parallèle avec un contrôle intelligent de la concurrence. En cas d'échec d'un traitement individuel, les autres continuent normalement sans interruption.</p>
+          </div>
+          <div class="card">
+            <h4>File de tâches avec retry</h4>
+            <p>Les opérations longues (génération IA, export PDF) sont traitées de manière asynchrone avec un suivi en base de données. En cas d'échec, le système relance automatiquement avec un délai croissant.</p>
+          </div>
+          <div class="card">
+            <h4>Optimisation des assets</h4>
+            <p>Les images sont automatiquement converties en formats nouvelle génération (AVIF, WebP) pour des performances optimales. Le build utilise un compilateur ultra-rapide pour un démarrage instantané.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- PARTIE 3 : MODELE DE DONNEES                                -->
+        <!-- ============================================================ -->
+
+        <h2>Modèle de Données</h2>
+
+        <p>
+          Le système de données repose sur une base PostgreSQL structurée en <strong>34 entités</strong> réparties dans <strong>9 domaines fonctionnels</strong>. Cette organisation reflète une modélisation orientée domaine (Domain-Driven Design), où chaque domaine possède son propre périmètre de responsabilité.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Écosystème de données centré sur l'utilisateur</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph UserGroup["UTILISATEUR"]
+        User["Utilisateur"]
+    end
+
+    subgraph CVGroup["CV ET DOCUMENTS"]
+        CvFile["CV"]
+        CvVersion["Historique des versions"]
+        ExportTpl["Configurations d'export"]
+    end
+
+    subgraph OfferGroup["OFFRES D'EMPLOI"]
+        JobOffer["Offre d'emploi"]
+    end
+
+    subgraph PipelineGroup["PIPELINE DE GÉNÉRATION"]
+        GenTask["Tâche de génération"]
+        GenOffer["Offre à traiter"]
+        GenSubtask["Sous-tâche IA"]
+    end
+
+    subgraph BillingGroup["ABONNEMENTS ET CRÉDITS"]
+        Sub["Abonnement"]
+        Plan["Plan"]
+        Limits["Limites par fonctionnalité"]
+        Balance["Solde de crédits"]
+        Tx["Transactions"]
+    end
+
+    subgraph AuthGroup["AUTHENTIFICATION"]
+        Account["Comptes OAuth liés"]
+    end
+
+    subgraph SystemGroup["SYSTÈME"]
+        BgTask["Tâches asynchrones"]
+    end
+
+    User -->|"possède"| CvFile
+    User -->|"crée"| JobOffer
+    User -->|"souscrit"| Sub
+    User -->|"possède"| Balance
+    User -->|"effectue"| Tx
+    User -->|"lié"| Account
+    User -->|"lance"| BgTask
+    User -->|"génère"| GenTask
+    User -->|"configure"| ExportTpl
+
+    CvFile -->|"historique"| CvVersion
+    CvFile -->|"adapté pour"| JobOffer
+    JobOffer -->|"CV générés"| CvFile
+
+    GenTask -->|"contient"| GenOffer
+    GenOffer -->|"exécute"| GenSubtask
+
+    Sub -->|"plan choisi"| Plan
+    Plan -->|"définit"| Limits
+
+    style User fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CvFile fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CvVersion fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ExportTpl fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style JobOffer fill:#6366f1,stroke:#4f46e5,color:#fff
+    style GenTask fill:#f59e0b,stroke:#d97706,color:#fff
+    style GenOffer fill:#f59e0b,stroke:#d97706,color:#fff
+    style GenSubtask fill:#f59e0b,stroke:#d97706,color:#fff
+    style Sub fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Plan fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Limits fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Balance fill:#22c55e,stroke:#16a34a,color:#fff
+    style Tx fill:#22c55e,stroke:#16a34a,color:#fff
+    style Account fill:#64748b,stroke:#475569,color:#fff
+    style BgTask fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 9 DOMAINES FONCTIONNELS                                      -->
+        <!-- ============================================================ -->
+
+        <h2>Les 9 Domaines Fonctionnels</h2>
+
+        <h3>1. Utilisateurs et Authentification <span class="badge badge-primary">5 entités</span></h3>
+
+        <p>
+          Le domaine central du système gère l'ensemble du cycle de vie des comptes utilisateurs : création, authentification multi-provider (email, Google, GitHub, Apple), vérification d'email, jetons de connexion automatique et demandes de changement d'adresse email. Chaque utilisateur possède un profil, un rôle (utilisateur standard ou administrateur) et un état d'avancement dans le parcours d'accueil.
+        </p>
+
+        <h3>2. CV et Documents <span class="badge badge-primary">3 entités</span></h3>
+
+        <p>
+          Le cœur documentaire de l'application. Les CV sont stockés au format JSON structuré avec un système de versioning intégré : chaque modification (adaptation IA, optimisation, restauration) génère une nouvelle version avec un journal des changements et le score d'adéquation associé. Les configurations d'export permettent à l'utilisateur de personnaliser les sélections pour la génération PDF.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Contrôle des modifications IA</div>
+          <p>Chaque modification proposée par l'intelligence artificielle est enregistrée séparément avec un statut (en attente, acceptée ou rejetée). L'utilisateur conserve un contrôle total sur les changements apportés à son CV, avec la possibilité d'accepter ou refuser chaque suggestion individuellement.</p>
+        </div>
+
+        <h3>3. Offres d'Emploi <span class="badge badge-primary">1 entité</span></h3>
+
+        <p>
+          Les offres d'emploi extraites depuis différentes sources (URL de sites d'emploi, documents PDF, extension navigateur) sont stockées dans un format JSON structuré uniforme. Le système assure la déduplication intelligente par empreinte de contenu : si une offre identique existe déjà, aucun crédit supplémentaire n'est consommé pour l'extraire à nouveau.
+        </p>
+
+        <h3>4. Pipeline de Génération <span class="badge badge-primary">3 entités</span></h3>
+
+        <p>
+          La génération de CV optimisés s'organise en 3 niveaux hiérarchiques pour un suivi granulaire :
+        </p>
+        <ul>
+          <li><strong>Tâche de génération</strong> : orchestration globale avec suivi de progression, mode de traitement (adaptation ou optimisation) et comptabilité des crédits débités.</li>
+          <li><strong>Offre à traiter</strong> : chaque offre d'emploi dans la tâche, avec son statut individuel, les résultats de classification et le CV généré en sortie.</li>
+          <li><strong>Sous-tâche IA</strong> : traçabilité unitaire de chaque appel à l'intelligence artificielle, incluant le modèle utilisé, le coût estimé et la durée d'exécution.</li>
+        </ul>
+        <p>
+          Cette architecture permet un suivi granulaire des coûts et performances, ainsi qu'un mécanisme de reprise intelligent en cas d'échec partiel.
+        </p>
+
+        <h3>5. Abonnements et Crédits <span class="badge badge-primary">7 entités</span></h3>
+
+        <p>
+          Le domaine de monétisation le plus riche du système, couvrant l'intégralité du cycle de facturation :
+        </p>
+        <ul>
+          <li><strong>Abonnements</strong> : liaison avec le système de paiement, statut, période de facturation et gestion de l'annulation en fin de période.</li>
+          <li><strong>Plans</strong> : 3 niveaux (Gratuit, Pro, Premium) avec tarification mensuelle et annuelle.</li>
+          <li><strong>Limites par fonctionnalité</strong> : quotas configurés par plan pour chaque action (génération, optimisation, traduction, etc.).</li>
+          <li><strong>Compteurs d'usage</strong> : suivi des utilisations par période avec remise à zéro automatique.</li>
+          <li><strong>Solde de crédits</strong> : balance complète (achetés, utilisés, remboursés, offerts).</li>
+          <li><strong>Transactions</strong> : historique complet de chaque mouvement de crédits avec référence au paiement.</li>
+          <li><strong>Packs de crédits</strong> : offres d'achat configurables avec tarification dégressive.</li>
+        </ul>
+
+        <h3>6. Monitoring IA <span class="badge badge-warning">4 entités</span></h3>
+
+        <p>
+          Un système de surveillance complet des appels à l'intelligence artificielle, permettant un pilotage précis des coûts et des performances :
+        </p>
+        <ul>
+          <li><strong>Usage agrégé</strong> : consommation consolidée par jour, fonctionnalité et modèle IA, avec comptage des tokens et coût estimé.</li>
+          <li><strong>Journal des appels</strong> : trace individuelle de chaque interaction avec l'IA, incluant la durée et les métriques de consommation.</li>
+          <li><strong>Grille tarifaire</strong> : prix par modèle IA (standard et prioritaire) pour un calcul précis des coûts.</li>
+          <li><strong>Alertes</strong> : configuration de seuils de dépenses avec notifications automatiques.</li>
+        </ul>
+
+        <h3>7. Email et Notifications <span class="badge badge-primary">3 entités</span></h3>
+
+        <p>
+          Le système d'emails transactionnels fonctionne avec un mécanisme événementiel : chaque action utilisateur significative (inscription, génération terminée, achat) peut déclencher l'envoi d'un email. Les templates sont éditables directement depuis l'interface d'administration avec des variables dynamiques. Un journal complet des envois assure la traçabilité.
+        </p>
+
+        <h3>8. Télémétrie et Analytics <span class="badge badge-primary">4 entités</span></h3>
+
+        <p>
+          Un socle d'observabilité complet pour comprendre l'usage de la plateforme :
+        </p>
+        <ul>
+          <li><strong>Événements</strong> : tracking de chaque action utilisateur avec catégorisation, durée et métadonnées contextuelles.</li>
+          <li><strong>Usage par fonctionnalité</strong> : compteurs cumulés permettant d'identifier les fonctionnalités les plus utilisées.</li>
+          <li><strong>Retours utilisateurs</strong> : notes, commentaires et signalements de bugs directement depuis l'application.</li>
+          <li><strong>Consentements RGPD</strong> : historique complet des préférences de consentement avec horodatage, conforme aux exigences de traçabilité réglementaire.</li>
+        </ul>
+
+        <h3>9. Configuration et Système <span class="badge badge-primary">4 entités</span></h3>
+
+        <p>
+          Le socle opérationnel de l'application :
+        </p>
+        <ul>
+          <li><strong>Paramètres dynamiques</strong> : configuration modifiable sans redéploiement (modèles IA, seuils, fonctionnalités), organisée par catégorie.</li>
+          <li><strong>Tâches asynchrones</strong> : file de traitement avec suivi en temps réel, statut détaillé, gestion des crédits et mécanisme de reprise automatique.</li>
+          <li><strong>Historique des liens</strong> : URLs d'offres visitées par chaque utilisateur pour éviter les doublons.</li>
+          <li><strong>Journal des webhooks</strong> : trace de chaque notification reçue du système de paiement, avec déduplication automatique pour l'idempotence.</li>
+        </ul>
+
+        <!-- ============================================================ -->
+        <!-- DIAGRAMME EMAIL & MONITORING                                 -->
+        <!-- ============================================================ -->
+
+        <h2>Écosystème Email, Monitoring et Conformité</h2>
+
+        <p>
+          Au-delà des données métier, le système intègre un écosystème complet de supervision, communication et conformité réglementaire.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Données transversales : email, monitoring et analytics</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph EmailGroup["EMAIL ET NOTIFICATIONS"]
+        Trigger["Déclencheurs<br/>événements système"]
+        Template["Templates<br/>éditables en ligne"]
+        Log["Journal d'envois<br/>statut et traçabilité"]
+    end
+
+    subgraph MonitorGroup["MONITORING IA"]
+        Usage["Usage agrégé<br/>par jour et fonctionnalité"]
+        Call["Appels individuels<br/>coût et durée"]
+    end
+
+    subgraph AnalyticsGroup["TÉLÉMÉTRIE ET ANALYTICS"]
+        Telemetry["Événements<br/>tracking utilisateur"]
+        FeatUsage["Usage<br/>par fonctionnalité"]
+        FeatCounter["Compteurs<br/>mensuels"]
+        FeedbackN["Retours<br/>utilisateurs"]
+    end
+
+    subgraph RGPDGroup["CONFORMITÉ RGPD"]
+        Consent["Consentements<br/>historique complet"]
+        Links["Historique<br/>liens visités"]
+    end
+
+    UserRef["Utilisateur"]
+
+    Trigger -->|"templates associés"| Template
+    Template -->|"envois"| Log
+
+    UserRef -->|"usage agrégé"| Usage
+    UserRef -->|"appels IA"| Call
+    UserRef -->|"événements"| Telemetry
+    UserRef -->|"utilisation"| FeatUsage
+    UserRef -->|"compteurs"| FeatCounter
+    UserRef -->|"retours"| FeedbackN
+    UserRef -->|"consentements"| Consent
+    UserRef -->|"liens visités"| Links
+
+    style UserRef fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Trigger fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Template fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Log fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Usage fill:#f59e0b,stroke:#d97706,color:#fff
+    style Call fill:#f59e0b,stroke:#d97706,color:#fff
+    style Telemetry fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeatUsage fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeatCounter fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeedbackN fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Consent fill:#64748b,stroke:#475569,color:#fff
+    style Links fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TABLEAU RECAPITULATIF                                        -->
+        <!-- ============================================================ -->
+
+        <h2>Vue consolidée des 9 domaines</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Domaine</th>
+              <th>Entités</th>
+              <th>Rôle principal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Utilisateurs et Authentification</td>
+              <td>5</td>
+              <td>Comptes, connexion multi-provider, vérification et tokens</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>CV et Documents</td>
+              <td>3</td>
+              <td>Stockage JSON, versioning, configurations d'export</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Offres d'Emploi</td>
+              <td>1</td>
+              <td>Extraction multi-source et déduplication</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Pipeline de Génération</td>
+              <td>3</td>
+              <td>Orchestration IA hiérarchique avec traçabilité</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Abonnements et Crédits</td>
+              <td>7</td>
+              <td>Plans, quotas, crédits, transactions et packs</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Monitoring IA</td>
+              <td>4</td>
+              <td>Suivi des coûts, usage et alertes</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Email et Notifications</td>
+              <td>3</td>
+              <td>Templates dynamiques et journal d'envois</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>Télémétrie et Analytics</td>
+              <td>4</td>
+              <td>Tracking, retours utilisateurs et consentements RGPD</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>Configuration et Système</td>
+              <td>4</td>
+              <td>Paramètres dynamiques, tâches async et webhooks</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================================ -->
+        <!-- POINTS CLES                                                  -->
+        <!-- ============================================================ -->
+
+        <h2>Points clés de l'architecture de données</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Modélisation orientée domaine</h4>
+            <p>Les 34 entités sont rigoureusement organisées en 9 domaines fonctionnels indépendants. Cette approche Domain-Driven Design garantit une séparation claire des responsabilités et facilite l'évolution de chaque domaine sans impact sur les autres.</p>
+          </div>
+          <div class="card">
+            <h4>Stockage JSON structuré</h4>
+            <p>Les CV sont stockés au format JSON directement en base de données, permettant une manipulation fine de chaque section sans nécessiter de parsing intermédiaire. Ce choix offre flexibilité et performance pour les pipelines IA.</p>
+          </div>
+          <div class="card">
+            <h4>Traçabilité complète</h4>
+            <p>Chaque action significative laisse une trace : versions de CV, transactions de crédits, appels IA, envois d'emails, consentements RGPD. Cette traçabilité répond aux exigences réglementaires et facilite le diagnostic en cas d'anomalie.</p>
+          </div>
+          <div class="card">
+            <h4>Monitoring IA intégré</h4>
+            <p>La présence d'un domaine dédié au suivi des appels IA (usage agrégé, journal des appels, grille tarifaire, alertes) témoigne d'une maturité opérationnelle. L'équipe peut piloter en temps réel les coûts et performances de chaque pipeline.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">En résumé</div>
+          <p>L'architecture de données de FitMyCV.io combine une stack technologique de dernière génération avec un modèle de données mature de 34 entités en 9 domaines. Chaque domaine est conçu pour évoluer indépendamment, avec une traçabilité complète des actions utilisateur, une conformité RGPD native et un monitoring IA intégré pour le pilotage des coûts.</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="./assets/js/layout.js?v=1.0.5"></script>
+  <script src="./assets/js/main.js?v=1.0.7"></script>
+</body>
+</html>

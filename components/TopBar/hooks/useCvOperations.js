@@ -3,6 +3,18 @@ import { useRouter } from "next/navigation";
 import { enhanceItem } from "../utils/cvUtils";
 
 /**
+ * Pose le cookie cvFile en nettoyant d'abord tout cookie domain legacy
+ * (créé par d'anciennes versions de l'extension avec domain explicite).
+ * Sans ce nettoyage, deux cookies cvFile coexistent et le stale est lu en premier.
+ */
+function setCvFileCookie(file) {
+  // Supprimer le cookie domain legacy (extension < v1.x)
+  document.cookie = "cvFile=; path=/; domain=" + location.hostname + "; max-age=0";
+  // Poser le cookie host-only (compatible extension + SaaS)
+  document.cookie = "cvFile=" + encodeURIComponent(file) + "; path=/; max-age=31536000";
+}
+
+/**
  * Hook pour les opérations CRUD sur les CV
  */
 export function useCvOperations({
@@ -133,7 +145,7 @@ export function useCvOperations({
         lastSelectedRef.current = nextCurrent;
 
         // Synchroniser le cookie cvFile (nécessaire pour fetchSourceInfo/fetchMatchScore)
-        document.cookie = "cvFile=" + encodeURIComponent(nextCurrent) + "; path=/; max-age=31536000";
+        setCvFileCookie(nextCurrent);
 
         try {
           localStorage.setItem("admin:cv", nextCurrent);
@@ -175,8 +187,7 @@ export function useCvOperations({
       lastSelectedMetaRef.current = selected;
     }
     lastSelectedRef.current = file;
-    document.cookie =
-      "cvFile=" + encodeURIComponent(file) + "; path=/; max-age=31536000";
+    setCvFileCookie(file);
     try {
       localStorage.setItem("admin:cv", file);
     } catch (_err) {}

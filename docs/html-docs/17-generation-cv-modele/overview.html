@@ -3,191 +3,320 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>G&eacute;n&eacute;ration CV Mod&egrave;le | FitMyCV.io</title>
+  <title>G&eacute;n&eacute;ration CV Mod&egrave;le - Vue d'ensemble | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <span>G&eacute;n&eacute;ration CV Mod&egrave;le</span>
+          <a href="./overview.html">G&eacute;n&eacute;ration CV Mod&egrave;le</a>
+          <span>/</span>
+          <span>Vue d'ensemble</span>
         </div>
 
         <h1>G&eacute;n&eacute;ration CV Mod&egrave;le</h1>
         <p class="lead">
-          FitMyCV.io propose deux m&eacute;thodes pour g&eacute;n&eacute;rer des <strong>CV mod&egrave;les</strong> (CV fictifs professionnels) : &agrave; partir d'une offre d'emploi ou d'un simple titre de poste.
+          Le syst&egrave;me de g&eacute;n&eacute;ration de CV mod&egrave;le permet de cr&eacute;er des CV professionnels fictifs &agrave; partir de z&eacute;ro gr&acirc;ce &agrave; l'IA. Contrairement au <a href="../05-pipeline-generation/overview.html">pipeline d'adaptation CV</a> (section 05) qui <strong>adapte</strong> un CV existant &agrave; une offre, ici l'IA <strong>cr&eacute;e enti&egrave;rement</strong> un CV fictif &mdash; profil, exp&eacute;riences, comp&eacute;tences, formation &mdash; &agrave; partir d'une offre d'emploi ou d'un simple titre de poste.
         </p>
 
-        <div class="callout callout-info">
-          <div class="callout-title">Qu'est-ce qu'un CV Mod&egrave;le ?</div>
-          <p>Un <strong>CV mod&egrave;le</strong> est un CV fictif g&eacute;n&eacute;r&eacute; par l'IA, repr&eacute;sentant un candidat id&eacute;al pour un poste donn&eacute;. Il sert de base &agrave; l'utilisateur pour cr&eacute;er son propre CV en s'inspirant de la structure, des comp&eacute;tences et du parcours propos&eacute;s.</p>
+        <div class="callout callout-warning">
+          <div class="callout-title">Distinction importante</div>
+          <p>
+            <strong>Section 05 (Pipeline G&eacute;n&eacute;ration)</strong> : adapte un CV existant &agrave; une offre d'emploi (classification, batches, recomposition).<br>
+            <strong>Section 17 (G&eacute;n&eacute;ration CV Mod&egrave;le)</strong> : cr&eacute;e un CV compl&egrave;tement fictif depuis z&eacute;ro, sans CV source.
+          </p>
         </div>
 
-        <h2>Vue d'ensemble</h2>
+        <!-- ==================== DEUX METHODES ==================== -->
+        <h2>Deux M&eacute;thodes de G&eacute;n&eacute;ration</h2>
 
-        <p>Ces fonctionnalit&eacute;s sont <strong>distinctes</strong> du pipeline de g&eacute;n&eacute;ration principal (section 05) qui <strong>adapte</strong> un CV existant &agrave; une offre d'emploi. Ici, l'IA <strong>cr&eacute;e</strong> un CV de z&eacute;ro.</p>
+        <p>Le syst&egrave;me propose deux approches distinctes pour g&eacute;n&eacute;rer un CV mod&egrave;le :</p>
 
-        <div class="diagram">
-          <div class="diagram-title">Les deux m&eacute;thodes de g&eacute;n&eacute;ration</div>
-          <div class="mermaid">
-flowchart TB
-    subgraph Method1["M&Eacute;THODE 1 : Depuis Offre"]
-        direction LR
-        Offer["Offre d'emploi<br/>(URL ou PDF)"] --> Extract["Extraction<br/>structur&eacute;e"] --> Gen1["G&eacute;n&eacute;ration GPT"] --> CV1["CV Mod&egrave;le"]
-    end
-
-    subgraph Method2["M&Eacute;THODE 2 : Depuis Titre"]
-        direction LR
-        Title["Titre de poste<br/>(texte libre)"] --> Gen2["G&eacute;n&eacute;ration GPT"] --> CV2["CV Mod&egrave;le"]
-    end
-
-    Method1 ~~~ Method2
+        <div class="card-grid">
+          <div class="card">
+            <h4>1. Depuis une Offre d'Emploi</h4>
+            <p><strong>Fichier :</strong> <code>lib/features/template-generation/service.js</code></p>
+            <p><strong>Fonction :</strong> <code>createTemplateCv()</code></p>
+            <p>Accepte des URLs ou des fichiers PDF. L'offre est d'abord extraite et structur&eacute;e, puis un CV fictif est g&eacute;n&eacute;r&eacute; en r&eacute;ponse &agrave; cette offre. Supporte plusieurs sources en parall&egrave;le (un CV par source).</p>
+            <p><strong>API :</strong> <code>POST /api/background-tasks/create-template-cv</code></p>
+            <p><a href="./template-from-offer.html">Documentation compl&egrave;te &rarr;</a></p>
+          </div>
+          <div class="card">
+            <h4>2. Depuis un Titre de Poste</h4>
+            <p><strong>Fichier :</strong> <code>lib/features/job-title-generation/service.js</code></p>
+            <p><strong>Fonction :</strong> <code>generateCvFromJobTitle()</code></p>
+            <p>Accepte un titre de poste (ex: "D&eacute;veloppeur Full Stack Senior") et une langue cible. L'IA g&eacute;n&egrave;re un CV fictif complet pour ce m&eacute;tier. Supporte 4 langues.</p>
+            <p><strong>API :</strong> <code>POST /api/background-tasks/generate-cv-from-job-title</code></p>
+            <p><a href="./template-from-job-title.html">Documentation compl&egrave;te &rarr;</a></p>
           </div>
         </div>
 
-        <h2>Comparaison des M&eacute;thodes</h2>
+        <!-- ==================== ARCHITECTURE ==================== -->
+        <h2>Architecture G&eacute;n&eacute;rale</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Vue d'ensemble des deux pipelines de g&eacute;n&eacute;ration de CV mod&egrave;le</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input1["DEPUIS OFFRE D'EMPLOI"]
+        URL["URL(s)"]
+        PDF["PDF(s)"]
+    end
+
+    subgraph Input2["DEPUIS TITRE DE POSTE"]
+        Title["Titre de poste"]
+        Lang["Langue cible"]
+    end
+
+    subgraph Common["RESSOURCES COMMUNES"]
+        Schema["Charger le schéma CV<br/>depuis le fichier modèle"]
+        Credits["Vérifier les crédits<br/>OpenAI disponibles"]
+        Track["Enregistrer la<br/>consommation OpenAI"]
+    end
+
+    subgraph Pipeline1["PIPELINE OFFRE"]
+        Extract1["Extraire l'offre d'emploi<br/>depuis URL ou PDF"]
+        Format1["Formater l'offre<br/>en texte structuré"]
+        Call1["Appeler l'IA (ChatGPT)<br/>avec les instructions"]
+        Normalize1["Normaliser le JSON<br/>du CV généré"]
+    end
+
+    subgraph Pipeline2["PIPELINE TITRE"]
+        Validate2["Valider le titre<br/>(désactivé)"]
+        Call2["Appeler l'IA (OpenAI)<br/>avec les instructions"]
+        Parse2["Analyser et valider<br/>le CV généré"]
+    end
+
+    subgraph Output["RESULTAT"]
+        BGTask["Tâche en<br/>arrière-plan"]
+        CvJSON["CV complet<br/>au format JSON"]
+        JobLink["Lien vers l'offre<br/>(pipeline offre uniquement)"]
+    end
+
+    URL --> Extract1
+    PDF --> Extract1
+    Extract1 --> Format1 --> Call1 --> Normalize1
+    Credits --> Call1
+    Schema --> Call1
+    Normalize1 --> CvJSON
+    Normalize1 --> Track
+
+    Title --> Validate2
+    Lang --> Call2
+    Validate2 --> Call2
+    Credits --> Call2
+    Schema --> Call2
+    Call2 --> Parse2
+    Parse2 --> CvJSON
+    Parse2 --> Track
+
+    CvJSON --> BGTask
+    Extract1 --> JobLink
+    style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PDF fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Title fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Lang fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Schema fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Credits fill:#f59e0b,stroke:#d97706,color:#fff
+    style Track fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Extract1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Format1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Call1 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Normalize1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Validate2 fill:#f59e0b,stroke:#d97706,color:#fff
+    style Call2 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Parse2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BGTask fill:#22c55e,stroke:#16a34a,color:#fff
+    style CvJSON fill:#22c55e,stroke:#16a34a,color:#fff
+    style JobLink fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== POINTS COMMUNS ==================== -->
+        <h2>Points Communs</h2>
+
+        <p>Les deux pipelines partagent plusieurs composants et m&eacute;canismes :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Sch&eacute;ma CV</h4>
+            <p><code>getCvSchema()</code> charge le sch&eacute;ma depuis <code>data/template.json</code>. Si le fichier n'existe pas, un sch&eacute;ma par d&eacute;faut est utilis&eacute; en fallback. Ce sch&eacute;ma d&eacute;finit la structure JSON attendue pour le CV g&eacute;n&eacute;r&eacute;.</p>
+          </div>
+          <div class="card">
+            <h4>Syst&egrave;me de T&acirc;ches</h4>
+            <p>Les deux m&eacute;thodes utilisent le syst&egrave;me de <code>BackgroundTask</code> pour l'ex&eacute;cution asynchrone. Le front-end lance la t&acirc;che et surveille son &eacute;tat via polling.</p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Format de R&eacute;ponse</h4>
+            <p>Les deux appels OpenAI utilisent <code>response_format: { type: 'json_object' }</code> pour garantir une r&eacute;ponse JSON valide (diff&eacute;rent des <code>json_schema</code> Structured Outputs utilis&eacute;s dans le pipeline d'adaptation).</p>
+          </div>
+          <div class="card">
+            <h4>Suivi des Co&ucirc;ts</h4>
+            <p><code>trackOpenAIUsage()</code> enregistre les tokens consomm&eacute;s, le mod&egrave;le utilis&eacute;, la dur&eacute;e et le co&ucirc;t estim&eacute; pour chaque appel. Chaque pipeline utilise un <code>featureName</code> distinct.</p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>V&eacute;rification Budget</h4>
+            <p><code>checkOpenAICredits()</code> est appel&eacute; en d&eacute;but de pipeline pour v&eacute;rifier que le budget OpenAI n'est pas &eacute;puis&eacute;, avant tout appel IA co&ucirc;teux.</p>
+          </div>
+        </div>
+
+        <!-- ==================== COMPARAISON ==================== -->
+        <h2>Tableau Comparatif</h2>
 
         <table>
           <thead>
             <tr>
-              <th>Crit&egrave;re</th>
-              <th>Depuis Offre</th>
-              <th>Depuis Titre</th>
+              <th>Aspect</th>
+              <th>Depuis Offre (<code>createTemplateCv</code>)</th>
+              <th>Depuis Titre (<code>generateCvFromJobTitle</code>)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Input</strong></td>
-              <td>URL ou PDF d'offre d'emploi</td>
-              <td>Titre de poste (ex: "Chef de projet IT")</td>
+              <td><strong>Entr&eacute;e</strong></td>
+              <td>URL(s) et/ou PDF(s)</td>
+              <td>Titre de poste + langue</td>
             </tr>
             <tr>
-              <td><strong>Pr&eacute;cision</strong></td>
-              <td>Tr&egrave;s pr&eacute;cis (bas&eacute; sur l'offre r&eacute;elle)</td>
-              <td>G&eacute;n&eacute;rique (bas&eacute; sur le march&eacute;)</td>
+              <td><strong>Extraction pr&eacute;alable</strong></td>
+              <td>Oui &mdash; <code>getOrExtractJobOfferFromUrl/Pdf()</code></td>
+              <td>Non &mdash; titre envoy&eacute; directement</td>
             </tr>
             <tr>
-              <td><strong>Feature</strong></td>
+              <td><strong>Sources multiples</strong></td>
+              <td>Oui &mdash; un CV par URL/PDF</td>
+              <td>Non &mdash; un seul CV par titre</td>
+            </tr>
+            <tr>
+              <td><strong>Validation titre</strong></td>
+              <td>Non applicable</td>
+              <td><code>validateJobTitle()</code> existe mais est d&eacute;sactiv&eacute;e</td>
+            </tr>
+            <tr>
+              <td><strong>Langues support&eacute;es</strong></td>
+              <td>D&eacute;tect&eacute;e depuis l'offre (<code>jobOfferLanguage</code>)</td>
+              <td>4 langues : fran&ccedil;ais, anglais, allemand, espagnol</td>
+            </tr>
+            <tr>
+              <td><strong>Fichier service</strong></td>
+              <td><code>lib/features/template-generation/service.js</code></td>
+              <td><code>lib/features/job-title-generation/service.js</code></td>
+            </tr>
+            <tr>
+              <td><strong>Prompts</strong></td>
+              <td><code>template-generation/prompts/system.md</code> + <code>user.md</code></td>
+              <td><code>job-title-generation/prompts/generate-from-job-title/system.md</code> + <code>user.md</code></td>
+            </tr>
+            <tr>
+              <td><strong>Feature Name (tracking)</strong></td>
+              <td><code>create_template_cv_url</code> ou <code>create_template_cv_pdf</code></td>
+              <td><code>generate_from_job_title</code></td>
+            </tr>
+            <tr>
+              <td><strong>Feature (cr&eacute;dits)</strong></td>
               <td><code>gpt_cv_generation</code></td>
               <td><code>generate_from_job_title</code></td>
             </tr>
             <tr>
-              <td><strong>Endpoint</strong></td>
-              <td><code>POST /api/background-tasks/create-template-cv</code></td>
-              <td><code>POST /api/background-tasks/generate-cv-from-job-title</code></td>
+              <td><strong>Lien JobOffer</strong></td>
+              <td>Oui &mdash; <code>jobOfferId</code> retourn&eacute;</td>
+              <td>Non</td>
             </tr>
             <tr>
-              <td><strong>Pipeline</strong></td>
-              <td>Extraction offre + G&eacute;n&eacute;ration CV</td>
-              <td>G&eacute;n&eacute;ration CV directe</td>
+              <td><strong>Callback</strong></td>
+              <td><code>onTitleExtracted(title)</code></td>
+              <td>Aucun</td>
             </tr>
             <tr>
-              <td><strong>Temps moyen</strong></td>
-              <td>10-20 secondes</td>
-              <td>5-10 secondes</td>
+              <td><strong>Mod&egrave;le IA</strong></td>
+              <td><code>getCvModel()</code></td>
+              <td><code>getAiModelSetting('model_generate_from_job_title')</code></td>
             </tr>
             <tr>
-              <td><strong>Cas d'usage</strong></td>
-              <td>Candidature cibl&eacute;e</td>
-              <td>Exploration de carri&egrave;re</td>
+              <td><strong>Cache GPT-5</strong></td>
+              <td>Oui &mdash; <code>addCacheRetentionIfSupported()</code> 24h</td>
+              <td>Non</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Architecture Commune</h2>
+        <!-- ==================== SCHEMA CV ==================== -->
+        <h2>Sch&eacute;ma CV &mdash; <code>getCvSchema()</code></h2>
 
-        <p>Les deux m&eacute;thodes partagent la m&ecirc;me architecture de base :</p>
+        <div class="data-flow">
+          <div class="data-flow-header">CHARGEMENT DU SCHEMA CV</div>
 
-        <div class="diagram">
-          <div class="diagram-title">Architecture g&eacute;n&eacute;rale</div>
-          <div class="mermaid">
-flowchart LR
-    subgraph Frontend
-        Modal["Modal G&eacute;n&eacute;rateur CV"]
-    end
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Source principale</div>
+            <p><code>data/template.json</code> &mdash; Sch&eacute;ma JSON d&eacute;finissant la structure compl&egrave;te d'un CV (header, summary, skills, experience, education, languages, extras, projects).</p>
+          </div>
 
-    subgraph API["API Layer"]
-        Route["API Route"]
-        Feature["Feature Check"]
-        Job["Background Job"]
-    end
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Fallback</div>
+            <p>Si <code>data/template.json</code> n'existe pas ou ne peut pas &ecirc;tre lu, un sch&eacute;ma par d&eacute;faut cod&eacute; en dur dans le service est utilis&eacute;. Ce fallback garantit que la g&eacute;n&eacute;ration fonctionne m&ecirc;me sans le fichier template.</p>
+          </div>
 
-    subgraph Service
-        Service1["service.js"]
-        Prompts["Prompts IA"]
-        OpenAI["OpenAI API"]
-    end
-
-    subgraph Storage
-        Task["BackgroundTask"]
-        CvFile["CvFile"]
-    end
-
-    Modal --> Route
-    Route --> Feature
-    Feature --> Job
-    Job --> Service1
-    Service1 --> Prompts
-    Prompts --> OpenAI
-    OpenAI --> Service1
-    Service1 --> CvFile
-    Job --> Task
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Utilisation</div>
+            <p>Le sch&eacute;ma est inject&eacute; dans le prompt utilisateur pour guider l'IA. Le CV g&eacute;n&eacute;r&eacute; doit respecter cette structure JSON pour &ecirc;tre compatible avec le reste du syst&egrave;me (stockage, affichage, export).</p>
           </div>
         </div>
 
-        <h2>Flux Commun</h2>
+        <!-- ==================== SYSTEME DE TACHES ==================== -->
+        <h2>Syst&egrave;me de T&acirc;ches en Arri&egrave;re-plan</h2>
 
-        <ol>
-          <li><strong>Authentification</strong> - V&eacute;rification session utilisateur</li>
-          <li><strong>Feature Check</strong> - V&eacute;rification limites/cr&eacute;dits via <code>incrementFeatureCounter</code></li>
-          <li><strong>Cr&eacute;ation BackgroundTask</strong> - Enregistrement de la t&acirc;che en DB</li>
-          <li><strong>Ex&eacute;cution Job</strong> - Traitement asynchrone dans la queue</li>
-          <li><strong>G&eacute;n&eacute;ration GPT</strong> - Appel OpenAI avec prompts sp&eacute;cifiques</li>
-          <li><strong>Sauvegarde CvFile</strong> - Stockage du CV g&eacute;n&eacute;r&eacute; en DB</li>
-          <li><strong>Notification SSE</strong> - Mise &agrave; jour temps r&eacute;el du frontend</li>
-        </ol>
+        <p>Les deux pipelines utilisent le syst&egrave;me <code>BackgroundTask</code> pour l'ex&eacute;cution asynchrone :</p>
 
-        <h2>Composant Frontend</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>API Endpoint</th>
+              <th>Pipeline</th>
+              <th>Feature (cr&eacute;dits)</th>
+              <th>T&acirc;ches cr&eacute;&eacute;es</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>POST /api/background-tasks/create-template-cv</code></td>
+              <td>Depuis offre</td>
+              <td><code>gpt_cv_generation</code></td>
+              <td>1 par source (URL ou PDF)</td>
+            </tr>
+            <tr>
+              <td><code>POST /api/background-tasks/generate-cv-from-job-title</code></td>
+              <td>Depuis titre</td>
+              <td><code>generate_from_job_title</code></td>
+              <td>1 t&acirc;che unique</td>
+            </tr>
+          </tbody>
+        </table>
 
-        <p>Les deux fonctionnalit&eacute;s sont accessibles depuis le m&ecirc;me composant :</p>
+        <div class="callout callout-info">
+          <div class="callout-title">FormData</div>
+          <p>Les deux endpoints acceptent des donn&eacute;es au format <code>FormData</code>. L'endpoint "depuis offre" supporte les champs <code>links</code> (URLs) et <code>files</code> (PDFs upload&eacute;s). L'endpoint "depuis titre" accepte <code>jobTitle</code> et <code>language</code>.</p>
+        </div>
 
-        <pre><code class="language-jsx">// components/TopBar/modals/CvGeneratorModal.jsx
-
-// Deux modes de génération :
-// 1. "offer" - depuis URL/PDF d'offre
-// 2. "jobTitle" - depuis titre de poste
-
-const [mode, setMode] = useState('offer');
-const [links, setLinks] = useState([]);
-const [files, setFiles] = useState([]);
-const [jobTitle, setJobTitle] = useState('');
-const [language, setLanguage] = useState('français');</code></pre>
-
-        <h2>Prochaines Sections</h2>
-
-        <ul>
-          <li><a href="./template-from-offer.html">Depuis Offre d'Emploi</a> - Pipeline complet avec extraction de l'offre</li>
-          <li><a href="./template-from-job-title.html">Depuis Titre de Poste</a> - Pipeline simplifi&eacute; et rapide</li>
-        </ul>
-
-        <h2>Fichiers Cl&eacute;s (Communs)</h2>
+        <!-- ==================== FICHIERS CLES ==================== -->
+        <h2>Fichiers Cl&eacute;s</h2>
 
         <table>
           <thead>
@@ -198,24 +327,59 @@ const [language, setLanguage] = useState('français');</code></pre>
           </thead>
           <tbody>
             <tr>
-              <td><code>components/TopBar/modals/CvGeneratorModal.jsx</code></td>
-              <td>Interface utilisateur (les deux modes)</td>
+              <td><code>lib/features/template-generation/service.js</code></td>
+              <td><code>createTemplateCv()</code> &mdash; Pipeline depuis offre d'emploi</td>
             </tr>
             <tr>
-              <td><code>lib/subscription/featureUsage.js</code></td>
-              <td>V&eacute;rification limites et cr&eacute;dits</td>
-            </tr>
-            <tr>
-              <td><code>lib/background-jobs/jobQueue.js</code></td>
-              <td>Queue des t&acirc;ches asynchrones</td>
+              <td><code>lib/features/job-title-generation/service.js</code></td>
+              <td><code>generateCvFromJobTitle()</code> &mdash; Pipeline depuis titre de poste</td>
             </tr>
             <tr>
               <td><code>data/template.json</code></td>
-              <td>Sch&eacute;ma de r&eacute;f&eacute;rence du CV</td>
+              <td>Sch&eacute;ma CV utilis&eacute; par les deux pipelines</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/template-generation/prompts/system.md</code></td>
+              <td>System prompt &mdash; pipeline offre</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/template-generation/prompts/user.md</code></td>
+              <td>User prompt &mdash; pipeline offre</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-title-generation/prompts/generate-from-job-title/system.md</code></td>
+              <td>System prompt &mdash; pipeline titre</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-title-generation/prompts/generate-from-job-title/user.md</code></td>
+              <td>User prompt &mdash; pipeline titre</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-title-generation/prompts/validate-job-title/system.md</code></td>
+              <td>System prompt &mdash; validation titre (d&eacute;sactiv&eacute;e)</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/job-title-generation/prompts/validate-job-title/user.md</code></td>
+              <td>User prompt &mdash; validation titre (d&eacute;sactiv&eacute;e)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/background-tasks/create-template-cv/route.js</code></td>
+              <td>API endpoint &mdash; pipeline offre</td>
+            </tr>
+            <tr>
+              <td><code>app/api/background-tasks/generate-cv-from-job-title/route.js</code></td>
+              <td>API endpoint &mdash; pipeline titre</td>
             </tr>
           </tbody>
         </table>
 
+        <!-- ==================== LIENS ==================== -->
+        <h2>Sections D&eacute;taill&eacute;es</h2>
+
+        <ul>
+          <li><a href="./template-from-offer.html">Depuis Offre d'Emploi</a> &mdash; <code>createTemplateCv()</code>, extraction, formatage, callChatGPT, data-flow complet</li>
+          <li><a href="./template-from-job-title.html">Depuis Titre de Poste</a> &mdash; <code>generateCvFromJobTitle()</code>, validation, langues support&eacute;es, data-flow complet</li>
+        </ul>
       </div>
     </main>
   </div>
@@ -230,7 +394,6 @@ const [language, setLanguage] = useState('français');</code></pre>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

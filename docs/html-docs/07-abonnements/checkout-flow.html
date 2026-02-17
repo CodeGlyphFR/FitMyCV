@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -29,105 +26,240 @@
           <span>/</span>
           <a href="./overview.html">Abonnements</a>
           <span>/</span>
-          <span>Checkout</span>
+          <span>Checkout Flow</span>
         </div>
-
 
         <h1>Checkout Flow</h1>
         <p class="lead">
-          Processus de souscription a un abonnement via Stripe Checkout.
+          L'endpoint <code>POST /api/checkout/subscription</code> g&egrave;re <strong>trois sc&eacute;narios</strong> diff&eacute;rents selon l'&eacute;tat de l'abonnement : nouvelle souscription, upgrade avec prorata, ou downgrade programm&eacute;.
         </p>
 
-        <h2>Flux de Checkout</h2>
+        <h2>Sc&eacute;nario 1 : Nouvelle Souscription</h2>
+
+        <p>Utilisateur sans abonnement Stripe actif (plan Gratuit ou premier achat).</p>
 
         <div class="diagram">
+          <div class="diagram-title">Flux nouvelle souscription</div>
           <div class="mermaid">
-flowchart LR
-    User[Utilisateur] --> Select[Selection plan]
-    Select --> Checkout[Stripe Checkout]
-    Checkout --> Success[Success URL]
-    Success --> Activate[Activation]
+sequenceDiagram
+    participant U as Utilisateur
+    participant App as Serveur
+    participant Stripe as Stripe
+    participant WH as Webhooks
+
+    U->>App: Plan choisi, période, langue
+    App->>App: Vérifier : pas d'abonnement Stripe actif
+
+    alt Pas de client Stripe
+        App->>Stripe: Créer un client
+        Stripe-->>App: Identifiant client
+        App->>App: Enregistrer l'identifiant client
+    end
+
+    App->>Stripe: Créer une session de paiement abonnement
+    Note over Stripe: Acceptation CGV<br/>Codes promo autorisés<br/>Adresse facturation obligatoire
+    Stripe-->>App: URL de paiement
+    App-->>U: Redirection vers Stripe Checkout
+
+    U->>Stripe: Paiement carte
+    Stripe->>WH: Paiement terminé
+    WH->>WH: Mettre à jour les infos de facturation
+    Stripe->>WH: Abonnement créé
+    WH->>App: Créer/MAJ abonnement en base
+    Stripe->>WH: Facture payée
+    WH->>App: Réinitialiser les compteurs
+
+    App-->>U: Redirection page abonnements
           </div>
         </div>
 
-        <h2>Implementation</h2>
+        <h2>Sc&eacute;nario 2 : Upgrade</h2>
 
-        <pre><code>// app/api/subscription/checkout/route.js
-import Stripe from 'stripe';
+        <p>Utilisateur avec abonnement Stripe actif qui passe &agrave; un <strong>tier sup&eacute;rieur</strong> ou au m&ecirc;me tier avec passage mensuel &rarr; annuel.</p>
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        <div class="diagram">
+          <div class="diagram-title">Flux upgrade avec prorata</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant App as Serveur
+    participant Stripe as Stripe
 
-export async function POST(request) {
-  const session = await auth();
-  const { priceId } = await request.json();
+    U->>App: Plan choisi, période
+    App->>Stripe: Récupérer l'abonnement actuel
+    App->>App: Déterminer : upgrade détecté
 
-  const checkoutSession = await stripe.checkout.sessions.create({
-    customer_email: session.user.email,
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `{process.env.NEXT_PUBLIC_URL}/subscription/success`,
-    cancel_url: `{process.env.NEXT_PUBLIC_URL}/subscription/cancel`,
-    metadata: { userId: session.user.id }
-  });
+    App->>Stripe: Modifier l'abonnement<br/>avec prorata et nouveau prix
+    Stripe-->>App: Abonnement mis à jour
 
-  return Response.json({ url: checkoutSession.url });
-}</code></pre>
+    App->>App: Mettre à jour l'abonnement en base
 
-        <h2>Localisation Stripe Checkout</h2>
+    alt Upgrade Gratuit → Payant
+        App->>App: Réinitialiser les compteurs
+    end
 
-        <p>Les messages d'acceptation des CGV sont localis&eacute;s selon la langue de l'utilisateur via <code>lib/stripe/checkoutLocale.js</code>.</p>
+    App-->>U: Upgrade réussi
+          </div>
+        </div>
 
-        <h3>Langues support&eacute;es</h3>
+        <div class="callout callout-info">
+          <div class="callout-title">Prorata automatique</div>
+          <p>L'upgrade utilise <code>proration_behavior: 'create_prorations'</code> et <code>billing_cycle_anchor: 'now'</code>. Le montant restant de l'ancien plan est cr&eacute;dit&eacute; automatiquement par Stripe. L'endpoint <code>POST /api/subscription/preview-upgrade</code> permet de calculer le prorata avant d'effectuer l'upgrade.</p>
+        </div>
+
+        <h2>Sc&eacute;nario 3 : Downgrade</h2>
+
+        <p>Utilisateur qui passe &agrave; un <strong>tier inf&eacute;rieur</strong> ou au m&ecirc;me tier avec passage annuel &rarr; mensuel. Le changement est <strong>programm&eacute;</strong> pour la fin de la p&eacute;riode en cours.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux downgrade programm&eacute;</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant App as Serveur
+    participant Stripe as Stripe
+
+    U->>App: Plan choisi, période
+    App->>Stripe: Récupérer l'abonnement actuel
+    App->>App: Déterminer : downgrade détecté
+
+    alt Planning existant
+        App->>Stripe: Récupérer le planning existant
+    else Pas de planning
+        App->>Stripe: Créer un planning depuis l'abonnement
+    end
+
+    App->>Stripe: Mettre à jour le planning :<br/>plan actuel jusqu'à fin de période,<br/>nouveau plan ensuite
+    Stripe-->>App: Planning mis à jour
+
+    App-->>U: Downgrade programmé, date effective
+
+    Note over U: L'utilisateur garde le plan actuel<br/>jusqu'à la fin de la période
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Annulation de downgrade</div>
+          <p><code>POST /api/subscription/cancel-downgrade</code> lib&egrave;re le Subscription Schedule via <code>subscriptionSchedules.release()</code>, annulant le downgrade programm&eacute;. Le <code>getSubscriptionSummary()</code> d&eacute;tecte les downgrades programm&eacute;s en v&eacute;rifiant si un schedule avec 2 phases est attach&eacute; &agrave; l'abonnement.</p>
+        </div>
+
+        <h2>Achat de Packs de Cr&eacute;dits</h2>
+
+        <p><code>POST /api/checkout/credits</code> cr&eacute;e une session Stripe Checkout en mode <code>payment</code> (paiement unique).</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux achat cr&eacute;dits</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant App as Serveur
+    participant Stripe as Stripe
+    participant WH as Webhooks
+
+    U->>App: Pack choisi, langue
+    App->>App: Vérifier pack actif et prix Stripe
+
+    App->>Stripe: Créer une session de paiement unique
+    Stripe-->>App: URL de paiement
+    App-->>U: Redirection Stripe
+
+    U->>Stripe: Paiement
+    Stripe->>WH: Paiement terminé
+    WH->>App: Attribuer les crédits achetés
+    Stripe->>WH: Charge réussie
+    WH->>App: Créer la facture
+    WH->>App: Envoyer email confirmation
+
+    App-->>U: Redirection page crédits
+          </div>
+        </div>
+
+        <h2>Annulation d'Abonnement</h2>
+
+        <p><code>POST /api/subscription/cancel</code> supporte deux modes :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Code</th>
+              <th>Mode</th>
+              <th>Param&egrave;tre</th>
+              <th>Comportement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Diff&eacute;r&eacute;</strong></td>
+              <td><code>immediate: false</code></td>
+              <td>Stripe : <code>cancel_at_period_end: true</code>, DB : <code>cancelAtPeriodEnd: true</code></td>
+            </tr>
+            <tr>
+              <td><strong>Imm&eacute;diat</strong></td>
+              <td><code>immediate: true</code></td>
+              <td>Stripe : <code>subscriptions.cancel()</code>, DB : downgrade vers Gratuit</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Lib&eacute;ration du schedule</div>
+          <p>Si un Subscription Schedule existe (downgrade programm&eacute;), il est <strong>lib&eacute;r&eacute; automatiquement</strong> avant l'annulation pour &eacute;viter les conflits.</p>
+        </div>
+
+        <h2>Localisation Checkout Stripe</h2>
+
+        <p>Le message d'acceptation des CGV est localis&eacute; via <code>lib/stripe/checkoutLocale.js</code>. Les traductions sont extraites des fichiers <code>locales/{lang}/subscription.json</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Locale</th>
               <th>Message</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><code>fr</code></td>
-              <td>J'accepte les Conditions G&eacute;n&eacute;rales de Vente</td>
+              <td>J'accepte les <a href="#">Conditions G&eacute;n&eacute;rales de Vente</a>.</td>
             </tr>
             <tr>
               <td><code>en</code></td>
-              <td>I accept the Terms of Service</td>
+              <td>I accept the <a href="#">Terms of Service</a>.</td>
             </tr>
             <tr>
               <td><code>es</code></td>
-              <td>Acepto los T&eacute;rminos de Servicio</td>
+              <td>Acepto los <a href="#">T&eacute;rminos de Servicio</a>.</td>
             </tr>
             <tr>
               <td><code>de</code></td>
-              <td>Ich akzeptiere die Allgemeinen Gesch&auml;ftsbedingungen</td>
+              <td>Ich akzeptiere die <a href="#">Nutzungsbedingungen</a>.</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Utilisation</h3>
+        <h2>Preview Prorata</h2>
 
-        <pre><code>// lib/stripe/checkoutLocale.js
-import { getTermsMessage } from '@/lib/stripe/checkoutLocale';
+        <p><code>POST /api/subscription/preview-upgrade</code> calcule le montant &agrave; payer sans effectuer la modification :</p>
 
-// Dans la cr&eacute;ation de session Stripe
-const checkoutSession = await stripe.checkout.sessions.create({
-  // ...autres options
-  consent_collection: {
-    terms_of_service: 'required'
+        <pre><code class="language-javascript">// Utilise stripe.invoices.createPreview()
+const upcomingInvoice = await stripe.invoices.createPreview({
+  customer: stripeCustomerId,
+  subscription: stripeSubscriptionId,
+  subscription_details: {
+    items: [{ id: itemId, price: newPriceId }],
+    proration_behavior: 'create_prorations',
+    billing_cycle_anchor: 'now',
   },
-  custom_text: {
-    terms_of_service_acceptance: {
-      message: getTermsMessage(locale) // "fr", "en", "es", "de"
-    }
-  }
-});</code></pre>
+});
 
-        <div class="callout callout-info">
-          <div class="callout-title">Traductions synchronis&eacute;es</div>
-          <p>Les messages utilisent les traductions de <code>locales/{lang}/subscription.json</code> pour garantir la coh&eacute;rence avec le reste de l'application.</p>
-        </div>
+// R&eacute;ponse
+{
+  prorataAmount: 12.50,          // Montant final (apr&egrave;s balance)
+  prorataAmountBeforeBalance: 15, // Avant d&eacute;duction solde
+  customerBalance: -2.50,        // Cr&eacute;dit client Stripe
+  creditAmount: 5.00,            // Cr&eacute;dit de l'ancien plan
+  monthsOffered: 0,
+  currency: "EUR"
+}</code></pre>
       </div>
     </main>
   </div>

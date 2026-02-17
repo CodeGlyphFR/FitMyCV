@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline IA &mdash; Adaptation de CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb"><a href="./index.html">Accueil</a><span>/</span><span>Pipeline IA &mdash; Adaptation de CV</span></div>
+
+        <!-- ==================== INTRODUCTION ==================== -->
+        <h1>Pipeline IA &mdash; Adaptation de CV</h1>
+        <p class="lead">
+          Un pipeline IA en <strong>10 &eacute;tapes</strong> qui transforme un CV existant pour l'adapter &agrave; une offre d'emploi sp&eacute;cifique, avec <strong>parall&eacute;lisation massive</strong> et <strong>z&eacute;ro hallucination</strong>.
+        </p>
+
+        <p>
+          Le pipeline d'adaptation est le c&oelig;ur technique de FitMyCV.io. Il prend en entr&eacute;e un CV source et une offre d'emploi, puis produit automatiquement un CV optimis&eacute; &mdash; en pr&eacute;servant scrupuleusement la v&eacute;racit&eacute; du contenu original tout en maximisant l'ad&eacute;quation avec le poste vis&eacute;.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">M&eacute;triques cl&eacute;s</div>
+          <p><strong>10</strong> phases orchestr&eacute;es &bull; <strong>6</strong> traitements IA en parall&egrave;le &bull; <strong>10</strong> sch&eacute;mas de validation stricts &bull; <strong>20</strong> instructions IA sp&eacute;cialis&eacute;es &bull; <strong>4</strong> langues support&eacute;es (FR, EN, ES, DE)</p>
+        </div>
+
+        <!-- ==================== ARCHITECTURE PAR PHASES ==================== -->
+        <h2>Architecture en 3 Grandes Phases</h2>
+
+        <p>Le pipeline suit une architecture en trois grandes phases, chacune ayant une responsabilit&eacute; unique et un contrat d'entr&eacute;e/sortie bien d&eacute;fini :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><span class="badge badge-primary">Phase 1</span> Extraction &amp; Classification</h4>
+            <p>R&eacute;cup&eacute;ration de l'offre d'emploi (URL, PDF ou extension navigateur), puis <strong>tri intelligent</strong> de chaque exp&eacute;rience et projet du CV source.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-warning">Phase 2</span> Adaptation parall&egrave;le</h4>
+            <p><strong>6 traitements IA simultan&eacute;s</strong> adaptent chaque section du CV, suivis d'un r&eacute;sum&eacute; professionnel qui agr&egrave;ge l'ensemble des r&eacute;sultats.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-success">Phase 3</span> Recomposition &amp; Revue</h4>
+            <p>Assemblage algorithmique du CV final (sans appel IA), puis initialisation du <strong>suivi des modifications</strong> pour la revue utilisateur.</p>
+          </div>
+        </div>
+
+        <!-- ==================== DIAGRAMME WORKFLOW GLOBAL ==================== -->
+        <h2>Workflow Global</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline complet d'adaptation de CV &mdash; 10 &eacute;tapes</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉE"]
+        CV["CV source"]
+        Offre["Offre d'emploi<br/>(URL / PDF / Extension)"]
+    end
+
+    subgraph Phase0["EXTRACTION"]
+        Extract["Extraire et structurer<br/>l'offre d'emploi"]
+    end
+
+    subgraph Phase05["CLASSIFICATION"]
+        Classify["Analyser chaque<br/>expérience et projet"]
+        Decision{"Conserver /<br/>Supprimer /<br/>Déplacer"}
+    end
+
+    subgraph Phase1["ADAPTATION PARALLÈLE"]
+        direction TB
+        subgraph Parallel["6 TRAITEMENTS SIMULTANÉS"]
+            BatchExp["Expériences"]
+            BatchProj["Projets"]
+            BatchExtras["Extras"]
+            BatchEdu["Formation"]
+            BatchLang["Langues"]
+            BatchSkills["Compétences"]
+        end
+        BatchSummary["Résumé professionnel<br/>(séquentiel, après<br/>les 6 traitements)"]
+    end
+
+    subgraph Phase2["RECOMPOSITION"]
+        Recompose["Assembler le CV final"]
+        Review["Initialiser le suivi<br/>des modifications"]
+        FinalCV["CV adapté"]
+    end
+
+    Offre --> Extract
+    CV --> Classify
+    Extract --> Classify
+    Classify --> Decision
+
+    Decision --> BatchExp
+    Decision --> BatchProj
+    Decision --> BatchExtras
+    Decision --> BatchEdu
+    Decision --> BatchLang
+    Decision --> BatchSkills
+
+    Parallel --> BatchSummary
+
+    BatchExp --> Recompose
+    BatchProj --> Recompose
+    BatchExtras --> Recompose
+    BatchEdu --> Recompose
+    BatchLang --> Recompose
+    BatchSkills --> Recompose
+    BatchSummary --> Recompose
+
+    Recompose --> Review --> FinalCV
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Offre fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extract fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Classify fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Decision fill:#f59e0b,stroke:#d97706,color:#fff
+    style BatchExp fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchProj fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchExtras fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchEdu fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchLang fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchSkills fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchSummary fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Recompose fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Review fill:#f59e0b,stroke:#d97706,color:#fff
+    style FinalCV fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== TABLEAU DES 10 ETAPES ==================== -->
+        <h2>Les 10 &Eacute;tapes du Pipeline</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>&Eacute;tape</th>
+              <th>Nom</th>
+              <th>Description fonctionnelle</th>
+              <th>Ex&eacute;cution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">0</span></td>
+              <td>Extraction</td>
+              <td>R&eacute;cup&egrave;re et structure l'offre d'emploi depuis une URL, un PDF ou le contenu envoy&eacute; par l'extension navigateur. Trois sources convergent vers un m&ecirc;me format structur&eacute;.</td>
+              <td>S&eacute;quentiel</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">0.5</span></td>
+              <td>Classification</td>
+              <td>Analyse chaque exp&eacute;rience et projet du CV source pour d&eacute;cider : <strong>conserver</strong>, <strong>supprimer</strong> ou <strong>d&eacute;placer en projet</strong>. Assure la couverture des ann&eacute;es d'exp&eacute;rience demand&eacute;es sans trou.</td>
+              <td>S&eacute;quentiel</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1a</span></td>
+              <td>Exp&eacute;riences</td>
+              <td>Adapte chaque exp&eacute;rience conserv&eacute;e : reformulation des responsabilit&eacute;s, int&eacute;gration des mots-cl&eacute;s de l'offre, traduction si n&eacute;cessaire.</td>
+              <td>Parall&egrave;le</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1b</span></td>
+              <td>Projets</td>
+              <td>Adapte les projets conserv&eacute;s et les exp&eacute;riences converties en projets (courtes missions, freelance).</td>
+              <td>Parall&egrave;le</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1c</span></td>
+              <td>Extras</td>
+              <td>Adapte les certifications, b&eacute;n&eacute;volat, hobbies et publications.</td>
+              <td>Parall&egrave;le</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1d</span></td>
+              <td>Formation</td>
+              <td>Traduit dipl&ocirc;mes et sp&eacute;cialisations dans la langue cible avec table d'&eacute;quivalences int&eacute;gr&eacute;e (ex : Baccalaur&eacute;at = High School Diploma = Abitur).</td>
+              <td>Parall&egrave;le</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1e</span></td>
+              <td>Langues</td>
+              <td>Analyse les exigences linguistiques de l'offre, traduit les noms et niveaux, conserve les niveaux CECRL.</td>
+              <td>Parall&egrave;le</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1f</span></td>
+              <td>Comp&eacute;tences</td>
+              <td>Traite les 4 cat&eacute;gories de comp&eacute;tences (techniques, m&eacute;thodologies, savoir-&ecirc;tre, outils) avec un processus de r&eacute;flexion en 10 &eacute;tapes pour un matching s&eacute;mantique pr&eacute;cis.</td>
+              <td>Parall&egrave;le</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1g</span></td>
+              <td>R&eacute;sum&eacute; professionnel</td>
+              <td>Synth&egrave;se ex&eacute;cut&eacute;e <strong>apr&egrave;s</strong> tous les traitements pr&eacute;c&eacute;dents. Agr&egrave;ge les exp&eacute;riences, r&eacute;alisations cl&eacute;s et comp&eacute;tences adapt&eacute;es.</td>
+              <td>S&eacute;quentiel</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">2</span></td>
+              <td>Recomposition</td>
+              <td>Assemblage purement algorithmique (aucun appel IA) : fusionne les 8 sections, cr&eacute;e la version de r&eacute;f&eacute;rence, initialise le suivi des modifications.</td>
+              <td>S&eacute;quentiel</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== PARALLELISATION ==================== -->
+        <h2>Parall&eacute;lisation Intelligente</h2>
+
+        <p>
+          L'une des forces majeures du pipeline est sa strat&eacute;gie de parall&eacute;lisation. Plut&ocirc;t qu'un simple lancement simultan&eacute; de toutes les t&acirc;ches, FitMyCV utilise des <strong>strat&eacute;gies d'ordonnancement optimis&eacute;es</strong> qui maximisent l'utilisation du cache IA.
+        </p>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Impact sur les performances</div>
+          <p>Un CV typique (5 exp&eacute;riences, 3 projets, 20 comp&eacute;tences) passerait de <strong>~35 secondes</strong> en traitement s&eacute;quentiel &agrave; <strong>~8&ndash;12 secondes</strong> gr&acirc;ce &agrave; la parall&eacute;lisation &mdash; soit une r&eacute;duction de <strong>65 &agrave; 75%</strong> du temps d'attente.</p>
+        </div>
+
+        <div class="diagram">
+          <div class="diagram-title">Orchestration des traitements parall&egrave;les avec cache IA</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph CacheA["CACHE A — Contexte Offre"]
+        CA["Titre du poste<br/>Compétences requises<br/>Responsabilités clés"]
+    end
+
+    subgraph Batches["6 TRAITEMENTS PARALLÈLES"]
+        B1["Expériences"]
+        B2["Projets"]
+        B3["Extras"]
+        B4["Formation"]
+        B5["Langues"]
+        B6["Compétences"]
+    end
+
+    subgraph CacheB["CACHE B — Contexte Enrichi"]
+        CB["Cache A<br/>+ Résultats adaptés<br/>(expériences, projets,<br/>compétences)"]
+    end
+
+    Summary["Résumé<br/>professionnel"]
+
+    CacheA --> Batches
+    Batches --> CacheB
+    CacheB --> Summary
+
+    style CA fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B4 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B5 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B6 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Summary fill:#6366f1,stroke:#4f46e5,color:#fff
+          </div>
+        </div>
+
+        <h3>Strat&eacute;gies d'ordonnancement</h3>
+
+        <p>Deux strat&eacute;gies sp&eacute;cifiques optimisent le taux de r&eacute;utilisation du cache IA :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Strat&eacute;gie &laquo; cache-first &raquo; (Exp&eacute;riences)</h4>
+            <p>La premi&egrave;re exp&eacute;rience est trait&eacute;e seule pour &eacute;tablir le cache c&ocirc;t&eacute; IA. Les exp&eacute;riences suivantes sont ensuite lanc&eacute;es en parall&egrave;le et b&eacute;n&eacute;ficient du cache d&eacute;j&agrave; actif &mdash; r&eacute;duisant co&ucirc;t et latence pour chaque appel suivant.</p>
+          </div>
+          <div class="card">
+            <h4>Strat&eacute;gie &laquo; staggered &raquo; (Comp&eacute;tences)</h4>
+            <p>Les m&eacute;thodologies sont trait&eacute;es en premier (cache IA &eacute;tabli), puis les trois autres cat&eacute;gories (techniques, savoir-&ecirc;tre, outils) sont lanc&eacute;es en parall&egrave;le avec un l&eacute;ger d&eacute;calage pour maximiser le taux de cache.</p>
+          </div>
+        </div>
+
+        <!-- ==================== CACHE BICOUCHE ==================== -->
+        <h2>Syst&egrave;me de Cache Bicouche</h2>
+
+        <p>
+          Le pipeline exploite le <strong>cache de prompts IA</strong> &agrave; travers un syst&egrave;me &agrave; deux niveaux. Le principe : les premiers &eacute;l&eacute;ments des instructions IA sont identiques entre les appels parall&egrave;les, ce qui permet au fournisseur d'IA de r&eacute;utiliser les tokens d&eacute;j&agrave; trait&eacute;s.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><span class="badge badge-primary">Cache A</span> Contexte Offre</h4>
+            <p><strong>Utilis&eacute; par :</strong> les 6 traitements parall&egrave;les</p>
+            <p>Contient les informations essentielles de l'offre d'emploi : titre du poste, comp&eacute;tences requises et souhait&eacute;es, m&eacute;thodologies, et les 5 responsabilit&eacute;s principales. Ce pr&eacute;fixe commun &agrave; tous les appels maximise la r&eacute;utilisation des tokens.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-success">Cache B</span> Contexte Enrichi</h4>
+            <p><strong>Utilis&eacute; par :</strong> le r&eacute;sum&eacute; professionnel uniquement</p>
+            <p>Inclut la totalit&eacute; du Cache A <strong>plus</strong> un r&eacute;sum&eacute; des exp&eacute;riences, projets et comp&eacute;tences d&eacute;j&agrave; adapt&eacute;s. Cela permet au r&eacute;sum&eacute; professionnel d'avoir une vision compl&egrave;te de tout le CV adapt&eacute;.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Impact concret</div>
+          <p>Gr&acirc;ce au cache bicouche, les appels parall&egrave;les partagent un pr&eacute;fixe commun qui est trait&eacute; une seule fois par le fournisseur d'IA. R&eacute;sultat : <strong>r&eacute;duction significative des co&ucirc;ts</strong> (tokens factur&eacute;s une seule fois) et de la <strong>latence</strong> (traitement quasi instantan&eacute; du pr&eacute;fixe cach&eacute;).</p>
+        </div>
+
+        <!-- ==================== HIERARCHIE DES PRIORITES ==================== -->
+        <h2>Hi&eacute;rarchie des Priorit&eacute;s</h2>
+
+        <p>
+          Toutes les instructions IA du pipeline respectent une hi&eacute;rarchie stricte de 4 niveaux. En cas de conflit entre deux r&egrave;gles, la priorit&eacute; la plus haute l'emporte <strong>syst&eacute;matiquement</strong>.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Priorit&eacute;</th>
+              <th>Principe</th>
+              <th>Description</th>
+              <th>Exemple</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-error">P1</span></td>
+              <td><strong>V&Eacute;RIT&Eacute;</strong></td>
+              <td>Jamais d'information invent&eacute;e. Chaque mot doit pouvoir &ecirc;tre trac&eacute; jusqu'au CV source.</td>
+              <td>L'ATS sugg&egrave;re d'ajouter &laquo; Machine Learning &raquo; &rarr; <strong>refus&eacute;</strong> si absent du CV original</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">P2</span></td>
+              <td><strong>LANGUE</strong></td>
+              <td>Contenu dans la langue cible du CV (FR, EN, ES, DE). Exceptions : technologies, certifications, noms propres.</td>
+              <td>&laquo; Gestion de projet &raquo; &rarr; &laquo; Project Management &raquo; si le CV est en anglais</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">P3</span></td>
+              <td><strong>ATS</strong></td>
+              <td>Int&eacute;grer les mots-cl&eacute;s exacts de l'offre pour maximiser le score des syst&egrave;mes de tri automatique.</td>
+              <td>L'offre mentionne &laquo; CI/CD &raquo; &rarr; utiliser ce terme exact plut&ocirc;t que &laquo; int&eacute;gration continue &raquo;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">P4</span></td>
+              <td><strong>STYLE</strong></td>
+              <td>Ton professionnel, verbes d'action, format adapt&eacute; au secteur d'activit&eacute;.</td>
+              <td>&laquo; J'ai fait des rapports &raquo; &rarr; &laquo; R&eacute;daction de rapports d'analyse &raquo;</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== ANTI-HALLUCINATION ==================== -->
+        <h2>Politique Anti-Hallucination</h2>
+
+        <div class="callout callout-error">
+          <div class="callout-title">R&egrave;gle fondamentale</div>
+          <p><strong>&laquo; Chaque mot doit pointer vers la source. &raquo;</strong><br>Les modifications sont des <em>reformulations</em>, jamais des <em>inventions</em>. Cette r&egrave;gle est r&eacute;p&eacute;t&eacute;e dans chaque instruction IA sous diff&eacute;rentes formes pour garantir une conformit&eacute; maximale.</p>
+        </div>
+
+        <p>Voici des exemples concrets d'interdictions :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type de modification</th>
+              <th>Avant (CV source)</th>
+              <th>Apr&egrave;s (INTERDIT)</th>
+              <th>Pourquoi c'est interdit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Ajout de comp&eacute;tence</td>
+              <td>&laquo; Python &raquo;</td>
+              <td>&laquo; Python / IA &raquo;</td>
+              <td>Le candidat n'a jamais mentionn&eacute; l'IA</td>
+            </tr>
+            <tr>
+              <td>Modification de dur&eacute;e</td>
+              <td>&laquo; 2 ans d'exp&eacute;rience &raquo;</td>
+              <td>&laquo; 3 ans d'exp&eacute;rience &raquo;</td>
+              <td>Falsification d'un fait v&eacute;rifiable</td>
+            </tr>
+            <tr>
+              <td>Invention de m&eacute;trique</td>
+              <td>&laquo; Am&eacute;lioration des performances &raquo;</td>
+              <td>&laquo; Am&eacute;lioration de 30% des performances &raquo;</td>
+              <td>Chiffre invent&eacute; sans source</td>
+            </tr>
+            <tr>
+              <td>Ajout de responsabilit&eacute;</td>
+              <td><em>(non mentionn&eacute;)</em></td>
+              <td>&laquo; Management d'&eacute;quipe de 5 personnes &raquo;</td>
+              <td>Responsabilit&eacute; absente du CV source</td>
+            </tr>
+            <tr>
+              <td>Copie depuis l'offre</td>
+              <td><em>(CV source)</em></td>
+              <td>Recopier les responsabilit&eacute;s de l'offre</td>
+              <td>Le CV doit refl&eacute;ter le candidat, pas l'offre</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== CLASSIFICATION ==================== -->
+        <h2>Classification Intelligente</h2>
+
+        <p>
+          Avant l'adaptation, l'IA analyse chaque exp&eacute;rience et projet du CV source pour prendre l'une de <strong>3 d&eacute;cisions</strong> :
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Processus de classification &mdash; 3 d&eacute;cisions possibles</div>
+          <div class="mermaid">
+flowchart LR
+    Input["CV source<br/>+ Offre d'emploi"]
+    IA["Classification<br/>par l'IA"]
+    Keep["Conserver<br/>Adapter dans<br/>les batches"]
+    Remove["Supprimer<br/>Non pertinent<br/>pour le poste"]
+    Move["Déplacer<br/>Convertir en<br/>projet"]
+
+    Input --> IA
+    IA -->|"Pertinent"| Keep
+    IA -->|"Hors sujet"| Remove
+    IA -->|"Court / Freelance"| Move
+
+    style Input fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style IA fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Keep fill:#22c55e,stroke:#16a34a,color:#fff
+    style Remove fill:#ef4444,stroke:#dc2626,color:#fff
+    style Move fill:#f59e0b,stroke:#d97706,color:#fff
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>D&eacute;cision</th>
+              <th>Crit&egrave;res</th>
+              <th>R&eacute;sultat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">Conserver</span></td>
+              <td>Exp&eacute;rience ou projet pertinent pour le poste vis&eacute;</td>
+              <td>Sera adapt&eacute; dans les traitements parall&egrave;les</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">Supprimer</span></td>
+              <td>Non pertinent (ex : job &eacute;tudiant pour un poste senior, domaine compl&egrave;tement diff&eacute;rent)</td>
+              <td>Exclu du CV final</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">D&eacute;placer</span></td>
+              <td>Exp&eacute;rience courte ou mission freelance</td>
+              <td>Converti en projet, pr&eacute;servant l'information sous une forme plus adapt&eacute;e</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Fen&ecirc;tre d'exp&eacute;rience dynamique</div>
+          <p>Si l'offre demande X ann&eacute;es d'exp&eacute;rience, la classification s'assure que le CV couvre cette p&eacute;riode <strong>sans trou</strong>. Les exp&eacute;riences au-del&agrave; de cette fen&ecirc;tre sont &eacute;valu&eacute;es diff&eacute;remment : seules les plus pertinentes sont conserv&eacute;es.</p>
+        </div>
+
+        <!-- ==================== REPONSES VALIDEES PAR SCHEMA ==================== -->
+        <h2>R&eacute;ponses IA Valid&eacute;es par Sch&eacute;ma</h2>
+
+        <p>
+          Chaque &eacute;tape du pipeline utilise un <strong>sch&eacute;ma de validation strict</strong> qui garantit la structure des r&eacute;ponses de l'IA. Gr&acirc;ce au d&eacute;codage guid&eacute;, le mod&egrave;le d'IA est contraint &agrave; chaque token de respecter le sch&eacute;ma attendu.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>10 sch&eacute;mas de validation</h4>
+            <p>Chaque phase du pipeline poss&egrave;de son propre sch&eacute;ma qui d&eacute;finit les champs, les types et les valeurs autoris&eacute;es. Aucun champ suppl&eacute;mentaire, aucune valeur hors &eacute;num&eacute;ration.</p>
+          </div>
+          <div class="card">
+            <h4>Modifications document&eacute;es</h4>
+            <p>Chaque modification est accompagn&eacute;e d'une <strong>justification</strong> (valeur avant, valeur apr&egrave;s, raison). Si un champ est identique &agrave; la source, il est marqu&eacute; comme inchang&eacute;.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Z&eacute;ro erreur de format</div>
+          <p>Le d&eacute;codage guid&eacute; &eacute;limine les erreurs de format qui &eacute;taient fr&eacute;quentes avec le mode JSON libre. Chaque r&eacute;ponse IA est <strong>exploitable &agrave; 100%</strong> sans post-traitement de correction.</p>
+        </div>
+
+        <!-- ==================== INSTRUCTIONS IA ==================== -->
+        <h2>Instructions IA Modulaires</h2>
+
+        <p>
+          Le pipeline s'appuie sur <strong>20 instructions sp&eacute;cialis&eacute;es</strong> organis&eacute;es en 10 paires (instructions syst&egrave;me + donn&eacute;es utilisateur), une par &eacute;tape.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Architecture des instructions</h4>
+            <ul>
+              <li><strong>10 paires</strong> syst&egrave;me + donn&eacute;es (une par &eacute;tape)</li>
+              <li><strong>R&egrave;gles partag&eacute;es</strong> factoris&eacute;es dans des directives communes (hi&eacute;rarchie des priorit&eacute;s, r&egrave;gles anti-hallucination)</li>
+              <li><strong>D&eacute;tection automatique de profil</strong> (Junior / Confirm&eacute; / Senior) pour adapter le style de r&eacute;daction</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Techniques IA int&eacute;gr&eacute;es</h4>
+            <ul>
+              <li><strong>Processus de r&eacute;flexion en 10 &eacute;tapes</strong> pour les comp&eacute;tences (matching s&eacute;mantique multi-secteur)</li>
+              <li><strong>Framework STAR</strong> (Situation, T&acirc;ches, R&eacute;sultats) pour les exp&eacute;riences</li>
+              <li><strong>Table d'&eacute;quivalences linguistiques</strong> int&eacute;gr&eacute;e pour les formations (Baccalaur&eacute;at = High School Diploma = Abitur)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ==================== CHANGE TRACKING ==================== -->
+        <h2>Suivi des Modifications (Change Tracking)</h2>
+
+        <p>
+          Apr&egrave;s la recomposition, un syst&egrave;me de suivi permet &agrave; l'utilisateur de <strong>revoir, accepter ou rejeter chaque modification</strong> individuellement. L'utilisateur garde le contr&ocirc;le total &mdash; le pipeline n'est jamais une bo&icirc;te noire.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><span class="badge badge-primary">1</span> Extraction</h4>
+            <p>Les modifications document&eacute;es par l'IA sont extraites : <strong>valeur avant</strong>, <strong>valeur apr&egrave;s</strong>, <strong>raison</strong> du changement.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-primary">2</span> D&eacute;tection compl&eacute;mentaire</h4>
+            <p>Un diff programmatique d&eacute;tecte automatiquement les &eacute;l&eacute;ments ajout&eacute;s ou supprim&eacute;s que l'IA n'aurait pas explicit&eacute;s.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-primary">3</span> D&eacute;duplication</h4>
+            <p>Les doublons entre modifications IA et diff programmatique sont &eacute;limin&eacute;s. Les paires de traduction sont fusionn&eacute;es (un terme supprim&eacute; + son &eacute;quivalent traduit ajout&eacute; = 1 seule modification).</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-primary">4</span> Revue utilisateur</h4>
+            <p>Chaque modification est pr&eacute;sent&eacute;e avec un diff visuel <strong>avant / apr&egrave;s</strong>. L'utilisateur peut accepter ou rejeter chaque changement individuellement.</p>
+          </div>
+        </div>
+
+        <!-- ==================== RESILIENCE ==================== -->
+        <h2>R&eacute;silience et Fiabilit&eacute;</h2>
+
+        <p>
+          Le pipeline est con&ccedil;u pour <strong>ne jamais perdre de donn&eacute;es ni de cr&eacute;dits utilisateur</strong>, m&ecirc;me en cas d'erreur.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'une t&acirc;che &mdash; gestion des erreurs et annulation</div>
+          <div class="mermaid">
+flowchart LR
+    Queue["En file<br/>d'attente"]
+    Running["En cours<br/>de traitement"]
+    Success["Terminé<br/>avec succès"]
+    Failed["Échec"]
+    Cancelled["Annulé"]
+    Refund["Remboursement<br/>automatique"]
+
+    Queue --> Running
+    Running --> Success
+    Running -->|"Erreur"| Failed
+    Running -->|"Utilisateur"| Cancelled
+    Failed --> Refund
+    Cancelled --> Refund
+
+    style Queue fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Running fill:#f59e0b,stroke:#d97706,color:#fff
+    style Success fill:#22c55e,stroke:#16a34a,color:#fff
+    style Failed fill:#ef4444,stroke:#dc2626,color:#fff
+    style Cancelled fill:#6b7280,stroke:#4b5563,color:#fff
+    style Refund fill:#8b5cf6,stroke:#7c3aed,color:#fff
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Retry automatique</h4>
+            <p>En cas d'erreur transitoire, le syst&egrave;me r&eacute;essaie automatiquement jusqu'&agrave; <strong>3 fois</strong> avec des d&eacute;lais croissants (1s &rarr; 2s &rarr; 4s) pour laisser le temps au service de se r&eacute;tablir.</p>
+          </div>
+          <div class="card">
+            <h4>Fallback sur le CV source</h4>
+            <p>Si un traitement individuel &eacute;choue malgr&eacute; les tentatives, la section correspondante est conserv&eacute;e <strong>telle quelle</strong> depuis le CV source. Le CV final est toujours complet.</p>
+          </div>
+          <div class="card">
+            <h4>Remboursement automatique</h4>
+            <p>En cas d'&eacute;chec global ou d'annulation par l'utilisateur, les cr&eacute;dits consomm&eacute;s sont <strong>automatiquement rembours&eacute;s</strong>. Un m&eacute;canisme anti-double remboursement garantit l'int&eacute;grit&eacute; des comptes.</p>
+          </div>
+          <div class="card">
+            <h4>Annulation &agrave; tout moment</h4>
+            <p>L'utilisateur peut <strong>annuler la g&eacute;n&eacute;ration &agrave; tout moment</strong>. Le syst&egrave;me interrompt proprement tous les appels IA en cours et d&eacute;clenche le remboursement.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Progression en temps r&eacute;el</div>
+          <p>L'utilisateur suit la progression de chaque &eacute;tape en direct gr&acirc;ce aux &eacute;v&eacute;nements temps r&eacute;el (SSE). Chaque phase termin&eacute;e met &agrave; jour l'interface instantan&eacute;ment.</p>
+        </div>
+
+        <!-- ==================== TRACABILITE ==================== -->
+        <h2>Tra&ccedil;abilit&eacute; Compl&egrave;te</h2>
+
+        <p>
+          Chaque appel IA est enregistr&eacute; avec les donn&eacute;es suivantes pour un suivi et un monitoring pr&eacute;cis :
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Donn&eacute;es enregistr&eacute;es par appel IA</h4>
+            <ul>
+              <li>Mod&egrave;le utilis&eacute; et &eacute;tape du pipeline</li>
+              <li>Nombre de tokens (entr&eacute;e, cache, sortie)</li>
+              <li>Co&ucirc;t estim&eacute; de l'appel</li>
+              <li>Dur&eacute;e d'ex&eacute;cution</li>
+              <li>Statut (succ&egrave;s / &eacute;chec / annul&eacute;)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Monitoring avanc&eacute;</h4>
+            <ul>
+              <li>Co&ucirc;t total par g&eacute;n&eacute;ration</li>
+              <li>Taux de cache IA (tokens r&eacute;utilis&eacute;s vs. nouveaux)</li>
+              <li>Alertes configurables sur les seuils de co&ucirc;t</li>
+              <li>Statistiques par plan utilisateur (Gratuit / Pro / Premium)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ==================== RECAPITULATIF ==================== -->
+        <h2>R&eacute;capitulatif</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>D&eacute;tail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>&Eacute;tapes du pipeline</strong></td>
+              <td>10 (extraction, classification, 6 adaptations parall&egrave;les, r&eacute;sum&eacute;, recomposition)</td>
+            </tr>
+            <tr>
+              <td><strong>Traitements parall&egrave;les</strong></td>
+              <td>6 simultan&eacute;s + 1 s&eacute;quentiel</td>
+            </tr>
+            <tr>
+              <td><strong>Sch&eacute;mas de validation</strong></td>
+              <td>10 sch&eacute;mas stricts avec d&eacute;codage guid&eacute;</td>
+            </tr>
+            <tr>
+              <td><strong>Instructions IA</strong></td>
+              <td>20 (10 paires syst&egrave;me + donn&eacute;es) avec r&egrave;gles partag&eacute;es</td>
+            </tr>
+            <tr>
+              <td><strong>Niveaux de cache</strong></td>
+              <td>2 (Cache A pour les traitements parall&egrave;les, Cache B pour le r&eacute;sum&eacute;)</td>
+            </tr>
+            <tr>
+              <td><strong>Langues support&eacute;es</strong></td>
+              <td>4 (fran&ccedil;ais, anglais, espagnol, allemand)</td>
+            </tr>
+            <tr>
+              <td><strong>R&eacute;duction du temps</strong></td>
+              <td>De ~35s &agrave; ~8&ndash;12s gr&acirc;ce &agrave; la parall&eacute;lisation (~70%)</td>
+            </tr>
+            <tr>
+              <td><strong>Sections CV trait&eacute;es</strong></td>
+              <td>8 (en-t&ecirc;te, r&eacute;sum&eacute;, exp&eacute;riences, projets, comp&eacute;tences, formation, langues, extras)</td>
+            </tr>
+            <tr>
+              <td><strong>Retry automatique</strong></td>
+              <td>3 tentatives avec d&eacute;lais croissants (1s &rarr; 2s &rarr; 4s)</td>
+            </tr>
+            <tr>
+              <td><strong>Anti-hallucination</strong></td>
+              <td>Hi&eacute;rarchie V&eacute;rit&eacute; > Langue > ATS > Style dans chaque instruction IA</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="./assets/js/layout.js?v=1.0.5"></script>
+  <script src="./assets/js/main.js?v=1.0.7"></script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Génération de CV depuis Zéro | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb"><a href="./index.html">Accueil</a><span>/</span><span>Génération de CV depuis Zéro</span></div>
+
+        <h1>Génération de CV depuis Zéro</h1>
+        <p class="lead">
+          En complément de l'adaptation de CV existants, FitMyCV.io permet de <strong>créer des CV professionnels complets depuis zéro</strong> grâce à l'IA. Deux modes de création sont disponibles : à partir d'une offre d'emploi ou d'un simple titre de poste. L'IA invente un profil fictif complet &mdash; expériences, compétences, formation, langues &mdash; parfaitement adapté au poste cible.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Deux approches complémentaires</div>
+          <p>
+            FitMyCV.io propose deux modes de génération IA distincts : <strong>l'adaptation</strong> transforme un CV existant pour une offre spécifique, tandis que la <strong>création depuis zéro</strong> génère un CV professionnel complet sans document source. Le mode création est particulièrement utile pour explorer un nouveau secteur ou préparer une candidature sans CV existant dans le domaine visé.
+          </p>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- DEUX MODES DE CREATION -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Deux modes de création</h2>
+
+        <p>Le système offre deux approches pour générer un CV professionnel complet depuis zéro :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Depuis une offre d'emploi</h4>
+            <p>L'IA analyse l'offre (URL ou PDF), comprend les exigences du poste et génère un CV fictif parfaitement adapté. Le système décompose l'offre en <strong>10 catégories d'information</strong> pour maximiser la pertinence du profil créé.</p>
+            <p>Supporte <strong>plusieurs offres en parallèle</strong> : un CV dédié est généré pour chaque offre soumise, permettant de comparer les profils générés pour différentes opportunités.</p>
+          </div>
+          <div class="card">
+            <h4>Depuis un titre de poste</h4>
+            <p>Un simple intitulé de métier suffit (ex : &laquo; Chef de Projet Digital &raquo;). L'IA invente un profil professionnel cohérent et complet dans la <strong>langue de votre choix</strong>.</p>
+            <p>Supporte <strong>4 langues</strong> : français (par défaut), anglais, allemand et espagnol. Le CV entier est généré dans la langue sélectionnée.</p>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- DIAGRAMME PIPELINES -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Architecture des deux pipelines</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Vue d'ensemble : deux entrées, un socle commun, un même résultat</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input1["DEPUIS UNE OFFRE"]
+        URL["URL ou PDF<br/>de l'offre"]
+    end
+
+    subgraph Input2["DEPUIS UN TITRE"]
+        Title["Titre de poste<br/>+ langue cible"]
+    end
+
+    subgraph Pipeline1["PIPELINE OFFRE"]
+        Extract["Extraction et<br/>structuration de l'offre"]
+        Format["Décomposition en<br/>10 catégories"]
+        Gen1["Génération du CV<br/>par l'IA"]
+    end
+
+    subgraph Pipeline2["PIPELINE TITRE"]
+        Prep["Préparation du<br/>schéma et des instructions"]
+        Gen2["Génération du CV<br/>par l'IA"]
+    end
+
+    subgraph Common["SOCLE COMMUN"]
+        Schema["Schéma CV<br/>structuré"]
+        Async["Exécution en<br/>tâche de fond"]
+        Cost["Suivi des coûts<br/>et consommation IA"]
+    end
+
+    subgraph Output["RÉSULTAT"]
+        CV["CV professionnel<br/>complet au format structuré"]
+    end
+
+    URL --> Extract --> Format --> Gen1
+    Title --> Prep --> Gen2
+    Schema --> Gen1
+    Schema --> Gen2
+    Gen1 --> CV
+    Gen2 --> CV
+    CV --> Async
+    Gen1 --> Cost
+    Gen2 --> Cost
+
+    style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Title fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extract fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Format fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Gen1 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Prep fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Gen2 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Schema fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Async fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Cost fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CV fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- TABLEAU COMPARATIF -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Comparaison des deux modes</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Depuis une offre</th>
+              <th>Depuis un titre</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Entrée</strong></td>
+              <td>Une ou plusieurs URLs et/ou PDFs d'offres</td>
+              <td>Un titre de poste + une langue cible</td>
+            </tr>
+            <tr>
+              <td><strong>Analyse préalable</strong></td>
+              <td>Oui &mdash; l'offre est extraite et décomposée en 10 catégories</td>
+              <td>Non &mdash; le titre est envoyé directement à l'IA</td>
+            </tr>
+            <tr>
+              <td><strong>Plusieurs sources</strong></td>
+              <td>Oui &mdash; un CV généré par offre soumise</td>
+              <td>Non &mdash; un CV généré par titre</td>
+            </tr>
+            <tr>
+              <td><strong>Langues</strong></td>
+              <td>Détectée automatiquement depuis l'offre</td>
+              <td>4 langues au choix : français, anglais, allemand, espagnol</td>
+            </tr>
+            <tr>
+              <td><strong>Lien vers l'offre</strong></td>
+              <td>Oui &mdash; le CV généré est lié à l'offre analysée</td>
+              <td>Non &mdash; CV indépendant</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- DEPUIS UNE OFFRE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Création depuis une offre d'emploi</h2>
+
+        <p>Le pipeline de création depuis une offre se déroule en <strong>4 étapes principales</strong> :</p>
+
+        <h3>1. Extraction et structuration de l'offre</h3>
+        <p>
+          L'offre est récupérée depuis son URL ou le fichier PDF fourni. Le contenu brut est analysé par l'IA qui en extrait les informations clés de manière structurée. Si l'offre a déjà été analysée récemment, le résultat mis en cache est réutilisé pour gagner en rapidité.
+        </p>
+
+        <h3>2. Décomposition en 10 catégories</h3>
+        <p>
+          Avant d'être transmise à l'IA pour la génération, l'offre est décomposée en <strong>10 dimensions</strong> qui permettent une compréhension fine des attentes du poste :
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Informations extraites</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Entreprise</strong></td>
+              <td>Nom de l'entreprise, secteur d'activité</td>
+            </tr>
+            <tr>
+              <td><strong>Type de contrat</strong></td>
+              <td>CDI, CDD, freelance, etc.</td>
+            </tr>
+            <tr>
+              <td><strong>Expérience requise</strong></td>
+              <td>Niveau d'expérience demandé</td>
+            </tr>
+            <tr>
+              <td><strong>Localisation</strong></td>
+              <td>Ville, région, télétravail</td>
+            </tr>
+            <tr>
+              <td><strong>Compétences obligatoires</strong></td>
+              <td>Hard skills, outils, méthodologies requises</td>
+            </tr>
+            <tr>
+              <td><strong>Compétences souhaitées</strong></td>
+              <td>Compétences bonus, atouts appréciés</td>
+            </tr>
+            <tr>
+              <td><strong>Missions</strong></td>
+              <td>Responsabilités et missions du poste</td>
+            </tr>
+            <tr>
+              <td><strong>Formation</strong></td>
+              <td>Niveau d'études requis</td>
+            </tr>
+            <tr>
+              <td><strong>Langues</strong></td>
+              <td>Langues requises ou souhaitées</td>
+            </tr>
+            <tr>
+              <td><strong>Avantages</strong></td>
+              <td>Avantages proposés par l'employeur</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          Cette analyse structurée permet à l'IA de créer un profil fictif qui répond précisément à chaque exigence du poste, maximisant l'adéquation du CV généré.
+        </p>
+
+        <h3>3. Génération du CV par l'IA</h3>
+        <p>
+          L'IA reçoit le schéma CV structuré du système et l'offre décomposée en 10 catégories. Elle génère un CV professionnel complet &mdash; profil, expériences détaillées, compétences, formation, langues &mdash; fictif mais cohérent et adapté aux exigences identifiées. Le système exploite le <strong>cache natif des modèles IA de dernière génération</strong>, réduisant les coûts en réutilisant le contexte des instructions entre les appels.
+        </p>
+
+        <h3>4. Validation et finalisation</h3>
+        <p>
+          Le résultat est normalisé pour garantir un format structuré valide, compatible avec le reste du système (affichage, export, scoring). La consommation IA est enregistrée pour le suivi des coûts.
+        </p>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Traitement multi-offres</div>
+          <p>
+            Le système peut traiter <strong>plusieurs offres simultanément</strong>, générant un CV dédié pour chaque offre soumise (URL ou PDF). Cela permet de comparer les CV générés pour différentes opportunités et de choisir le profil le plus pertinent.
+          </p>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- DEPUIS UN TITRE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Création depuis un titre de poste</h2>
+
+        <p>Le pipeline depuis un titre de poste est plus direct et se déroule en <strong>3 étapes</strong> :</p>
+
+        <h3>1. Vérification et préparation</h3>
+        <p>
+          Le système vérifie les droits de l'utilisateur, charge le schéma CV structuré et prépare les instructions pour l'IA avec le titre de poste et la langue cible.
+        </p>
+
+        <h3>2. Génération du CV par l'IA</h3>
+        <p>
+          À partir d'un simple intitulé de métier (ex : &laquo; Développeur Full Stack Senior &raquo;), l'IA génère un CV professionnel complet et cohérent : profil, expériences détaillées, compétences, formation, langues. Le tout dans l'une des <strong>4 langues supportées</strong>.
+        </p>
+
+        <h3>3. Validation du résultat</h3>
+        <p>
+          Le CV généré est validé automatiquement : il doit contenir au minimum un nom complet et un titre de poste. Un CV incomplet est rejeté et n'est pas présenté à l'utilisateur. La consommation IA est enregistrée.
+        </p>
+
+        <h3>Langues disponibles</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Français</h4>
+            <p>Langue par défaut. Si aucune langue n'est sélectionnée, le CV est généré en français.</p>
+          </div>
+          <div class="card">
+            <h4>Anglais</h4>
+            <p>CV généré intégralement en anglais, adapté aux conventions anglophones.</p>
+          </div>
+          <div class="card">
+            <h4>Allemand</h4>
+            <p>CV généré intégralement en allemand, adapté aux conventions germaniques.</p>
+          </div>
+          <div class="card">
+            <h4>Espagnol</h4>
+            <p>CV généré intégralement en espagnol, adapté aux conventions hispanophones.</p>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- DIAGRAMME CREATION DEPUIS OFFRE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Pipeline détaillé : création depuis une offre</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Les 4 étapes de la création d'un CV depuis une offre d'emploi</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph E1["1. EXTRACTION"]
+        URL["URL ou PDF<br/>de l'offre"]
+        Extract["Récupération et<br/>analyse du contenu"]
+        Cache["Réutilisation du<br/>cache si disponible"]
+    end
+
+    subgraph E2["2. STRUCTURATION"]
+        Format["Décomposition en<br/>10 catégories"]
+        Cat["Entreprise, contrat,<br/>compétences, missions,<br/>formation, langues..."]
+    end
+
+    subgraph E3["3. GÉNÉRATION IA"]
+        Schema["Schéma CV<br/>structuré"]
+        AI["Génération du<br/>profil fictif complet"]
+        AICache["Cache IA de<br/>dernière génération"]
+    end
+
+    subgraph E4["4. FINALISATION"]
+        Valid["Normalisation<br/>du résultat"]
+        Track["Suivi de la<br/>consommation IA"]
+        Result["CV professionnel<br/>prêt à l'emploi"]
+    end
+
+    URL --> Extract
+    Cache --> Extract
+    Extract --> Format --> Cat
+    Cat --> AI
+    Schema --> AI
+    AICache --> AI
+    AI --> Valid --> Track --> Result
+
+    style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extract fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Cache fill:#64748b,stroke:#475569,color:#fff
+    style Format fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Cat fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Schema fill:#14b8a6,stroke:#0d9488,color:#fff
+    style AI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style AICache fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Valid fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Track fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Result fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- SOCLE COMMUN -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Socle commun aux deux modes</h2>
+
+        <p>Malgré des entrées différentes, les deux pipelines partagent un socle technique commun qui garantit la cohérence du système :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Schéma CV structuré</h4>
+            <p>Les deux modes utilisent le même schéma de référence qui définit la structure complète d'un CV (profil, expériences, compétences, formation, langues, projets). Ce schéma guide l'IA pour produire un résultat compatible avec le reste du système.</p>
+          </div>
+          <div class="card">
+            <h4>Exécution en tâche de fond</h4>
+            <p>La génération s'exécute en arrière-plan sans bloquer l'interface. L'utilisateur lance la création et peut suivre l'avancement en temps réel via l'interface.</p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Format de sortie unifié</h4>
+            <p>Les deux pipelines produisent un CV au même format structuré, garantissant la compatibilité avec l'ensemble des fonctionnalités : affichage, export PDF/Word, scoring, traduction et versioning.</p>
+          </div>
+          <div class="card">
+            <h4>Suivi granulaire des coûts IA</h4>
+            <p>Chaque génération est tracée individuellement : modèle utilisé, volume de données traitées, durée et coût estimé. Le suivi distingue le canal d'entrée (offre ou titre) pour une visibilité fine dans le tableau de bord.</p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Vérification du budget</h4>
+            <p>Avant tout appel à l'IA, le système vérifie que le budget n'est pas épuisé. La génération est interrompue immédiatement si les ressources sont insuffisantes, évitant toute surprise.</p>
+          </div>
+          <div class="card">
+            <h4>Cache IA intelligent</h4>
+            <p>Le système exploite le cache natif des modèles IA de dernière génération, avec une rétention de 24 heures. Les instructions communes sont réutilisées entre les appels, réduisant significativement les coûts de génération.</p>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- CE QUE L'IA GENERE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Ce que l'IA génère</h2>
+
+        <p>Quel que soit le mode choisi, l'IA produit un <strong>CV complet et structuré</strong> contenant :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Profil professionnel</h4>
+            <p>Nom complet, titre de poste, coordonnées fictives et résumé de profil adapté au poste cible.</p>
+          </div>
+          <div class="card">
+            <h4>Expériences professionnelles</h4>
+            <p>Parcours professionnel inventé mais cohérent, avec postes, entreprises, dates et descriptions détaillées des missions.</p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Compétences techniques</h4>
+            <p>Compétences classées par catégorie avec niveaux de maîtrise, adaptées aux exigences du poste visé.</p>
+          </div>
+          <div class="card">
+            <h4>Formation et langues</h4>
+            <p>Parcours de formation cohérent avec le niveau d'expérience et langues maîtrisées, le tout dans la langue cible.</p>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- RESUME -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>En résumé</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>2 modes de création</h4>
+            <p>Depuis une offre d'emploi (URL ou PDF) ou depuis un simple titre de poste.</p>
+          </div>
+          <div class="card">
+            <h4>10 catégories d'analyse</h4>
+            <p>L'offre est décomposée en 10 dimensions pour maximiser la pertinence du profil généré.</p>
+          </div>
+          <div class="card">
+            <h4>4 langues supportées</h4>
+            <p>Français, anglais, allemand et espagnol pour la génération depuis un titre de poste.</p>
+          </div>
+          <div class="card">
+            <h4>Multi-offres simultané</h4>
+            <p>Soumettez plusieurs offres et obtenez un CV dédié pour chaque opportunité.</p>
+          </div>
+          <div class="card">
+            <h4>Schéma unifié</h4>
+            <p>Le CV généré est compatible avec tout le système : export, scoring, traduction et versioning.</p>
+          </div>
+          <div class="card">
+            <h4>Cache IA intelligent</h4>
+            <p>Exploitation du cache natif des modèles IA pour réduire les coûts de génération.</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="./assets/js/layout.js?v=1.0.5"></script>
+  <script src="./assets/js/main.js?v=1.0.7"></script>
+</body>
+</html>

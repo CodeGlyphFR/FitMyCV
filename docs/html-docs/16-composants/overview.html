@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -32,269 +29,765 @@
 
         <h1>Composants React</h1>
         <p class="lead">
-          FitMyCV.io comprend <strong>138 composants React</strong> organisés par domaine fonctionnel. L'application utilise React 19 avec Server Components et Client Components.
+          FitMyCV.io comprend <strong>175 composants React</strong> r&eacute;partis dans <strong>19 r&eacute;pertoires</strong> sous <code>components/</code>. L'application utilise <strong>Next.js 16</strong> (App Router) avec <strong>React 19</strong>, exploitant les Server Components par d&eacute;faut et les Client Components (<code>'use client'</code>) uniquement lorsque l'interactivit&eacute; est requise. Le styling est assur&eacute; exclusivement par <strong>Tailwind CSS 4</strong> et les ic&ocirc;nes par <strong>Lucide React</strong>.
         </p>
 
-        <h2>Organisation</h2>
-
-        <pre><code>components/
-├── cv/                    # Éditeur et gestion CV (42 composants)
-│   ├── editor/           # Sections éditables
-│   ├── preview/          # Prévisualisation
-│   └── templates/        # Templates visuels
-├── admin/                 # Dashboard admin (28 composants)
-│   ├── tabs/             # Onglets principaux
-│   ├── charts/           # Graphiques
-│   └── email/            # Gestion emails
-├── auth/                  # Authentification (8 composants)
-├── dashboard/             # Dashboard utilisateur (12 composants)
-├── onboarding/            # Flux onboarding (6 composants)
-├── subscription/          # Gestion abonnement (10 composants)
-├── job-offers/            # Offres d'emploi (8 composants)
-├── ui/                    # Composants UI réutilisables (24 composants)
-└── layout/                # Layout et navigation</code></pre>
-
-        <h2>Composants Principaux</h2>
-
-        <h3>CV Editor</h3>
-
-        <div class="diagram">
-          <div class="diagram-title">Architecture de l'éditeur CV</div>
-          <div class="mermaid">
-flowchart TB
-    subgraph Editor["CV EDITOR"]
-        CvEditor["CvEditor.jsx<br/>(Container)"]
-        Sidebar["EditorSidebar"]
-        Preview["CvPreview"]
-    end
-
-    subgraph Sections["SECTIONS"]
-        Header["HeaderSection"]
-        Summary["SummarySection"]
-        Experiences["ExperiencesSection"]
-        Skills["SkillsSection"]
-        Education["EducationSection"]
-        Projects["ProjectsSection"]
-    end
-
-    subgraph State["STATE"]
-        Context["CvContext"]
-        Reducer["cvReducer"]
-    end
-
-    CvEditor --> Sidebar
-    CvEditor --> Preview
-    Sidebar --> Sections
-    Sections --> Context
-    Context --> Reducer
-          </div>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Composant</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>CvEditor</code></td>
-              <td>Client</td>
-              <td>Container principal avec state management</td>
-            </tr>
-            <tr>
-              <td><code>EditorSidebar</code></td>
-              <td>Client</td>
-              <td>Navigation entre sections</td>
-            </tr>
-            <tr>
-              <td><code>CvPreview</code></td>
-              <td>Client</td>
-              <td>Prévisualisation temps réel</td>
-            </tr>
-            <tr>
-              <td><code>HeaderSection</code></td>
-              <td>Client</td>
-              <td>Édition infos personnelles</td>
-            </tr>
-            <tr>
-              <td><code>ExperienceItem</code></td>
-              <td>Client</td>
-              <td>Édition d'une expérience</td>
-            </tr>
-            <tr>
-              <td><code>SkillsEditor</code></td>
-              <td>Client</td>
-              <td>Gestion des compétences</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Dashboard Admin</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Composant</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>AdminDashboard</code></td>
-              <td>Container avec tabs</td>
-            </tr>
-            <tr>
-              <td><code>OverviewTab</code></td>
-              <td>KPIs et métriques globales</td>
-            </tr>
-            <tr>
-              <td><code>UsersTab</code></td>
-              <td>Gestion utilisateurs</td>
-            </tr>
-            <tr>
-              <td><code>OpenAICostsTab</code></td>
-              <td>Monitoring coûts IA</td>
-            </tr>
-            <tr>
-              <td><code>SettingsTab</code></td>
-              <td>Configuration système</td>
-            </tr>
-            <tr>
-              <td><code>KPICard</code></td>
-              <td>Carte métrique avec trend</td>
-            </tr>
-            <tr>
-              <td><code>MRRHistoryChart</code></td>
-              <td>Graphique revenus</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>UI Components</h3>
+        <h2>Architecture</h2>
 
         <div class="card-grid">
           <div class="card">
-            <h4>Forms</h4>
+            <h4>Next.js 16 App Router</h4>
+            <p>Server Components par d&eacute;faut, Client Components avec <code>'use client'</code>. Rendu c&ocirc;t&eacute; serveur pour les donn&eacute;es, interactivit&eacute; c&ocirc;t&eacute; client.</p>
+          </div>
+          <div class="card">
+            <h4>React 19</h4>
+            <p>Hooks, Context API, Portals, <code>useReducer</code> pour le state management complexe (CvContext).</p>
+          </div>
+          <div class="card">
+            <h4>Tailwind CSS 4</h4>
+            <p>Classes utilitaires exclusivement, pas de CSS modules. Design system coh&eacute;rent via configuration Tailwind.</p>
+          </div>
+          <div class="card">
+            <h4>Lucide React</h4>
+            <p>Biblioth&egrave;que d'ic&ocirc;nes SVG. Pr&eacute;chargement via <code>IconPreloader</code> pour les ic&ocirc;nes critiques.</p>
+          </div>
+        </div>
+
+        <h2>Stack de Providers</h2>
+
+        <p>L'application est envelopp&eacute;e par <strong>10+ providers</strong> imbriqu&eacute;s, d&eacute;finis dans <code>RootProviders.jsx</code>. Certains providers conditionnels ne sont activ&eacute;s que pour les utilisateurs authentifi&eacute;s.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Hi&eacute;rarchie des providers (RootProviders.jsx)</div>
+          <div class="mermaid">
+graph TB
+    subgraph RootProviders["PROVIDERS RACINE"]
+        SP["Gestion de la<br/>session utilisateur"]
+        RP["Protection anti-spam<br/>reCAPTCHA"]
+        SetP["Fournisseur de<br/>paramètres globaux"]
+        CCP["Fournisseur des coûts<br/>par fonctionnalité"]
+        LangP["Gestion de la langue<br/>FR / EN"]
+        NotifP["Système de<br/>notifications"]
+        AdminP["Contexte<br/>administration"]
+        OnbP["Gestion du parcours<br/>d'accueil"]
+    end
+
+    subgraph ConditionalProviders["PROVIDERS CONDITIONNELS authentifie"]
+        RRP["Rafraîchissement en<br/>temps réel (SSE)"]
+        BTP["Gestion des tâches<br/>en arrière-plan"]
+        PPP["Suivi de progression<br/>de la génération"]
+    end
+
+    SP --> RP
+    RP --> SetP
+    SetP --> CCP
+    CCP --> LangP
+    LangP --> NotifP
+    NotifP --> AdminP
+    AdminP --> OnbP
+    OnbP -->|"Si authentifie"| RRP
+    RRP --> BTP
+    BTP --> PPP
+
+    style SP fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RP fill:#22c55e,stroke:#16a34a,color:#fff
+    style SetP fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CCP fill:#f59e0b,stroke:#d97706,color:#fff
+    style LangP fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style NotifP fill:#22c55e,stroke:#16a34a,color:#fff
+    style AdminP fill:#ef4444,stroke:#dc2626,color:#fff
+    style OnbP fill:#6366f1,stroke:#4f46e5,color:#fff
+    style RRP fill:#14b8a6,stroke:#0d9488,color:#fff
+    style BTP fill:#14b8a6,stroke:#0d9488,color:#fff
+    style PPP fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <h2>Cat&eacute;gories de Composants</h2>
+
+        <h3>1. Layout (8 composants)</h3>
+
+        <p>Structure g&eacute;n&eacute;rale de l'application : barre de navigation conditionnelle, footer, arri&egrave;re-plan et espacement.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ConditionalTopBar</code></td>
+              <td>Affiche la TopBar uniquement sur les pages n&eacute;cessaires</td>
+            </tr>
+            <tr>
+              <td><code>ConditionalFooter</code></td>
+              <td>Footer conditionnel selon la route</td>
+            </tr>
+            <tr>
+              <td><code>ConditionalMainWrapper</code></td>
+              <td>Wrapper principal avec layout conditionnel</td>
+            </tr>
+            <tr>
+              <td><code>TopBarSpacer</code></td>
+              <td>Espacement pour compenser la TopBar fixe</td>
+            </tr>
+            <tr>
+              <td><code>Footer</code></td>
+              <td>Pied de page avec liens et informations</td>
+            </tr>
+            <tr>
+              <td><code>GlobalBackground</code></td>
+              <td>Arri&egrave;re-plan global anim&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>Section</code></td>
+              <td>Conteneur de section r&eacute;utilisable</td>
+            </tr>
+            <tr>
+              <td><code>ScrollToTopOnMount</code></td>
+              <td>Scroll automatique en haut au montage</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>2. TopBar (34 composants)</h3>
+
+        <p>Barre de navigation principale (<code>TopBar.jsx</code>, 570+ lignes) avec dropdowns, portals et 8+ modales.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>TopBar.jsx</code></td>
+              <td>Conteneur principal (570+ lignes), gestion de l'&eacute;tat global de la barre</td>
+            </tr>
+            <tr>
+              <td><code>FilterDropdown</code></td>
+              <td>Dropdown de filtrage des CV</td>
+            </tr>
+            <tr>
+              <td><code>CvDropdownPortal</code></td>
+              <td>Portal pour le dropdown de s&eacute;lection CV</td>
+            </tr>
+            <tr>
+              <td><code>UserMenuPortal</code></td>
+              <td>Portal pour le menu utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>TopBarActions</code></td>
+              <td>Boutons d'actions (nouveau CV, import, export)</td>
+            </tr>
+            <tr>
+              <td><code>TopBarModals</code></td>
+              <td>Conteneur de toutes les modales de la TopBar</td>
+            </tr>
+            <tr>
+              <td><code>ItemLabel</code></td>
+              <td>Libell&eacute; d'item avec ic&ocirc;ne dans les dropdowns</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><strong>Modales de la TopBar :</strong></p>
+        <ul>
+          <li><code>CvGeneratorModal</code> &mdash; G&eacute;n&eacute;ration CV par IA (offre d'emploi)</li>
+          <li><code>NewCvModal</code> &mdash; Cr&eacute;ation manuelle de CV</li>
+          <li><code>PdfImportModal</code> &mdash; Import de CV depuis un fichier PDF</li>
+          <li><code>ExportPdfModal</code> &mdash; Export du CV en PDF</li>
+          <li><code>DeleteCvModal</code> &mdash; Suppression d'un CV individuel</li>
+          <li><code>BulkDeleteCvModal</code> &mdash; Suppression en lot de CV</li>
+          <li><code>ExtensionTutorialModal</code> &mdash; Tutoriel de l'extension navigateur</li>
+        </ul>
+
+        <h3>3. Sections CV (8 composants)</h3>
+
+        <p>Sections &eacute;ditables du CV, chacune g&eacute;rant son propre formulaire et synchronis&eacute;e avec <code>CvContext</code>.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Lignes</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Header</code></td>
+              <td>520+</td>
+              <td>Informations personnelles (nom, email, t&eacute;l&eacute;phone, photo, adresse)</td>
+            </tr>
+            <tr>
+              <td><code>Summary</code></td>
+              <td>&mdash;</td>
+              <td>R&eacute;sum&eacute; professionnel / accroche</td>
+            </tr>
+            <tr>
+              <td><code>Experience</code></td>
+              <td>&mdash;</td>
+              <td>Exp&eacute;riences professionnelles (CRUD dynamique)</td>
+            </tr>
+            <tr>
+              <td><code>Education</code></td>
+              <td>&mdash;</td>
+              <td>Formations et dipl&ocirc;mes</td>
+            </tr>
+            <tr>
+              <td><code>Skills</code></td>
+              <td>&mdash;</td>
+              <td>Comp&eacute;tences techniques et soft skills</td>
+            </tr>
+            <tr>
+              <td><code>Languages</code></td>
+              <td>&mdash;</td>
+              <td>Langues parl&eacute;es avec niveaux</td>
+            </tr>
+            <tr>
+              <td><code>Projects</code></td>
+              <td>&mdash;</td>
+              <td>Projets personnels et open source</td>
+            </tr>
+            <tr>
+              <td><code>Extras</code></td>
+              <td>&mdash;</td>
+              <td>Centres d'int&eacute;r&ecirc;t, certifications, b&eacute;n&eacute;volat</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>4. CV Improvement (13 composants)</h3>
+
+        <p>Panneau d'analyse et d'am&eacute;lioration du CV par rapport &agrave; une offre d'emploi.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CVImprovementPanel</code></td>
+              <td>Panneau principal (495 lignes), orchestration de l'analyse</td>
+            </tr>
+            <tr>
+              <td><code>MatchScore</code></td>
+              <td>Score de correspondance CV/offre (pourcentage)</td>
+            </tr>
+            <tr>
+              <td><code>JobOfferDetailModal</code></td>
+              <td>D&eacute;tail de l'offre d'emploi analys&eacute;e</td>
+            </tr>
+            <tr>
+              <td><code>ScoreVisualization</code></td>
+              <td>Visualisation graphique du score</td>
+            </tr>
+            <tr>
+              <td><code>SuggestionsSection</code></td>
+              <td>Suggestions d'am&eacute;lioration par l'IA</td>
+            </tr>
+            <tr>
+              <td><code>MissingSkillsSection</code></td>
+              <td>Comp&eacute;tences manquantes identifi&eacute;es</td>
+            </tr>
+            <tr>
+              <td><code>MatchingSkillsSection</code></td>
+              <td>Comp&eacute;tences d&eacute;j&agrave; pr&eacute;sentes et correspondantes</td>
+            </tr>
+            <tr>
+              <td><code>OptimizationFooter</code></td>
+              <td>Actions d'optimisation (lancer, annuler)</td>
+            </tr>
+            <tr>
+              <td><code>VersionSelector</code></td>
+              <td>S&eacute;lecteur de version du CV optimis&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>SourceInfo</code></td>
+              <td>Informations sur la source de l'offre</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>5. CV Review (13 composants)</h3>
+
+        <p>Interface de revue des modifications g&eacute;n&eacute;r&eacute;es par l'IA avant application.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ChangeHighlight</code></td>
+              <td>Mise en surbrillance visuelle des modifications</td>
+            </tr>
+            <tr>
+              <td><code>ChangeReviewPopover</code></td>
+              <td>Popover de revue avec accepter/rejeter</td>
+            </tr>
+            <tr>
+              <td><code>InlineDiff</code></td>
+              <td>Diff inline (avant/apr&egrave;s) dans le texte</td>
+            </tr>
+            <tr>
+              <td><code>ReviewableItemCard</code></td>
+              <td>Carte d'item r&eacute;visable (exp&eacute;rience, formation)</td>
+            </tr>
+            <tr>
+              <td><code>SkillItemHighlight</code></td>
+              <td>Mise en surbrillance d'une comp&eacute;tence modifi&eacute;e</td>
+            </tr>
+            <tr>
+              <td><code>OrphanedChangesDisplay</code></td>
+              <td>Affichage des modifications orphelines non appliqu&eacute;es</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>6. Admin (68 composants)</h3>
+
+        <p>Dashboard d'administration complet avec onglets, graphiques, gestion emails et utilisateurs.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Onglets principaux</h4>
             <ul>
-              <li><code>Input</code></li>
-              <li><code>Textarea</code></li>
-              <li><code>Select</code></li>
-              <li><code>Checkbox</code></li>
-              <li><code>DatePicker</code></li>
+              <li><code>TabsBar</code></li>
+              <li><code>OverviewTab</code></li>
+              <li><code>UsersTab</code></li>
+              <li><code>RevenueTab</code></li>
+              <li><code>SubscriptionPlansTab</code></li>
+              <li><code>OpenAICostsTab</code></li>
+              <li><code>EmailManagementTab</code></li>
+              <li><code>SettingsTab</code></li>
+              <li><code>OnboardingTab</code></li>
+              <li><code>FeaturesTab</code></li>
+              <li><code>ErrorsTab</code></li>
+              <li><code>FeedbackTab</code></li>
             </ul>
           </div>
           <div class="card">
-            <h4>Feedback</h4>
+            <h4>Graphiques et KPIs</h4>
             <ul>
-              <li><code>Button</code></li>
-              <li><code>Modal</code></li>
-              <li><code>Toast</code></li>
-              <li><code>Spinner</code></li>
-              <li><code>ProgressBar</code></li>
+              <li><code>KPICard</code></li>
+              <li><code>MRRHistoryChart</code></li>
+              <li><code>PlanDistributionChart</code></li>
+              <li><code>OnboardingStatusChart</code></li>
+              <li><code>OnboardingDropoffChart</code></li>
             </ul>
           </div>
           <div class="card">
-            <h4>Display</h4>
+            <h4>Sous-r&eacute;pertoires</h4>
             <ul>
-              <li><code>Card</code></li>
-              <li><code>Badge</code></li>
-              <li><code>Avatar</code></li>
-              <li><code>Tooltip</code></li>
-              <li><code>Tabs</code></li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>Navigation</h4>
-            <ul>
-              <li><code>Sidebar</code></li>
-              <li><code>Breadcrumb</code></li>
-              <li><code>Dropdown</code></li>
-              <li><code>ContextMenu</code></li>
-              <li><code>Pagination</code></li>
+              <li><code>email/</code> &mdash; &Eacute;diteur, liste, pr&eacute;visualisation</li>
+              <li><code>users/</code> &mdash; Liste, d&eacute;tail, actions</li>
+              <li><code>settings/</code> &mdash; Navigation, formulaires, zones danger</li>
             </ul>
           </div>
         </div>
 
-        <h3>ContextMenu (D&eacute;taill&eacute;)</h3>
+        <h3>7. UI (19 composants)</h3>
 
-        <p>Menu contextuel r&eacute;utilisable avec ic&ocirc;ne kebab (&loz;), utilis&eacute; pour remplacer les boutons edit/delete par un menu unifi&eacute;.</p>
+        <p>Composants d'interface r&eacute;utilisables &agrave; travers toute l'application.</p>
 
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge">Props</span>
-            <span class="data-flow-title">Configuration du composant</span>
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Modal</code></td>
+              <td>Modale g&eacute;n&eacute;rique (150+ lignes) avec focus management, portals, fermeture Escape/click outside</td>
+            </tr>
+            <tr>
+              <td><code>ModalForm</code></td>
+              <td>Modale avec formulaire int&eacute;gr&eacute; et validation</td>
+            </tr>
+            <tr>
+              <td><code>ContextMenu</code></td>
+              <td>Menu contextuel via React Portal (z-index 10002, ARIA, positionnement dynamique)</td>
+            </tr>
+            <tr>
+              <td><code>SkeletonLoader</code></td>
+              <td>Placeholder de chargement anim&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>Tooltip</code></td>
+              <td>Infobulle avec positionnement automatique</td>
+            </tr>
+            <tr>
+              <td><code>TipBox</code></td>
+              <td>Bo&icirc;te d'information/astuce contextuelle</td>
+            </tr>
+            <tr>
+              <td><code>PasswordInput</code></td>
+              <td>Champ mot de passe avec toggle visibilit&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>CountrySelect</code></td>
+              <td>S&eacute;lecteur de pays avec drapeaux</td>
+            </tr>
+            <tr>
+              <td><code>LanguageSwitcher</code></td>
+              <td>Bascule FR/EN</td>
+            </tr>
+            <tr>
+              <td><code>MonthPicker</code></td>
+              <td>S&eacute;lecteur de mois/ann&eacute;e</td>
+            </tr>
+            <tr>
+              <td><code>CreditCostDisplay</code></td>
+              <td>Affichage du co&ucirc;t en cr&eacute;dits d'une action</td>
+            </tr>
+            <tr>
+              <td><code>CreditCostTooltip</code></td>
+              <td>Tooltip d&eacute;taill&eacute; du co&ucirc;t en cr&eacute;dits</td>
+            </tr>
+            <tr>
+              <td><code>CreditCounter</code></td>
+              <td>Compteur de cr&eacute;dits anim&eacute; dans la TopBar</td>
+            </tr>
+            <tr>
+              <td><code>LoadingOverlay</code></td>
+              <td>Overlay de chargement plein &eacute;cran</td>
+            </tr>
+            <tr>
+              <td><code>PipelineTaskProgress</code></td>
+              <td>Barre de progression du pipeline de g&eacute;n&eacute;ration</td>
+            </tr>
+            <tr>
+              <td><code>GenericTaskProgressBar</code></td>
+              <td>Barre de progression g&eacute;n&eacute;rique pour les t&acirc;ches background</td>
+            </tr>
+            <tr>
+              <td><code>DefaultCvIcon</code></td>
+              <td>Ic&ocirc;ne par d&eacute;faut pour les CV</td>
+            </tr>
+            <tr>
+              <td><code>GptLogo</code></td>
+              <td>Logo OpenAI/GPT stylis&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>IconPreloader</code></td>
+              <td>Pr&eacute;chargement des ic&ocirc;nes Lucide critiques</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>8. Subscription (15 composants)</h3>
+
+        <p>Gestion des abonnements, plans, cr&eacute;dits et factures.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>SubscriptionsPage</code></td>
+              <td>Page principale des abonnements</td>
+            </tr>
+            <tr>
+              <td><code>CurrentPlanCard</code></td>
+              <td>Carte du plan actuel de l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>PlanComparisonCards</code></td>
+              <td>Comparaison des plans disponibles</td>
+            </tr>
+            <tr>
+              <td><code>FeatureCountersCard</code></td>
+              <td>Compteurs d'utilisation des features</td>
+            </tr>
+            <tr>
+              <td><code>CreditBalanceCard</code></td>
+              <td>Solde des cr&eacute;dits</td>
+            </tr>
+            <tr>
+              <td><code>CreditBalanceBanner</code></td>
+              <td>Banni&egrave;re d'alerte de solde faible</td>
+            </tr>
+            <tr>
+              <td><code>CreditPacksCards</code></td>
+              <td>Grille des packs de cr&eacute;dits disponibles</td>
+            </tr>
+            <tr>
+              <td><code>CreditTransactionsTable</code></td>
+              <td>Historique des transactions de cr&eacute;dits</td>
+            </tr>
+            <tr>
+              <td><code>InvoicesTable</code></td>
+              <td>Historique des factures Stripe</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><strong>Sous-r&eacute;pertoire <code>plan-comparison/</code> :</strong> <code>PlanCard</code>, <code>UpgradeModal</code>, <code>DowngradePaidModal</code>, <code>DowngradeToFreeModal</code></p>
+
+        <h3>9. Onboarding (20 composants)</h3>
+
+        <p>Flux d'accueil des nouveaux utilisateurs avec tutoriel interactif.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>OnboardingModal</code></td>
+              <td>Modale principale (820+ lignes) avec swipe/drag, navigation clavier</td>
+            </tr>
+            <tr>
+              <td><code>OnboardingProvider</code></td>
+              <td>Provider de contexte pour l'&eacute;tat de l'onboarding</td>
+            </tr>
+            <tr>
+              <td><code>OnboardingOrchestrator</code></td>
+              <td>Orchestration des &eacute;tapes et transitions</td>
+            </tr>
+            <tr>
+              <td><code>ChecklistPanel</code></td>
+              <td>Panneau de checklist des &eacute;tapes compl&eacute;t&eacute;es</td>
+            </tr>
+            <tr>
+              <td><code>OnboardingCompletionModal</code></td>
+              <td>Modale de f&eacute;licitations &agrave; la fin</td>
+            </tr>
+            <tr>
+              <td><code>WelcomeModal</code></td>
+              <td>Modale de bienvenue initiale</td>
+            </tr>
+            <tr>
+              <td><code>OnboardingHighlight</code></td>
+              <td>Mise en surbrillance d'un &eacute;l&eacute;ment de la page</td>
+            </tr>
+            <tr>
+              <td><code>OnboardingMultiHighlight</code></td>
+              <td>Mise en surbrillance de plusieurs &eacute;l&eacute;ments</td>
+            </tr>
+            <tr>
+              <td><code>OnboardingTooltip</code></td>
+              <td>Tooltip contextuel d'&eacute;tape</td>
+            </tr>
+            <tr>
+              <td><code>StepRenderer</code></td>
+              <td>Rendu dynamique du contenu de chaque &eacute;tape</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>10. Auth (5 composants)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composant</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>AuthScreen</code></td>
+              <td>&Eacute;cran d'authentification (login/register)</td>
+            </tr>
+            <tr>
+              <td><code>EmailVerificationError</code></td>
+              <td>Page d'erreur de v&eacute;rification email</td>
+            </tr>
+            <tr>
+              <td><code>PasswordStrengthIndicator</code></td>
+              <td>Indicateur visuel de force du mot de passe</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>11&ndash;20. Autres Cat&eacute;gories</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Notifications (2)</h4>
+            <ul>
+              <li><code>NotificationContainer</code></li>
+              <li><code>NotificationProvider</code></li>
+            </ul>
           </div>
-          <div class="data-flow-content">
-            <table>
-              <thead>
-                <tr>
-                  <th>Prop</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><code>items</code></td>
-                  <td>Array</td>
-                  <td>Liste des actions du menu</td>
-                </tr>
-                <tr>
-                  <td><code>className</code></td>
-                  <td>string</td>
-                  <td>Classes CSS additionnelles</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <h5>Structure d'un item</h5>
-            <pre><code>{
-  icon: LucideIcon,     // Ic&ocirc;ne optionnelle
-  label: string,        // Texte de l'action
-  onClick: () => void,  // Callback au clic
-  danger: boolean       // Style rouge pour suppressions
-}</code></pre>
-
-            <h5>Exemple d'utilisation</h5>
-            <pre><code class="language-jsx">import ContextMenu from '@/components/ui/ContextMenu';
-import { Pencil, Trash2 } from 'lucide-react';
-
-&lt;ContextMenu
-  items={[
-    {
-      icon: Pencil,
-      label: t('common.edit'),
-      onClick: () => setEditMode(true)
-    },
-    {
-      icon: Trash2,
-      label: t('common.delete'),
-      onClick: handleDelete,
-      danger: true
-    }
-  ]}
-/&gt;</code></pre>
+          <div class="card">
+            <h4>Feedback (3)</h4>
+            <ul>
+              <li><code>FeedbackButton</code></li>
+              <li><code>FeedbackModal</code></li>
+              <li><code>StarRating</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Account (8)</h4>
+            <ul>
+              <li><code>AccountPageHeader</code></li>
+              <li><code>AccountPageLoading</code></li>
+              <li><code>AccountSettings</code></li>
+              <li><code>LinkedAccountsSection</code></li>
+              <li><code>DeleteAccountSection</code></li>
+              <li><code>ProfileSection</code></li>
+              <li><code>SecuritySection</code></li>
+              <li><code>NotificationPreferences</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Cookies (4)</h4>
+            <ul>
+              <li><code>CookieBanner</code></li>
+              <li><code>CookieSettings</code></li>
+              <li><code>ConsentHistory</code></li>
+              <li><code>CookieRegistry</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Empty State (4)</h4>
+            <ul>
+              <li><code>EmptyState</code></li>
+              <li><code>NoCvMessage</code></li>
+              <li><code>NoResultsMessage</code></li>
+              <li><code>WelcomeEmptyState</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Header (6)</h4>
+            <ul>
+              <li><code>PageHeader</code></li>
+              <li><code>BreadcrumbNav</code></li>
+              <li><code>HeaderActions</code></li>
+              <li><code>SearchBar</code></li>
+              <li><code>HeaderLogo</code></li>
+              <li><code>HeaderNavLinks</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Task Queue (2)</h4>
+            <ul>
+              <li><code>TaskQueueDropdown</code></li>
+              <li><code>TaskQueueModal</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Pages (2)</h4>
+            <ul>
+              <li><code>LandingPage</code></li>
+              <li><code>PricingPage</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Providers (6)</h4>
+            <ul>
+              <li><code>RootProviders</code></li>
+              <li><code>BackgroundTasksProvider</code></li>
+              <li><code>RealtimeRefreshProvider</code></li>
+              <li><code>PipelineProgressProvider</code></li>
+              <li><code>ReviewProvider</code></li>
+              <li><code>SettingsProvider</code></li>
+            </ul>
           </div>
         </div>
 
-        <div class="callout callout-info">
-          <div class="callout-title">Fonctionnalit&eacute;s</div>
-          <ul>
-            <li><strong>Positionnement dynamique</strong> : Calcul automatique pour &eacute;viter les d&eacute;bordements</li>
-            <li><strong>React Portal</strong> : Rendu via <code>createPortal</code> (z-index 10002)</li>
-            <li><strong>Fermeture automatique</strong> : Click outside, Escape, scroll</li>
-            <li><strong>Accessibilit&eacute;</strong> : Attributs ARIA (<code>role="menu"</code>, <code>aria-expanded</code>)</li>
-          </ul>
+        <h2>Architecture de l'&Eacute;diteur CV</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture compl&egrave;te de l'&eacute;diteur de CV</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Page["PAGE CV"]
+        CvPage["Page CV (composant serveur)<br/>Charge les données du CV"]
+    end
+
+    subgraph Context["GESTION DE L'ETAT"]
+        CvProvider["Fournisseur de<br/>contexte CV"]
+        Reducer["Gestionnaire d'état<br/>du CV (actions de<br/>mise à jour)"]
+        AutoSave["Sauvegarde<br/>automatique (2s)"]
+    end
+
+    subgraph Editor["EDITEUR"]
+        Sections["Sections éditables<br/>(En-tête, Résumé, Expériences,<br/>Formation, Compétences,<br/>Langues, Projets, Extras)"]
+    end
+
+    subgraph Improvement["AMELIORATION"]
+        Panel["Panneau d'amélioration<br/>du CV"]
+        Score["Score de<br/>correspondance"]
+        Suggestions["Suggestions<br/>d'amélioration"]
+    end
+
+    subgraph Review["REVUE IA"]
+        ReviewP["Gestionnaire de<br/>revue des modifications"]
+        Highlights["Mise en surbrillance<br/>des modifications"]
+        Diff["Comparaison<br/>avant / après"]
+        Actions["Actions de revue<br/>(accepter / rejeter)"]
+    end
+
+    subgraph TopBarCV["BARRE DE NAVIGATION CV"]
+        TB["Barre de<br/>navigation"]
+        Modals["Fenêtres modales<br/>(Export, Import, Génération)"]
+    end
+
+    CvPage --> CvProvider
+    CvProvider --> Reducer
+    CvProvider --> Editor
+    CvProvider --> AutoSave
+    AutoSave -->|"Sauvegarde via API"| CvPage
+    Editor --> Sections
+    CvProvider --> Improvement
+    Improvement --> Panel
+    Panel --> Score
+    Panel --> Suggestions
+    CvProvider --> Review
+    Review --> ReviewP
+    ReviewP --> Highlights
+    ReviewP --> Diff
+    ReviewP --> Actions
+    CvProvider --> TopBarCV
+    TopBarCV --> TB
+    TB --> Modals
+
+    style CvPage fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CvProvider fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Reducer fill:#6366f1,stroke:#4f46e5,color:#fff
+    style AutoSave fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Sections fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Panel fill:#22c55e,stroke:#16a34a,color:#fff
+    style Score fill:#22c55e,stroke:#16a34a,color:#fff
+    style Suggestions fill:#22c55e,stroke:#16a34a,color:#fff
+    style ReviewP fill:#f59e0b,stroke:#d97706,color:#fff
+    style Highlights fill:#f59e0b,stroke:#d97706,color:#fff
+    style Diff fill:#f59e0b,stroke:#d97706,color:#fff
+    style Actions fill:#f59e0b,stroke:#d97706,color:#fff
+    style TB fill:#64748b,stroke:#475569,color:#fff
+    style Modals fill:#64748b,stroke:#475569,color:#fff
+          </div>
         </div>
 
         <h2>Patterns</h2>
 
         <h3>Server vs Client Components</h3>
 
-        <pre><code>// Server Component (par défaut)
+        <pre><code class="language-jsx">// Server Component (par d&eacute;faut dans Next.js 16)
 // app/dashboard/page.jsx
 export default async function DashboardPage() {
   const session = await auth();
@@ -303,10 +796,10 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div>
-      <h1>Mes CV</h1>
-      <CvList cvFiles={cvFiles} /> {/* Client Component */}
-    </div>
+    &lt;div&gt;
+      &lt;h1&gt;Mes CV&lt;/h1&gt;
+      &lt;CvList cvFiles={cvFiles} /&gt; {/* Client Component */}
+    &lt;/div&gt;
   );
 }
 
@@ -320,19 +813,19 @@ export function CvList({ cvFiles }) {
   const [selected, setSelected] = useState(null);
 
   return (
-    <ul>
-      {cvFiles.map(cv => (
-        <li key={cv.id} onClick={() => setSelected(cv.id)}>
+    &lt;ul&gt;
+      {cvFiles.map(cv =&gt; (
+        &lt;li key={cv.id} onClick={() =&gt; setSelected(cv.id)}&gt;
           {cv.filename}
-        </li>
+        &lt;/li&gt;
       ))}
-    </ul>
+    &lt;/ul&gt;
   );
 }</code></pre>
 
-        <h3>Context Pattern</h3>
+        <h3>Context Pattern (CvContext)</h3>
 
-        <pre><code>// components/cv/CvContext.jsx
+        <pre><code class="language-jsx">// components/cv/CvContext.jsx
 'use client';
 
 import { createContext, useContext, useReducer } from 'react';
@@ -347,9 +840,9 @@ export function CvProvider({ children, initialCv }) {
   });
 
   return (
-    <CvContext.Provider value={{ state, dispatch }}>
+    &lt;CvContext.Provider value={{ state, dispatch }}&gt;
       {children}
-    </CvContext.Provider>
+    &lt;/CvContext.Provider&gt;
   );
 }
 
@@ -364,11 +857,7 @@ export function useCv() {
 function cvReducer(state, action) {
   switch (action.type) {
     case 'UPDATE_HEADER':
-      return {
-        ...state,
-        cv: { ...state.cv, header: action.payload },
-        isDirty: true
-      };
+      return { ...state, cv: { ...state.cv, header: action.payload }, isDirty: true };
     case 'ADD_EXPERIENCE':
       return {
         ...state,
@@ -381,97 +870,146 @@ function cvReducer(state, action) {
         },
         isDirty: true
       };
-    // ...
+    case 'SAVED':
+      return { ...state, isDirty: false };
+    case 'SET_SAVING':
+      return { ...state, isSaving: action.payload };
     default:
       return state;
   }
 }</code></pre>
 
-        <h3>Hook Pattern</h3>
-
-        <pre><code>// hooks/useAutoSave.js
-'use client';
-
-import { useEffect, useRef } from 'react';
-import { useCv } from '@/components/cv/CvContext';
-
-export function useAutoSave(cvId, delay = 2000) {
-  const { state, dispatch } = useCv();
-  const timeoutRef = useRef(null);
-
-  useEffect(() => {
-    if (!state.isDirty) return;
-
-    // Debounce
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(async () => {
-      dispatch({ type: 'SET_SAVING', payload: true });
-
-      try {
-        await fetch(`/api/cv/${cvId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(state.cv)
-        });
-
-        dispatch({ type: 'SAVED' });
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-      } finally {
-        dispatch({ type: 'SET_SAVING', payload: false });
-      }
-    }, delay);
-
-    return () => clearTimeout(timeoutRef.current);
-  }, [state.cv, state.isDirty, cvId, delay, dispatch]);
-}</code></pre>
-
-        <h2>Hooks Personnalisés</h2>
+        <h2>Hooks Personnalis&eacute;s</h2>
 
         <table>
           <thead>
             <tr>
               <th>Hook</th>
               <th>Description</th>
+              <th>Fichier</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><code>useCv()</code></td>
-              <td>Accès au context CV</td>
+              <td>Acc&egrave;s au context CV (state + dispatch)</td>
+              <td><code>components/cv/CvContext.jsx</code></td>
             </tr>
             <tr>
               <td><code>useAutoSave()</code></td>
-              <td>Sauvegarde automatique avec debounce</td>
+              <td>Sauvegarde automatique avec debounce (2s par d&eacute;faut)</td>
+              <td><code>hooks/useAutoSave.js</code></td>
             </tr>
             <tr>
               <td><code>useTaskProgress()</code></td>
-              <td>Suivi progression SSE</td>
+              <td>Suivi de progression des t&acirc;ches background via SSE</td>
+              <td><code>hooks/useTaskProgress.js</code></td>
             </tr>
             <tr>
               <td><code>useSubscription()</code></td>
-              <td>État abonnement courant</td>
+              <td>&Eacute;tat de l'abonnement courant (plan, status, p&eacute;riode)</td>
+              <td><code>hooks/useSubscription.js</code></td>
             </tr>
             <tr>
               <td><code>useCredits()</code></td>
-              <td>Solde et transactions</td>
+              <td>Solde et transactions de cr&eacute;dits</td>
+              <td><code>hooks/useCredits.js</code></td>
             </tr>
             <tr>
               <td><code>useOpenAICostsData()</code></td>
-              <td>Données coûts admin</td>
+              <td>Donn&eacute;es de co&ucirc;ts OpenAI pour le dashboard admin</td>
+              <td><code>hooks/useOpenAICostsData.js</code></td>
+            </tr>
+            <tr>
+              <td><code>useCreditCost()</code></td>
+              <td>Co&ucirc;t en cr&eacute;dits d'une feature sp&eacute;cifique</td>
+              <td><code>lib/creditCosts/CreditCostsContext.jsx</code></td>
+            </tr>
+            <tr>
+              <td><code>useLanguage()</code></td>
+              <td>Langue courante et fonction de changement (FR/EN)</td>
+              <td><code>lib/language/LanguageContext.jsx</code></td>
             </tr>
           </tbody>
         </table>
 
         <h2>Conventions</h2>
 
-        <ul>
-          <li><strong>Fichiers</strong> : PascalCase pour composants (<code>CvEditor.jsx</code>)</li>
-          <li><strong>Exports</strong> : Named exports pour composants réutilisables</li>
-          <li><strong>'use client'</strong> : Uniquement quand nécessaire (state, effects, events)</li>
-          <li><strong>Props</strong> : Destructuring avec valeurs par défaut</li>
-          <li><strong>Styles</strong> : Tailwind CSS classes, pas de CSS modules</li>
-        </ul>
+        <div class="callout callout-info">
+          <div class="callout-title">R&egrave;gles de d&eacute;veloppement</div>
+          <ul>
+            <li><strong>Nommage fichiers</strong> : PascalCase pour les composants (<code>CvEditor.jsx</code>, <code>MatchScore.jsx</code>)</li>
+            <li><strong>Exports</strong> : Named exports pour les composants r&eacute;utilisables, default exports pour les pages</li>
+            <li><strong><code>'use client'</code></strong> : Uniquement quand n&eacute;cessaire (state, effects, event handlers, hooks browser)</li>
+            <li><strong>Props</strong> : Destructuring avec valeurs par d&eacute;faut (<code>{ title = 'Default', items = [] }</code>)</li>
+            <li><strong>Styles</strong> : Classes Tailwind CSS exclusivement, jamais de CSS modules ni de styles inline</li>
+            <li><strong>Ic&ocirc;nes</strong> : Lucide React import&eacute;es individuellement (<code>import { Pencil, Trash2 } from 'lucide-react'</code>)</li>
+            <li><strong>Internationalisation</strong> : Utilisation du hook <code>useLanguage()</code> et de la fonction <code>t()</code> pour tous les textes affich&eacute;s</li>
+          </ul>
+        </div>
+
+        <h2>ContextMenu (D&eacute;taill&eacute;)</h2>
+
+        <p>Menu contextuel r&eacute;utilisable avec ic&ocirc;ne kebab, rempla&ccedil;ant les boutons edit/delete par un menu unifi&eacute;.</p>
+
+        <pre><code class="language-jsx">import ContextMenu from '@/components/ui/ContextMenu';
+import { Pencil, Trash2 } from 'lucide-react';
+
+&lt;ContextMenu
+  items={[
+    {
+      icon: Pencil,
+      label: t('common.edit'),
+      onClick: () =&gt; setEditMode(true)
+    },
+    {
+      icon: Trash2,
+      label: t('common.delete'),
+      onClick: handleDelete,
+      danger: true
+    }
+  ]}
+/&gt;</code></pre>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Fonctionnalit&eacute;s du ContextMenu</div>
+          <ul>
+            <li><strong>Positionnement dynamique</strong> : Calcul automatique pour &eacute;viter les d&eacute;bordements de viewport</li>
+            <li><strong>React Portal</strong> : Rendu via <code>createPortal</code> (z-index 10002)</li>
+            <li><strong>Fermeture automatique</strong> : Click outside, touche Escape, scroll de la page</li>
+            <li><strong>Accessibilit&eacute;</strong> : Attributs ARIA complets (<code>role="menu"</code>, <code>aria-expanded</code>, <code>aria-haspopup</code>)</li>
+          </ul>
+        </div>
+
+        <h2>Organisation des Fichiers</h2>
+
+        <pre><code class="language-bash">components/
+├── layout/              # 8 composants : ConditionalTopBar, Footer, Section...
+├── topbar/              # 34 composants : TopBar, Dropdowns, Portals, Modales
+├── cv/
+│   ├── sections/        # 8 composants : Header, Summary, Experience, Skills...
+│   ├── improvement/     # 13 composants : CVImprovementPanel, MatchScore...
+│   └── review/          # 13 composants : ChangeHighlight, InlineDiff...
+├── admin/               # 68 composants
+│   ├── tabs/            # 12 onglets principaux
+│   ├── charts/          # KPICard, MRRHistoryChart, PlanDistributionChart...
+│   ├── email/           # &Eacute;diteur, liste, pr&eacute;visualisation templates
+│   ├── users/           # Liste, d&eacute;tail, actions utilisateurs
+│   └── settings/        # Navigation, formulaires, zones danger
+├── ui/                  # 19 composants : Modal, ContextMenu, Tooltip...
+├── subscription/        # 15 composants : Plans, Cr&eacute;dits, Factures
+│   └── plan-comparison/ # PlanCard, UpgradeModal, DowngradeModals
+├── onboarding/          # 20 composants : OnboardingModal (820+ lignes)...
+├── auth/                # 5 composants : AuthScreen, PasswordStrength...
+├── notifications/       # 2 composants : Container, Provider
+├── feedback/            # 3 composants : Button, Modal, StarRating
+├── account/             # 8 composants : Settings, LinkedAccounts...
+├── empty-state/         # 4 composants : EmptyState, NoCvMessage...
+├── cookies/             # 4 composants : Banner, Settings, ConsentHistory...
+├── header/              # 6 composants : PageHeader, BreadcrumbNav...
+├── task-queue/          # 2 composants : Dropdown, Modal
+├── pages/               # 2 composants : LandingPage, PricingPage
+└── providers/           # 6 composants : RootProviders, BackgroundTasks...</code></pre>
       </div>
     </main>
   </div>

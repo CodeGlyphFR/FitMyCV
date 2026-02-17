@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,106 +26,308 @@
           <span>Admin</span>
         </div>
 
-
-        <h1>Endpoints Admin</h1>
+        <h1>Endpoints Admin &amp; Analytics</h1>
         <p class="lead">
-          Endpoints reserves aux administrateurs.
+          <strong>65 endpoints</strong> r&eacute;serv&eacute;s aux administrateurs : 53 endpoints <code>/api/admin/*</code> et 12 endpoints <code>/api/analytics/*</code>. Tous v&eacute;rifient <code>session.user.role === 'ADMIN'</code>.
         </p>
 
         <div class="callout callout-warning">
-          <div class="callout-title">Acces restreint</div>
-          <p>Ces endpoints necessitent le role <code>admin</code> sur le compte utilisateur.</p>
+          <div class="callout-title">Acc&egrave;s restreint</div>
+          <p>Tous les endpoints ci-dessous n&eacute;cessitent le r&ocirc;le <code>ADMIN</code>. Retourne <code>403 Forbidden</code> si le r&ocirc;le est insuffisant.</p>
         </div>
 
-        <h2>Utilisateurs</h2>
+        <!-- ============================================= -->
+        <!-- USERS -->
+        <!-- ============================================= -->
+        <h2>Utilisateurs (4 endpoints)</h2>
 
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/admin/users</code></td>
-              <td>GET</td>
-              <td>Liste des utilisateurs</td>
-            </tr>
-            <tr>
-              <td><code>/api/admin/users/[id]</code></td>
-              <td>GET/PUT/DELETE</td>
-              <td>Gestion utilisateur</td>
-            </tr>
-            <tr>
-              <td><code>/api/admin/users/[id]/credits</code></td>
-              <td>POST</td>
-              <td>Modifier credits</td>
-            </tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/users</code></td><td>Liste pagin&eacute;e des utilisateurs avec filtres</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/users</code></td><td>Cr&eacute;er un utilisateur manuellement</td></tr>
+            <tr><td><span class="badge badge-primary">PATCH</span></td><td><code>/api/admin/users/[userId]</code></td><td>Modifier un utilisateur (r&ocirc;le, email, validation)</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/users/[userId]</code></td><td>Supprimer un utilisateur</td></tr>
           </tbody>
         </table>
 
-        <h2>Configuration</h2>
-
+        <h4>GET /api/admin/users &mdash; Query Params</h4>
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/admin/plans</code></td>
-              <td>GET/POST/PUT</td>
-              <td>Gestion plans</td>
-            </tr>
-            <tr>
-              <td><code>/api/admin/settings</code></td>
-              <td>GET/PUT</td>
-              <td>Parametres système</td>
-            </tr>
-            <tr>
-              <td><code>/api/admin/stats</code></td>
-              <td>GET</td>
-              <td>Statistiques globales</td>
-            </tr>
+            <tr><td><code>page</code></td><td>number</td><td>Num&eacute;ro de page (d&eacute;faut: 1)</td></tr>
+            <tr><td><code>limit</code></td><td>number</td><td>Items par page (d&eacute;faut: 10, max: 50)</td></tr>
+            <tr><td><code>role</code></td><td>string</td><td>Filtre par r&ocirc;le : <code>USER</code>, <code>ADMIN</code></td></tr>
+            <tr><td><code>emailStatus</code></td><td>string</td><td>Filtre : <code>verified</code>, <code>unverified</code></td></tr>
+            <tr><td><code>search</code></td><td>string</td><td>Recherche par nom/pr&eacute;nom</td></tr>
+            <tr><td><code>sortBy</code></td><td>string</td><td>Tri : <code>newest</code>, <code>oldest</code></td></tr>
           </tbody>
         </table>
 
-        <h2>Documentation</h2>
+        <h4>PATCH /api/admin/users/[userId] &mdash; Actions</h4>
+        <pre><code class="language-json">// Modifier le r&ocirc;le
+{ "action": "updateRole", "role": "ADMIN" }
+
+// Modifier l'email
+{ "action": "updateEmail", "email": "new@email.com" }
+
+// Valider manuellement l'email
+{ "action": "validateEmail" }</code></pre>
+
+        <!-- ============================================= -->
+        <!-- SUBSCRIPTION PLANS -->
+        <!-- ============================================= -->
+        <h2>Plans d'Abonnement (4 endpoints)</h2>
 
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/admin/docs/[[...path]]</code></td>
-              <td>GET</td>
-              <td>Servir la documentation HTML technique</td>
-            </tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/subscription-plans</code></td><td>Liste de tous les plans avec limitations</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/subscription-plans</code></td><td>Cr&eacute;er un nouveau plan (synchro Stripe)</td></tr>
+            <tr><td><span class="badge badge-primary">PATCH</span></td><td><code>/api/admin/subscription-plans/[id]</code></td><td>Modifier un plan existant</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/subscription-plans/[id]</code></td><td>Supprimer un plan</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- SUBSCRIPTION MODE -->
+        <!-- ============================================= -->
+        <h2>Mode Abonnement (2 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/subscription-mode</code></td><td>&Eacute;tat du mode abonnement + stats abonn&eacute;s</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/subscription-mode</code></td><td>Basculer entre subscription/credits/hybrid</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Annulation Massive (2 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/cancel-all-subscriptions</code></td><td>Pr&eacute;visualiser les abonnements &agrave; annuler</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/cancel-all-subscriptions</code></td><td>Annuler tous les abonnements actifs</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- CREDIT PACKS -->
+        <!-- ============================================= -->
+        <h2>Packs de Cr&eacute;dits (4 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/credit-packs</code></td><td>Liste de tous les packs</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/credit-packs</code></td><td>Cr&eacute;er un pack de cr&eacute;dits</td></tr>
+            <tr><td><span class="badge badge-primary">PATCH</span></td><td><code>/api/admin/credit-packs/[id]</code></td><td>Modifier un pack</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/credit-packs/[id]</code></td><td>Supprimer un pack</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- OPENAI -->
+        <!-- ============================================= -->
+        <h2>Monitoring OpenAI (9 endpoints)</h2>
+
+        <h3>Solde &amp; Pricing</h3>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/openai-balance</code></td><td>Solde du compte OpenAI</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/openai-pricing</code></td><td>Grille tarifaire des mod&egrave;les IA</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/openai-pricing</code></td><td>Ajouter/modifier un prix mod&egrave;le</td></tr>
+            <tr><td><span class="badge badge-primary">PATCH</span></td><td><code>/api/admin/openai-pricing</code></td><td>Mettre &agrave; jour un prix</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/openai-pricing</code></td><td>Supprimer un prix mod&egrave;le</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Alertes</h3>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/openai-alerts</code></td><td>Liste des alertes configur&eacute;es</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/openai-alerts</code></td><td>Cr&eacute;er une alerte de seuil</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/openai-alerts</code></td><td>Supprimer une alerte</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/openai-alerts/triggered</code></td><td>Alertes d&eacute;clench&eacute;es r&eacute;cemment</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- EMAIL -->
+        <!-- ============================================= -->
+        <h2>Gestion Email (12 endpoints)</h2>
+
+        <h3>Templates</h3>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/email-templates</code></td><td>Liste de tous les templates</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/email-templates</code></td><td>Cr&eacute;er un template</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/email-templates/[id]</code></td><td>D&eacute;tail d'un template</td></tr>
+            <tr><td><span class="badge badge-primary">PUT</span></td><td><code>/api/admin/email-templates/[id]</code></td><td>Modifier un template</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/email-templates/[id]</code></td><td>Supprimer un template</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/email-templates/[id]/activate</code></td><td>Activer un template</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/email-templates/[id]/activate</code></td><td>D&eacute;sactiver un template</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/email-templates/[id]/set-default</code></td><td>D&eacute;finir comme template par d&eacute;faut</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/email-templates/[id]/set-default</code></td><td>Retirer le statut par d&eacute;faut</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Triggers</h3>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/email-triggers</code></td><td>Liste des triggers d'envoi</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/email-triggers</code></td><td>Cr&eacute;er un trigger</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/email-triggers/[name]/templates</code></td><td>Templates associ&eacute;s &agrave; un trigger</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/email-triggers/[name]/templates</code></td><td>Associer un template &agrave; un trigger</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Logs, Stats &amp; Test</h3>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/email-logs</code></td><td>Historique des emails envoy&eacute;s</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/email-stats</code></td><td>Statistiques d'envoi (taux d'ouverture, etc.)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/email-test</code></td><td>Envoyer un email de test</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- SETTINGS -->
+        <!-- ============================================= -->
+        <h2>Param&egrave;tres Syst&egrave;me (5 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/settings</code></td><td>Tous les param&egrave;tres (filtrable par <code>category</code>)</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/settings</code></td><td>Cr&eacute;er/modifier un param&egrave;tre</td></tr>
+            <tr><td><span class="badge badge-primary">PUT</span></td><td><code>/api/admin/settings/[id]</code></td><td>Modifier un param&egrave;tre sp&eacute;cifique</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/settings/[id]</code></td><td>Supprimer un param&egrave;tre</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/settings/history</code></td><td>Historique des modifications de settings</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- REVENUE & COSTS -->
+        <!-- ============================================= -->
+        <h2>Revenue &amp; Co&ucirc;ts (2 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/revenue</code></td><td>M&eacute;triques de revenus (MRR, ARR, ARPU, churn). Params : <code>period</code>, <code>year</code></td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/plan-costs</code></td><td>Co&ucirc;ts OpenAI par plan d'abonnement</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- ONBOARDING ADMIN -->
+        <!-- ============================================= -->
+        <h2>Onboarding Admin (3 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/onboarding/analytics</code></td><td>Analytics onboarding (taux compl&eacute;tion, dropoff)</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/onboarding/users</code></td><td>Utilisateurs et leur statut onboarding</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/onboarding/reset</code></td><td>R&eacute;initialiser l'onboarding d'un utilisateur</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- MAINTENANCE & OTHER -->
+        <!-- ============================================= -->
+        <h2>Maintenance &amp; Divers (4 endpoints)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/maintenance/active-sessions</code></td><td>Sessions actives sur le serveur</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/admin/mutate</code></td><td>Mutation Prisma g&eacute;n&eacute;rique (admin only)</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/public-images</code></td><td>Lister les images publiques uploadées</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/admin/telemetry/cleanup</code></td><td>Nettoyer les donn&eacute;es de t&eacute;l&eacute;m&eacute;trie anciennes</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- DOCS -->
+        <!-- ============================================= -->
+        <h2>Documentation (1 endpoint)</h2>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/admin/docs/[[...path]]</code></td><td>Servir la documentation HTML technique</td></tr>
           </tbody>
         </table>
 
         <div class="callout callout-info">
-          <div class="callout-title">Sécurité</div>
-          <p>Protection contre path traversal - les chemins sont limités au dossier <code>docs/html-docs/</code>.</p>
+          <div class="callout-title">S&eacute;curit&eacute;</div>
+          <p>Protection contre path traversal : les chemins sont limit&eacute;s au dossier <code>docs/html-docs/</code>. Content-Types support&eacute;s : HTML, CSS, JS, PNG, JPG, GIF, SVG, WOFF, WOFF2, TTF, EOT.</p>
         </div>
 
-        <h3>Content-Types supportés</h3>
-        <p>HTML, CSS, JS, PNG, JPG, GIF, SVG, WOFF, WOFF2, TTF, EOT</p>
+        <!-- ============================================= -->
+        <!-- ANALYTICS -->
+        <!-- ============================================= -->
+        <h2>Analytics (12 endpoints)</h2>
 
-        <h3>Exemples</h3>
-        <pre><code class="language-http">GET /api/admin/docs/index.html
-GET /api/admin/docs/assets/css/style.css
-GET /api/admin/docs/01-architecture/overview.html</code></pre>
+        <p>Endpoints d&eacute;di&eacute;s au dashboard analytics admin, sous <code>/api/analytics/*</code>.</p>
+
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/summary</code></td><td>R&eacute;sum&eacute; global (KPIs, totaux)</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/users</code></td><td>Statistiques utilisateurs</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/users/[userId]/summary</code></td><td>R&eacute;sum&eacute; pour un utilisateur sp&eacute;cifique</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/events</code></td><td>&Eacute;v&eacute;nements par type et p&eacute;riode</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/features</code></td><td>Utilisation par feature</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/errors</code></td><td>Erreurs applicatives</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/openai-usage</code></td><td>Utilisation OpenAI (tokens, co&ucirc;ts)</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/cv-generation-costs</code></td><td>Co&ucirc;ts de g&eacute;n&eacute;ration CV par p&eacute;riode</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/cv-improvement-costs</code></td><td>Co&ucirc;ts d'am&eacute;lioration CV par p&eacute;riode</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/analytics/feedbacks</code></td><td>Liste des feedbacks utilisateurs</td></tr>
+            <tr><td><span class="badge badge-primary">PATCH</span></td><td><code>/api/analytics/feedbacks</code></td><td>Modifier le statut d'un feedback</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/analytics/feedbacks</code></td><td>Supprimer un feedback</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================= -->
+        <!-- SUMMARY -->
+        <!-- ============================================= -->
+        <h2>R&eacute;capitulatif</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Groupe</th>
+              <th>Pr&eacute;fixe</th>
+              <th>Routes</th>
+              <th>Endpoints</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Utilisateurs</td><td><code>/api/admin/users/*</code></td><td>2</td><td>4</td></tr>
+            <tr><td>Plans</td><td><code>/api/admin/subscription-plans/*</code></td><td>2</td><td>4</td></tr>
+            <tr><td>Mode Abonnement</td><td><code>/api/admin/subscription-mode</code></td><td>1</td><td>2</td></tr>
+            <tr><td>Annulation Massive</td><td><code>/api/admin/cancel-all-subscriptions</code></td><td>1</td><td>2</td></tr>
+            <tr><td>Cr&eacute;dits</td><td><code>/api/admin/credit-packs/*</code></td><td>2</td><td>4</td></tr>
+            <tr><td>OpenAI</td><td><code>/api/admin/openai-*</code></td><td>4</td><td>9</td></tr>
+            <tr><td>Email</td><td><code>/api/admin/email-*</code></td><td>8</td><td>16</td></tr>
+            <tr><td>Settings</td><td><code>/api/admin/settings/*</code></td><td>3</td><td>5</td></tr>
+            <tr><td>Revenue &amp; Co&ucirc;ts</td><td><code>/api/admin/revenue, plan-costs</code></td><td>2</td><td>2</td></tr>
+            <tr><td>Onboarding</td><td><code>/api/admin/onboarding/*</code></td><td>3</td><td>3</td></tr>
+            <tr><td>Maintenance</td><td><code>/api/admin/maintenance/*, mutate, etc.</code></td><td>4</td><td>4</td></tr>
+            <tr><td>Docs</td><td><code>/api/admin/docs/*</code></td><td>1</td><td>1</td></tr>
+            <tr><td>Analytics</td><td><code>/api/analytics/*</code></td><td>10</td><td>12</td></tr>
+            <tr><td><strong>Total</strong></td><td></td><td><strong>43</strong></td><td><strong>68</strong></td></tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>
@@ -146,7 +342,6 @@ GET /api/admin/docs/01-architecture/overview.html</code></pre>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

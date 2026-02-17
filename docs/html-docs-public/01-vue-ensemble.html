@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue d'ensemble & Architecture | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="./index.html">Accueil</a>
+          <span>/</span>
+          <span>Vue d'ensemble & Architecture</span>
+        </div>
+
+        <h1>Vue d'ensemble & Architecture</h1>
+        <p class="lead">
+          FitMyCV.io est une plateforme SaaS de nouvelle génération qui permet de créer, optimiser et exporter des CV personnalisés grâce à l'intelligence artificielle. Cette page présente l'architecture globale du système, ses choix techniques et les principes d'ingénierie qui garantissent fiabilité et évolutivité.
+        </p>
+
+        <!-- ============================================================ -->
+        <!-- METRIQUES CLES                                               -->
+        <!-- ============================================================ -->
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>175+</h4>
+            <p>composants d'interface</p>
+          </div>
+          <div class="card">
+            <h4>123</h4>
+            <p>points d'accès API</p>
+          </div>
+          <div class="card">
+            <h4>34</h4>
+            <p>modules métier</p>
+          </div>
+          <div class="card">
+            <h4>5</h4>
+            <p>pipelines IA spécialisés</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- ARCHITECTURE MONOLITHIQUE MODULAIRE                          -->
+        <!-- ============================================================ -->
+
+        <h2>Un monolithe modulaire par choix</h2>
+
+        <p>
+          FitMyCV.io adopte une <strong>architecture monolithique modulaire</strong> &mdash; un choix délibéré qui combine la simplicité de déploiement d'un monolithe avec la séparation rigoureuse des responsabilités d'une architecture modulaire. Chaque domaine fonctionnel est isolé dans son propre module avec une interface publique claire, garantissant un couplage faible et une haute cohésion.
+        </p>
+
+        <p>
+          Ce choix architectural offre trois avantages majeurs :
+        </p>
+
+        <ul>
+          <li><strong>Déploiement simplifié</strong> &mdash; Une seule unité de déploiement, sans orchestration de microservices.</li>
+          <li><strong>Cohérence transactionnelle</strong> &mdash; Les opérations critiques (facturation, génération IA, gestion de crédits) s'exécutent dans un contexte partagé, sans synchronisation distribuée.</li>
+          <li><strong>Modularité interne</strong> &mdash; 34 modules indépendants organisent la logique métier par domaine, permettant de faire évoluer chaque partie sans impacter les autres.</li>
+        </ul>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Compromis assumé</div>
+          <p>La file de tâches asynchrones est gérée en mémoire (sans système de messaging externe), ce qui simplifie considérablement l'infrastructure mais limite la mise à l'échelle horizontale. Ce compromis est délibéré : il correspond parfaitement aux besoins actuels de la plateforme tout en restant évoluable si nécessaire.</p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- ARCHITECTURE EN 4 COUCHES                                    -->
+        <!-- ============================================================ -->
+
+        <h2>Architecture en 4 couches</h2>
+
+        <p>
+          Le système est structuré en quatre couches distinctes, chacune ayant un périmètre de responsabilité clairement défini. Ce découpage garantit que les évolutions d'une couche n'impactent pas les autres.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Vue globale de l'architecture</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Presentation["PRÉSENTATION"]
+        RC["175+ composants<br/>d'interface"]
+        TW["Styles et animations"]
+    end
+
+    subgraph APILayer["COUCHE API"]
+        AR["123 points d'accès<br/>répartis en 7 domaines"]
+    end
+
+    subgraph Business["LOGIQUE MÉTIER"]
+        subgraph Modules["34 MODULES"]
+            CVC["Moteur CV"]
+            OAI["Intelligence Artificielle"]
+            FEAT["5 pipelines IA"]
+            SUB["Abonnements<br/>et Crédits"]
+            BJ["Tâches asynchrones"]
+        end
+    end
+
+    subgraph Data["ACCÈS AUX DONNÉES"]
+        PR["Couche de persistance"]
+        Models["34 entités en 9 domaines"]
+    end
+
+    subgraph Infra["SERVICES EXTERNES"]
+        PG[("Base de données")]
+        OpenAI["Moteur IA"]
+        Stripe["Paiements"]
+        Email["Service d'emails"]
+    end
+
+    Presentation --> APILayer
+    APILayer --> Business
+    Business --> Data
+    Data --> PG
+    Business --> OpenAI
+    Business --> Stripe
+    Business --> Email
+
+    style RC fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style TW fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style AR fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CVC fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style OAI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FEAT fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SUB fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BJ fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PR fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Models fill:#14b8a6,stroke:#0d9488,color:#fff
+    style PG fill:#14b8a6,stroke:#0d9488,color:#fff
+    style OpenAI fill:#64748b,stroke:#475569,color:#fff
+    style Stripe fill:#f59e0b,stroke:#d97706,color:#fff
+    style Email fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Couche</th>
+              <th>Rôle</th>
+              <th>Envergure</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Présentation</strong></td>
+              <td>Interface utilisateur réactive avec rendu hybride (serveur et client)</td>
+              <td>175+ composants</td>
+            </tr>
+            <tr>
+              <td><strong>API</strong></td>
+              <td>Points d'accès sécurisés avec authentification, validation et formatage</td>
+              <td>123 routes en 7 domaines</td>
+            </tr>
+            <tr>
+              <td><strong>Logique métier</strong></td>
+              <td>Modules autonomes couvrant l'ensemble des fonctionnalités</td>
+              <td>34 modules, 5 pipelines IA</td>
+            </tr>
+            <tr>
+              <td><strong>Données</strong></td>
+              <td>Persistance relationnelle avec modélisation orientée domaine</td>
+              <td>34 entités en 9 domaines</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================================ -->
+        <!-- FLUX DE DONNEES                                              -->
+        <!-- ============================================================ -->
+
+        <h2>Flux de données</h2>
+
+        <p>
+          Chaque interaction utilisateur suit un flux standardisé à travers les couches du système. Ce diagramme illustre le parcours typique d'une requête, de l'interface jusqu'aux services externes.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Parcours d'une requête</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant C as Interface utilisateur
+    participant A as Couche API
+    participant L as Modules métier
+    participant D as Couche de données
+    participant DB as Base de données
+    participant E as Services externes
+
+    C->>A: Requête
+    A->>A: Authentification et validation
+    A->>L: Logique métier
+    L->>D: Lecture / écriture
+    D->>DB: Requête
+    DB-->>D: Résultat
+    L->>E: IA / Paiement / Email
+    E-->>L: Réponse
+    L-->>A: Données traitées
+    A-->>C: Réponse
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 6 DOMAINES FONCTIONNELS                                      -->
+        <!-- ============================================================ -->
+
+        <h2>6 domaines fonctionnels</h2>
+
+        <p>
+          La logique métier est structurée en 34 modules indépendants, organisés par domaine fonctionnel. Chaque module possède son propre périmètre et expose uniquement une interface publique, garantissant une séparation nette des responsabilités.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Authentification & Sécurité</h4>
+            <p>Connexion multi-fournisseur (email, Google, GitHub, Apple), validation des fichiers uploadés, protection anti-bot, conformité RGPD et gestion des consentements.</p>
+          </div>
+
+          <div class="card">
+            <h4>Moteur CV</h4>
+            <p>Gestion complète du cycle de vie des CV : stockage structuré au format JSON, versioning automatique, scoring d'adéquation CV/offre, traduction multilingue (4 langues) et export multi-format.</p>
+          </div>
+
+          <div class="card">
+            <h4>Intelligence Artificielle</h4>
+            <p>5 pipelines IA spécialisés : adaptation de CV selon une offre, optimisation de contenu, import PDF intelligent, génération depuis un intitulé de poste, et création de templates. Chaque pipeline utilise des appels IA parallélisés avec des réponses validées par schéma.</p>
+          </div>
+
+          <div class="card">
+            <h4>Abonnements & Crédits</h4>
+            <p>Système de monétisation hybride : abonnements avec limites par fonctionnalité et crédits à l'unité, synchronisé avec la plateforme de paiement. Remboursement automatique en cas d'échec.</p>
+          </div>
+
+          <div class="card">
+            <h4>Traitement asynchrone</h4>
+            <p>File de tâches asynchrones avec suivi temps réel, retry automatique et événements de progression pour les opérations longues (génération IA, export, traduction).</p>
+          </div>
+
+          <div class="card">
+            <h4>Communication & Monitoring</h4>
+            <p>Emails transactionnels avec templates dynamiques, télémétrie d'usage et suivi des coûts IA, analytics, et internationalisation complète de l'interface en 4 langues.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- DEPENDANCES ENTRE MODULES                                    -->
+        <!-- ============================================================ -->
+
+        <h2>Dépendances entre domaines</h2>
+
+        <p>
+          Le graphe de dépendances entre les principaux domaines suit un flux unidirectionnel &mdash; aucune dépendance circulaire. C'est le signe d'une architecture saine où chaque domaine peut évoluer indépendamment.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de dépendances entre domaines</div>
+          <div class="mermaid">
+flowchart LR
+    auth["Authentification"] --> subscription["Abonnements"]
+    auth --> email["Communication"]
+
+    cv["Moteur CV"] --> data["Données"]
+
+    features["Pipelines IA"] --> ai["Intelligence Artificielle"]
+    features --> cv
+    features --> offers["Offres d'emploi"]
+
+    subscription --> data
+    subscription --> events["Événements"]
+
+    jobs["Tâches asynchrones"] --> subscription
+    jobs --> features
+
+    ai --> monitoring["Monitoring"]
+
+    style auth fill:#6366f1,stroke:#4f46e5,color:#fff
+    style subscription fill:#f59e0b,stroke:#d97706,color:#fff
+    style email fill:#64748b,stroke:#475569,color:#fff
+    style cv fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style data fill:#14b8a6,stroke:#0d9488,color:#fff
+    style features fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ai fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style offers fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style events fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style jobs fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style monitoring fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- PATTERNS D'INGENIERIE                                        -->
+        <!-- ============================================================ -->
+
+        <h2>Patterns d'ingénierie</h2>
+
+        <p>
+          Quatre patterns fondamentaux structurent l'ensemble du code et garantissent cohérence, fiabilité et maintenabilité à travers toute la plateforme.
+        </p>
+
+        <h3>1. API standardisée en 4 phases</h3>
+
+        <p>
+          Les 123 points d'accès suivent un protocole identique en quatre phases : <strong>vérification de l'identité</strong>, <strong>validation des données entrantes</strong>, <strong>exécution de la logique métier</strong>, puis <strong>réponse formatée avec gestion d'erreurs</strong>. Cette uniformité facilite la maintenance et l'ajout de nouvelles fonctionnalités.
+        </p>
+
+        <h3>2. Erreurs internationalisées par domaine</h3>
+
+        <p>
+          Le système d'erreurs utilise un mécanisme d'internationalisation par domaine. Chaque erreur est associée à une clé de traduction, permettant à l'interface d'afficher des messages localisés dans la langue de l'utilisateur. Les erreurs sont organisées en 8 domaines (authentification, CV, abonnement, tâches, extension, compte, etc.) avec support d'actions contextuelles &mdash; par exemple, une erreur de limite atteinte propose directement la mise à niveau du plan.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Organisation des erreurs par domaine</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Factory["Structure d'une erreur"]
+        direction TB
+        Key["Clé de traduction"]
+        Status["Code de statut HTTP"]
+        Params["Paramètres dynamiques"]
+        Action["Action suggérée<br/>et redirection"]
+    end
+
+    subgraph Domains["8 DOMAINES"]
+        Common["Erreurs communes"]
+        Auth["Authentification"]
+        Cv["CV"]
+        Sub["Abonnement"]
+        Bg["Tâches"]
+        Ext["Extension"]
+        Acct["Compte"]
+        Other["Autres"]
+    end
+
+    Factory --> Domains
+
+    style Key fill:#64748b,stroke:#475569,color:#fff
+    style Status fill:#64748b,stroke:#475569,color:#fff
+    style Params fill:#64748b,stroke:#475569,color:#fff
+    style Action fill:#64748b,stroke:#475569,color:#fff
+    style Common fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Auth fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Cv fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Sub fill:#f59e0b,stroke:#d97706,color:#fff
+    style Bg fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Ext fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Acct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Other fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <h3>3. Facturation robuste à double voie</h3>
+
+        <p>
+          Avant chaque action payante, le système exécute un protocole de sécurité en 5 étapes :
+        </p>
+
+        <ol>
+          <li><strong>Vérification des droits</strong> &mdash; Le plan d'abonnement et les quotas sont contrôlés.</li>
+          <li><strong>Débit préventif</strong> &mdash; Les crédits sont réservés <em>avant</em> l'exécution.</li>
+          <li><strong>Exécution de l'action</strong> &mdash; La génération IA ou l'opération demandée se lance.</li>
+          <li><strong>Mise à jour des compteurs</strong> &mdash; Les statistiques d'usage sont enregistrées.</li>
+          <li><strong>Remboursement automatique</strong> &mdash; En cas d'échec, les crédits sont restitués sans aucune intervention.</li>
+        </ol>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Zéro crédit perdu</div>
+          <p>Ce mécanisme garantit qu'aucun crédit n'est perdu en cas d'erreur technique. Le système supporte deux modes de facturation transparents : abonnement avec quotas par fonctionnalité, ou crédits à l'unité avec débit/remboursement automatique.</p>
+        </div>
+
+        <h3>4. Tâches asynchrones avec retry intelligent</h3>
+
+        <p>
+          Les opérations longues (génération de CV, traduction, export) sont exécutées de manière asynchrone avec un suivi complet en base de données. Chaque tâche suit un cycle de vie précis avec retry automatique en cas d'échec.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'une tâche asynchrone</div>
+          <div class="mermaid">
+flowchart TD
+    START(("*")) -->|"Création"| pending["En attente"]
+    pending -->|"Démarrage"| running["En cours"]
+    running -->|"Succès"| completed["Terminé"]
+    running -->|"Échec"| failed["En échec"]
+    failed -->|"Nouvel essai (max 3)"| running
+    completed --> END(("*"))
+    failed -->|"Maximum atteint"| END
+
+    style START fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style pending fill:#f59e0b,stroke:#d97706,color:#fff
+    style running fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style completed fill:#22c55e,stroke:#16a34a,color:#fff
+    style failed fill:#ef4444,stroke:#dc2626,color:#fff
+    style END fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <p>
+          La progression de chaque tâche est diffusée en temps réel vers l'interface utilisateur via une connexion persistante (Server-Sent Events), permettant un suivi en direct sans rechargement de page.
+        </p>
+
+        <!-- ============================================================ -->
+        <!-- CI/CD ET VERSIONING                                          -->
+        <!-- ============================================================ -->
+
+        <h2>Déploiement continu et versioning automatique</h2>
+
+        <p>
+          Le déploiement est entièrement automatisé. Chaque demande de fusion déclenche un environnement de pré-production complet avec une <strong>copie de la base de données de production</strong>, permettant de tester dans des conditions réelles avant toute mise en ligne.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline de déploiement automatisé</div>
+          <div class="mermaid">
+flowchart LR
+    PR["Demande de fusion"] --> PreProd["Pré-production<br/>avec copie de la base"]
+    PreProd --> Test["Tests en conditions<br/>réelles"]
+    Merge["Fusion validée"] --> Bump["Versioning<br/>automatique"]
+    Bump --> Deploy["Déploiement<br/>en production"]
+    Deploy --> Sync["Synchronisation<br/>de toutes les branches"]
+
+    style PR fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PreProd fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Test fill:#f59e0b,stroke:#d97706,color:#fff
+    style Merge fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Bump fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Deploy fill:#22c55e,stroke:#16a34a,color:#fff
+    style Sync fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <h3>Versioning sémantique à 4 niveaux</h3>
+
+        <p>
+          Le versioning est entièrement automatisé via un système à 4 niveaux (<strong>Major.Minor.Patch.Build</strong>) basé sur les conventions de messages de commit. À chaque fusion, un script analyse automatiquement tous les commits de la demande de fusion et applique le bon incrément de version :
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Niveau</th>
+              <th>Déclencheur</th>
+              <th>Signification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-error">Major</span></td>
+              <td>Changement incompatible</td>
+              <td>Modification cassante pour les utilisateurs existants</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">Minor</span></td>
+              <td>Nouvelle fonctionnalité</td>
+              <td>Capacité inédite ajoutée à la plateforme</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">Patch</span></td>
+              <td>Correction ou amélioration</td>
+              <td>Bug corrigé ou fonctionnalité existante améliorée</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">Build</span></td>
+              <td>Maintenance interne</td>
+              <td>Documentation, configuration, outillage</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          La version est propagée automatiquement dans l'ensemble de la plateforme après chaque fusion. Les branches de développement sont ensuite synchronisées pour maintenir la cohérence du code à travers tous les environnements.
+        </p>
+
+        <!-- ============================================================ -->
+        <!-- POINTS CLES                                                  -->
+        <!-- ============================================================ -->
+
+        <h2>Points clés à retenir</h2>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Monolithe modulaire</div>
+          <p>Bien que déployée comme une seule unité, l'application est rigoureusement séparée en 34 modules indépendants. Chaque module possède son propre périmètre fonctionnel et expose uniquement une interface publique &mdash; garantissant un couplage faible et une haute cohésion.</p>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">5 pipelines IA spécialisés</div>
+          <p>Cinq pipelines d'intelligence artificielle couvrent l'ensemble des besoins : adaptation de CV selon une offre, optimisation de contenu, import PDF intelligent, génération depuis un intitulé de poste, et création de templates. Chaque pipeline utilise des appels parallèles avec des réponses structurées et validées par schéma.</p>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Sorties IA structurées et fiables</div>
+          <p>Tous les appels à l'intelligence artificielle utilisent un système de sorties structurées avec validation par schéma, garantissant que chaque réponse de l'IA respecte un format prédéfini. Cela élimine les erreurs d'interprétation et assure la fiabilité des traitements automatisés.</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="./assets/js/layout.js?v=1.0.5"></script>
+  <script src="./assets/js/main.js?v=1.0.7"></script>
+</body>
+</html>

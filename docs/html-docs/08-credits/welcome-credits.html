@@ -3,82 +3,331 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Credits Bienvenue | FitMyCV.io</title>
+  <title>Cr&eacute;dits Bienvenue | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Credits</a>
+          <a href="./overview.html">Cr&eacute;dits</a>
           <span>/</span>
-          <span>Credits Bienvenue</span>
+          <span>Cr&eacute;dits Bienvenue</span>
         </div>
 
-
-        <h1>Credits Bienvenue</h1>
+        <h1>Cr&eacute;dits Bienvenue</h1>
         <p class="lead">
-          Attribution automatique de credits gratuits aux nouveaux utilisateurs.
+          L'attribution de cr&eacute;dits &agrave; l'inscription d&eacute;pend du <strong>mod&egrave;le &eacute;conomique actif</strong>. La fonction <code>assignDefaultPlan()</code> dans <code>lib/subscription/subscriptions.js</code> g&egrave;re les deux modes automatiquement.
         </p>
 
-        <h2>Configuration</h2>
+        <h2>Comportement selon le Mode</h2>
 
-        <div class="callout callout-info">
-          <div class="callout-title">Credits offerts</div>
-          <p><strong>5 credits</strong> sont automatiquement attribues a chaque nouvel utilisateur lors de son inscription.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Mode</th>
+              <th>Setting</th>
+              <th>Cr&eacute;dits bienvenue</th>
+              <th>Subscription cr&eacute;&eacute;e</th>
+              <th>CreditBalance cr&eacute;&eacute;e</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Abonnement + Cr&eacute;dits</strong></td>
+              <td><code>subscription_mode_enabled = true</code></td>
+              <td><strong>0</strong> (aucun)</td>
+              <td>Oui (plan Gratuit)</td>
+              <td>Oui (balance = 0)</td>
+            </tr>
+            <tr>
+              <td><strong>Cr&eacute;dits uniquement</strong></td>
+              <td><code>subscription_mode_enabled = false</code></td>
+              <td>Configurable via <code>welcome_credits</code> (d&eacute;faut: 0)</td>
+              <td>Non</td>
+              <td>Oui (balance = welcome_credits)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Flux d'Inscription</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux assignDefaultPlan() &agrave; l'inscription</div>
+          <div class="mermaid">
+flowchart TD
+    Start["Attribuer le plan<br/>par défaut"] --> ModeCheck{"Mode abonnement<br/>activé ?"}
+
+    ModeCheck -->|"Non"| CreditsOnly["MODE CRÉDITS"]
+    CreditsOnly --> GetWelcome["Récupérer la valeur<br/>du paramètre"]
+    GetWelcome --> BalCheck{"Solde de crédits<br/>existe déjà ?"}
+    BalCheck -->|"Oui"| SkipCredits["Ignorer - solde existant"]
+    BalCheck -->|"Non"| CreateBalance["Créer le solde<br/>avec crédits bienvenue"]
+    CreateBalance --> WelcomeCheck{"Crédits bienvenue > 0 ?"}
+    WelcomeCheck -->|"Oui"| CreateTx["Créer la transaction<br/>type : cadeau"]
+    WelcomeCheck -->|"Non"| DoneN["Terminé"]
+    CreateTx --> DoneN
+
+    ModeCheck -->|"Oui"| SubMode["MODE ABONNEMENT"]
+    SubMode --> FindFree["Trouver le plan gratuit<br/>(prix = 0)"]
+    FindFree --> SubCheck{"Abonnement<br/>existe déjà ?"}
+    SubCheck -->|"Oui"| SkipSub["Ignorer - abonnement existant"]
+    SubCheck -->|"Non"| CreateSub["Créer l'abonnement<br/>plan Gratuit, actif"]
+    CreateSub --> CreateBal0["Créer le solde<br/>à 0 crédits"]
+    CreateBal0 --> DoneN
+
+    style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ModeCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style CreditsOnly fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style GetWelcome fill:#6366f1,stroke:#4f46e5,color:#fff
+    style BalCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style SkipCredits fill:#64748b,stroke:#475569,color:#fff
+    style CreateBalance fill:#22c55e,stroke:#16a34a,color:#fff
+    style WelcomeCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style CreateTx fill:#14b8a6,stroke:#0d9488,color:#fff
+    style DoneN fill:#22c55e,stroke:#16a34a,color:#fff
+    style SubMode fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FindFree fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SubCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style SkipSub fill:#64748b,stroke:#475569,color:#fff
+    style CreateSub fill:#22c55e,stroke:#16a34a,color:#fff
+    style CreateBal0 fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
         </div>
 
-        <h2>Implementation</h2>
+        <h2>Mode Cr&eacute;dits-Only : Impl&eacute;mentation</h2>
 
-        <pre><code>// lib/subscription/welcomeCredits.js
-const WELCOME_CREDITS = 5;
+        <pre><code class="language-javascript">// lib/subscription/subscriptions.js - assignDefaultPlan() (extrait)
 
-export async function grantWelcomeCredits(userId) {
-  // Verifier si deja attribues
-  const existing = await prisma.creditBalance.findUnique({
-    where: { userId }
+const subscriptionEnabled = await isSubscriptionModeEnabled();
+
+if (!subscriptionEnabled) {
+  // MODE CR&Eacute;DITS UNIQUEMENT - Pas de Subscription, juste des cr&eacute;dits
+  const welcomeCredits = await getNumericSettingValue('welcome_credits', 0);
+
+  const existingBalance = await prisma.creditBalance.findUnique({
+    where: { userId },
   });
 
-  if (existing) return null;
+  if (!existingBalance) {
+    await prisma.creditBalance.create({
+      data: {
+        userId,
+        balance: welcomeCredits,
+        totalGifted: welcomeCredits,
+      },
+    });
 
-  // Creer le solde avec les credits de bienvenue
-  const balance = await prisma.creditBalance.create({
-    data: {
-      userId,
-      balance: WELCOME_CREDITS
+    // Cr&eacute;er transaction pour tra&ccedil;abilit&eacute;
+    if (welcomeCredits > 0) {
+      await prisma.creditTransaction.create({
+        data: {
+          userId,
+          amount: welcomeCredits,
+          type: 'gift',
+          metadata: JSON.stringify({ source: 'welcome_bonus' }),
+        },
+      });
     }
-  });
+  }
 
-  // Logger la transaction
-  await prisma.creditTransaction.create({
-    data: {
-      userId,
-      amount: WELCOME_CREDITS,
-      type: 'credit',
-      reason: 'welcome_bonus',
-      description: 'Credits de bienvenue'
-    }
-  });
-
-  return balance;
+  return { success: true, creditsOnlyMode: true, welcomeCredits };
 }</code></pre>
+
+        <h2>Mode Abonnement : Impl&eacute;mentation</h2>
+
+        <pre><code class="language-javascript">// lib/subscription/subscriptions.js - assignDefaultPlan() (extrait)
+
+// Trouver le plan gratuit (priceMonthly === 0)
+const freePlan = await prisma.subscriptionPlan.findFirst({
+  where: { priceMonthly: 0, priceYearly: 0 },
+  orderBy: { id: 'asc' },
+});
+
+// Customer Stripe = placeholder local pour le plan gratuit
+let finalStripeCustomerId = stripeCustomerId || `local_${userId}`;
+
+// Cr&eacute;er l'abonnement (p&eacute;riode: 10 ans = quasi permanent)
+const now = new Date();
+const periodEnd = new Date(now);
+periodEnd.setFullYear(periodEnd.getFullYear() + 10);
+
+const subscription = await prisma.subscription.create({
+  data: {
+    userId,
+    stripeCustomerId: finalStripeCustomerId,
+    planId: freePlan.id,
+    status: 'active',
+    billingPeriod: 'monthly',
+    currentPeriodStart: now,
+    currentPeriodEnd: periodEnd,
+  },
+});
+
+// Initialiser la balance de cr&eacute;dits (&agrave; 0)
+await prisma.creditBalance.create({
+  data: { userId, balance: 0 },
+});</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Pas de cr&eacute;dits de bienvenue en mode abonnement</div>
+          <p>En mode abonnement, la <code>CreditBalance</code> est initialis&eacute;e &agrave; <strong>0</strong>. Les utilisateurs du plan Gratuit b&eacute;n&eacute;ficient d&eacute;j&agrave; de limites mensuelles sur les features (configur&eacute;es via <code>SubscriptionPlanFeatureLimit</code>). Les cr&eacute;dits ne sont utilis&eacute;s que lorsque les limites du plan sont atteintes.</p>
+        </div>
+
+        <h2>Configuration du Setting</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Valeur</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>welcome_credits</code></td>
+              <td>Entier (d&eacute;faut: 0)</td>
+              <td>Nombre de cr&eacute;dits offerts &agrave; l'inscription en mode cr&eacute;dits-only</td>
+            </tr>
+            <tr>
+              <td><code>subscription_mode_enabled</code></td>
+              <td>Bool&eacute;en (d&eacute;faut: true)</td>
+              <td>D&eacute;termine le mod&egrave;le &eacute;conomique actif</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Idempotence</div>
+          <p><code>assignDefaultPlan()</code> est <strong>idempotent</strong> : si une <code>CreditBalance</code> (mode cr&eacute;dits-only) ou une <code>Subscription</code> (mode abonnement) existe d&eacute;j&agrave; pour l'utilisateur, la fonction retourne imm&eacute;diatement sans cr&eacute;er de doublon.</p>
+        </div>
+
+        <h2>D&eacute;clenchement</h2>
+
+        <p><code>assignDefaultPlan()</code> est appel&eacute; automatiquement par le callback <strong>NextAuth</strong> lors de la premi&egrave;re connexion d'un utilisateur (OAuth Google/GitHub ou email).</p>
+
+        <h3>Double appel dans NextAuth (lib/auth/options.js)</h3>
+
+        <p><code>assignDefaultPlan()</code> est appel&eacute; &agrave; <strong>deux endroits</strong> dans le cycle d'authentification, garantissant qu'aucun utilisateur ne reste sans plan :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Points d'appel dans le cycle NextAuth</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant NA as NextAuth
+    participant DB as Base de données
+    participant AP as Attribution du plan
+
+    U->>NA: Première connexion - OAuth ou email
+
+    rect rgb(240, 249, 255)
+    Note over NA,DB: Création utilisateur - nouvel utilisateur
+    NA->>DB: Créer l'utilisateur
+    NA->>AP: Attribuer le plan par défaut
+    AP->>DB: Créer l'abonnement ou le solde
+    end
+
+    rect rgb(240, 255, 240)
+    Note over NA,DB: Rappel connexion - à chaque connexion
+    NA->>AP: Attribuer le plan par défaut
+    Note right of AP: Ignoré si déjà fait
+    AP-->>NA: Succès
+    end
+          </div>
+        </div>
+
+        <pre><code class="language-javascript">// lib/auth/options.js - &Eacute;v&eacute;nement createUser (nouvel utilisateur)
+events: {
+  async createUser({ user }) {
+    // V&eacute;rifier si inscriptions autoris&eacute;es
+    const registrationBlocked = regSetting?.value === '0'
+      || maintenanceSetting?.value === '1';
+    if (registrationBlocked) return; // Ne pas attribuer de ressources
+
+    // Attribuer automatiquement le plan gratuit
+    try {
+      await assignDefaultPlan(user.id);
+      logger.context('auth', 'info', `Plan gratuit attribu&eacute; &agrave; user ${user.id}`);
+    } catch (error) {
+      console.error('[auth] Erreur attribution plan gratuit:', error);
+    }
+  },
+},
+
+// lib/auth/options.js - Callback signIn (fallback &agrave; chaque connexion)
+callbacks: {
+  async signIn({ user, account }) {
+    // G&egrave;re le cas o&ugrave; un utilisateur cr&eacute;&eacute; en mode cr&eacute;dits
+    // se connecte apr&egrave;s r&eacute;activation du mode abonnement
+    try {
+      const result = await assignDefaultPlan(user.id);
+      if (result.success &amp;&amp; result.subscription) {
+        logger.context('auth', 'info',
+          `Plan par d&eacute;faut attribu&eacute; (signIn fallback) &agrave; user ${user.id}`);
+      }
+    } catch (error) {
+      console.error('[auth] Erreur attribution plan (signIn):', error);
+    }
+
+    return true;
+  },
+}</code></pre>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Robustesse du double appel</div>
+          <p>Le callback <code>signIn</code> agit comme <strong>filet de s&eacute;curit&eacute;</strong> : si <code>createUser</code> &eacute;choue (erreur r&eacute;seau, timeout DB), la prochaine connexion rattrapera l'attribution du plan. Gr&acirc;ce &agrave; l'<strong>idempotence</strong> de <code>assignDefaultPlan()</code>, aucun doublon n'est cr&eacute;&eacute;.</p>
+        </div>
+
+        <h2>Sc&eacute;nario de changement de mode</h2>
+
+        <p>Le fallback <code>signIn</code> g&egrave;re un cas sp&eacute;cifique : un utilisateur cr&eacute;&eacute; en mode <strong>cr&eacute;dits-only</strong> qui se reconnecte apr&egrave;s le passage en mode <strong>abonnement</strong>.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>&Eacute;tape</th>
+              <th>Mode actif</th>
+              <th>Action</th>
+              <th>R&eacute;sultat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1. Inscription</td>
+              <td>Cr&eacute;dits-only</td>
+              <td><code>createUser</code> &rarr; <code>assignDefaultPlan()</code></td>
+              <td>CreditBalance cr&eacute;&eacute;e (pas de Subscription)</td>
+            </tr>
+            <tr>
+              <td>2. Admin bascule</td>
+              <td>Abonnement</td>
+              <td>Setting <code>subscription_mode_enabled = true</code></td>
+              <td>Rien ne change en DB</td>
+            </tr>
+            <tr>
+              <td>3. Reconnexion</td>
+              <td>Abonnement</td>
+              <td><code>signIn</code> &rarr; <code>assignDefaultPlan()</code></td>
+              <td>Subscription cr&eacute;&eacute;e (plan Gratuit) + CreditBalance d&eacute;j&agrave; existante</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

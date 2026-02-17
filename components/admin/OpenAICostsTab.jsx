@@ -80,8 +80,6 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     isPriorityMode,
     setIsPriorityMode,
     fetchPricings,
-    balance,
-    balanceLoading,
     alerts,
     setAlerts,
     fetchAlerts,
@@ -171,26 +169,6 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
   // Computed values
   const avgCostPerCall = correctedTotalCalls > 0 ? correctedTotalCost / correctedTotalCalls : 0;
   const topFeatureLabel = stableTopFeature.name || stableTopFeature.feature || 'N/A';
-
-  // Balance subtitle with color
-  const getBalanceSubtitle = () => {
-    if (balanceLoading) {
-      return { text: 'Chargement du solde...', color: 'text-white/60' };
-    }
-    if (balance === null || balance === undefined) {
-      return null;
-    }
-    const balanceText = `Solde: ${formatCurrency(balance)}`;
-    if (balance < 5) {
-      return { text: balanceText, color: 'text-red-400' };
-    } else if (balance < 10) {
-      return { text: balanceText, color: 'text-orange-400' };
-    } else {
-      return { text: balanceText, color: 'text-green-400' };
-    }
-  };
-
-  const balanceSubtitle = getBalanceSubtitle();
 
   // Custom tooltip for bar chart
   const renderBarChartTooltip = ({ active, payload }) => {
@@ -314,8 +292,8 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
           icon="💰"
           label="Coût total"
           value={formatCurrency(correctedTotalCost)}
-          subtitle={balanceSubtitle?.text}
-          subtitleClassName={balanceSubtitle?.color}
+          subtitle={null}
+          subtitleClassName={null}
           trend={null}
           description="Coût total des appels OpenAI pour la période sélectionnée, incluant tous les modèles et features"
         />

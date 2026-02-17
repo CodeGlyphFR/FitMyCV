@@ -55,14 +55,14 @@ Modèle central utilisateur avec authentification et relations.
 
 ### Account
 
-Comptes OAuth liés (Google, LinkedIn, etc.).
+Comptes OAuth liés (Google, GitHub, Apple).
 
 | Champ | Type | Description |
 |-------|------|-------------|
 | `id` | String (cuid) | Identifiant unique |
 | `userId` | String | Référence User |
 | `type` | String | Type compte (`"oauth"`) |
-| `provider` | String | `"google"` \| `"linkedin"` |
+| `provider` | String | `"google"` \| `"github"` \| `"apple"` |
 | `providerAccountId` | String | ID chez le provider |
 | `refresh_token` | String? | Token rafraîchissement |
 | `access_token` | String? | Token accès |

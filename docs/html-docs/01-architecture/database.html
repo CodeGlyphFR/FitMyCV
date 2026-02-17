@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -34,7 +34,7 @@
 
         <h1>Base de Données</h1>
         <p class="lead">
-          FitMyCV.io utilise PostgreSQL via Prisma ORM avec 34 modèles de données organisés en domaines fonctionnels.
+          FitMyCV.io utilise PostgreSQL via Prisma 6 ORM avec 34 modèles de données organisés en 9 domaines fonctionnels.
         </p>
 
         <h2>Schéma Relationnel</h2>
@@ -43,63 +43,139 @@
           <div class="diagram-title">Relations principales - Utilisateur</div>
           <div class="mermaid">
 flowchart TB
-    User["<strong>User</strong><br/>id, email, name, role"]
-
-    subgraph CV["CV & Documents"]
-        CvFile["<strong>CvFile</strong><br/>content JSON, matchScore"]
-        CvVersion["<strong>CvVersion</strong><br/>versionNumber, origin"]
+    subgraph UserGroup["UTILISATEUR"]
+        User["Utilisateur<br/>email, rôle, profil"]
     end
 
-    subgraph Jobs["Offres d'Emploi"]
-        JobOffer["<strong>JobOffer</strong><br/>title, company, requirements"]
-        CvGenerationOffer["<strong>CvGenerationOffer</strong><br/>status, generatedCvId"]
+    subgraph CVGroup["CV & DOCUMENTS"]
+        CvFile["Fichier CV<br/>contenu JSON"]
+        CvVersion["Historique versions<br/>changelog, score"]
+        ExportTpl["Modèle d'export<br/>sélections PDF"]
     end
 
-    subgraph Billing["Facturation"]
-        Subscription["<strong>Subscription</strong><br/>status, periodEnd"]
-        CreditBalance["<strong>CreditBalance</strong><br/>balance"]
-        CreditTransaction["<strong>CreditTransaction</strong><br/>amount, type"]
+    subgraph OfferGroup["OFFRES D'EMPLOI"]
+        JobOffer["Offre d'emploi<br/>URL ou PDF extraite"]
     end
 
-    User --> CvFile
-    User --> JobOffer
-    User --> Subscription
-    User --> CreditBalance
-    User --> CreditTransaction
+    subgraph PipelineGroup["PIPELINE GENERATION"]
+        GenTask["Tâche de génération<br/>tâche master"]
+        GenOffer["Offre à traiter<br/>statut, résultats"]
+        GenSubtask["Sous-tâche IA<br/>traçabilité, coûts"]
+    end
 
-    CvFile --> CvVersion
-    CvFile --> CvGenerationOffer
-    JobOffer --> CvGenerationOffer
+    subgraph BillingGroup["ABONNEMENTS & CRÉDITS"]
+        Sub["Abonnement<br/>via Stripe"]
+        Plan["Plan d'abonnement<br/>Gratuit / Pro / Premium"]
+        Limits["Limites par feature<br/>quotas par plan"]
+        Balance["Solde de crédits<br/>achetés, utilisés, remboursés"]
+        Tx["Transactions crédits<br/>historique complet"]
+    end
+
+    subgraph AuthGroup["AUTHENTIFICATION"]
+        Account["Comptes OAuth liés<br/>Google, GitHub, Apple"]
+    end
+
+    subgraph SystemGroup["SYSTEME"]
+        BgTask["Tâches asynchrones<br/>avec suivi temps réel"]
+    end
+
+    User -->|"possede"| CvFile
+    User -->|"cree"| JobOffer
+    User -->|"souscrit"| Sub
+    User -->|"possede"| Balance
+    User -->|"effectue"| Tx
+    User -->|"OAuth lie"| Account
+    User -->|"lance"| BgTask
+    User -->|"genere"| GenTask
+    User -->|"configure"| ExportTpl
+
+    CvFile -->|"historique"| CvVersion
+    CvFile -->|"adapte pour"| JobOffer
+    JobOffer -->|"CVs generes"| CvFile
+
+    GenTask -->|"contient"| GenOffer
+    GenOffer -->|"execute"| GenSubtask
+
+    Sub -->|"plan choisi"| Plan
+    Plan -->|"definit"| Limits
+
+    style User fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CvFile fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CvVersion fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ExportTpl fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style JobOffer fill:#6366f1,stroke:#4f46e5,color:#fff
+    style GenTask fill:#f59e0b,stroke:#d97706,color:#fff
+    style GenOffer fill:#f59e0b,stroke:#d97706,color:#fff
+    style GenSubtask fill:#f59e0b,stroke:#d97706,color:#fff
+    style Sub fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Plan fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Limits fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Balance fill:#22c55e,stroke:#16a34a,color:#fff
+    style Tx fill:#22c55e,stroke:#16a34a,color:#fff
+    style Account fill:#64748b,stroke:#475569,color:#fff
+    style BgTask fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 
         <div class="diagram">
-          <div class="diagram-title">Relations principales - Génération & Abonnements</div>
+          <div class="diagram-title">Relations - Email & Monitoring</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Generation["Pipeline Génération"]
-        CvGenerationTask["<strong>CvGenerationTask</strong><br/>mode, status, progress"]
-        CvGenerationOffer["<strong>CvGenerationOffer</strong><br/>status, matchScore"]
-        CvGenerationSubtask["<strong>CvGenerationSubtask</strong><br/>phase, status"]
+    subgraph EmailGroup["EMAIL & NOTIFICATIONS"]
+        Trigger["Declencheur email<br/>evenement systeme"]
+        Template["Template email<br/>sujet, HTML, design"]
+        Log["Journal d'envois<br/>statut, provider Resend"]
     end
 
-    subgraph Plans["Plans & Limites"]
-        SubscriptionPlan["<strong>SubscriptionPlan</strong><br/>name, price, features"]
-        FeatureLimit["<strong>FeatureLimit</strong><br/>feature, monthlyLimit"]
-        FeatureUsageCounter["<strong>FeatureUsageCounter</strong><br/>feature, count, month"]
+    subgraph MonitorGroup["MONITORING OPENAI"]
+        Usage["Usage agrege<br/>par jour, feature, modele"]
+        Call["Appels individuels<br/>tokens, cout, duree"]
     end
 
-    CvGenerationTask --> CvGenerationOffer
-    CvGenerationTask --> CvGenerationSubtask
+    subgraph AnalyticsGroup["TELEMETRIE & ANALYTICS"]
+        Telemetry["Evenements tracking<br/>type, categorie, duree"]
+        FeatUsage["Usage par feature<br/>compteur cumule"]
+        FeatCounter["Compteurs mensuels<br/>reset automatique"]
+        FeedbackN["Retours utilisateurs<br/>notes et bug reports"]
+    end
 
-    SubscriptionPlan --> FeatureLimit
-    User["<strong>User</strong>"] --> FeatureUsageCounter
+    subgraph RGPDGroup["RGPD & HISTORIQUE"]
+        Consent["Consentements<br/>historique RGPD"]
+        Links["Liens visites<br/>historique URLs"]
+    end
+
+    UserRef["Utilisateur"]
+
+    Trigger -->|"templates associes"| Template
+    Template -->|"envois"| Log
+
+    UserRef -->|"usage agrege"| Usage
+    UserRef -->|"appels IA"| Call
+    UserRef -->|"evenements"| Telemetry
+    UserRef -->|"utilisation features"| FeatUsage
+    UserRef -->|"compteurs mensuels"| FeatCounter
+    UserRef -->|"retours"| FeedbackN
+    UserRef -->|"consentements"| Consent
+    UserRef -->|"liens visites"| Links
+
+    style UserRef fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Trigger fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Template fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Log fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Usage fill:#f59e0b,stroke:#d97706,color:#fff
+    style Call fill:#f59e0b,stroke:#d97706,color:#fff
+    style Telemetry fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeatUsage fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeatCounter fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeedbackN fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Consent fill:#64748b,stroke:#475569,color:#fff
+    style Links fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 
         <h2>Domaines Fonctionnels</h2>
 
-        <h3>1. Utilisateurs & Auth</h3>
+        <h3>1. Utilisateurs & Auth (5 modèles)</h3>
 
         <table>
           <thead>
@@ -113,27 +189,32 @@ flowchart TB
             <tr>
               <td><code>User</code></td>
               <td>Utilisateur principal</td>
-              <td>id, email, name, role, hashedPassword</td>
+              <td>id, email, name, role, passwordHash, stripeCustomerId, onboardingState</td>
             </tr>
             <tr>
               <td><code>Account</code></td>
-              <td>Comptes OAuth liés</td>
-              <td>provider, providerAccountId, access_token</td>
+              <td>Comptes OAuth liés (Google, GitHub, Apple)</td>
+              <td>provider, providerAccountId, access_token, refresh_token</td>
             </tr>
             <tr>
-              <td><code>Session</code></td>
-              <td>Sessions actives</td>
-              <td>sessionToken, expires</td>
+              <td><code>EmailVerificationToken</code></td>
+              <td>Tokens vérification email</td>
+              <td>userId, token, expires</td>
             </tr>
             <tr>
-              <td><code>VerificationToken</code></td>
-              <td>Tokens de vérification email</td>
-              <td>identifier, token, expires</td>
+              <td><code>AutoSignInToken</code></td>
+              <td>Tokens connexion automatique</td>
+              <td>userId, token, expires</td>
+            </tr>
+            <tr>
+              <td><code>EmailChangeRequest</code></td>
+              <td>Demandes changement d'email</td>
+              <td>userId, newEmail, token, expires</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>2. CV & Documents</h3>
+        <h3>2. CV & Documents (3 modèles)</h3>
 
         <table>
           <thead>
@@ -146,28 +227,28 @@ flowchart TB
           <tbody>
             <tr>
               <td><code>CvFile</code></td>
-              <td>CV stocké en JSON</td>
-              <td>content (JSON), matchScore, isDefault, jobOfferId</td>
+              <td>CV stocké en JSON dans la DB</td>
+              <td>content (Json), contentVersion, matchScore, scoreBefore, optimiseStatus, pendingChanges, language</td>
             </tr>
             <tr>
               <td><code>CvVersion</code></td>
-              <td>Historique des versions</td>
-              <td>versionNumber, content, origin, description</td>
+              <td>Historique des versions (optimisation, adaptation, restore)</td>
+              <td>version (Int), content (Json), changelog, changeType, matchScore</td>
             </tr>
             <tr>
-              <td><code>CvTemplate</code></td>
-              <td>Templates de CV</td>
-              <td>name, structure, isDefault</td>
+              <td><code>ExportTemplate</code></td>
+              <td>Configurations de sélection pour export PDF</td>
+              <td>userId, name, selections (Json)</td>
             </tr>
           </tbody>
         </table>
 
         <div class="callout callout-info">
           <div class="callout-title">Stockage du contenu CV</div>
-          <p>Le contenu du CV est stocké en JSON dans le champ <code>content</code> de <code>CvFile</code>. Structure : sections (experiences, skills, education, etc.) avec leurs items.</p>
+          <p>Le contenu du CV est stocké en JSON dans le champ <code>content</code> de <code>CvFile</code>. La version courante est suivie via <code>contentVersion</code>. Les modifications IA sont dans <code>pendingChanges</code> avec un statut par changement (pending/accepted/rejected).</p>
         </div>
 
-        <h3>3. Offres d'Emploi</h3>
+        <h3>3. Offres d'Emploi (1 modèle)</h3>
 
         <table>
           <thead>
@@ -180,18 +261,13 @@ flowchart TB
           <tbody>
             <tr>
               <td><code>JobOffer</code></td>
-              <td>Offre d'emploi extraite</td>
-              <td>url, content (JSON), extractedAt</td>
-            </tr>
-            <tr>
-              <td><code>JobOfferRaw</code></td>
-              <td>Contenu brut de la page</td>
-              <td>html, text, fetchedAt</td>
+              <td>Offre d'emploi extraite (URL ou PDF)</td>
+              <td>sourceType ('url'|'pdf'), sourceValue, contentHash, content (Json), extractionModel, tokensUsed</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>4. Génération CV (Pipeline)</h3>
+        <h3>4. Pipeline Génération CV (3 modèles)</h3>
 
         <table>
           <thead>
@@ -205,22 +281,22 @@ flowchart TB
             <tr>
               <td><code>CvGenerationTask</code></td>
               <td>Tâche master de génération</td>
-              <td>userId, status, mode, totalOffers, creditsRefunded</td>
+              <td>userId, sourceCvFileId, mode ('adapt'|'optimize'), status, totalOffers, completedOffers, creditsDebited</td>
             </tr>
             <tr>
               <td><code>CvGenerationOffer</code></td>
               <td>Offre à traiter dans une tâche</td>
-              <td>taskId, jobOfferId, status, classificationResult</td>
+              <td>taskId, sourceUrl, jobOfferId, offerIndex, status, classificationResult, batchResults, generatedCvFileId, generatedCvFileName, retryCount, creditsRefunded</td>
             </tr>
             <tr>
               <td><code>CvGenerationSubtask</code></td>
-              <td>Sous-tâche IA (traçabilité)</td>
-              <td>type, input, output, tokens, cost, duration</td>
+              <td>Sous-tâche IA unitaire (traçabilité)</td>
+              <td>offerId, type (classify|batch_*|recompose), itemIndex, input/output (Json), modifications (Json), modelUsed, promptTokens, cachedTokens, completionTokens, estimatedCost, durationMs</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>5. Abonnements & Crédits</h3>
+        <h3>5. Abonnements & Crédits (7 modèles)</h3>
 
         <table>
           <thead>
@@ -234,42 +310,42 @@ flowchart TB
             <tr>
               <td><code>Subscription</code></td>
               <td>Abonnement Stripe actif</td>
-              <td>stripeSubscriptionId, status, currentPeriodEnd</td>
+              <td>stripeSubscriptionId, planId, status, billingPeriod, currentPeriodEnd, cancelAtPeriodEnd</td>
             </tr>
             <tr>
               <td><code>SubscriptionPlan</code></td>
               <td>Plans disponibles</td>
-              <td>name, priceMonthly, stripePriceId</td>
+              <td>name, isFree, tier, priceMonthly, priceYearly, stripeProductId</td>
             </tr>
             <tr>
-              <td><code>FeatureLimit</code></td>
+              <td><code>SubscriptionPlanFeatureLimit</code></td>
               <td>Limites par plan/feature</td>
-              <td>planId, featureName, usageLimit, isEnabled</td>
+              <td>planId, featureName, isEnabled, usageLimit</td>
             </tr>
             <tr>
               <td><code>FeatureUsageCounter</code></td>
-              <td>Compteurs mensuels</td>
-              <td>userId, featureName, count, periodStart</td>
+              <td>Compteurs par période (reset auto)</td>
+              <td>userId, featureName, count, periodStart, periodEnd</td>
             </tr>
             <tr>
               <td><code>CreditBalance</code></td>
               <td>Solde crédits utilisateur</td>
-              <td>userId, balance</td>
+              <td>userId, balance, totalPurchased, totalUsed, totalRefunded, totalGifted, balanceAfterLastPurchase</td>
             </tr>
             <tr>
               <td><code>CreditTransaction</code></td>
-              <td>Historique transactions</td>
-              <td>type, amount, reason, featureName</td>
+              <td>Historique transactions crédits</td>
+              <td>userId, amount, type, featureName, stripePaymentIntentId, refunded</td>
             </tr>
             <tr>
               <td><code>CreditPack</code></td>
-              <td>Packs à l'achat</td>
-              <td>name, credits, price, isActive</td>
+              <td>Packs de crédits à l'achat</td>
+              <td>name, creditAmount, price, isActive, stripePriceId</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>6. OpenAI Monitoring</h3>
+        <h3>6. OpenAI Monitoring (4 modèles)</h3>
 
         <table>
           <thead>
@@ -281,24 +357,29 @@ flowchart TB
           </thead>
           <tbody>
             <tr>
-              <td><code>OpenAIUsageLog</code></td>
-              <td>Log de chaque appel API</td>
-              <td>userId, featureName, model, tokens, cost</td>
+              <td><code>OpenAIUsage</code></td>
+              <td>Usage agrégé par jour/feature/modèle</td>
+              <td>userId, featureName, model, date, promptTokens, cachedTokens, completionTokens, estimatedCost, callsCount</td>
             </tr>
             <tr>
-              <td><code>OpenAICostAlert</code></td>
-              <td>Configuration alertes</td>
-              <td>type, threshold, isEnabled</td>
+              <td><code>OpenAICall</code></td>
+              <td>Log de chaque appel API individuel</td>
+              <td>userId, featureName, model, promptTokens, cachedTokens, completionTokens, estimatedCost, duration</td>
             </tr>
             <tr>
-              <td><code>OpenAICostNotification</code></td>
-              <td>Alertes déclenchées</td>
-              <td>alertId, currentValue, triggeredAt</td>
+              <td><code>OpenAIPricing</code></td>
+              <td>Grille tarifaire par modèle (standard + priority)</td>
+              <td>modelName, inputPricePerMToken, outputPricePerMToken, cachePricePerMToken, isActive</td>
+            </tr>
+            <tr>
+              <td><code>OpenAIAlert</code></td>
+              <td>Configuration alertes de coûts</td>
+              <td>type, threshold, enabled, name, description</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>7. Email & Notifications</h3>
+        <h3>7. Email & Notifications (3 modèles)</h3>
 
         <table>
           <thead>
@@ -309,20 +390,59 @@ flowchart TB
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td><code>EmailTrigger</code></td>
+              <td>Événements déclencheurs d'emails</td>
+              <td>name (unique), label, variables (String), category, isSystem</td>
+            </tr>
             <tr>
               <td><code>EmailTemplate</code></td>
-              <td>Templates email</td>
-              <td>name, subject, htmlContent, trigger</td>
+              <td>Templates email éditables</td>
+              <td>name, triggerId, subject, designJson, htmlContent, isActive, isDefault</td>
             </tr>
             <tr>
               <td><code>EmailLog</code></td>
-              <td>Historique envois</td>
-              <td>templateId, recipient, status, sentAt</td>
+              <td>Historique d'envois</td>
+              <td>templateId, templateName, recipientEmail, status, provider ('resend'), providerId</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>8. Configuration</h3>
+        <h3>8. Telemetry & Analytics (4 modèles)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Modèle</th>
+              <th>Description</th>
+              <th>Champs clés</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>TelemetryEvent</code></td>
+              <td>Événements de tracking</td>
+              <td>userId, type, category, metadata, deviceId, duration, status</td>
+            </tr>
+            <tr>
+              <td><code>FeatureUsage</code></td>
+              <td>Usage cumulé par feature</td>
+              <td>userId, featureName, usageCount, lastUsedAt, totalDuration</td>
+            </tr>
+            <tr>
+              <td><code>Feedback</code></td>
+              <td>Retours utilisateurs et bug reports</td>
+              <td>userId, rating, comment, isBugReport, status</td>
+            </tr>
+            <tr>
+              <td><code>ConsentLog</code></td>
+              <td>Historique consentements RGPD</td>
+              <td>userId, action, preferences, ip, userAgent</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>9. Configuration & Système (4 modèles)</h3>
 
         <table>
           <thead>
@@ -335,69 +455,91 @@ flowchart TB
           <tbody>
             <tr>
               <td><code>Setting</code></td>
-              <td>Paramètres système</td>
-              <td>key, value, category, description</td>
+              <td>Paramètres système (modèles IA, config)</td>
+              <td>settingName (unique), value, category, description</td>
             </tr>
             <tr>
               <td><code>BackgroundTask</code></td>
-              <td>Tâches asynchrones</td>
-              <td>type, status, payload, result</td>
+              <td>Tâches asynchrones avec tracking</td>
+              <td>id, title, type, status, deviceId, userId, payload, result, error, creditUsed, successMessage, shouldUpdateCvList, cvFile, featureName, featureCounterPeriodStart</td>
+            </tr>
+            <tr>
+              <td><code>LinkHistory</code></td>
+              <td>Historique des URLs visitées</td>
+              <td>userId, url (unique par user)</td>
+            </tr>
+            <tr>
+              <td><code>StripeWebhookLog</code></td>
+              <td>Log des webhooks Stripe reçus</td>
+              <td>eventId (unique), eventType, payload, processed, error</td>
             </tr>
           </tbody>
         </table>
 
         <h2>Indexes et Performance</h2>
 
-        <pre><code>// Indexes critiques définis dans schema.prisma
+        <p>Les indexes critiques sont définis directement dans <code>schema.prisma</code> :</p>
 
-// Recherche rapide des CV par utilisateur
-@@index([userId], map: "CvFile_userId_idx")
+        <pre><code class="language-javascript">// Contraintes d'unicité composées
+@@unique([userId, filename])          // CvFile : 1 nom par user
+@@unique([userId, sourceValue])       // JobOffer : pas de doublon offre
+@@unique([userId, featureName])       // FeatureUsageCounter : 1 compteur par feature
+@@unique([userId, featureName, model, date]) // OpenAIUsage : agrégation unique
 
-// Recherche offres par URL (cache)
-@@unique([url, userId], map: "JobOffer_url_userId_key")
+// Indexes de recherche
+@@index([userId])                     // Sur presque tous les modèles
+@@index([status])                     // BackgroundTask, CvGenerationTask
+@@index([createdAt])                  // Pour pagination et tri
+@@index([deviceId])                   // BackgroundTask : sync par device
+@@index([type, timestamp])            // TelemetryEvent : analytics
+@@index([featureName, date])          // OpenAIUsage : rapports par feature
 
-// Compteurs par période
-@@unique([userId, featureName, periodStart], map: "FeatureUsageCounter_unique")
-
-// Logs OpenAI pour analytics
-@@index([userId, createdAt], map: "OpenAIUsageLog_user_date_idx")
-@@index([featureName, createdAt], map: "OpenAIUsageLog_feature_date_idx")</code></pre>
+// Indexes composés pour requêtes fréquentes
+@@index([userId, createdAt])          // CreditTransaction, LinkHistory
+@@index([cvFile, status])             // BackgroundTask : tâches par CV
+@@index([offerId, type])              // CvGenerationSubtask : sous-tâches par offre</code></pre>
 
         <h2>Migrations</h2>
 
         <div class="card-grid">
           <div class="card">
             <h4>Créer une migration</h4>
-            <pre><code>npx prisma migrate dev --name description</code></pre>
+            <pre><code class="language-bash">npx prisma migrate dev --name description</code></pre>
           </div>
           <div class="card">
             <h4>Appliquer en production</h4>
-            <pre><code>npx prisma migrate deploy</code></pre>
+            <pre><code class="language-bash">npx prisma migrate deploy</code></pre>
           </div>
           <div class="card">
             <h4>Régénérer le client</h4>
-            <pre><code>npx prisma generate</code></pre>
+            <pre><code class="language-bash">npx prisma generate</code></pre>
+          </div>
+          <div class="card">
+            <h4>Migrations de données</h4>
+            <pre><code class="language-bash">npm run db:migrate-data</code></pre>
+            <p>Scripts JS dans <code>prisma/data-migrations/</code></p>
           </div>
         </div>
 
         <h2>Connexion à la Base</h2>
 
-        <pre><code>// lib/prisma.js - Singleton Prisma Client
-import { PrismaClient } from '@prisma/client';
+        <pre><code class="language-javascript">// lib/prisma.js - Singleton Prisma Client
+import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis;
 
-const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development'
-    ? ['query', 'error', 'warn']
-    : ['error'],
-});
+const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
 export default prisma;</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Singleton Pattern</div>
+          <p>Le client Prisma est instancié une seule fois et stocké dans <code>globalThis</code> pour éviter les connexions multiples en mode développement (hot reload Next.js).</p>
+        </div>
 
         <div class="callout callout-warning">
           <div class="callout-title">Connection Pooling</div>

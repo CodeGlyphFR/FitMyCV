@@ -3,89 +3,316 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phase Classification | FitMyCV.io</title>
+  <title>Phase Classification - Pipeline G&eacute;n&eacute;ration | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Pipeline Generation</a>
+          <a href="./overview.html">Pipeline G&eacute;n&eacute;ration</a>
           <span>/</span>
           <span>Classification</span>
         </div>
 
-
-        <h1>Phase Classification</h1>
+        <h1>Phase 0.5 : Classification</h1>
         <p class="lead">
-          Premiere phase du pipeline de generation qui analyse et classifie chaque element du CV source selon sa pertinence pour l'offre d'emploi ciblee.
+          La classification analyse chaque exp&eacute;rience et projet du CV source pour d&eacute;cider de son traitement : <code>KEEP</code>, <code>REMOVE</code> ou <code>MOVE_TO_PROJECTS</code>. Elle utilise les <strong>Structured Outputs</strong> OpenAI avec le schema <code>classificationSchema.json</code> pour garantir le format de r&eacute;ponse.
         </p>
 
-        <h2>Objectif</h2>
-        <p>La phase de classification determine pour chaque experience, competence et projet du CV source s'il doit etre :</p>
-        <ul>
-          <li><strong>keep</strong> : Conserver tel quel (tres pertinent)</li>
-          <li><strong>adapt</strong> : Adapter le contenu (partiellement pertinent)</li>
-          <li><strong>remove</strong> : Supprimer (non pertinent)</li>
-          <li><strong>move_to_projects</strong> : Deplacer vers la section projets</li>
-        </ul>
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/classify.js</code></p>
+        <p><strong>Mod&egrave;le IA :</strong> Configurable via <code>getAiModelSetting('model_cv_classify')</code></p>
 
-        <h2>Implementation</h2>
+        <!-- ==================== FONCTIONS ==================== -->
+        <h2>Fonctions Principales</h2>
 
-        <pre><code>// lib/cv-generation/phases/classification.js
-import { callOpenAI } from '@/lib/openai-core/client';
+        <div class="card-grid">
+          <div class="card">
+            <h4>executeClassification()</h4>
+            <p>Wrapper avec tracking DB. Cr&eacute;e un <code>CvGenerationSubtask</code> de type <code>'classification'</code>, appelle <code>classifyCore()</code>, enregistre les r&eacute;sultats et les m&eacute;triques (tokens, co&ucirc;t, dur&eacute;e).</p>
+          </div>
+          <div class="card">
+            <h4>classifyCore()</h4>
+            <p>Logique pure de classification. Charge les prompts et le schema, appelle OpenAI avec Structured Outputs, retourne le r&eacute;sultat pars&eacute;.</p>
+          </div>
+          <div class="card">
+            <h4>applyClassification()</h4>
+            <p>Applique les d&eacute;cisions au CV source : filtre les exp&eacute;riences <code>KEEP</code>, convertit les <code>MOVE_TO_PROJECTS</code> en format projet.</p>
+          </div>
+        </div>
 
-export async function classifyExperiences(cvData, jobOffer) {
-  const result = await callOpenAI({
-    featureName: 'classification',
-    messages: [
-      { role: 'system', content: CLASSIFICATION_PROMPT },
-      { role: 'user', content: JSON.stringify({ cv: cvData, job: jobOffer }) }
-    ],
-    responseFormat: {
-      type: 'json_schema',
-      json_schema: classificationSchema
+        <!-- ==================== DIAGRAMME ==================== -->
+        <h2>Flux de Classification</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Du CV source aux d&eacute;cisions de classification</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph InputSection["ENTREE"]
+        CV["Contenu du CV<br/>expériences + projets"]
+        Job["Contenu de l'offre<br/>compétences, responsabilités"]
+    end
+
+    subgraph CoreSection["CLASSIFICATION IA"]
+        Prompt["Chargement des prompts<br/>système et utilisateur<br/>de classification"]
+        Schema["Schéma de classification<br/>Sortie structurée"]
+        OpenAI["Appel OpenAI<br/>Modèle de classification"]
+    end
+
+    subgraph DecisionSection["DECISIONS"]
+        Keep["Conserver<br/>Expérience pertinente"]
+        Remove["Supprimer<br/>Non pertinent"]
+        Move["Déplacer en projet<br/>Expérience courte"]
+    end
+
+    subgraph ApplySection["APPLICATION DES DECISIONS"]
+        FilterExp["Expériences conservées"]
+        ConvertProj["Conversion des expériences<br/>déplacées en projets"]
+        Stats["Statistiques"]
+    end
+
+    CV --> Prompt
+    Job --> Prompt
+    Prompt --> Schema --> OpenAI
+    OpenAI --> DecisionSection
+    DecisionSection --> ApplySection
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Job fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Prompt fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Schema fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OpenAI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Keep fill:#22c55e,stroke:#16a34a,color:#fff
+    style Remove fill:#ef4444,stroke:#dc2626,color:#fff
+    style Move fill:#f59e0b,stroke:#d97706,color:#fff
+    style FilterExp fill:#22c55e,stroke:#16a34a,color:#fff
+    style ConvertProj fill:#f59e0b,stroke:#d97706,color:#fff
+    style Stats fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== CLASSIFYCORE ==================== -->
+        <h2>classifyCore() &mdash; D&eacute;tail</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">CLASSIFICATION &mdash; Appel OpenAI avec Structured Outputs</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Donn&eacute;es d'entr&eacute;e</div>
+            <pre><code class="language-javascript">// classifyCore({ sourceCv, jobOffer, userId, signal })
+
+// Paramètre calculé : cutoffYear
+// Si l'offre demande min_years ans d'expérience,
+// cutoffYear = (année courante) - min_years
+// → utilisé dans le prompt pour identifier les expériences trop anciennes</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Prompts et Schema</div>
+            <pre><code class="language-javascript">// Chargement des prompts
+const systemPrompt = await loadPromptWithVars(
+  'lib/features/cv-adaptation/prompts/classify-system.md',
+  { /* variables */ }
+);
+const userPrompt = await loadPromptWithVars(
+  'lib/features/cv-adaptation/prompts/classify-user.md',
+  { sourceCv, jobOffer, cutoffYear }
+);
+
+// Chargement du schema pour Structured Outputs
+const schema = await loadJsonFile(
+  'lib/features/cv-adaptation/schemas/classificationSchema.json'
+);
+
+// Appel OpenAI
+const response = await client.chat.completions.create({
+  model,
+  messages: [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ],
+  response_format: {
+    type: 'json_schema',
+    json_schema: {
+      name: 'classification_result',
+      schema: schema,
+      strict: true
     }
-  });
+  }
+}, { signal });</code></pre>
+          </div>
 
-  return result;
-}</code></pre>
-
-        <h2>Schema de Sortie</h2>
-
-        <pre><code>{
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Format de sortie (classificationSchema.json)</div>
+            <pre><code class="language-json">{
   "experiences": [
     {
-      "id": "exp-1",
-      "decision": "keep",
-      "reason": "Experience directement liee au poste"
+      "index": 0,
+      "action": "KEEP",
+      "reason": "Expérience directement liée au poste cible"
     },
     {
-      "id": "exp-2",
-      "decision": "adapt",
-      "reason": "Competences transferables a mettre en avant"
+      "index": 1,
+      "action": "REMOVE",
+      "reason": "Job étudiant non pertinent pour un poste senior"
+    },
+    {
+      "index": 2,
+      "action": "MOVE_TO_PROJECTS",
+      "reason": "Mission freelance de 2 mois → convertir en projet"
     }
   ],
-  "skills": [...],
-  "projects": [...]
+  "projects": [
+    {
+      "index": 0,
+      "action": "KEEP",
+      "reason": "Projet pertinent pour les compétences demandées"
+    }
+  ]
 }</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== DECISIONS ==================== -->
+        <h2>Les 3 D&eacute;cisions</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>D&eacute;cision</th>
+              <th>Crit&egrave;res</th>
+              <th>Action dans le pipeline</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">KEEP</span></td>
+              <td>Exp&eacute;rience/projet pertinent pour le poste cible : comp&eacute;tences transf&eacute;rables, secteur similaire, r&ocirc;le comparable</td>
+              <td>Sera adapt&eacute; dans les batches (phase 1)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">REMOVE</span></td>
+              <td>Non pertinent : domaine compl&egrave;tement diff&eacute;rent, job &eacute;tudiant pour poste senior, exp&eacute;rience trop ancienne (au-del&agrave; du <code>cutoffYear</code>)</td>
+              <td>Exclu du CV final</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">MOVE_TO_PROJECTS</span></td>
+              <td>Exp&eacute;rience courte (&lt; 3 mois), mission freelance, stage — m&eacute;rite d'&ecirc;tre mentionn&eacute;e mais pas en tant qu'exp&eacute;rience</td>
+              <td>Convertie en projet (inline dans <code>applyClassification()</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Pas de d&eacute;cision "ADAPT"</div>
+          <p>Contrairement aux versions pr&eacute;c&eacute;dentes, la classification n'a <strong>que 3 d&eacute;cisions possibles</strong>. L'adaptation (reformulation, ajout de mots-cl&eacute;s, etc.) est enti&egrave;rement d&eacute;l&eacute;gu&eacute;e aux batches de la phase 1.</p>
+        </div>
+
+        <!-- ==================== APPLYCLASSIFICATION ==================== -->
+        <h2>applyClassification() &mdash; Application des D&eacute;cisions</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">Filtrage et conversion</div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Logique algorithmique (aucun appel IA)</div>
+            <pre><code class="language-javascript">export function applyClassification(sourceCv, classification) {
+  // 1. Filtrer les expériences KEEP
+  const experiences = sourceCv.experience.filter((exp, index) => {
+    const c = classification.experiences.find(e => e.index === index);
+    return c?.action === 'KEEP';
+  });
+
+  // 2. Convertir MOVE_TO_PROJECTS en projets
+  const movedToProjects = classification.experiences
+    .filter(c => c.action === 'MOVE_TO_PROJECTS')
+    .map(c => {
+      const exp = sourceCv.experience[c.index];
+      return { /* conversion inline experience → projet */ };
+    });
+
+  // 3. Fusionner les projets KEEP + convertis
+  const projects = [
+    ...sourceCv.projects.filter((proj, index) => {
+      const c = classification.projects.find(p => p.index === index);
+      return c?.action === 'KEEP';
+    }),
+    ...movedToProjects
+  ];
+
+  return { experiences, projects, movedToProjects, stats: { ... } };
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Retour</div>
+            <pre><code class="language-javascript">{
+  experiences: [...],      // Expériences KEEP uniquement
+  projects: [...],         // Projets KEEP + expériences converties
+  movedToProjects: [...],  // Expériences MOVE_TO_PROJECTS avec _originalExperience
+  stats: {
+    originalExperiences: 5,
+    keptExperiences: 3,
+    removedExperiences: 1,
+    movedToProjects: 1,
+    originalProjects: 2,
+    keptProjects: 2
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== CONVERSION ==================== -->
+        <h2>Conversion Experience &rarr; Projet</h2>
+
+        <p>La conversion des exp&eacute;riences <code>MOVE_TO_PROJECTS</code> en format projet est effectu&eacute;e <strong>inline dans <code>applyClassification()</code></strong> (classify.js:327-358). Il n'existe pas de fonction <code>convertExperienceToProject()</code> export&eacute;e s&eacute;par&eacute;ment. La transformation pr&eacute;serve les m&eacute;tadonn&eacute;es d'origine via <code>_originalExperience</code>.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">M&eacute;tadonn&eacute;e _originalExperience</div>
+          <p>Le champ <code>_originalExperience</code> est utilis&eacute; par le batch-projects pour savoir qu'il s'agit d'une conversion et adapter le prompt en cons&eacute;quence. Il est supprim&eacute; lors de la recomposition finale.</p>
+        </div>
+
+        <!-- ==================== FICHIERS ==================== -->
+        <h2>Fichiers Associ&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/cv-adaptation/phases/classify.js</code></td>
+              <td>executeClassification, classifyCore, applyClassification</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/cv-adaptation/prompts/classify-system.md</code></td>
+              <td>Prompt syst&egrave;me : r&egrave;gles, crit&egrave;res, cutoffYear</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/cv-adaptation/prompts/classify-user.md</code></td>
+              <td>Prompt utilisateur : CV source + offre d'emploi</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/cv-adaptation/schemas/classificationSchema.json</code></td>
+              <td>JSON Schema pour Structured Outputs</td>
+            </tr>
+          </tbody>
+        </table>
+
       </div>
     </main>
   </div>
@@ -100,7 +327,6 @@ export async function classifyExperiences(cvData, jobOffer) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

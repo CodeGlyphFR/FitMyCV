@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Détection &amp; Extraction des Offres | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">Extension Navigateur</a>
+          <span>/</span>
+          <span>Détection &amp; Extraction</span>
+        </div>
+
+        <h1>Détection &amp; Extraction des Offres</h1>
+        <p class="lead">
+          L'extension utilise une approche en 2 phases pour détecter les offres d'emploi sur n'importe quel site web, puis extrait le contenu en Markdown via Readability et des sélecteurs CSS spécifiques par job board.
+        </p>
+
+        <!-- ─── Phase 1 : Quick Detection ─── -->
+
+        <h2>Phase 1 : Pré-détection rapide (~1ms)</h2>
+
+        <p>La Phase 1 effectue des vérifications structurelles légères. Si l'une d'elles réussit, la page est considérée comme une offre d'emploi <strong>sans</strong> passer par la Phase 2.</p>
+
+        <h3>1. JSON-LD <code>JobPosting</code></h3>
+
+        <p>Recherche d'un schéma <code>@type: "JobPosting"</code> dans les balises <code>&lt;script type="application/ld+json"&gt;</code>, y compris dans les graphes <code>@graph</code>.</p>
+
+        <pre><code class="language-javascript">function checkJsonLdJobPosting() {
+  const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+  for (const script of scripts) {
+    try {
+      const data = JSON.parse(script.textContent);
+      const items = Array.isArray(data) ? data : [data];
+      for (const item of items) {
+        if (item['@type'] === 'JobPosting') return true;
+        if (item['@graph']) {
+          for (const node of item['@graph']) {
+            if (node['@type'] === 'JobPosting') return true;
+          }
+        }
+      }
+    } catch { /* invalid JSON, skip */ }
+  }
+  return false;
+}</code></pre>
+
+        <h3>2. Marqueurs de genre dans les H1</h3>
+
+        <p>Détecte les patterns typiques d'offres d'emploi dans les titres :</p>
+
+        <pre><code class="language-javascript">// Regex pour (F/H), (H/F), (M/F), (m/w/d), (H/F/X), etc.
+const GENDER_MARKER_RE =
+  /[(\[]\s*[fhmw]\s*[/\\]\s*[fhmw](?:\s*[/\\]\s*[dxn])?\s*[)\]]|
+   \b[fhmw]\s*\/\s*[fhmw](?:\s*\/\s*[dxn])?\s*$/im;</code></pre>
+
+        <p>Exemples détectés : <code>Développeur Java (H/F)</code>, <code>Product Manager (m/w/d)</code>, <code>Analyste [F/H/X]</code></p>
+
+        <h3>3. Patterns d'URL</h3>
+
+        <p>Vérifie si le chemin de l'URL contient des segments typiques d'offres d'emploi, en 6 langues :</p>
+
+        <pre><code class="language-javascript">const JOB_URL_RE = /\/(jobs?|careers?|emplois?|offres?(?:-d-?emploi)?|
+  vacanc(?:y|ies)|stellenangebote?|empleo|ofertas?|vacantes?|
+  trabajo|oportunidad(?:es)?|recrutement|recruitment|hiring|
+  postes?|bewerbung)\b/i;</code></pre>
+
+        <!-- ─── Phase 2 : DOM Scoring ─── -->
+
+        <h2>Phase 2 : Scoring DOM (~5-10ms)</h2>
+
+        <p>Si la Phase 1 échoue, un scoring heuristique analyse le DOM. Le seuil de détection est de <strong>40 points</strong>.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Système de scoring Phase 2</div>
+          <div class="mermaid">
+graph LR
+    A["Bouton Postuler<br/>+30 pts"] --> S["Score total"]
+    B["Titres de section métier<br/>+15 pts x 2 max"] --> S
+    C["Mots-clés du contenu<br/>+2 pts x 10 max"] --> S
+    D["Contenu structuré > 500 cars<br/>+10 pts"] --> S
+    S -->|"≥ 40"| Y["✓ Offre détectée"]
+    S -->|"< 40"| N["✗ Pas une offre"]
+    style A fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S fill:#f59e0b,stroke:#d97706,color:#fff
+    style Y fill:#22c55e,stroke:#16a34a,color:#fff
+    style N fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <h3>Détail des critères</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Critère</th>
+              <th>Points</th>
+              <th>Maximum</th>
+              <th>Méthode</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Bouton Postuler/Apply</strong></td>
+              <td>+30</td>
+              <td>30</td>
+              <td>Recherche dans <code>button</code>, <code>a[role="button"]</code>, <code>input[type="submit"]</code> avec textes en FR/EN/DE/ES</td>
+            </tr>
+            <tr>
+              <td><strong>Headings métier</strong></td>
+              <td>+15 chacun</td>
+              <td>30</td>
+              <td>Recherche dans <code>h1-h4</code>, <code>strong</code>, <code>b</code>, <code>dt</code> avec patterns comme &laquo; Missions &raquo;, &laquo; Requirements &raquo;, &laquo; Aufgaben &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Keywords contenu</strong></td>
+              <td>+2 chacun</td>
+              <td>20</td>
+              <td>Recherche dans le body/main de mots comme &laquo; CDI &raquo;, &laquo; full-time &raquo;, &laquo; Vollzeit &raquo;, &laquo; salario &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Contenu structuré</strong></td>
+              <td>+10</td>
+              <td>10</td>
+              <td>Zone <code>main</code>/<code>article</code> avec &gt; 500 caractères de texte</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Textes des boutons recherchés (multilingue)</h3>
+
+        <pre><code class="language-javascript">const APPLY_BUTTON_TEXTS = [
+  // FR
+  'postuler', 'candidater', 'envoyer ma candidature', 'je postule',
+  'déposer ma candidature',
+  // EN
+  'apply', 'apply now', 'apply for this job', 'submit application',
+  'easy apply', 'quick apply',
+  // DE
+  'bewerben', 'jetzt bewerben', 'bewerbung senden', 'online bewerben',
+  // ES
+  'postularse', 'aplicar', 'enviar candidatura', 'inscribirse',
+  'postular', 'aplicar ahora', 'enviar solicitud',
+];</code></pre>
+
+        <!-- ─── Flow de détection ─── -->
+
+        <h2>Flow de Détection Complet</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Séquence de détection sur chaque page</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant Page as Page Web
+    participant DET as Detecteur d offres
+    participant SW as Service en arriere-plan
+    participant DOM as Page (bouton)
+
+    Page->>DET: Page chargee ou navigation dynamique
+    DET->>DET: Lance la detection rapide (Phase 1)
+
+    alt Phase 1 reussit
+        DET->>DET: Offre trouvee
+    else Phase 1 echoue
+        DET->>DET: Lance l analyse du contenu (Phase 2)
+        alt Score >= 40
+            DET->>DET: Offre trouvee
+        else Score < 40
+            DET->>DET: Pas d'offre detectee
+        end
+    end
+
+    alt Offre detectee
+        DET->>SW: Signale une offre detectee
+        SW->>SW: Active l'icone de l'extension
+        DET->>DET: Cherche l'emplacement du bouton
+        alt Site connu + authentifie
+            DET->>DOM: Injecte "FitMyCV +" apres le titre
+            DET->>DET: Surveille la presence du bouton
+        end
+    else Pas d'offre
+        DET->>SW: Signale aucune offre
+        SW->>SW: Desactive l'icone de l'extension
+        DET->>DOM: Retire le bouton FitMyCV
+    end
+          </div>
+        </div>
+
+        <!-- ─── Gestion SPA ─── -->
+
+        <h2>Navigation SPA &amp; Panneaux Latéraux</h2>
+
+        <p>L'extension gère les sites modernes (React, Angular) où la navigation ne recharge pas la page :</p>
+
+        <h3>Détection de changement d'URL</h3>
+
+        <pre><code class="language-javascript">// MutationObserver sur document.body pour détecter les navigations SPA
+const urlObserver = new MutationObserver(() => {
+  if (location.href !== currentUrl) {
+    currentUrl = location.href;
+    lastDetectedUrl = null;           // Reset le cache de détection
+    contentObserverRetries = 0;
+    setupContentObserver();           // Re-setup l'observer de contenu
+    debouncedDetect();                // Re-lancer la détection (debounce 500ms)
+  }
+});
+urlObserver.observe(document.body, { childList: true, subtree: true });
+
+// Aussi écouter popstate pour la navigation historique
+window.addEventListener('popstate', () => {
+  lastDetectedUrl = null;
+  debouncedDetect();
+});</code></pre>
+
+        <h3>Observer de contenu (panneaux latéraux)</h3>
+
+        <p>Pour les sites comme Indeed, LinkedIn et Glassdoor qui affichent les offres dans un panneau latéral <strong>sans changer l'URL</strong> :</p>
+
+        <pre><code class="language-javascript">function setupContentObserver() {
+  // Priorité : panneau de détail spécifique au site → main/article générique
+  const detailPanel = getDetailPanelForHostname(location.hostname);
+  const container = detailPanel || document.querySelector(
+    'main, article, [role="main"], #root, #app, #__next'
+  );
+
+  // Surveille les changements significatifs du contenu (300 premiers caractères)
+  contentObserver = new MutationObserver(() => {
+    const current = container.textContent.trim().slice(0, 300);
+    if (current !== lastContentSnapshot && current.length > 50) {
+      lastContentSnapshot = current;
+      lastDetectedUrl = null;       // Force re-détection
+      removeButton();               // Retire l'ancien bouton
+      debouncedDetect();            // Re-détecte avec le nouveau contenu
+    }
+  });
+
+  contentObserver.observe(container, {
+    childList: true, subtree: true, characterData: true,
+  });
+}</code></pre>
+
+        <!-- ─── Bouton injection ─── -->
+
+        <h2>Bouton &laquo; FitMyCV + &raquo;</h2>
+
+        <h3>Conditions d'injection</h3>
+
+        <ol>
+          <li>L'utilisateur est <strong>authentifié</strong> (token JWT présent dans storage)</li>
+          <li>Le site est un <strong>job board connu</strong> (présent dans <code>SITE_SELECTORS</code>)</li>
+          <li>Un <strong>élément d'ancrage</strong> valide est trouvé (titre de l'offre &gt; 3 caractères)</li>
+        </ol>
+
+        <h3>Recherche de l'ancrage</h3>
+
+        <pre><code class="language-javascript">function findButtonAnchor() {
+  const hostname = location.hostname;
+
+  // 1. Sites inconnus → pas de bouton (évite les faux positifs)
+  if (!isKnownJobSite(hostname)) return null;
+
+  // 2. Sites connus → sélecteurs de titre spécifiques
+  const titleSelectors = getTitleSelectorsForHostname(hostname);
+  const detailPanel = getDetailPanelForHostname(hostname);
+  const searchRoot = detailPanel || document;    // Panneau latéral si disponible
+
+  for (const selector of titleSelectors) {
+    const el = searchRoot.querySelector(selector);
+    if (el && el.textContent.trim().length > 3) return el;
+  }
+
+  // 3. Fallback : h1 dans main/article
+  const mainContent = document.querySelector('main, article, [role="main"]');
+  if (mainContent) {
+    const h1 = mainContent.querySelector('h1');
+    if (h1 && h1.textContent.trim().length > 3) return h1;
+  }
+
+  return null;
+}</code></pre>
+
+        <h3>Styles adaptatifs par site</h3>
+
+        <p>Le bouton adapte son apparence selon le job board pour une intégration visuelle naturelle :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Site</th>
+              <th>Font size</th>
+              <th>Padding</th>
+              <th>Display</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>LinkedIn</td><td>14px</td><td>6px 14px</td><td>block</td></tr>
+            <tr><td>Indeed (.com)</td><td>12px</td><td>4px 10px</td><td>inline-flex</td></tr>
+            <tr><td>Indeed (.fr)</td><td>12px</td><td>4px 10px</td><td>inline-flex</td></tr>
+            <tr><td>Glassdoor (.com)</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
+            <tr><td>Glassdoor (.fr)</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
+            <tr><td>Welcome to the Jungle</td><td>13px</td><td>6px 14px</td><td>block</td></tr>
+            <tr><td>France Travail</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
+            <tr><td>APEC</td><td>13px</td><td>5px 12px</td><td>inline-flex</td></tr>
+            <tr><td>HelloWork</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
+            <tr><td>Meteojob</td><td>13px</td><td>5px 12px</td><td>inline-flex</td></tr>
+            <tr><td>Cadremploi</td><td>13px</td><td>5px 12px</td><td>inline-flex</td></tr>
+            <tr><td>Monster (.fr)</td><td>13px</td><td>5px 12px</td><td>inline-flex</td></tr>
+            <tr><td>Workday</td><td>13px</td><td>5px 12px</td><td>block</td></tr>
+          </tbody>
+        </table>
+
+        <h3>États du bouton</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>État</th>
+              <th>Texte</th>
+              <th>Couleur</th>
+              <th>Durée</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>default</code></td><td>FitMyCV +</td><td><code>#10b981</code> (emerald)</td><td>Permanent</td></tr>
+            <tr><td><code>loading</code></td><td>&#9203;</td><td><code>#9ca3af</code> (gray)</td><td>Pendant extraction</td></tr>
+            <tr><td><code>success</code></td><td>&#10003; Ajouté</td><td><code>#059669</code> (emerald-dark)</td><td>2s puis reset</td></tr>
+            <tr><td><code>duplicate</code></td><td>Déjà ajouté</td><td><code>#f59e0b</code> (amber)</td><td>2s puis reset</td></tr>
+            <tr><td><code>error</code></td><td>&#10005; Erreur</td><td><code>#ef4444</code> (red)</td><td>2s puis reset</td></tr>
+          </tbody>
+        </table>
+
+        <p>Les textes du bouton sont traduits dynamiquement selon la langue choisie dans le popup (FR/EN/ES/DE).</p>
+
+        <h3>Persistance du bouton</h3>
+
+        <p>Un <code>MutationObserver</code> surveille le parent du bouton. Si le bouton est supprimé par un re-render SPA, il est ré-injecté automatiquement après 300ms avec un système de retry exponentiel (8 tentatives max, délai de 500ms à 3s).</p>
+
+        <!-- ─── Extraction ─── -->
+
+        <h2>Extraction du Contenu</h2>
+
+        <p>L'extraction est déclenchée à la demande (clic bouton ou commande popup) via un <strong>import dynamique</strong> de <code>extractor.js</code>.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Stratégie d'extraction par priorité</div>
+          <div class="mermaid">
+flowchart TD
+    START["Extraire l'offre<br/>d'emploi"] --> READ["1. Extraction<br/>automatique du contenu"]
+    READ -->|"contenu suffisant"| GOOD["Utilise le contenu<br/>extrait automatiquement"]
+    READ -->|"contenu insuffisant ou vide"| SEL["2. Extraction via<br/>sélecteurs par site"]
+    SEL -->|"meilleur contenu trouve"| COMPARE["Compare les<br/>résultats"]
+    SEL -->|"rien trouve"| FAIL["Erreur d'extraction"]
+    COMPARE -->|"selecteur meilleur"| SEL_WIN["Utilise le contenu<br/>des sélecteurs par site"]
+    COMPARE -->|"extraction auto meilleure"| GOOD
+    GOOD --> SCORE["Évaluer la qualité<br/>du contenu"]
+    SEL_WIN --> SCORE
+    SCORE --> RETURN["Retourne le titre, contenu,<br/>URL, score et validité"]
+    style START fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style READ fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style GOOD fill:#22c55e,stroke:#16a34a,color:#fff
+    style SEL fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style COMPARE fill:#f59e0b,stroke:#d97706,color:#fff
+    style FAIL fill:#ef4444,stroke:#dc2626,color:#fff
+    style SEL_WIN fill:#22c55e,stroke:#16a34a,color:#fff
+    style SCORE fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style RETURN fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Méthode 1 : Mozilla Readability</h3>
+
+        <pre><code class="language-javascript">function tryReadabilityExtraction() {
+  const clone = document.cloneNode(true);          // Clone le DOM entier
+  const reader = new Readability(clone, {
+    charThreshold: 200,                            // Seuil minimum de caractères
+  });
+  const article = reader.parse();
+
+  if (!article || !article.content) return null;
+
+  const td = createTurndown();                     // Convertit HTML → Markdown
+  const markdown = cleanMarkdown(td.turndown(article.content));
+
+  if (markdown.length < 100) return null;
+  return { title: article.title, content: markdown, method: 'readability' };
+}</code></pre>
+
+        <h3>Méthode 2 : Sélecteurs CSS spécifiques</h3>
+
+        <p>Si Readability ne donne pas un résultat suffisant, l'extension tente des sélecteurs CSS spécifiques au site, puis des sélecteurs génériques :</p>
+
+        <pre><code class="language-javascript">function trySelectorExtraction() {
+  const selectors = getSelectorsForHostname(location.hostname);
+  const td = createTurndown();
+
+  for (const selector of selectors) {
+    const el = document.querySelector(selector);
+    if (!el || el.innerHTML.length < 200) continue;
+
+    const markdown = cleanMarkdown(td.turndown(el.innerHTML));
+    if (markdown.length < 100) continue;
+
+    const { score, isValid } = scoreJobOfferContent(markdown);
+    if (score >= 15 || markdown.length > 500) {
+      return { content: markdown, method: 'selector', selector };
+    }
+  }
+  return null;
+}</code></pre>
+
+        <h3>Conversion HTML &rarr; Markdown (Turndown)</h3>
+
+        <pre><code class="language-javascript">function createTurndown() {
+  const td = new TurndownService({
+    headingStyle: 'atx',          // # Heading
+    codeBlockStyle: 'fenced',     // ```code```
+    bulletListMarker: '-',        // - item
+  });
+  // Supprime les éléments non pertinents
+  td.remove(['img', 'script', 'style', 'noscript', 'iframe', 'svg']);
+  return td;
+}
+
+function cleanMarkdown(md) {
+  return md
+    .replace(/\n{3,}/g, '\n\n')                               // Collapse lignes vides
+    .replace(/^\s+|\s+$/g, '')                                 // Trim
+    .replace(/\[([^\]]+)\]\(javascript:[^)]*\)/g, '$1')        // Supprime liens JS
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')                      // Supprime images
+    .trim();
+}</code></pre>
+
+        <!-- ─── Sélecteurs par site ─── -->
+
+        <h2>Sélecteurs CSS par Job Board</h2>
+
+        <p>Le fichier <code>lib/site-selectors.js</code> centralise les sélecteurs CSS pour chaque site d'emploi. Trois catégories :</p>
+
+        <h3>Sélecteurs de contenu (<code>SITE_SELECTORS</code>)</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Site</th>
+              <th>Sélecteurs (priorité décroissante)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>LinkedIn</strong></td>
+              <td><code>.description__text</code>, <code>.show-more-less-html__markup</code>, <code>[class*="job-view-layout"]</code>, <code>.jobs-description</code>, <code>.jobs-description__content</code></td>
+            </tr>
+            <tr>
+              <td><strong>Indeed (.com)</strong></td>
+              <td><code>#jobDescriptionText</code>, <code>.jobsearch-JobComponent-description</code>, <code>[data-testid="jobDescriptionText"]</code>, <code>.jobsearch-BodyContainer</code></td>
+            </tr>
+            <tr>
+              <td><strong>Indeed (.fr)</strong></td>
+              <td><code>#jobDescriptionText</code>, <code>.jobsearch-JobComponent-description</code>, <code>[data-testid="jobDescriptionText"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>WttJ</strong></td>
+              <td><code>[data-testid="job-section-description"]</code>, <code>[class*="sc-"][class*="description"]</code>, <code>.ais-JobContent</code>, <code>main article</code>, <code>[data-testid="job-section"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Monster (.fr / .com)</strong></td>
+              <td><code>.job-description</code>, <code>#JobDescription</code>, <code>.details-content</code>, <code>.job-details</code></td>
+            </tr>
+            <tr>
+              <td><strong>Glassdoor (.fr / .com)</strong></td>
+              <td><code>.desc</code>, <code>[class*="jobDescription"]</code>, <code>.jobDescriptionContent</code>, <code>[data-test="jobDescription"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>France Travail</strong></td>
+              <td><code>.description-offre</code>, <code>[class*="offer-description"]</code>, <code>.contenu-offre</code>, <code>#TexteAnnonce</code></td>
+            </tr>
+            <tr>
+              <td><strong>pole-emploi.fr</strong></td>
+              <td>(identique à France Travail — alias legacy)</td>
+            </tr>
+            <tr>
+              <td><strong>APEC</strong></td>
+              <td><code>.details-offre</code>, <code>.offer-description</code>, <code>[class*="jobOffer"]</code>, <code>.job-description-content</code></td>
+            </tr>
+            <tr>
+              <td><strong>Cadremploi</strong></td>
+              <td><code>.c-jobOffer__description</code>, <code>[class*="job-description"]</code>, <code>.job-content</code></td>
+            </tr>
+            <tr>
+              <td><strong>HelloWork</strong></td>
+              <td><code>.tw-description</code>, <code>[class*="description"]</code>, <code>.job-description</code></td>
+            </tr>
+            <tr>
+              <td><strong>LesJeudis</strong></td>
+              <td><code>.job-description</code>, <code>.offer-description</code></td>
+            </tr>
+            <tr>
+              <td><strong>Meteojob</strong></td>
+              <td><code>.offer-main-content</code>, <code>.job-offer-details</code>, <code>.cc-job-offer</code></td>
+            </tr>
+            <tr>
+              <td><strong>Workday</strong></td>
+              <td><code>[data-automation-id="jobPostingDescription"]</code>, <code>[data-automation-id="job-posting-details"]</code>, <code>[data-automation-id="jobPostingPage"]</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Sélecteurs de titre (<code>SITE_TITLE_SELECTORS</code>)</h3>
+
+        <p>Utilisés pour trouver le titre de l'offre et l'ancrage du bouton &laquo; FitMyCV + &raquo; :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Site</th>
+              <th>Sélecteurs principaux</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Indeed (.com / .fr)</strong></td>
+              <td><code>h1[data-testid="jobsearch-JobInfoHeader-title"]</code>, <code>.jobsearch-JobInfoHeader-title</code>, <code>h1.jobTitle</code>, <code>[data-testid="job-title"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>LinkedIn</strong></td>
+              <td><code>.job-details-jobs-unified-top-card__job-title h1</code>, <code>.jobs-unified-top-card__job-title</code>, <code>h1[class*="job-title"]</code>, <code>.t-24.t-bold</code></td>
+            </tr>
+            <tr>
+              <td><strong>WttJ</strong></td>
+              <td><code>[data-testid="job-metadata-block"] + h2</code>, <code>h2.wui-text</code>, <code>[data-testid="job-header-title"]</code>, <code>h1[class*="Title"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>France Travail / pole-emploi.fr</strong></td>
+              <td><code>#detailOffreVolet h1.title</code>, <code>h1.t2.title</code>, <code>h1.title</code>, <code>.intitule-offre</code></td>
+            </tr>
+            <tr>
+              <td><strong>APEC</strong></td>
+              <td><code>h1.offer-title</code>, <code>.job-title</code>, <code>h1[class*="title"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Monster (.fr / .com)</strong></td>
+              <td><code>h1[class*="title"]</code>, <code>.job-header h1</code></td>
+            </tr>
+            <tr>
+              <td><strong>Glassdoor (.fr / .com)</strong></td>
+              <td><code>h1[id^="jd-job-title"]</code>, <code>[data-test="job-title"]</code>, <code>h1[class*="heading_Level1"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Cadremploi</strong></td>
+              <td><code>h1.job__title</code>, <code>.c-jobOffer__title h1</code>, <code>h1[class*="title"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>HelloWork</strong></td>
+              <td><code>h1[class*="title"]</code>, <code>.tw-title h1</code></td>
+            </tr>
+            <tr>
+              <td><strong>LesJeudis</strong></td>
+              <td><code>h1.job-title</code>, <code>h1[class*="title"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Meteojob</strong></td>
+              <td><code>h1 .cc-job-offer-title</code>, <code>h1.cc-font-size-base</code></td>
+            </tr>
+            <tr>
+              <td><strong>Workday</strong></td>
+              <td><code>h2[data-automation-id="jobPostingHeader"]</code>, <code>[data-automation-id="jobPostingHeader"]</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Panneaux latéraux (<code>SITE_DETAIL_PANEL_SELECTORS</code>)</h3>
+
+        <p>Pour les sites avec un layout split-panel (liste + détail) :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Site</th>
+              <th>Conteneur du panneau détail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Indeed (.com / .fr)</strong></td>
+              <td><code>.jobsearch-RightPane</code>, <code>.jobsearch-ViewjobPaneWrapper</code>, <code>.jobsearch-ViewJobLayout--embedded</code></td>
+            </tr>
+            <tr>
+              <td><strong>LinkedIn</strong></td>
+              <td><code>.jobs-search__job-details</code>, <code>.scaffold-layout__detail</code>, <code>.job-view-layout</code>, <code>[class*="job-view-layout"]</code></td>
+            </tr>
+            <tr>
+              <td><strong>Glassdoor (.com / .fr)</strong></td>
+              <td><code>[class*="TwoColumnLayout_columnRight"]</code>, <code>[class*="JobDetails_jobDetailsContainer"]</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Sélecteurs génériques (fallback)</h3>
+
+        <p>Pour les sites non reconnus, l'extension tente des sélecteurs génériques ordonnés par spécificité :</p>
+
+        <pre><code class="language-javascript">const GENERIC_SELECTORS = [
+  '[class*="job-description"]',
+  '[class*="jobDescription"]',
+  '[class*="job-content"]',
+  '[class*="job-details"]',
+  '[class*="offer-description"]',
+  '[class*="vacancy-description"]',
+  '[id*="job-description"]',
+  '[id*="jobDescription"]',
+  '[data-testid*="description"]',
+  '[data-automation*="description"]',
+  '[data-test*="description"]',
+  'article[class*="job"]',
+  'main article',
+  '[role="main"] article',
+  'main section:not([class*="nav"]):not([class*="header"]):not([class*="footer"])',
+  'article',
+  'main',
+  '[role="main"]',
+];</code></pre>
+
+        <h3>Sélecteurs de titre génériques (<code>GENERIC_TITLE_SELECTORS</code>)</h3>
+
+        <p>Fallback utilisé quand le site n'a pas de sélecteurs de titre spécifiques :</p>
+
+        <pre><code class="language-javascript">const GENERIC_TITLE_SELECTORS = [
+  'h1[class*="job-title"]',
+  'h1[class*="jobTitle"]',
+  'h1[class*="title"]',
+  '[class*="job-title"] h1',
+  '[class*="jobTitle"]',
+  '[data-testid*="title"]',
+  'h1',
+];</code></pre>
+
+        <h3>Domaines nécessitant une authentification (<code>AUTH_REQUIRED_DOMAINS</code>)</h3>
+
+        <p>Certains sites nécessitent que l'utilisateur soit connecté pour accéder au contenu complet de l'offre :</p>
+
+        <pre><code class="language-javascript">const AUTH_REQUIRED_DOMAINS = [
+  'apec.fr/candidat',
+  'linkedin.com/jobs/view',
+];</code></pre>
+
+        <h3>Fonction utilitaire <code>isSplitPanelSite()</code></h3>
+
+        <p>Vérifie si un site utilise un layout split-panel (liste + détail) en testant la présence du hostname dans <code>SITE_DETAIL_PANEL_SELECTORS</code> :</p>
+
+        <pre><code class="language-javascript">export function isSplitPanelSite(hostname) {
+  const host = hostname.replace(/^www\./, '');
+  return Object.keys(SITE_DETAIL_PANEL_SELECTORS).some(d => host.includes(d));
+}</code></pre>
+
+        <!-- ─── URL canonique ─── -->
+
+        <h2>Extraction d'URL Canonique</h2>
+
+        <p>L'extension génère des URLs stables par offre pour éviter les doublons :</p>
+
+        <h3>LinkedIn</h3>
+        <p>Extrait l'ID numérique depuis le lien du titre H1 : <code>https://www.linkedin.com/jobs/view/123456/</code></p>
+
+        <h3>Indeed</h3>
+        <p>Recherche le <code>job key</code> (jk) dans cet ordre :</p>
+        <ol>
+          <li>Paramètre URL <code>vjk</code></li>
+          <li>Attribut <code>data-jk</code> sur la carte sélectionnée</li>
+          <li>Lien <code>/viewjob?jk=</code> dans le panneau détail</li>
+          <li>Paramètre URL <code>jk</code></li>
+        </ol>
+        <p>Résultat : <code>https://fr.indeed.com/viewjob?jk=abc123</code></p>
+
+        <h3>Autres sites</h3>
+        <p>Fallback sur <code>location.href</code>.</p>
+
+        <!-- ─── Scoring ─── -->
+
+        <h2>Scoring de Qualité du Contenu</h2>
+
+        <p>Le module <code>lib/scoring.js</code> évalue la qualité de l'extraction sur une échelle de 0 à 100. Le contenu est considéré valide si <code>score &ge; 25</code> et <code>longueur &ge; 200</code> caractères.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Composantes du score de qualité</div>
+          <div class="mermaid">
+graph LR
+    L["Longueur<br/>0-20 pts"] --> T["Score Total<br/>(0-100)"]
+    K["Mots-clés<br/>0-30 pts"] --> T
+    S["Structure<br/>0-25 pts"] --> T
+    N["Bruit<br/>-0 à -25 pts"] --> T
+    T -->|"score >= 25 et >= 200 car."| V["Contenu valide"]
+    T -->|"score < 25"| I["Contenu invalide"]
+    style L fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style K fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style N fill:#ef4444,stroke:#dc2626,color:#fff
+    style T fill:#f59e0b,stroke:#d97706,color:#fff
+    style V fill:#22c55e,stroke:#16a34a,color:#fff
+    style I fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <h3>Critères de scoring détaillés</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Composante</th>
+              <th>Points</th>
+              <th>Logique</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Longueur</strong></td>
+              <td>5-20</td>
+              <td>Optimal entre 1500-8000 chars (20 pts). Dégradation progressive en dehors de cette plage.</td>
+            </tr>
+            <tr>
+              <td><strong>Keywords essentiels</strong></td>
+              <td>3 pts/mot</td>
+              <td><code>description</code>, <code>mission</code>, <code>profil</code>, <code>compétence</code>, <code>experience</code>, <code>formation</code>, <code>poste</code>, <code>qualification</code></td>
+            </tr>
+            <tr>
+              <td><strong>Keywords bonus</strong></td>
+              <td>1.5 pts/mot</td>
+              <td><code>salaire</code>, <code>remote</code>, <code>CDI</code>, <code>CDD</code>, <code>contrat</code>, <code>équipe</code>, <code>avantages</code></td>
+            </tr>
+            <tr>
+              <td><strong>Structure : listes</strong></td>
+              <td>+10</td>
+              <td>Présence de listes à puces (<code>- item</code>) ou numérotées</td>
+            </tr>
+            <tr>
+              <td><strong>Structure : headings</strong></td>
+              <td>+10</td>
+              <td>Présence de titres Markdown (<code># Heading</code>) ou patterns <code>Label:</code></td>
+            </tr>
+            <tr>
+              <td><strong>Structure : paragraphes</strong></td>
+              <td>+5</td>
+              <td>&ge; 3 paragraphes de &gt; 50 caractères</td>
+            </tr>
+            <tr>
+              <td><strong>Bruit</strong></td>
+              <td>-3 pts/match</td>
+              <td>Patterns parasites : <code>cookie</code>, <code>privacy policy</code>, <code>newsletter</code>, <code>login</code>, <code>copyright</code> (max -25 pts)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ─── Signal présence ─── -->
+
+        <h2>Signal de Présence</h2>
+
+        <p>Sur les domaines FitMyCV (<code>app.fitmycv.io</code>, <code>dev.fitmycv.io</code>, <code>localhost</code>), le detector émet un signal permettant au SaaS de détecter l'extension installée :</p>
+
+        <pre><code class="language-javascript">// Signal de présence pour le SaaS
+document.documentElement.dataset.fitmycvExtension = 'true';
+window.dispatchEvent(new CustomEvent('fitmycv:extension-ready'));</code></pre>
+
+        <p>Le SaaS utilise ce signal pour afficher ou masquer des éléments d'interface relatifs à l'extension (tutoriel d'installation, bouton promo).</p>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

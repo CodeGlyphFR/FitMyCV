@@ -3,496 +3,1456 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phase Batches - Pipeline Génération | FitMyCV.io</title>
+  <title>Phase Batches - 7 Batches d&eacute;taill&eacute;s | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Pipeline Génération</a>
+          <a href="./overview.html">Pipeline G&eacute;n&eacute;ration</a>
           <span>/</span>
           <span>Phase Batches</span>
         </div>
 
-        <h1>Phase 1 : Batches</h1>
+        <h1>Phase 1 : Les 7 Batches d'Adaptation</h1>
         <p class="lead">
-          La phase de batches adapte individuellement chaque section du CV. Les batches s'exécutent en parallèle (max 5 appels OpenAI concurrents) pour optimiser la performance.
+          La Phase 1 du pipeline est le c&oelig;ur de la transformation IA. Elle se compose de <strong>7 batches sp&eacute;cialis&eacute;s</strong>, dont 6 s'ex&eacute;cutent en parall&egrave;le via <code>Promise.all</code> (experiences, projects, extras, education, languages, skills) et 1 s'ex&eacute;cute s&eacute;quentiellement apr&egrave;s les autres (summary). Chaque batch utilise le <strong>syst&egrave;me de cache OpenAI &agrave; deux niveaux</strong> (Cache A / Cache B) et des <strong>Structured Outputs</strong> pour garantir la conformit&eacute; des r&eacute;ponses.
         </p>
 
-        <!-- ==================== BATCH EXPERIENCE ==================== -->
-        <h2 id="batch-experience">1a. Batch Experience</h2>
+        <div class="callout callout-info">
+          <div class="callout-title">Orchestration dans offerProcessor.js</div>
+          <p>La fonction <code>runBatchesPhase()</code> dans <code>orchestrator/offerProcessor.js</code> coordonne l'ensemble de la Phase 1. Elle appelle d'abord <code>applyClassification()</code> pour filtrer les exp&eacute;riences, puis lance les 6 batches parall&egrave;les, et enfin ex&eacute;cute le batch summary une fois tous les r&eacute;sultats disponibles. Chaque batch est envelopp&eacute; dans <code>withRetry()</code> avec <code>MAX_RETRIES=3</code> tentatives et un backoff exponentiel (<code>BACKOFF_BASE_MS=1000</code>).</p>
+        </div>
 
-        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-experiences.js</code></p>
-        <p><strong>Rôle :</strong> Adapter individuellement chaque expérience marquée KEEP lors de la classification.</p>
-        <p><strong>Cache utilisé :</strong> <span class="badge badge-primary">Cache A</span> (Job Offer uniquement)</p>
+        <!-- ==================== DIAGRAMME MERMAID ==================== -->
+        <h2>Diagramme d'Ex&eacute;cution</h2>
 
-        <div class="data-flow">
-          <div class="data-flow-header">BATCH EXPERIENCE - Flux de données</div>
+        <div class="diagram">
+          <div class="diagram-title">Orchestration des 7 batches &mdash; Parall&eacute;lisation et d&eacute;pendances</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph InputData["ENTREES DEPUIS CLASSIFICATION"]
+        Experiences["Expériences conservées"]
+        Projects["Projets conservés +<br/>expériences déplacées"]
+        Extras["Extras du CV source"]
+        EducationData["Formation du CV source"]
+        LanguagesData["Langues du CV source"]
+        SkillsData["Compétences du CV source<br/>4 catégories"]
+    end
 
-          <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <p><strong>Provenance :</strong> <code>CvFile.content.experience[index]</code> (Prisma) + <code>JobOffer.content</code></p>
-            <pre><code>{
-  "experience": {
-    "title": "Senior Developer",
-    "company": "TechCorp",
-    "location": "Paris",
-    "type": "CDI",
-    "start_date": "2020-01",
-    "end_date": "present",
-    "description": "Contexte de la mission",
-    "responsibilities": [
-      "Développer des applications web",
-      "Gérer une équipe de 3 personnes"
-    ],
-    "deliverables": [
-      "Application livrée en production"
-    ],
-    "skills_used": ["React", "Node.js"]
-  },
-  "jobOffer": {
-    "title": "Lead Developer React",
-    "skills": {
-      "required": ["React", "TypeScript", "API REST"],
-      "nice_to_have": ["AWS", "Docker"]
-    },
-    "responsibilities": ["Concevoir des APIs", "Mentorer l'équipe"]
-  }
+    subgraph CacheALayer["CACHE A - OFFRE D'EMPLOI"]
+        CA["Générer le cache<br/>Responsabilités clés (top 5)"]
+    end
+
+    subgraph ParallelBatches["6 BATCHES EN PARALLELE"]
+        direction TB
+        subgraph BatchExp["1a: Experiences"]
+            direction LR
+            Exp1["1ère expérience seule<br/>établit le cache OpenAI"]
+            ExpDelay["Délai 500ms"]
+            ExpN["Expériences restantes<br/>en parallèle"]
+            Exp1 --> ExpDelay --> ExpN
+        end
+
+        subgraph BatchProj["1b: Projects"]
+            ProjAll["Tous les projets<br/>en parallèle"]
+        end
+
+        subgraph BatchExtras["1c: Extras"]
+            ExtAll["Un seul appel IA<br/>pour tous les extras"]
+        end
+
+        subgraph BatchEdu["1d: Education"]
+            EduAll["Un seul appel IA<br/>pour toutes les formations"]
+        end
+
+        subgraph BatchLang["1e: Languages"]
+            LangAll["Un seul appel IA<br/>Exigences linguistiques"]
+        end
+
+        subgraph BatchSkills["1f: Skills"]
+            direction LR
+            Methods["Méthodologies<br/>établit le cache"]
+            SkDelay["Délai 500ms<br/>exécution décalée"]
+            SkPar["Compétences techniques +<br/>savoir-être + outils<br/>en parallèle décalé"]
+            Methods --> SkDelay --> SkPar
+        end
+    end
+
+    subgraph PostProcess["POST-TRAITEMENT"]
+        ProcessSkills["Post-traitement<br/>des compétences"]
+    end
+
+    subgraph CacheBLayer["CACHE B - OFFRE + SECTIONS ADAPTEES"]
+        CB["Générer le cache enrichi<br/>Cache A + sections adaptées"]
+    end
+
+    subgraph SequentialBatch["BATCH SEQUENTIEL"]
+        BatchSummary["1g: Résumé professionnel<br/>Un seul appel IA<br/>après tous les batches"]
+    end
+
+    subgraph OutputResults["RESULTATS"]
+        Results["Résultats des 7 batches<br/>expériences + projets + extras +<br/>formation + langues + compétences + résumé"]
+    end
+
+    Experiences --> BatchExp
+    Projects --> BatchProj
+    Extras --> BatchExtras
+    EducationData --> BatchEdu
+    LanguagesData --> BatchLang
+    SkillsData --> BatchSkills
+
+    CA --> BatchExp
+    CA --> BatchProj
+    CA --> BatchExtras
+    CA --> BatchEdu
+    CA --> BatchLang
+    CA --> BatchSkills
+
+    BatchSkills --> ProcessSkills
+
+    BatchExp --> CB
+    BatchProj --> CB
+    ProcessSkills --> CB
+
+    CB --> BatchSummary
+
+    BatchExp --> Results
+    BatchProj --> Results
+    BatchExtras --> Results
+    BatchEdu --> Results
+    BatchLang --> Results
+    ProcessSkills --> Results
+    BatchSummary --> Results
+
+    style Experiences fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Projects fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extras fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style EducationData fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style LanguagesData fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SkillsData fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CA fill:#f59e0b,stroke:#d97706,color:#fff
+    style Exp1 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ExpDelay fill:#64748b,stroke:#475569,color:#fff
+    style ExpN fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ProjAll fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ExtAll fill:#6366f1,stroke:#4f46e5,color:#fff
+    style EduAll fill:#6366f1,stroke:#4f46e5,color:#fff
+    style LangAll fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Methods fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SkDelay fill:#64748b,stroke:#475569,color:#fff
+    style SkPar fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ProcessSkills fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CB fill:#f59e0b,stroke:#d97706,color:#fff
+    style BatchSummary fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Results fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== TABLE RECAPITULATIVE ==================== -->
+        <h2>R&eacute;capitulatif des 7 Batches</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>Fichier</th>
+              <th>Fonction principale</th>
+              <th>Appels IA</th>
+              <th>Strat&eacute;gie</th>
+              <th>Cache</th>
+              <th>Mod&egrave;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-warning">1a</span></td>
+              <td><code>batch-experiences.js</code></td>
+              <td><code>executeBatchExperiences()</code></td>
+              <td>1 par exp&eacute;rience</td>
+              <td>Cache-first + parall&egrave;le</td>
+              <td><span class="badge badge-primary">Cache A</span></td>
+              <td><code>model_cv_batch_experience</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1b</span></td>
+              <td><code>batch-projects.js</code></td>
+              <td><code>executeBatchProjects()</code></td>
+              <td>1 par projet</td>
+              <td><code>Promise.all</code> direct</td>
+              <td><span class="badge badge-primary">Cache A</span></td>
+              <td><code>model_cv_batch_projects</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1c</span></td>
+              <td><code>batch-extras.js</code></td>
+              <td><code>executeBatchExtras()</code></td>
+              <td>1 seul appel</td>
+              <td>Unique</td>
+              <td><span class="badge badge-primary">Cache A</span></td>
+              <td><code>model_cv_batch_extras</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1d</span></td>
+              <td><code>batch-education.js</code></td>
+              <td><code>executeBatchEducation()</code></td>
+              <td>1 seul appel</td>
+              <td>Unique</td>
+              <td><span class="badge badge-primary">Cache A</span></td>
+              <td><code>model_cv_batch_education</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1e</span></td>
+              <td><code>batch-languages.js</code></td>
+              <td><code>executeBatchLanguages()</code></td>
+              <td>1 seul appel</td>
+              <td>Unique</td>
+              <td><span class="badge badge-primary">Cache A</span></td>
+              <td><code>model_cv_batch_languages</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1f</span></td>
+              <td><code>batch-skills.js</code></td>
+              <td><code>executeBatchSkills()</code></td>
+              <td>4 appels (1 par cat&eacute;gorie)</td>
+              <td>Staggered parallel</td>
+              <td><span class="badge badge-primary">Cache A</span></td>
+              <td><code>model_cv_batch_skills</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">1g</span></td>
+              <td><code>batch-summary.js</code></td>
+              <td><code>executeBatchSummary()</code></td>
+              <td>1 seul appel</td>
+              <td>S&eacute;quentiel (apr&egrave;s 1a-1f)</td>
+              <td><span class="badge badge-success">Cache B</span></td>
+              <td><code>model_cv_batch_summary</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== SYSTEME DE CACHE ==================== -->
+        <h2>Syst&egrave;me de Cache &agrave; Deux Niveaux</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/utils/cacheContext.js</code></p>
+        <p>Le syst&egrave;me de cache exploite la fonctionnalit&eacute; <strong>Prompt Caching</strong> d'OpenAI : lorsque les premiers tokens d'un prompt syst&egrave;me sont identiques entre plusieurs appels, le serveur r&eacute;utilise les tokens d&eacute;j&agrave; trait&eacute;s, r&eacute;duisant la latence et le co&ucirc;t. Les tokens en cache co&ucirc;tent significativement moins cher.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Cache A &mdash; <code>generateCacheA(jobOffer)</code></h4>
+            <p><strong>Utilis&eacute; par :</strong> Experiences, Projects, Extras, Education, Languages, Skills</p>
+            <p>Contenu du pr&eacute;fixe :</p>
+            <ul>
+              <li>En-t&ecirc;te <code># OFFRE D'EMPLOI - Responsabilit&eacute;s cibles</code></li>
+              <li>Responsabilit&eacute;s de l'offre (<strong>top 5 maximum</strong>)</li>
+              <li>S&eacute;parateur <code>---</code></li>
+            </ul>
+            <pre><code class="language-javascript">// generateCacheA() extrait les responsabilites de l'offre
+export function generateCacheA(jobOffer) {
+  const jobOfferContent = jobOffer?.content || jobOffer;
+  const responsibilities = jobOfferContent.responsibilities || [];
+  const responsibilitiesText = responsibilities.length > 0
+    ? responsibilities.slice(0, 5).map(r => `- ${r}`).join('\n')
+    : '(non specifie)';
+
+  return `# OFFRE D'EMPLOI - Responsabilites cibles\n\n${responsibilitiesText}\n\n---\n\n`;
 }</code></pre>
           </div>
-
-          <div class="data-flow-section data-flow-prompt">
-            <div class="data-flow-label">Structure du Prompt</div>
-            <p><strong>Fichiers :</strong> <code>prompts/batch-experience-system.md</code> + <code>prompts/batch-experience-user.md</code></p>
-            <p><strong>Organisation :</strong></p>
+          <div class="card">
+            <h4>Cache B &mdash; <code>generateCacheB(jobOffer, adaptedExperiences, adaptedProjects)</code></h4>
+            <p><strong>Utilis&eacute; par :</strong> Summary uniquement</p>
+            <p>Contenu du pr&eacute;fixe :</p>
             <ul>
-              <li><strong>[SYSTEM - Cache Prefix]</strong> : Job Offer context (cacheable)</li>
-              <li><strong>[SYSTEM - Instructions]</strong> : Règles d'adaptation (STAR framework)</li>
-              <li><strong>[USER]</strong> : Expérience source + variables</li>
+              <li>Titre du poste vis&eacute;, comp&eacute;tences demand&eacute;es/appr&eacute;ci&eacute;es, soft skills, m&eacute;thodologies</li>
+              <li>Missions du poste (top 5)</li>
+              <li>R&eacute;sum&eacute; compact des exp&eacute;riences adapt&eacute;es (titre + company + skills_used top 5)</li>
+              <li>R&eacute;sum&eacute; compact des projets adapt&eacute;s (nom + tech_stack top 5)</li>
             </ul>
-            <p><strong>Résumé du prompt :</strong></p>
-            <blockquote>
-              "Adapter l'expérience professionnelle pour maximiser l'alignement avec l'offre d'emploi.
-              Reformuler les responsabilités avec des verbes d'action (infinitif), extraire les chiffres vers deliverables,
-              aligner les skills_used avec ceux demandés par l'offre.
-              INTERDICTION d'inventer des informations non présentes dans la source."
-            </blockquote>
-          </div>
+            <pre><code class="language-javascript">// generateCacheB() inclut le contexte complet
+export function generateCacheB(jobOffer, adaptedExperiences, adaptedProjects) {
+  const keyInfo = extractJobOfferKeyInfo(jobOffer);
 
-          <div class="data-flow-section data-flow-cache">
-            <div class="data-flow-label">Gestion du Cache (CAG)</div>
-            <p><strong>Partie cachée :</strong> Le préfixe système contenant le Job Offer context</p>
-            <p><strong>Durée :</strong> 5 minutes (ephemeral) ou 24h (GPT-5)</p>
-            <p><strong>Bénéfice :</strong> Les tokens cache coûtent 90% moins cher</p>
-            <pre><code>// Construction du cache
-const cacheA = generateCacheA(jobOffer);
-// Appliqué via cache_control: { type: 'ephemeral' }</code></pre>
-          </div>
+  const experiencesSummary = (adaptedExperiences || []).map(exp =>
+    `- ${exp.title} @ ${exp.company} | Skills: ${(exp.skills_used || []).slice(0, 5).join(', ')}`
+  ).join('\n');
 
-          <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie (JSON Schema)</div>
-            <p><strong>Schéma :</strong> <code>schemas/batchExperienceSchema.json</code></p>
-            <pre><code>{
-  "description": "Contexte et défi (1-2 phrases, sans chiffres)",
-  "responsibilities": [
-    "Concevoir et développer des APIs REST",
-    "Mentorer une équipe de développeurs",
-    "Mettre en place les bonnes pratiques CI/CD"
-  ],
-  "deliverables": [
-    "-30% latence API",
-    "3 devs formés",
-    "Pipeline CI/CD"
-  ],
-  "skills_used": ["React", "TypeScript", "API REST"],
-  "domain": "Développement logiciel",
-  "years_in_domain": 4.5,
-  "modifications": [
-    {
-      "field": "responsibilities",
-      "action": "modified",
-      "before": "Développer des applications web",
-      "after": "Concevoir et développer des APIs REST",
-      "reason": "Alignement avec requirement 'API REST' de l'offre"
-    },
-    {
-      "field": "deliverables",
-      "action": "added",
-      "before": null,
-      "after": "-30% latence API",
-      "reason": "Chiffre extrait de responsibilities, placé dans deliverables"
-    }
-  ]
+  const projectsSummary = (adaptedProjects || []).map(proj =>
+    `- ${proj.name} | Tech: ${(proj.tech_stack || []).slice(0, 5).join(', ')}`
+  ).join('\n');
+
+  return `# OFFRE D'EMPLOI CIBLE
+**Titre du poste vise:** ${keyInfo.title}
+**Competences demandees:** ${keyInfo.requiredSkills}
+**Competences appreciees:** ${keyInfo.niceToHaveSkills}
+**Soft skills:** ${keyInfo.softSkills}
+**Methodologies:** ${keyInfo.methodologies}
+**Missions du poste:** ...
+# EXPERIENCES ADAPTEES
+${experiencesSummary || 'Aucune'}
+# PROJETS ADAPTES
+${projectsSummary || 'Aucun'}
+---
+`;
 }</code></pre>
           </div>
         </div>
 
         <div class="callout callout-warning">
-          <div class="callout-title">Règles critiques</div>
-          <ul>
-            <li><strong>Champs immuables :</strong> title, company, location, type, start_date, end_date (jamais modifiés)</li>
-            <li><strong>Flux des chiffres :</strong> Extraire de responsibilities → Placer dans deliverables</li>
-            <li><strong>Max items :</strong> 5 responsibilities, 4 deliverables, 6 skills_used</li>
-            <li><strong>Format responsibilities :</strong> Verbe infinitif, 5-10 mots, ZÉRO chiffre</li>
-            <li><strong>Format deliverables :</strong> 3-5 mots MAX, chiffre OBLIGATOIRE</li>
-          </ul>
+          <div class="callout-title">buildCachedSystemPrompt()</div>
+          <p>Le system prompt final est construit par <code>buildCachedSystemPrompt(cachePrefix, phaseInstructions)</code> qui concat&egrave;ne simplement le pr&eacute;fixe de cache avec les instructions sp&eacute;cifiques &agrave; la phase : <code>return cachePrefix + phaseInstructions;</code>. Les instructions phase par phase sont charg&eacute;es depuis les fichiers <code>prompts/batch-*-system.md</code>.</p>
         </div>
 
-        <!-- ==================== BATCH SKILLS ==================== -->
-        <h2 id="batch-skills">1d. Batch Skills</h2>
+        <h3>Tableau d'utilisation des caches</h3>
 
-        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-skills.js</code></p>
-        <p><strong>Rôle :</strong> Adapter et réorganiser les compétences selon 7 missions distinctes.</p>
-        <p><strong>Cache utilisé :</strong> <span class="badge badge-success">Cache B</span> (Job Offer + Expériences + Projets adaptés)</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>Cache</th>
+              <th>Contenu utilis&eacute;</th>
+              <th>Construction system prompt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-warning">1a</span> Experiences</td>
+              <td><span class="badge badge-primary">A</span></td>
+              <td>Responsabilit&eacute;s de l'offre (top 5)</td>
+              <td><code>extractJobResponsibilities()</code> dans le user prompt + system prompt direct</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1b</span> Projects</td>
+              <td><span class="badge badge-primary">A</span></td>
+              <td>Responsabilit&eacute;s de l'offre (top 5)</td>
+              <td><code>buildCachedSystemPrompt(cacheA, instructions)</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1c</span> Extras</td>
+              <td><span class="badge badge-primary">A</span></td>
+              <td>Responsabilit&eacute;s de l'offre (top 5)</td>
+              <td><code>buildCachedSystemPrompt(cacheA, instructions)</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1d</span> Education</td>
+              <td><span class="badge badge-primary">A</span></td>
+              <td>Responsabilit&eacute;s de l'offre (top 5)</td>
+              <td><code>buildCachedSystemPrompt(cacheA, instructions)</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1e</span> Languages</td>
+              <td><span class="badge badge-primary">A</span></td>
+              <td>Responsabilit&eacute;s de l'offre (top 5)</td>
+              <td><code>buildCachedSystemPrompt(cacheA, instructions)</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1f</span> Skills</td>
+              <td><span class="badge badge-primary">A</span></td>
+              <td>Contexte offre d&eacute;l&eacute;gu&eacute; &agrave; <code>processCategoryBatch()</code></td>
+              <td>G&eacute;r&eacute; dans le sous-module <code>skills/</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">1g</span> Summary</td>
+              <td><span class="badge badge-success">B</span></td>
+              <td>Offre + exp&eacute;riences adapt&eacute;es + projets adapt&eacute;s</td>
+              <td><code>buildCachedSystemPrompt(cacheB, instructions)</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== BATCH 1a : EXPERIENCES ==================== -->
+        <h2 id="batch-experience">Batch 1a : Experiences</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-experiences.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeBatchExperiences({ offerId, experiences, jobOffer, sourceLanguage, targetLanguage, userInterfaceLanguage, userId, signal, debugTimestamp })</code></p>
+        <p><strong>Subtask type :</strong> <code>batch_experience</code> (1 subtask cr&eacute;&eacute;e par exp&eacute;rience)</p>
 
         <div class="data-flow">
-          <div class="data-flow-header">BATCH SKILLS - Flux de données</div>
+          <div class="data-flow-header">BATCH EXPERIENCES &mdash; Adaptation individuelle de chaque exp&eacute;rience KEEP</div>
 
           <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <p><strong>Provenance :</strong> <code>CvFile.content.skills</code> + résultats des batches précédents</p>
-            <pre><code>{
-  "skills": {
-    "hard_skills": [
-      { "name": "Gestion de projets complexes", "proficiency": 3 }
-    ],
-    "soft_skills": ["Communication", "Leadership"],
-    "tools": [
-      { "name": "React (framework)", "proficiency": 4 }
-    ],
-    "methodologies": ["Agile"]
-  },
-  "adaptedExperiences": [...],  // Résumé compact
-  "adaptedProjects": [...],      // Résumé compact
-  "jobOffer": {
-    "skills": {
-      "required": ["React", "Node.js", "CI/CD"],
-      "methodologies": ["Agile", "Scrum"]
-    }
-  }
-}</code></pre>
+            <div class="data-flow-label">Entr&eacute;es</div>
+            <ul>
+              <li><strong>experiences :</strong> Tableau des exp&eacute;riences classifi&eacute;es <code>KEEP</code> par la phase Classification</li>
+              <li><strong>jobOffer :</strong> Offre d'emploi extraite (pour le user prompt via <code>extractJobResponsibilities()</code>)</li>
+              <li><strong>sourceLanguage / targetLanguage :</strong> Langues source et cible du CV (ex: <code>'francais'</code>)</li>
+              <li><strong>userInterfaceLanguage :</strong> Langue de l'interface pour les raisons (ex: <code>'fr'</code>)</li>
+              <li><strong>Prompts :</strong> <code>batch-experience-system.md</code> + <code>batch-experience-user.md</code></li>
+              <li><strong>Schema :</strong> <code>batchExperienceSchema.json</code></li>
+            </ul>
           </div>
 
           <div class="data-flow-section data-flow-prompt">
-            <div class="data-flow-label">Les 7 Missions du Batch Skills</div>
+            <div class="data-flow-label">Strat&eacute;gie d'ex&eacute;cution : Cache-first</div>
+            <ol>
+              <li><strong>Si 1 seule exp&eacute;rience :</strong> ex&eacute;cution simple via <code>adaptSingleExperience()</code></li>
+              <li><strong>Si plusieurs :</strong>
+                <ol>
+                  <li>Ex&eacute;cuter la <strong>1&egrave;re exp&eacute;rience seule</strong> pour &eacute;tablir le cache de prompt OpenAI</li>
+                  <li>Attendre <strong>500ms</strong> (<code>await new Promise(resolve =&gt; setTimeout(resolve, 500))</code>)</li>
+                  <li>Ex&eacute;cuter toutes les <strong>exp&eacute;riences restantes en <code>Promise.all</code></strong> (b&eacute;n&eacute;ficient du cache)</li>
+                </ol>
+              </li>
+            </ol>
+            <pre><code class="language-javascript">// Strategie cache-first dans executeBatchExperiences()
+if (validExperiences.length === 1) {
+  const result = await adaptSingleExperience({ experience: validExperiences[0], ... });
+  results = [result];
+} else {
+  // Etape 1: Executer la premiere pour etablir le cache
+  const firstResult = await adaptSingleExperience({
+    experience: validExperiences[0], experienceIndex: 0, ...
+  });
+
+  // Delai pour laisser le cache OpenAI se propager
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Etape 2: Executer les autres en parallele (beneficient du cache)
+  const remainingResults = await Promise.all(
+    validExperiences.slice(1).map((experience, index) =>
+      adaptSingleExperience({ experience, experienceIndex: index + 1, ... })
+    )
+  );
+
+  results = [firstResult, ...remainingResults];
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-javascript">// Retour de executeBatchExperiences()
+{
+  success: true,
+  adaptedExperiences: [
+    {
+      title: "Lead Developer",        // Titre ATS-friendly (si different de l'original)
+      company: "Entreprise X",         // IMMUABLE - conserve depuis l'original
+      location: "Paris",               // IMMUABLE
+      type: "CDI",                     // IMMUABLE
+      start_date: "2020-01",           // IMMUABLE
+      end_date: "2023-06",             // IMMUABLE
+      description: "...",              // Adapte via {value, reason}
+      responsibilities: ["..."],       // Reformulees avec mots-cles ATS
+      deliverables: ["..."],           // Filtres (chiffres obligatoires)
+      skills_used: ["..."],            // Reconstruits via skill_changes
+      domain: "Developpement Web",     // Determine par l'IA
+      years_in_domain: 3,              // Pre-calcule par calculateYearsInDomain()
+      skill_changes: [{ before: "JS", after: "JavaScript", reason: "..." }],
+      _title_reason: "...",            // Raisons pour le systeme de review
+      _description_reason: "...",
+      _responsibilities_reason: "...",
+      _deliverables_reason: "...",
+    }
+  ],
+  skillChanges: { 0: { skill_changes: [...] } },  // Par index d'experience
+  stats: { total: 3, succeeded: 3, failed: 0 },
+  tokens: { prompt: 12000, completion: 3000 },
+  duration: 4500,
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Champs immuables vs. modifiables</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Statut</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>company</code></td>
+              <td><span class="badge badge-error">IMMUABLE</span></td>
+              <td>Nom de l'entreprise &mdash; conserv&eacute; depuis l'original par <code>sanitizeAdaptedExperience()</code></td>
+            </tr>
+            <tr>
+              <td><code>location</code></td>
+              <td><span class="badge badge-error">IMMUABLE</span></td>
+              <td>Lieu de travail &mdash; conserv&eacute; depuis l'original</td>
+            </tr>
+            <tr>
+              <td><code>type</code></td>
+              <td><span class="badge badge-error">IMMUABLE</span></td>
+              <td>Type de contrat (CDI, CDD, etc.) &mdash; conserv&eacute; depuis l'original</td>
+            </tr>
+            <tr>
+              <td><code>start_date</code></td>
+              <td><span class="badge badge-error">IMMUABLE</span></td>
+              <td>Date de d&eacute;but &mdash; conserv&eacute;e depuis l'original</td>
+            </tr>
+            <tr>
+              <td><code>end_date</code></td>
+              <td><span class="badge badge-error">IMMUABLE</span></td>
+              <td>Date de fin &mdash; conserv&eacute;e depuis l'original</td>
+            </tr>
+            <tr>
+              <td><code>title</code></td>
+              <td><span class="badge badge-warning">SUGGERE</span></td>
+              <td>L'IA sugg&egrave;re un titre ATS-friendly via <code>{value, reason}</code> ; appliqu&eacute; <strong>seulement si diff&eacute;rent</strong> de l'original</td>
+            </tr>
+            <tr>
+              <td><code>description</code></td>
+              <td><span class="badge badge-success">MODIFIABLE</span></td>
+              <td>Contexte adapt&eacute; via <code>{value, reason}</code> &mdash; <code>null</code> signifie "garder l'original"</td>
+            </tr>
+            <tr>
+              <td><code>responsibilities</code></td>
+              <td><span class="badge badge-success">MODIFIABLE</span></td>
+              <td>Reformul&eacute;es avec mots-cl&eacute;s ATS via <code>{value, reason}</code></td>
+            </tr>
+            <tr>
+              <td><code>deliverables</code></td>
+              <td><span class="badge badge-success">MODIFIABLE</span></td>
+              <td>Mis en valeur via <code>{value, reason}</code> puis filtr&eacute;s par <code>filterDeliverablesWithNumbers()</code></td>
+            </tr>
+            <tr>
+              <td><code>skills_used</code></td>
+              <td><span class="badge badge-success">MODIFIABLE</span></td>
+              <td>Reconstruits par <code>sanitizeAdaptedExperience()</code> &agrave; partir de l'original + <code>skill_changes</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Post-traitement : sanitizeAdaptedExperience()</h3>
+
+        <p>Cette fonction est appel&eacute;e apr&egrave;s chaque appel IA pour reconstruire l'exp&eacute;rience compl&egrave;te &agrave; partir des champs originaux immuables et des modifications de l'IA :</p>
+
+        <pre><code class="language-javascript">function sanitizeAdaptedExperience(adaptedExperience, originalExperience) {
+  // 1. Restaurer les champs immuables depuis l'original
+  const immutableFields = {
+    company: originalExperience?.company,
+    location: originalExperience?.location,
+    type: originalExperience?.type,
+    start_date: originalExperience?.start_date,
+    end_date: originalExperience?.end_date,
+  };
+
+  // 2. Comparer le titre suggere avec l'original
+  const suggestedTitle = adaptedExperience.title?.value;
+  const originalTitle = originalExperience?.title;
+  const titleChanged = suggestedTitle && suggestedTitle !== originalTitle;
+  const title = titleChanged ? suggestedTitle : originalTitle;
+
+  // 3. Extraire les valeurs des objets { value, reason } ou utiliser l'original si null
+  const description = adaptedExperience.description?.value ?? originalExperience?.description;
+  const responsibilities = adaptedExperience.responsibilities?.value ?? originalExperience?.responsibilities;
+  const deliverables = adaptedExperience.deliverables?.value ?? originalExperience?.deliverables;
+
+  // 4. Reconstruire skills_used a partir de l'original + skill_changes
+  const originalSkills = originalExperience?.skills_used || [];
+  const skillChanges = adaptedExperience.skill_changes || [];
+  const changesMap = new Map();
+  for (const change of skillChanges) {
+    changesMap.set(change.before, change.after);
+  }
+  const skills_used = originalSkills
+    .map(skill => changesMap.has(skill) ? changesMap.get(skill) : skill)
+    .filter(skill => skill !== null); // retirer les skills supprimes (after = null)
+
+  return {
+    title, ...immutableFields, description, responsibilities,
+    deliverables: filterDeliverablesWithNumbers(deliverables || []),
+    skills_used, domain: adaptedExperience.domain,
+    years_in_domain: adaptedExperience.years_in_domain,
+    skill_changes: skillChanges,
+    _title_reason: titleChanged ? adaptedExperience.title?.reason : null,
+    _description_reason: adaptedExperience.description?.reason || null,
+    _responsibilities_reason: adaptedExperience.responsibilities?.reason || null,
+    _deliverables_reason: adaptedExperience.deliverables?.reason || null,
+  };
+}</code></pre>
+
+        <div class="callout callout-error">
+          <div class="callout-title">filterDeliverablesWithNumbers()</div>
+          <p>R&egrave;gle stricte : <strong>seuls les deliverables contenant au moins un chiffre</strong> (regex <code>/\d/</code>) sont conserv&eacute;s dans le CV final. Les r&eacute;alisations qualitatives sans m&eacute;trique sont syst&eacute;matiquement filtr&eacute;es. Cela garantit que chaque r&eacute;alisation est quantifiable et v&eacute;rifiable.</p>
+          <pre><code class="language-javascript">function filterDeliverablesWithNumbers(deliverables) {
+  if (!Array.isArray(deliverables)) return [];
+  return deliverables.filter(item => {
+    if (typeof item !== 'string') return false;
+    return /\d/.test(item); // Doit contenir au moins un chiffre
+  });
+}</code></pre>
+        </div>
+
+        <h3>Calcul de years_in_domain</h3>
+
+        <p>La dur&eacute;e de l'exp&eacute;rience est pr&eacute;-calcul&eacute;e par le code et fournie &agrave; l'IA dans le champ <code>_calculated_years</code> :</p>
+
+        <pre><code class="language-javascript">function calculateYearsInDomain(startDate, endDate) {
+  // Parser les dates (format YYYY-MM ou YYYY)
+  // endDate "present" ou "aujourd'hui" = date du jour
+  const totalMonths = (endYear - startYear) * 12 + (endMonth - startMonth);
+  const years = Math.max(0, totalMonths / 12);
+
+  // Si >= 1 an : arrondi half-down (4.5 -> 4, 4.6 -> 5)
+  if (years >= 1) return roundHalfDown(years);
+  // Si < 1 an : garde decimal arrondi a 1 chiffre (ex: 0.5 = 6 mois)
+  return Math.round(years * 10) / 10;
+}
+
+function roundHalfDown(value) {
+  return Math.ceil(value - 0.5);
+  // Exemples: 4.4 -> 4, 4.5 -> 4, 4.6 -> 5
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Donn&eacute;es envoy&eacute;es &agrave; l'IA</div>
+          <p>Le titre de l'exp&eacute;rience est <strong>volontairement exclu</strong> des donn&eacute;es envoy&eacute;es &agrave; l'IA (<code>experienceForAI</code> ne contient pas <code>title</code>) pour &eacute;viter de biaiser la d&eacute;termination du domaine et du titre ATS-friendly. Les champs envoy&eacute;s sont : <code>company</code>, <code>description</code>, <code>responsibilities</code>, <code>deliverables</code>, <code>skills_used</code>, <code>_classificationReason</code>, <code>_calculated_years</code>.</p>
+        </div>
+
+        <!-- ==================== BATCH 1b : PROJECTS ==================== -->
+        <h2 id="batch-projects">Batch 1b : Projects</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-projects.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeBatchProjects({ offerId, projects, movedExperiences, jobOffer, targetLanguage, userId, signal })</code></p>
+        <p><strong>Subtask type :</strong> <code>batch_project</code> (1 subtask par projet)</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH PROJECTS &mdash; Adaptation de tous les projets en parall&egrave;le</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es</div>
+            <ul>
+              <li><strong>projects :</strong> Projets classifi&eacute;s <code>KEEP</code> (d&eacute;j&agrave; fusionn&eacute;s avec les <code>MOVE_TO_PROJECTS</code> par <code>applyClassification()</code>)</li>
+              <li><strong>movedExperiences :</strong> Pass&eacute; comme tableau vide <code>[]</code> par l'orchestrateur (d&eacute;j&agrave; inclus dans <code>projects</code>)</li>
+              <li><strong>jobOffer :</strong> Offre d'emploi (inject&eacute;e dans le system prompt via Cache A)</li>
+              <li><strong>Prompts :</strong> <code>batch-project-system.md</code> + <code>batch-project-user.md</code></li>
+              <li><strong>Schema :</strong> <code>batchProjectSchema.json</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Strat&eacute;gie d'ex&eacute;cution</div>
+            <ol>
+              <li>Combiner <code>[...projects, ...movedExperiences]</code> dans <code>allProjects</code></li>
+              <li>G&eacute;n&eacute;rer le <strong>Cache A</strong> via <code>generateCacheA(jobOffer)</code></li>
+              <li>Construire le system prompt via <code>buildCachedSystemPrompt(cacheA, systemPromptInstructions)</code></li>
+              <li>Ex&eacute;cuter <strong>tous les projets en <code>Promise.all</code></strong> via <code>adaptSingleProject()</code></li>
+              <li>Les projets issus de <code>MOVE_TO_PROJECTS</code> portent le flag <code>_fromExperience: true</code> et contiennent <code>_originalExperience</code></li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-javascript">// Retour de executeBatchProjects()
+{
+  success: true,
+  adaptedProjects: [
+    {
+      name: "Migration Cloud",
+      role: "Lead Developer",
+      start_date: "2022-01",
+      end_date: "2022-06",
+      summary: "...",              // Reformule avec mots-cles de l'offre
+      tech_stack: ["AWS", "Docker"], // Reordonne par pertinence
+      url: null,
+    }
+  ],
+  stats: {
+    total: 2,
+    succeeded: 2,
+    failed: 0,
+    fromExperiences: 1,   // Nombre d'experiences converties
+  },
+  tokens: { prompt: 8000, completion: 2000 },
+  duration: 3000,
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Conversion Experience &rarr; Projet</h3>
+
+        <p>Quand la Classification marque une exp&eacute;rience comme <code>MOVE_TO_PROJECTS</code> (exp&eacute;rience courte, freelance, stage court), la conversion est effectu&eacute;e <strong>inline dans <code>applyClassification()</code></strong> (classify.js:327-358). Il n'existe pas de fonction <code>convertExperienceToProject()</code> export&eacute;e s&eacute;par&eacute;ment. La transformation pr&eacute;serve les m&eacute;tadonn&eacute;es d'origine via les champs <code>_fromExperience</code>, <code>_classificationReason</code> et <code>_originalExperience</code>.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Note sp&eacute;ciale dans le user prompt</div>
+          <p>Quand un projet provient d'une exp&eacute;rience convertie (<code>_fromExperience === true</code>), une note suppl&eacute;mentaire est inject&eacute;e dans le user prompt via la variable <code>movedFromExperienceNote</code> : <em>"Ce projet a &eacute;t&eacute; converti depuis une exp&eacute;rience professionnelle (titre chez company). Adapte-le en format projet."</em></p>
+        </div>
+
+        <!-- ==================== BATCH 1c : EXTRAS ==================== -->
+        <h2 id="batch-extras">Batch 1c : Extras</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-extras.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeBatchExtras({ offerId, extras, jobOffer, targetLanguage, userId, signal })</code></p>
+        <p><strong>Subtask type :</strong> <code>batch_extras</code> (1 seule subtask pour tous les extras)</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH EXTRAS &mdash; Un seul appel OpenAI pour tous les extras</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es</div>
+            <ul>
+              <li><strong>extras :</strong> Tableau complet des extras du CV source (<code>sourceCv.extras</code>)</li>
+              <li><strong>Donn&eacute;es g&eacute;r&eacute;es :</strong> B&eacute;n&eacute;volat, hobbies, disponibilit&eacute;, remote/t&eacute;l&eacute;travail, permis de conduire</li>
+              <li><strong>Prompts :</strong> <code>batch-extras-system.md</code> + <code>batch-extras-user.md</code></li>
+              <li><strong>Schema :</strong> <code>batchExtrasSchema.json</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Strat&eacute;gie d'ex&eacute;cution</div>
+            <ol>
+              <li>G&eacute;n&eacute;rer le <strong>Cache A</strong> via <code>generateCacheA(jobOffer)</code></li>
+              <li>Construire le system prompt via <code>buildCachedSystemPrompt(cacheA, systemPromptInstructions)</code></li>
+              <li>Envoyer <strong>tous les extras dans un seul appel</strong> OpenAI (pas de parall&eacute;lisation interne)</li>
+              <li>L'IA met en valeur les extras pertinents pour l'offre et conserve les autres tels quels</li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-javascript">// Retour de executeBatchExtras()
+{
+  success: true,
+  adaptedExtras: [
+    { name: "Benevolat", value: "..." },
+    { name: "Hobbies", value: "..." },
+    { name: "Disponibilite", value: "..." },
+  ],
+  modifications: [
+    { field: "Benevolat", action: "highlighted", before: "...", after: "...", reason: "..." },
+  ],
+  extras_modifications: [...],
+  subtaskId: "clx...",
+  tokens: { prompt: 3000, completion: 800 },
+  duration: 1500,
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">D&eacute;tection automatique des mots-cl&eacute;s</div>
+          <p>La fonction interne <code>extractJobOfferInfo()</code> scanne le texte complet de l'offre (<code>JSON.stringify(jobOffer).toLowerCase()</code>) pour d&eacute;tecter automatiquement les mentions de <strong>permis</strong>, <strong>v&eacute;hicule/voiture</strong>, <strong>disponibilit&eacute;</strong>, <strong>remote/t&eacute;l&eacute;travail/hybride</strong>. Ces d&eacute;tections alimentent le prompt pour que l'IA sache quels extras mettre en avant.</p>
+        </div>
+
+        <!-- ==================== BATCH 1d : EDUCATION ==================== -->
+        <h2 id="batch-education">Batch 1d : Education</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-education.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeBatchEducation({ offerId, education, jobOffer, targetLanguage, userId, signal })</code></p>
+        <p><strong>Subtask type :</strong> <code>batch_education</code> (1 seule subtask pour toutes les formations)</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH EDUCATION &mdash; Traduction et adaptation des formations</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es</div>
+            <ul>
+              <li><strong>education :</strong> Tableau des formations du CV source (<code>sourceCv.education</code>)</li>
+              <li><strong>Prompts :</strong> <code>batch-education-system.md</code> + <code>batch-education-user.md</code></li>
+              <li><strong>Schema :</strong> <code>batchEducationSchema.json</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Strat&eacute;gie d'ex&eacute;cution</div>
+            <ol>
+              <li>G&eacute;n&eacute;rer le <strong>Cache A</strong> via <code>generateCacheA(jobOffer)</code></li>
+              <li>Envoyer <strong>toutes les formations dans un seul appel</strong> OpenAI</li>
+              <li>L'IA traduit <code>degree</code> et <code>field_of_study</code> dans la <strong>langue cible</strong></li>
+              <li>Les autres champs (<code>institution</code>, <code>dates</code>, <code>location</code>) sont conserv&eacute;s tels quels</li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-javascript">// Retour de executeBatchEducation()
+{
+  success: true,
+  adaptedEducation: [
+    {
+      institution: "Universite Paris-Saclay",   // Conserve
+      degree: "Master of Science",               // Traduit en langue cible
+      field_of_study: "Computer Science",         // Traduit en langue cible
+      start_date: "2015-09",                     // Conserve
+      end_date: "2017-06",                       // Conserve
+      location: "Paris",                         // Conserve
+    }
+  ],
+  education_modifications: [
+    { field: "degree", action: "modified",
+      before: "Master", after: "Master of Science", reason: "Traduction" }
+  ],
+  subtaskId: "clx...",
+  tokens: { prompt: 2500, completion: 600 },
+  duration: 1200,
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== BATCH 1e : LANGUAGES ==================== -->
+        <h2 id="batch-languages">Batch 1e : Languages</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-languages.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeBatchLanguages({ offerId, languages, jobOffer, sourceLanguage, targetLanguage, userId, signal })</code></p>
+        <p><strong>Subtask type :</strong> <code>batch_languages</code> (1 seule subtask)</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH LANGUAGES &mdash; Traduction et alignement des langues</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es</div>
+            <ul>
+              <li><strong>languages :</strong> Langues du CV source (<code>sourceCv.languages</code>)</li>
+              <li><strong>languageRequirements :</strong> Exigences linguistiques extraites automatiquement de l'offre par <code>extractLanguageRequirements()</code></li>
+              <li><strong>Prompts :</strong> <code>batch-languages-system.md</code> + <code>batch-languages-user.md</code></li>
+              <li><strong>Schema :</strong> <code>batchLanguagesSchema.json</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">extractLanguageRequirements() &mdash; Extraction des exigences linguistiques</div>
+            <p>Cette fonction analyse l'offre d'emploi en deux passes :</p>
+            <ol>
+              <li><strong>Donn&eacute;es structur&eacute;es :</strong> V&eacute;rifie <code>jobOffer.requirements.languages</code> (tableau d'objets <code>{name, level}</code> ou de cha&icirc;nes)</li>
+              <li><strong>Analyse textuelle :</strong> Scanne le texte complet (titre + description + skills) pour d&eacute;tecter les langues non mentionn&eacute;es dans les donn&eacute;es structur&eacute;es</li>
+            </ol>
             <table>
               <thead>
-                <tr><th>#</th><th>Mission</th><th>Description</th></tr>
+                <tr>
+                  <th>Langue</th>
+                  <th>Patterns d&eacute;tect&eacute;s</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Fran&ccedil;ais</td><td><code>fran&ccedil;ais</code>, <code>francais</code>, <code>french</code></td></tr>
+                <tr><td>Anglais</td><td><code>anglais</code>, <code>english</code></td></tr>
+                <tr><td>Allemand</td><td><code>allemand</code>, <code>german</code>, <code>deutsch</code></td></tr>
+                <tr><td>Espagnol</td><td><code>espagnol</code>, <code>spanish</code>, <code>espa&ntilde;ol</code></td></tr>
+                <tr><td>Italien</td><td><code>italien</code>, <code>italian</code>, <code>italiano</code></td></tr>
+                <tr><td>Portugais</td><td><code>portugais</code>, <code>portuguese</code>, <code>portugu&ecirc;s</code></td></tr>
+                <tr><td>N&eacute;erlandais</td><td><code>n&eacute;erlandais</code>, <code>neerlandais</code>, <code>dutch</code></td></tr>
+                <tr><td>Chinois</td><td><code>chinois</code>, <code>chinese</code>, <code>mandarin</code></td></tr>
+                <tr><td>Japonais</td><td><code>japonais</code>, <code>japanese</code></td></tr>
+                <tr><td>Arabe</td><td><code>arabe</code>, <code>arabic</code></td></tr>
+              </tbody>
+            </table>
+            <p>Pour chaque langue d&eacute;tect&eacute;e, le code cherche un <strong>niveau</strong> dans un contexte de &plusmn;50 caract&egrave;res autour de la mention :</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Niveau d&eacute;tect&eacute;</th>
+                  <th>Patterns</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Courant</td><td><code>courant</code>, <code>fluent</code>, <code>proficient</code></td></tr>
+                <tr><td>Bilingue</td><td><code>bilingue</code>, <code>bilingual</code>, <code>native</code></td></tr>
+                <tr><td>Interm&eacute;diaire</td><td><code>intermediaire</code>, <code>intermediate</code>, <code>conversational</code></td></tr>
+                <tr><td>Notions</td><td><code>notions</code>, <code>basic</code>, <code>beginner</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-javascript">// Retour de executeBatchLanguages()
+{
+  success: true,
+  adaptedLanguages: [
+    { name: "French", level: "Native" },     // Traduit en langue cible
+    { name: "English", level: "Fluent" },
+  ],
+  language_modifications: [
+    { field: "name", action: "modified",
+      before: "Francais", after: "French", reason: "Traduction langue cible" }
+  ],
+  subtaskId: "clx...",
+  tokens: { prompt: 2000, completion: 500 },
+  duration: 1000,
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== BATCH 1f : SKILLS ==================== -->
+        <h2 id="batch-skills">Batch 1f : Skills</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-skills.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeBatchSkills({ offerId, skills, jobOffer, cvLanguage, jobLanguage, interfaceLanguage, userId, signal, debugTimestamp })</code></p>
+        <p><strong>Subtask type :</strong> <code>batch_skills</code> (1 seule subtask pour les 4 appels combin&eacute;s)</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH SKILLS &mdash; Strat&eacute;gie Staggered Parallel (4 cat&eacute;gories, 4 appels IA)</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es</div>
+            <ul>
+              <li><strong>skills :</strong> 4 cat&eacute;gories depuis <code>sourceCv.skills</code> :
+                <ul>
+                  <li><code>hard_skills</code> : <code>[{name, proficiency}, ...]</code></li>
+                  <li><code>soft_skills</code> : <code>["...", ...]</code></li>
+                  <li><code>tools</code> : <code>[{name, proficiency}, ...]</code></li>
+                  <li><code>methodologies</code> : <code>["...", ...]</code></li>
+                </ul>
+              </li>
+              <li><strong>jobOffer :</strong> Skills de l'offre extraits par <code>extractJobOfferSkills()</code> en 4 cat&eacute;gories avec <code>required</code> / <code>nice_to_have</code></li>
+              <li><strong>Sous-modules :</strong>
+                <ul>
+                  <li><code>skills/prepareSkillItems.js</code> &mdash; <code>prepareAllCategories()</code> : s&eacute;paration des skills compos&eacute;s</li>
+                  <li><code>skills/processCategoryBatch.js</code> &mdash; <code>processCategoryBatch()</code> : appel IA par cat&eacute;gorie</li>
+                  <li><code>skills/buildSkillsResult.js</code> &mdash; <code>buildSkillsResult()</code> : d&eacute;termination des actions</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Strat&eacute;gie d'ex&eacute;cution en 5 &eacute;tapes</div>
+            <ol>
+              <li><strong>Pr&eacute;paration :</strong> <code>prepareAllCategories(skills)</code> s&eacute;pare les skills compos&eacute;s (ex: "React/Next.js" &rarr; "React", "Next.js") et cr&eacute;e des <code>linkMap</code> pour retrouver le parent</li>
+              <li><strong>Extraction offre :</strong> <code>extractJobOfferSkills(jobOffer)</code> extrait les skills de l'offre en 4 cat&eacute;gories avec <code>required</code> / <code>niceToHave</code></li>
+              <li><strong>&Eacute;tape 1 &mdash; Methodologies d'abord :</strong> Ex&eacute;cute <code>processCategoryBatch({ category: 'methodologies', ... })</code> (cat&eacute;gorie la plus l&eacute;g&egrave;re &rarr; &eacute;tablit le cache OpenAI rapidement)</li>
+              <li><strong>&Eacute;tape 2 &mdash; 3 cat&eacute;gories en staggered :</strong> Ex&eacute;cute <code>hard_skills</code>, <code>soft_skills</code>, <code>tools</code> via <code>staggeredParallel()</code> avec <strong>500ms de d&eacute;lai</strong> entre chaque lancement</li>
+              <li><strong>&Eacute;tape 3 &mdash; Construction du r&eacute;sultat :</strong> <code>buildSkillsResult()</code> d&eacute;termine les actions (renamed/kept/deleted) selon les scores &mdash; <strong>le CODE d&eacute;cide, pas l'IA</strong></li>
+            </ol>
+            <pre><code class="language-javascript">// Execution dans executeBatchSkills()
+
+// 1. Preparer les items (separation des skills composes)
+const preparedCategories = prepareAllCategories(skills);
+const jobOfferSkills = extractJobOfferSkills(jobOffer);
+
+// 2. METHODOLOGIES en premier (etablit le cache OpenAI)
+const methodsResult = await processCategoryBatch({
+  category: 'methodologies',
+  preparedItems: preparedCategories.methodologies.preparedItems,
+  hasProficiency: false,
+  jobOfferSkills: jobOfferSkills.methodologies,
+  cvLanguage, jobLanguage, interfaceLanguage, signal,
+});
+
+// 3. Les 3 autres categories avec delai decale
+const [hardResult, softResult, toolsResult] = await staggeredParallel([
+  () => processCategoryBatch({ category: 'hard_skills', hasProficiency: true, ... }),
+  () => processCategoryBatch({ category: 'soft_skills', hasProficiency: false, ... }),
+  () => processCategoryBatch({ category: 'tools', hasProficiency: true, ... }),
+], 500);
+
+// 4. Le CODE determine les actions et reconstruit le format final
+const rawResult = buildSkillsResult({
+  hardMatches: hardResult.matches,
+  softMatches: softResult.matches,
+  toolsMatches: toolsResult.matches,
+  methodsMatches: methodsResult.matches,
+  preparedCategories, sourceSkills: skills, interfaceLanguage,
+});</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie (apr&egrave;s buildSkillsResult + consolidateDuplicateSkillFinals)</div>
+            <pre><code class="language-javascript">// rawResult retourne par executeBatchSkills()
+{
+  hard_skills: [
+    {
+      action: "renamed",          // renamed | kept | deleted
+      skill_final: "React.js",    // Nom final dans le CV adapte
+      probability: 95,            // Score de correspondance (0-100)
+      reason: "Correspondance directe avec l'offre",
+      original_value: "React",    // Nom original dans le CV source
+      original_position: 0,       // Position originale pour tri
+      proficiency: 85,            // Niveau de maitrise (si applicable)
+    },
+    {
+      action: "deleted",
+      skill_final: "jQuery",
+      probability: 0,
+      reason: "Aucune correspondance avec l'offre",
+      original_value: "jQuery",
+      original_position: 2,
+      proficiency: 60,
+    },
+  ],
+  soft_skills: [...],     // Sans proficiency
+  tools: [...],           // Avec proficiency
+  methodologies: [...],   // Sans proficiency
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>staggeredParallel() &mdash; D&eacute;calage temporel</h3>
+
+        <pre><code class="language-javascript">/**
+ * Execute des promises en parallele avec un delai entre chaque lancement.
+ * Permet au cache OpenAI de s'etablir entre les requetes.
+ * @param {Array&lt;() =&gt; Promise&gt;} promiseFactories - Fonctions retournant des promises
+ * @param {number} delayMs - Delai en ms entre chaque lancement (defaut: 500ms)
+ * @returns {Promise&lt;Array&gt;} - Resultats dans l'ordre des factories
+ */
+async function staggeredParallel(promiseFactories, delayMs = 500) {
+  const promises = [];
+  for (let i = 0; i < promiseFactories.length; i++) {
+    if (i > 0) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+    promises.push(promiseFactories[i]()); // Lance la promise
+  }
+  return Promise.all(promises); // Attend toutes les promises
+}</code></pre>
+
+        <h3>Logique de d&eacute;termination des actions (determineAction)</h3>
+
+        <p>La s&eacute;paration des responsabilit&eacute;s est fondamentale : <strong>l'IA calcule</strong> le score de correspondance et le nom adapt&eacute;, <strong>le code d&eacute;termine</strong> l'action finale. Cette logique est impl&eacute;ment&eacute;e dans <code>skills/buildSkillsResult.js</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Score</th>
+              <th>Condition</th>
+              <th>Action</th>
+              <th>Nom final utilis&eacute;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>&lt; 60%</code> ou pas de <code>offer_skill</code></td>
+              <td>&mdash;</td>
+              <td><span class="badge badge-error">deleted</span></td>
+              <td><code>adapted_name</code></td>
+            </tr>
+            <tr>
+              <td><code>60-69%</code></td>
+              <td><code>adapted_name === cv_skill</code></td>
+              <td><span class="badge badge-success">kept</span></td>
+              <td><code>adapted_name</code></td>
+            </tr>
+            <tr>
+              <td><code>60-69%</code></td>
+              <td><code>adapted_name !== cv_skill</code></td>
+              <td><span class="badge badge-warning">renamed</span></td>
+              <td><code>adapted_name</code></td>
+            </tr>
+            <tr>
+              <td><code>&ge; 70%</code></td>
+              <td><code>offer_skill === cv_skill</code></td>
+              <td><span class="badge badge-success">kept</span></td>
+              <td><code>offer_skill</code></td>
+            </tr>
+            <tr>
+              <td><code>&ge; 70%</code></td>
+              <td><code>offer_skill !== cv_skill</code></td>
+              <td><span class="badge badge-warning">renamed</span></td>
+              <td><code>offer_skill</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// determineAction() dans skills/buildSkillsResult.js
+export function determineAction(match) {
+  const { cv_skill, offer_skill, score, reason, adapted_name } = match;
+  let action, skill_final;
+
+  if (score < 60 || !offer_skill) {
+    action = 'deleted';
+    skill_final = adapted_name;
+  } else if (score >= 70) {
+    skill_final = offer_skill;
+    action = isSameName(offer_skill, cv_skill) ? 'kept' : 'renamed';
+  } else {
+    // Score 60-69%
+    skill_final = adapted_name;
+    action = isSameName(adapted_name, cv_skill) ? 'kept' : 'renamed';
+  }
+
+  return { action, skill_final, probability: score, reason, original_value: cv_skill };
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Logique d'inversion (v2)</div>
+          <p>Le syst&egrave;me utilise une <strong>logique d'inversion</strong> pour &eacute;conomiser des tokens : l'IA ne retourne <strong>que les skills avec un score &gt; 60%</strong>. Tout skill absent de la r&eacute;ponse IA est automatiquement consid&eacute;r&eacute; comme <code>deleted</code>. Le code dans <code>buildCategoryResult()</code> initialise <strong>tous les skills comme <code>deleted</code> par d&eacute;faut</strong>, puis met &agrave; jour uniquement ceux retourn&eacute;s par l'IA. Cette approche &eacute;vite &agrave; l'IA de g&eacute;n&eacute;rer des tokens inutiles pour les skills non pertinents.</p>
+        </div>
+
+        <h3>Consolidation des doublons</h3>
+
+        <p>La fonction <code>consolidateDuplicateSkillFinals()</code> fusionne les skills qui ont &eacute;t&eacute; renomin&eacute;s vers le m&ecirc;me <code>skill_final</code>. Par exemple, si "Claude Code" et "OpenAI API" matchent tous les deux vers "LLM" avec un score &ge; 70%, ils sont regroup&eacute;s en un seul skill consolid&eacute; :</p>
+
+        <ul>
+          <li>Le <code>skill_final</code> du skill avec le meilleur score est utilis&eacute;</li>
+          <li>Le <code>proficiency</code> est la moyenne des proficiencies originaux</li>
+          <li>Un champ <code>consolidated_from</code> stocke les informations de tous les originaux (pour le rollback dans le syst&egrave;me de review)</li>
+          <li>Si tous les skills sont <code>kept</code> (m&ecirc;me nom original), pas de consolidation</li>
+        </ul>
+
+        <h3>Raisons de suppression traduites</h3>
+
+        <pre><code class="language-javascript">const NO_MATCH_REASONS = {
+  fr: "Aucune correspondance avec l'offre",
+  en: 'No match with the job offer',
+  de: 'Keine Ubereinstimmung mit dem Stellenangebot',
+  es: 'Sin correspondencia con la oferta',
+};</code></pre>
+
+        <!-- ==================== BATCH 1g : SUMMARY ==================== -->
+        <h2 id="batch-summary">Batch 1g : Summary (S&eacute;quentiel)</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-summary.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeBatchSummary({ offerId, currentSummary, adaptedExperiences, adaptedProjects, adaptedSkills, adaptedExtras, jobOffer, targetLanguage, interfaceLanguage, userId, signal, debugTimestamp })</code></p>
+        <p><strong>Subtask type :</strong> <code>batch_summary</code> (1 seule subtask)</p>
+
+        <div class="callout callout-error">
+          <div class="callout-title">Ex&eacute;cution s&eacute;quentielle obligatoire</div>
+          <p>Le batch Summary est le <strong>seul batch qui s'ex&eacute;cute apr&egrave;s</strong> tous les autres. Il n&eacute;cessite les r&eacute;sultats adapt&eacute;s des 6 batches pr&eacute;c&eacute;dents (experiences, projects, skills post-trait&eacute;s par <code>processSkillsResponse()</code>, extras) pour g&eacute;n&eacute;rer un r&eacute;sum&eacute; professionnel coh&eacute;rent. Il utilise le <strong>Cache B</strong> qui contient l'int&eacute;gralit&eacute; du contexte.</p>
+        </div>
+
+        <div class="data-flow">
+          <div class="data-flow-header">BATCH SUMMARY &mdash; G&eacute;n&eacute;ration du r&eacute;sum&eacute; professionnel</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es (agr&eacute;g&eacute;es depuis les 6 batches pr&eacute;c&eacute;dents)</div>
+            <ul>
+              <li><strong>adaptedExperiences :</strong> Exp&eacute;riences adapt&eacute;es (batch 1a)</li>
+              <li><strong>adaptedProjects :</strong> Projets adapt&eacute;s (batch 1b)</li>
+              <li><strong>adaptedSkills :</strong> Skills post-trait&eacute;s par <code>processSkillsResponse()</code> (batch 1f)</li>
+              <li><strong>adaptedExtras :</strong> Extras adapt&eacute;s (batch 1c)</li>
+              <li><strong>currentSummary :</strong> Summary actuel du CV source (peut &ecirc;tre <code>null</code>)</li>
+              <li><strong>Prompts :</strong> <code>batch-summary-system.md</code> + <code>batch-summary-user.md</code></li>
+              <li><strong>Schema :</strong> <code>batchSummarySchema.json</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Agr&eacute;gations calcul&eacute;es pour le user prompt</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Variable du prompt</th>
+                  <th>Fonction source</th>
+                  <th>Description</th>
+                </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>1</td>
-                  <td>FILTRER</td>
-                  <td>Supprimer SEULEMENT si domaine complètement différent (ex: Soudure pour UX Designer)</td>
+                  <td><code>{experiencesByDomain}</code></td>
+                  <td><code>aggregateExperiencesByDomain()</code></td>
+                  <td>Regroupe les exp&eacute;riences par <code>domain</code> (du batch 1a) avec total d'ann&eacute;es (arrondi half-down si &ge; 1 an, en mois si &lt; 1 an). Tri&eacute; par ann&eacute;es d&eacute;croissant.</td>
                 </tr>
                 <tr>
-                  <td>2</td>
-                  <td>AJUSTER</td>
-                  <td>Ajuster proficiency (0-5) selon les expériences adaptées</td>
+                  <td><code>{topDeliverables}</code></td>
+                  <td><code>extractTopDeliverables()</code></td>
+                  <td>Top 5 deliverables avec chiffres, scor&eacute;s : <code>%</code> = +2 points, tout chiffre = +1 point. Format: <code>- deliverable (contexte exp&eacute;rience)</code></td>
                 </tr>
                 <tr>
-                  <td>3</td>
-                  <td>NETTOYER</td>
-                  <td>"React (framework)" → "React", max 3 mots par compétence</td>
+                  <td><code>{topSkills}</code></td>
+                  <td><code>extractTopSkills()</code></td>
+                  <td>Top 8 skills du candidat qui matchent l'offre. Scoring : <code>required</code> = 2, <code>nice_to_have</code> = 1. Fallback : hard_skills + tools (top 5).</td>
                 </tr>
                 <tr>
-                  <td>4</td>
-                  <td>SPLITTER</td>
-                  <td>"React / Vue" → ["React", "Vue"]. Exception: "CI/CD", "UX/UI"</td>
+                  <td><code>{jobKeywords}</code></td>
+                  <td><code>extractJobKeywords()</code></td>
+                  <td>Top 6 skills requis + 3 nice_to_have pour l'optimisation ATS</td>
                 </tr>
                 <tr>
-                  <td>5</td>
-                  <td>RÉARRANGER</td>
-                  <td>Déplacer entre catégories (hard_skills, tools, methodologies, soft_skills)</td>
+                  <td><code>{totalYears}</code></td>
+                  <td><code>calculateExperienceDurations()</code></td>
+                  <td>Nombre total d'ann&eacute;es depuis la 1&egrave;re exp&eacute;rience professionnelle (uniquement celles avec <code>company</code> renseign&eacute;e)</td>
                 </tr>
                 <tr>
-                  <td>6</td>
-                  <td>FUSIONNER</td>
-                  <td>Dédupliquer (chaque skill dans 1 seule catégorie)</td>
+                  <td><code>{currentTitles}</code></td>
+                  <td><code>calculateExperienceDurations()</code></td>
+                  <td>Titres des exp&eacute;riences en cours (d&eacute;dupliqu&eacute;s, sans <code>end_date</code> ou <code>end_date === 'present'</code>)</td>
                 </tr>
                 <tr>
-                  <td>7</td>
-                  <td>DÉDUIRE</td>
-                  <td>Déduire méthodologies depuis expériences ("sprint" → Scrum)</td>
+                  <td><code>{jobTitle}</code></td>
+                  <td>Direct</td>
+                  <td>Titre du poste vis&eacute; depuis <code>jobOffer.title</code></td>
+                </tr>
+                <tr>
+                  <td><code>{targetLanguage}</code></td>
+                  <td>Param&egrave;tre</td>
+                  <td>Langue cible pour le r&eacute;sum&eacute; (ex: <code>'francais'</code>)</td>
+                </tr>
+                <tr>
+                  <td><code>{interfaceLanguage}</code></td>
+                  <td>Param&egrave;tre</td>
+                  <td>Langue de l'interface pour le champ <code>reason</code> (ex: <code>'francais'</code>)</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie</div>
-            <pre><code>{
-  "hard_skills": [
-    { "name": "Gestion de projet", "proficiency": 3 }
-  ],
-  "soft_skills": ["Communication", "Leadership"],
-  "tools": [
-    { "name": "React", "proficiency": 4 },
-    { "name": "Node.js", "proficiency": 3 }
-  ],
-  "methodologies": ["Agile", "Scrum", "CI/CD"],
-  "modifications": [
-    {
-      "category": "hard_skills",
-      "skill": "Gestion de projets complexes",
-      "action": "renamed",
-      "reason": "Nettoyage: suppression 'complexes' (max 3 mots)"
-    },
-    {
-      "category": "tools",
-      "skill": "React (framework)",
-      "action": "renamed",
-      "reason": "Nettoyage: suppression parenthèses"
-    },
-    {
-      "category": "methodologies",
-      "skill": "Scrum",
-      "action": "inferred",
-      "reason": "Déduit depuis mention 'sprint' dans expérience #0"
-    }
-  ]
-}</code></pre>
-          </div>
-        </div>
-
-        <div class="callout callout-info">
-          <div class="callout-title">Règles de traduction</div>
-          <ul>
-            <li><strong>Soft skills génériques</strong> → TRADUIRE dans langue cible ("Customer-oriented" → "Orientation client")</li>
-            <li><strong>Noms de technologies</strong> → GARDER en anglais (React, Python, AWS, Scrum)</li>
-          </ul>
-        </div>
-
-        <!-- ==================== BATCH SUMMARY ==================== -->
-        <h2 id="batch-summary">1e. Batch Summary</h2>
-
-        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-summary.js</code></p>
-        <p><strong>Rôle :</strong> Générer ou adapter le résumé professionnel (2-4 lignes, 50-75 mots).</p>
-        <p><strong>Cache utilisé :</strong> <span class="badge badge-success">Cache B</span></p>
-
-        <div class="data-flow">
-          <div class="data-flow-header">BATCH SUMMARY - Flux de données</div>
-
-          <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <p><strong>Provenance :</strong> Résultats des batches précédents (expériences, projets, skills adaptés)</p>
-            <pre><code>{
-  "currentSummary": "Développeur full-stack avec 5 ans d'expérience...",
-  "targetLanguage": "French",
-  "experiencesByDomain": {
-    "Développement logiciel": 4.5,
-    "Data Engineering": 1.5
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-javascript">// Retour de executeBatchSummary()
+{
+  success: true,
+  adaptedSummary: {
+    description: "Developpeur Full-Stack avec 8 ans d'experience specialise
+      en React et Node.js. Expert en architectures microservices, j'ai conduit
+      la migration cloud d'une plateforme servant 2M d'utilisateurs.",
   },
-  "currentTitles": ["Senior Developer", "Tech Lead"],
-  "totalYears": 6,
-  "topDeliverables": ["-30% latence", "6 devs formés"],
-  "topSkills": ["React", "Node.js", "TypeScript"]
-}</code></pre>
-          </div>
-
-          <div class="data-flow-section data-flow-prompt">
-            <div class="data-flow-label">Résumé du prompt</div>
-            <blockquote>
-              "Générer un résumé professionnel de 2-4 lignes (50-75 mots) qui met en avant :
-              les années d'expérience par domaine, les compétences clés alignées avec l'offre,
-              les réalisations quantifiées principales. Le résumé doit donner envie de lire le CV
-              et positionner le candidat comme un match parfait pour le poste."
-            </blockquote>
-          </div>
-
-          <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie</div>
-            <pre><code>{
-  "description": "Développeur full-stack avec 6 ans d'expérience,
-    dont 4.5 ans en développement logiciel. Expert React et Node.js,
-    j'ai réduit la latence API de 30% et formé 6 développeurs.
-    Passionné par les bonnes pratiques et l'optimisation des performances.",
-  "modifications": [
-    {
-      "field": "description",
-      "action": "modified",
-      "before": "Développeur full-stack avec 5 ans d'expérience...",
-      "after": "Développeur full-stack avec 6 ans d'expérience...",
-      "reason": "Mise à jour années + ajout réalisations quantifiées"
-    }
-  ]
+  modifications: [
+    { field: "description", action: "generated",
+      reason: "Adaptation au poste cible" }
+  ],
+  reason: "Summary genere en synthetisant les experiences adaptees...",
+  subtaskId: "clx...",
+  tokens: { prompt: 5000, completion: 400, cached: 3000 },
+  estimatedCost: 0.012,
+  duration: 2000,
 }</code></pre>
           </div>
         </div>
 
-        <!-- ==================== BATCH PROJECTS ==================== -->
-        <h2 id="batch-projects">1b. Batch Projects</h2>
+        <h3>aggregateExperiencesByDomain()</h3>
 
-        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-projects.js</code></p>
-        <p><strong>Rôle :</strong> Adapter les projets existants + Créer des projets depuis les expériences MOVE_TO_PROJECTS.</p>
-        <p><strong>Cache utilisé :</strong> <span class="badge badge-primary">Cache A</span></p>
+        <p>Cette fonction regroupe les exp&eacute;riences par domaine (d&eacute;termin&eacute; par le batch 1a dans le champ <code>domain</code>) et calcule le total d'ann&eacute;es par domaine :</p>
 
-        <div class="data-flow">
-          <div class="data-flow-header">BATCH PROJECTS - Flux de données</div>
-
-          <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <pre><code>{
-  "project": {
-    "name": "E-commerce Platform",
-    "role": "Lead Developer",
-    "start_date": "2022-01",
-    "end_date": "2022-06",
-    "summary": "Développement d'une plateforme e-commerce",
-    "tech_stack": ["React", "Node.js", "PostgreSQL"],
-    "url": "https://github.com/..."
-  },
-  // OU pour conversion expérience → projet
-  "experienceToConvert": {
-    "title": "Projet interne R&D",
-    "company": "TechCorp",
-    "description": "Développement d'un outil interne",
-    "skills_used": ["Python", "Machine Learning"]
+        <pre><code class="language-javascript">function aggregateExperiencesByDomain(experiences) {
+  const domainMap = new Map();
+  for (const exp of experiences) {
+    const domain = exp.domain || 'Autre';
+    const years = exp.years_in_domain || 0;
+    if (!domainMap.has(domain)) {
+      domainMap.set(domain, { totalYears: 0, experiences: [] });
+    }
+    domainMap.get(domain).totalYears += years;
+    domainMap.get(domain).experiences.push({ title: exp.title, company: exp.company, years });
   }
+
+  // Trier par annees decroissant, formater:
+  // < 1 an -> affichage en mois (ex: "6 mois")
+  // >= 1 an -> arrondi half-down (4.5 -> 4, 4.6 -> 5)
+  const sortedDomains = [...domainMap.entries()].sort((a, b) => b[1].totalYears - a[1].totalYears);
+  const domainsSummary = sortedDomains.map(([domain, data]) => {
+    const years = Math.round(data.totalYears * 10) / 10;
+    if (years < 1) return `- ${domain}: ${Math.round(years * 12)} mois`;
+    return `- ${domain}: ${roundHalfDown(years)} an${roundHalfDown(years) > 1 ? 's' : ''}`;
+  }).join('\n');
+
+  return { domainsSummary, domainsDetails };
 }</code></pre>
-          </div>
 
-          <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie</div>
-            <pre><code>{
-  "name": "E-commerce Platform",
-  "role": "Lead Developer",
-  "start_date": "2022-01",
-  "end_date": "2022-06",
-  "summary": "Plateforme e-commerce React/Node.js avec 10k utilisateurs",
-  "tech_stack": ["React", "Node.js", "PostgreSQL", "API REST"],
-  "url": "https://github.com/...",
-  "modifications": [
-    {
-      "field": "summary",
-      "action": "modified",
-      "before": "Développement d'une plateforme e-commerce",
-      "after": "Plateforme e-commerce React/Node.js avec 10k utilisateurs",
-      "reason": "Ajout technologies et métrique"
-    },
-    {
-      "field": "tech_stack",
-      "action": "added",
-      "before": null,
-      "after": "API REST",
-      "reason": "Alignement avec requirement de l'offre"
-    }
-  ]
-}</code></pre>
-          </div>
-        </div>
+        <!-- ==================== PARAMETRES OPENAI ==================== -->
+        <h2>Param&egrave;tres OpenAI par Batch</h2>
 
-        <!-- ==================== BATCH EXTRAS ==================== -->
-        <h2 id="batch-extras">1c. Batch Extras</h2>
+        <p>Chaque batch configure les param&egrave;tres OpenAI de mani&egrave;re sp&eacute;cifique via les utilitaires <code>addTemperatureIfSupported()</code>, <code>adjustTokensForReasoningModel()</code> et <code>addReasoningEffortIfSupported()</code> :</p>
 
-        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/batch-extras.js</code></p>
-        <p><strong>Rôle :</strong> Adapter la section extras (Permis, Bénévolat, Hobbies, Certifications).</p>
-        <p><strong>Cache utilisé :</strong> <span class="badge badge-primary">Cache A</span></p>
-
-        <div class="data-flow">
-          <div class="data-flow-header">BATCH EXTRAS - Flux de données</div>
-
-          <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <pre><code>{
-  "extras": [
-    { "name": "Permis B", "summary": "Véhiculé" },
-    { "name": "Bénévolat", "summary": "Formateur code pour jeunes défavorisés" }
-  ]
-}</code></pre>
-          </div>
-
-          <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie</div>
-            <pre><code>{
-  "extras": [
-    { "name": "Permis B", "summary": "Véhiculé, disponible pour déplacements" },
-    { "name": "Mentorat", "summary": "Formateur code pour jeunes défavorisés depuis 2020" }
-  ],
-  "modifications": [
-    {
-      "field": "Bénévolat",
-      "action": "renamed",
-      "before": "Bénévolat",
-      "after": "Mentorat",
-      "reason": "Reformulation pour valoriser compétence mentoring"
-    }
-  ]
-}</code></pre>
-          </div>
-        </div>
-
-        <h2>Parallélisation et Rate Limiting</h2>
-
-        <div class="diagram">
-          <div class="diagram-title">Exécution parallèle des batches</div>
-          <div class="mermaid">
-gantt
-    title Exécution Phase 1 - Batches
-    dateFormat YYYY-MM-DD
-
-    section Cache A - Parallèle
-    Batch Experience 0   :a1, 2024-01-01, 2d
-    Batch Experience 1   :a2, 2024-01-01, 2d
-    Batch Experience 2   :a3, 2024-01-01, 3d
-    Batch Projects       :a4, 2024-01-02, 2d
-    Batch Extras         :a5, 2024-01-03, 1d
-
-    section Cache B - Séquentiel
-    Batch Skills         :b1, after a3, 2d
-    Batch Summary        :b2, after a3, 1d
-          </div>
-        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>Temperature</th>
+              <th>max_completion_tokens (standard)</th>
+              <th>max_completion_tokens (reasoning)</th>
+              <th>reasoning_effort</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-warning">1a</span> Experiences</td>
+              <td>0.3</td>
+              <td>1500</td>
+              <td>8000</td>
+              <td><code>low</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1b</span> Projects</td>
+              <td>0.3</td>
+              <td>1000</td>
+              <td>16000</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1c</span> Extras</td>
+              <td>0.2</td>
+              <td>800</td>
+              <td>16000</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1d</span> Education</td>
+              <td>0.2</td>
+              <td>1500</td>
+              <td>16000</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1e</span> Languages</td>
+              <td>0.2</td>
+              <td>800</td>
+              <td>16000</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1f</span> Skills</td>
+              <td colspan="4"><em>D&eacute;l&eacute;gu&eacute; &agrave; <code>processCategoryBatch()</code> dans le sous-module <code>skills/</code></em></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">1g</span> Summary</td>
+              <td>0.3</td>
+              <td>800</td>
+              <td>8000</td>
+              <td><code>low</code></td>
+            </tr>
+          </tbody>
+        </table>
 
         <div class="callout callout-info">
-          <div class="callout-title">Contrôle de concurrence</div>
-          <p>Max <strong>5 appels OpenAI concurrents</strong> via <code>pLimit(5)</code>. Les batches utilisant Cache A s'exécutent en parallèle, puis Cache B attend leurs résultats.</p>
+          <div class="callout-title">Compatibilit&eacute; mod&egrave;les de raisonnement</div>
+          <p>Les mod&egrave;les de raisonnement (o1, o3, o4, gpt-5) ne supportent pas le param&egrave;tre <code>temperature</code>. La fonction <code>addTemperatureIfSupported()</code> le d&eacute;tecte et l'omet. <code>adjustTokensForReasoningModel()</code> augmente <code>max_completion_tokens</code> car les tokens de raisonnement internes comptent dans la limite. <code>addReasoningEffortIfSupported()</code> ajoute <code>reasoning_effort='low'</code> pour favoriser la vitesse (utilis&eacute; par Experiences et Summary).</p>
         </div>
 
-        <h2>Traçabilité en Base de Données</h2>
+        <!-- ==================== TRACABILITE ==================== -->
+        <h2>Tra&ccedil;abilit&eacute; et M&eacute;triques</h2>
 
-        <p>Chaque batch crée un enregistrement <code>CvGenerationSubtask</code> :</p>
+        <p>Chaque appel IA cr&eacute;e un enregistrement <code>CvGenerationSubtask</code> dans la base de donn&eacute;es avec les m&eacute;triques compl&egrave;tes :</p>
 
         <table>
           <thead>
             <tr>
               <th>Champ</th>
-              <th>Valeur</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>type</td><td><code>batch_experience</code>, <code>batch_project</code>, <code>batch_skills</code>, etc.</td></tr>
-            <tr><td>itemIndex</td><td>Index de l'item (0, 1, 2... pour expériences)</td></tr>
-            <tr><td>status</td><td><code>pending</code> → <code>running</code> → <code>completed</code> / <code>failed</code></td></tr>
-            <tr><td>input</td><td>JSON des données d'entrée (debug)</td></tr>
-            <tr><td>output</td><td>JSON du résultat</td></tr>
-            <tr><td>modifications</td><td>Array des modifications avec before/after/reason</td></tr>
-            <tr><td>modelUsed</td><td>Modèle OpenAI utilisé</td></tr>
-            <tr><td>promptTokens</td><td>Tokens prompt</td></tr>
-            <tr><td>cachedTokens</td><td>Tokens du cache</td></tr>
-            <tr><td>completionTokens</td><td>Tokens completion</td></tr>
-            <tr><td>estimatedCost</td><td>Coût estimé USD</td></tr>
-            <tr><td>durationMs</td><td>Durée d'exécution</td></tr>
+            <tr><td><code>offerId</code></td><td>R&eacute;f&eacute;rence vers <code>CvGenerationOffer</code></td></tr>
+            <tr><td><code>type</code></td><td><code>batch_experience</code>, <code>batch_project</code>, <code>batch_extras</code>, <code>batch_education</code>, <code>batch_languages</code>, <code>batch_skills</code>, <code>batch_summary</code></td></tr>
+            <tr><td><code>itemIndex</code></td><td>Index de l'item dans le tableau (pour experiences et projets individuels)</td></tr>
+            <tr><td><code>status</code></td><td><code>running</code> &rarr; <code>completed</code> ou <code>failed</code></td></tr>
+            <tr><td><code>input</code></td><td>Donn&eacute;es d'entr&eacute;e r&eacute;sum&eacute;es (titres, noms, comptages pour le diagnostic)</td></tr>
+            <tr><td><code>output</code></td><td>R&eacute;ponse IA compl&egrave;te (sanitiz&eacute;e via <code>sanitizeForPostgres()</code> pour supprimer les <code>\u0000</code>)</td></tr>
+            <tr><td><code>modifications</code></td><td>Liste des modifications appliqu&eacute;es (skill_changes, highlights, etc.)</td></tr>
+            <tr><td><code>modelUsed</code></td><td>Nom exact du mod&egrave;le utilis&eacute; (ex: <code>gpt-4o-2024-08-06</code>)</td></tr>
+            <tr><td><code>promptTokens</code></td><td>Tokens du prompt envoy&eacute;</td></tr>
+            <tr><td><code>cachedTokens</code></td><td>Tokens provenant du cache OpenAI (<code>usage.prompt_tokens_details.cached_tokens</code>)</td></tr>
+            <tr><td><code>completionTokens</code></td><td>Tokens de la r&eacute;ponse g&eacute;n&eacute;r&eacute;e</td></tr>
+            <tr><td><code>estimatedCost</code></td><td>Co&ucirc;t estim&eacute; en USD calcul&eacute; par <code>calculateCost()</code></td></tr>
+            <tr><td><code>durationMs</code></td><td>Dur&eacute;e d'ex&eacute;cution en millisecondes</td></tr>
+            <tr><td><code>startedAt / completedAt</code></td><td>Timestamps de d&eacute;but et fin d'ex&eacute;cution</td></tr>
           </tbody>
         </table>
+
+        <p>En parall&egrave;le des subtasks en base, chaque batch appelle <code>trackOpenAIUsage()</code> pour le suivi t&eacute;l&eacute;m&eacute;trique par utilisateur :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>featureName</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Experiences</td><td><code>cv_adaptation_experience</code></td></tr>
+            <tr><td>Projects</td><td><code>cv_adaptation_project</code></td></tr>
+            <tr><td>Extras</td><td><code>cv_adaptation_extras</code></td></tr>
+            <tr><td>Education</td><td><code>cv_adaptation_education</code></td></tr>
+            <tr><td>Languages</td><td><code>cv_adaptation_languages</code></td></tr>
+            <tr><td>Skills</td><td><code>cv_adaptation_skills</code></td></tr>
+            <tr><td>Summary</td><td><code>cv_adaptation_summary</code></td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== GESTION DES ERREURS ==================== -->
+        <h2>Gestion des Erreurs et Fallbacks</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Retry avec backoff exponentiel</h4>
+            <p>Chaque batch est envelopp&eacute; dans <code>withRetry()</code> (<code>orchestrator/retryHandler.js</code>) :</p>
+            <ul>
+              <li><code>MAX_RETRIES = 3</code> tentatives maximum</li>
+              <li><code>BACKOFF_BASE_MS = 1000</code> ms de base</li>
+              <li>Backoff exponentiel entre les tentatives</li>
+              <li>Avant chaque retry, les subtasks en &eacute;chec sont marqu&eacute;es avec <code>retryCount</code> incr&eacute;ment&eacute;</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Fallback en cas d'&eacute;chec</h4>
+            <p>Quand un batch &eacute;choue apr&egrave;s toutes les tentatives :</p>
+            <ul>
+              <li><strong>Extras :</strong> Retourne les extras originaux inchang&eacute;s</li>
+              <li><strong>Education :</strong> Retourne les formations originales inchang&eacute;es</li>
+              <li><strong>Languages :</strong> Retourne les langues originales inchang&eacute;es</li>
+              <li><strong>Summary :</strong> Retourne le <code>currentSummary</code> original</li>
+              <li><strong>Experiences / Projects / Skills :</strong> L'erreur est remont&eacute;e &agrave; <code>runBatchesPhase()</code> qui ex&eacute;cute un <code>throw</code> &mdash; la g&eacute;n&eacute;ration &eacute;choue et les cr&eacute;dits sont rembours&eacute;s</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Annulation (AbortSignal)</div>
+          <p>Tous les batches acceptent un param&egrave;tre <code>signal</code> (de type <code>AbortSignal</code>) pour permettre l'annulation en cours d'ex&eacute;cution. Apr&egrave;s chaque appel OpenAI, le code v&eacute;rifie <code>if (signal?.aborted) throw new Error('Task cancelled')</code>. Le signal est &eacute;galement pass&eacute; dans les <code>fetchOptions</code> de <code>client.chat.completions.create(requestOptions, { signal })</code> pour interrompre imm&eacute;diatement les requ&ecirc;tes HTTP en cours.</p>
+        </div>
+
+        <!-- ==================== RESULTAT FINAL ==================== -->
+        <h2>R&eacute;sultat Final de runBatchesPhase()</h2>
+
+        <p>La fonction <code>runBatchesPhase()</code> dans <code>offerProcessor.js</code> v&eacute;rifie le succ&egrave;s de chaque batch, post-traite les skills via <code>processSkillsResponse()</code>, puis retourne un objet consolid&eacute; :</p>
+
+        <pre><code class="language-javascript">// Retour de runBatchesPhase() dans orchestrator/offerProcessor.js
+{
+  experiences: experiencesResult.adaptedExperiences,      // Array d'experiences adaptees
+  projects: projectsResult.adaptedProjects,                // Array de projets adaptes
+  extras: extrasResult.adaptedExtras,                      // Array d'extras adaptes
+  education: educationResult.adaptedEducation,             // Array de formations adaptees
+  languages: languagesResult.adaptedLanguages,             // Array de langues adaptees
+  skills: processedSkills,                                 // Object (post-traite par processSkillsResponse)
+  summary: {
+    ...summaryResult.adaptedSummary,                       // { description: "..." }
+    modifications: summaryResult.modifications || [],      // Array de modifications
+  },
+  // Modifications pour le systeme de review
+  experienceModifications: experiencesResult.modifications || {},
+  summaryModifications: summaryResult.modifications || {},
+  education_modifications: educationResult.education_modifications || [],
+  language_modifications: languagesResult.language_modifications || [],
+  extras_modifications: extrasResult.extras_modifications || [],
+}</code></pre>
+
+        <p>Ce r&eacute;sultat est ensuite pass&eacute; &agrave; la <strong>Phase 2 : Recomposition</strong> (<code>executeRecomposition()</code> dans <code>phases/recompose.js</code>) qui assemble le CV final, cr&eacute;e le <code>CvFile</code> + <code>CvVersion v0</code>, et initialise le syst&egrave;me de review via <code>initializeReviewState()</code>.</p>
+
+        <!-- ==================== DEBUG ==================== -->
+        <h2>Fichiers de Debug</h2>
+
+        <p>Les batches Experiences et Summary &eacute;crivent des fichiers de debug via <code>writeDebugLog()</code> contenant le system prompt, le user prompt et la r&eacute;ponse compl&egrave;te :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>Fichier debug</th>
+              <th>LogType</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Experiences</td>
+              <td><code>experience_0.md</code>, <code>experience_1.md</code>, ...</td>
+              <td><code>LogType.EXPERIENCES</code></td>
+            </tr>
+            <tr>
+              <td>Summary</td>
+              <td><code>summary.md</code></td>
+              <td><code>LogType.SUMMARY</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>Tous les fichiers de debug d'une m&ecirc;me g&eacute;n&eacute;ration sont regroup&eacute;s dans le m&ecirc;me dossier gr&acirc;ce au param&egrave;tre <code>debugTimestamp</code> partag&eacute; entre tous les batches, g&eacute;n&eacute;r&eacute; une seule fois par <code>generateTimestamp()</code> dans <code>runBatchesPhase()</code>.</p>
+
+        <!-- ==================== LIENS ==================== -->
+        <h2>Voir aussi</h2>
+
+        <ul>
+          <li><a href="./overview.html">Vue d'ensemble</a> &mdash; Workflow global du pipeline de g&eacute;n&eacute;ration</li>
+          <li><a href="./orchestrator.html">Orchestrateur</a> &mdash; Lifecycle, coordination, cr&eacute;dits, retry, SSE</li>
+          <li><a href="./phase-classification.html">Phase Classification</a> &mdash; classifyCore(), applyClassification(), schema</li>
+          <li><a href="./phase-recompose.html">Phase Recomposition</a> &mdash; Assemblage, CvFile, CvVersion, change tracking</li>
+          <li><a href="./prompts.html">Prompts IA</a> &mdash; 20 fichiers prompts, structure, hi&eacute;rarchie</li>
+          <li><a href="./schemas-io.html">Schemas I/O</a> &mdash; 10 JSON Schemas, Structured Outputs, actions</li>
+        </ul>
       </div>
     </main>
   </div>
@@ -507,7 +1467,6 @@ gantt
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

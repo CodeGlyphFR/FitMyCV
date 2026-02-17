@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extraction d'Offres d'Emploi | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb"><a href="./index.html">Accueil</a><span>/</span><span>Extraction d'Offres d'Emploi</span></div>
+
+        <!-- ==================== INTRODUCTION ==================== -->
+        <h1>Extraction d'Offres d'Emploi</h1>
+        <p class="lead">
+          Le syst&egrave;me analyse automatiquement n'importe quelle offre d'emploi &mdash; qu'elle soit en ligne, en PDF ou captur&eacute;e par l'extension navigateur &mdash; et en extrait <strong>13 cat&eacute;gories d'informations structur&eacute;es</strong>.
+        </p>
+
+        <p>
+          Quelle que soit la source, le r&eacute;sultat est un format structur&eacute; identique, directement exploitable par les pipelines d'<a href="./02-pipeline-adaptation.html">adaptation</a> et d'<a href="./03-pipeline-optimisation.html">optimisation</a> de CV. Cette convergence vers un format unique est un choix architectural fondamental qui simplifie l'ensemble de la cha&icirc;ne de traitement.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">M&eacute;triques cl&eacute;s</div>
+          <p><strong>3</strong> canaux d'entr&eacute;e &bull; <strong>13</strong> champs structur&eacute;s extraits &bull; <strong>4</strong> cat&eacute;gories de comp&eacute;tences &bull; <strong>14+</strong> sites d'emploi support&eacute;s &bull; <strong>3</strong> niveaux de scraping &bull; <strong>4</strong> langues d&eacute;tect&eacute;es &bull; Cache intelligent z&eacute;ro co&ucirc;t sur les doublons</p>
+        </div>
+
+        <!-- ==================== ARCHITECTURE TRI-SOURCE ==================== -->
+        <h2>Architecture Tri-Source</h2>
+
+        <p>Le syst&egrave;me supporte trois canaux d'entr&eacute;e qui convergent tous vers le m&ecirc;me format structur&eacute; :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Trois sources d'entr&eacute;e &rarr; un format de sortie unique</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["3 CANAUX D'ENTRÉE"]
+        URL["URL de site d'emploi"]
+        PDF["PDF uploadé"]
+        Ext["Extension navigateur"]
+    end
+
+    subgraph Fetch["RÉCUPÉRATION"]
+        Direct["Accès direct"]
+        Nav["Navigation intelligente<br/>anti-détection"]
+        TextPDF["Extraction textuelle"]
+    end
+
+    subgraph IA["EXTRACTION IA"]
+        Analyse["Analyse par l'IA<br/>avec schéma strict"]
+        LangDetect["Détection automatique<br/>de la langue"]
+    end
+
+    subgraph Cache["DÉDUPLICATION"]
+        NormURL["Normalisation URL"]
+        HashPDF["Empreinte de contenu"]
+        Unique["Unicité par utilisateur"]
+    end
+
+    subgraph Output["SORTIE UNIQUE"]
+        JSON["Offre d'emploi structurée<br/>13 champs — format identique"]
+    end
+
+    subgraph Usage["UTILISATION"]
+        Adapt["Pipeline Adaptation CV"]
+        Optim["Pipeline Optimisation CV"]
+    end
+
+    URL --> Direct
+    Direct -->|"site protégé ?"| Nav
+    URL --> Nav
+    PDF --> TextPDF
+    Ext --> IA
+
+    Direct --> IA
+    Nav --> IA
+    TextPDF --> IA
+
+    Analyse --> LangDetect --> Cache
+    NormURL --> Unique
+    HashPDF --> Unique
+    Unique --> JSON
+    JSON --> Adapt
+    JSON --> Optim
+
+    style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PDF fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Ext fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Direct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Nav fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style TextPDF fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Analyse fill:#6366f1,stroke:#4f46e5,color:#fff
+    style LangDetect fill:#6366f1,stroke:#4f46e5,color:#fff
+    style NormURL fill:#f59e0b,stroke:#d97706,color:#fff
+    style HashPDF fill:#f59e0b,stroke:#d97706,color:#fff
+    style Unique fill:#f59e0b,stroke:#d97706,color:#fff
+    style JSON fill:#22c55e,stroke:#16a34a,color:#fff
+    style Adapt fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Optim fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><span class="badge badge-primary">URL</span> Site d'emploi</h4>
+            <p>Scraping intelligent avec <strong>fallback automatique</strong> : si le site est prot&eacute;g&eacute; par un syst&egrave;me anti-bot, le syst&egrave;me bascule automatiquement sur une navigation furtive sans intervention de l'utilisateur.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-warning">PDF</span> Document upload&eacute;</h4>
+            <p>Extraction textuelle avec <strong>empreinte de contenu</strong> pour la d&eacute;duplication. Les PDFs identiques sont d&eacute;tect&eacute;s m&ecirc;me avec des noms de fichiers diff&eacute;rents.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-success">Extension</span> Navigateur</h4>
+            <p>Contenu pr&eacute;-extrait c&ocirc;t&eacute; client et envoy&eacute; directement &agrave; l'IA. <strong>Z&eacute;ro scraping serveur</strong> &mdash; le traitement le plus rapide et le plus &eacute;conomique.</p>
+          </div>
+        </div>
+
+        <!-- ==================== 13 CHAMPS ==================== -->
+        <h2>13 Cat&eacute;gories d'Informations Extraites</h2>
+
+        <p>
+          L'IA extrait automatiquement 13 cat&eacute;gories d'information structur&eacute;e depuis n'importe quel format d'offre. Le sch&eacute;ma est strictement valid&eacute; par d&eacute;codage guid&eacute;, garantissant des donn&eacute;es exploitables &agrave; 100% par les pipelines de g&eacute;n&eacute;ration.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Cat&eacute;gorie</th>
+              <th>Description</th>
+              <th>Exemple</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Titre du poste</strong></td>
+              <td>Intitul&eacute; concis (3&ndash;8 mots)</td>
+              <td>&laquo; D&eacute;veloppeur Full Stack Senior &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Entreprise</strong></td>
+              <td>Nom de la soci&eacute;t&eacute;</td>
+              <td>&laquo; TechCorp &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Type de contrat</strong></td>
+              <td>CDI, CDD, Freelance, Stage, Alternance</td>
+              <td>&laquo; CDI &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Exp&eacute;rience requise</strong></td>
+              <td>Niveau (junior &agrave; lead) avec fourchette d'ann&eacute;es</td>
+              <td>Senior, 5+ ans</td>
+            </tr>
+            <tr>
+              <td><strong>Localisation</strong></td>
+              <td>Ville, pays et mode de travail (pr&eacute;sentiel / hybride / t&eacute;l&eacute;travail)</td>
+              <td>Paris, France &mdash; Hybride</td>
+            </tr>
+            <tr>
+              <td><strong>Salaire</strong></td>
+              <td>Fourchette avec devise et p&eacute;riode</td>
+              <td>55 000&ndash;70 000 EUR/an</td>
+            </tr>
+            <tr>
+              <td><strong>Comp&eacute;tences</strong></td>
+              <td>4 cat&eacute;gories avec distinction requis/souhait&eacute; (voir d&eacute;tail ci-dessous)</td>
+              <td>React (requis), Docker (souhait&eacute;)</td>
+            </tr>
+            <tr>
+              <td><strong>Formation</strong></td>
+              <td>Niveau de dipl&ocirc;me et domaine d'&eacute;tude</td>
+              <td>Bac+5 Informatique</td>
+            </tr>
+            <tr>
+              <td><strong>Langues</strong></td>
+              <td>Langues demand&eacute;es avec niveau et caract&egrave;re obligatoire/souhait&eacute;</td>
+              <td>Fran&ccedil;ais natif (requis), Anglais courant (requis)</td>
+            </tr>
+            <tr>
+              <td><strong>Responsabilit&eacute;s</strong></td>
+              <td>Liste des missions du poste</td>
+              <td>&laquo; D&eacute;velopper des fonctionnalit&eacute;s front et back &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Avantages</strong></td>
+              <td>B&eacute;n&eacute;fices propos&eacute;s par l'employeur</td>
+              <td>&laquo; T&eacute;l&eacute;travail 2j/semaine, tickets restaurant &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Processus de recrutement</strong></td>
+              <td>&Eacute;tapes, dur&eacute;e estim&eacute;e, deadline</td>
+              <td>Entretien RH &rarr; Test technique &rarr; Entretien final (2&ndash;3 semaines)</td>
+            </tr>
+            <tr>
+              <td><strong>Langue de l'offre</strong></td>
+              <td>Langue d&eacute;tect&eacute;e automatiquement</td>
+              <td>Fran&ccedil;ais</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== CLASSIFICATION COMPETENCES ==================== -->
+        <h3>Classification Automatique des Comp&eacute;tences</h3>
+
+        <p>
+          Le champ le plus riche de l'extraction : l'IA organise automatiquement les comp&eacute;tences en <strong>4 cat&eacute;gories</strong>, en distinguant pour chacune les comp&eacute;tences <strong>requises</strong> des comp&eacute;tences <strong>souhait&eacute;es</strong>. Cette classification fine permet un scoring d'ad&eacute;quation CV/offre pr&eacute;cis et nuanc&eacute;.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><span class="badge badge-primary">Comp&eacute;tences techniques</span></h4>
+            <p>Savoir-faire m&eacute;tier : d&eacute;veloppement backend, conception d'API, architecture cloud...</p>
+            <p><em>Requises</em> vs. <em>souhait&eacute;es</em></p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-warning">Outils &amp; Technologies</span></h4>
+            <p>Langages, frameworks, bases de donn&eacute;es : React, Node.js, PostgreSQL, Docker...</p>
+            <p><em>Requises</em> vs. <em>souhait&eacute;es</em></p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-success">M&eacute;thodologies</span></h4>
+            <p>Processus et pratiques : Agile, CI/CD, TDD, Scrum...</p>
+            <p><em>Requises</em> vs. <em>souhait&eacute;es</em></p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-error">Savoir-&ecirc;tre</span></h4>
+            <p>Comp&eacute;tences transversales : leadership, communication, autonomie, esprit d'&eacute;quipe...</p>
+          </div>
+        </div>
+
+        <!-- ==================== SCRAPING INTELLIGENT ==================== -->
+        <h2>Scraping Intelligent</h2>
+
+        <p>
+          Le syst&egrave;me adapte automatiquement sa strat&eacute;gie de r&eacute;cup&eacute;ration selon le site cible, en utilisant une approche &agrave; <strong>3 niveaux</strong> :
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><span class="badge badge-success">Niveau 1</span> Acc&egrave;s direct</h4>
+            <p>Requ&ecirc;te HTTP simple pour les sites accessibles (APEC, France Travail, HelloWork, Monster...). <strong>Rapide et &eacute;conomique</strong> en ressources serveur.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-warning">Niveau 2</span> Navigation furtive</h4>
+            <p>Pour les sites prot&eacute;g&eacute;s par anti-bot (Indeed, Glassdoor, Welcome to the Jungle...). Simule un navigateur r&eacute;el avec <strong>anti-d&eacute;tection</strong> pour contourner les protections Cloudflare et similaires.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-primary">Niveau 3</span> Fallback automatique</h4>
+            <p>Si l'acc&egrave;s direct &eacute;choue (protection d&eacute;tect&eacute;e), le syst&egrave;me <strong>bascule automatiquement</strong> sur la navigation furtive. Aucune intervention utilisateur n&eacute;cessaire.</p>
+          </div>
+        </div>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline d'extraction URL avec n&oelig;uds de d&eacute;cision</div>
+          <div class="mermaid">
+flowchart TB
+    URL["URL de l'offre"]
+    Cache{"Déjà en<br/>cache ?"}
+    CacheHit["Retour instantané<br/>zéro crédit"]
+    Strategy{"Site<br/>protégé ?"}
+    Direct["Accès direct"]
+    Furtif["Navigation furtive<br/>anti-détection"]
+    Blocked{"Accès<br/>bloqué ?"}
+    Clean["Nettoyage du contenu<br/>Suppression navigation,<br/>publicités, footers"]
+    Expired{"Offre<br/>expirée ?"}
+    ExpiredMsg["Rejet sans<br/>débit de crédit"]
+    IA["Extraction IA<br/>avec schéma strict"]
+    Valid{"Offre<br/>valide ?"}
+    InvalidMsg["Rejet sans<br/>débit de crédit"]
+    Lang["Détection langue"]
+    Store["Stockage et<br/>déduplication"]
+
+    URL --> Cache
+    Cache -->|"Oui"| CacheHit
+    Cache -->|"Non"| Strategy
+    Strategy -->|"Oui"| Furtif
+    Strategy -->|"Non"| Direct
+    Direct --> Blocked
+    Blocked -->|"Oui"| Furtif
+    Blocked -->|"Non"| Clean
+    Furtif --> Clean
+    Clean --> Expired
+    Expired -->|"Oui"| ExpiredMsg
+    Expired -->|"Non"| IA
+    IA --> Valid
+    Valid -->|"Non"| InvalidMsg
+    Valid -->|"Oui"| Lang --> Store
+
+    style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Cache fill:#f59e0b,stroke:#d97706,color:#fff
+    style CacheHit fill:#22c55e,stroke:#16a34a,color:#fff
+    style Strategy fill:#f59e0b,stroke:#d97706,color:#fff
+    style Direct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Furtif fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Blocked fill:#f59e0b,stroke:#d97706,color:#fff
+    style Clean fill:#64748b,stroke:#475569,color:#fff
+    style Expired fill:#f59e0b,stroke:#d97706,color:#fff
+    style ExpiredMsg fill:#ef4444,stroke:#dc2626,color:#fff
+    style IA fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Valid fill:#f59e0b,stroke:#d97706,color:#fff
+    style InvalidMsg fill:#ef4444,stroke:#dc2626,color:#fff
+    style Lang fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Store fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== SITES SUPPORTES ==================== -->
+        <h3>Sites d'Emploi Support&eacute;s</h3>
+
+        <p>Le syst&egrave;me supporte nativement <strong>14+ sites d'emploi</strong> avec une strat&eacute;gie de r&eacute;cup&eacute;ration adapt&eacute;e &agrave; chacun :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Plateforme</th>
+              <th>Mode de r&eacute;cup&eacute;ration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>LinkedIn</td>
+              <td>Acc&egrave;s direct avec fallback navigation</td>
+            </tr>
+            <tr>
+              <td>Indeed</td>
+              <td><strong>Navigation compl&egrave;te</strong> (protection anti-bot)</td>
+            </tr>
+            <tr>
+              <td>APEC</td>
+              <td>Acc&egrave;s direct</td>
+            </tr>
+            <tr>
+              <td>France Travail</td>
+              <td>Acc&egrave;s direct</td>
+            </tr>
+            <tr>
+              <td>Glassdoor</td>
+              <td><strong>Navigation compl&egrave;te</strong> (protection Cloudflare)</td>
+            </tr>
+            <tr>
+              <td>Welcome to the Jungle</td>
+              <td><strong>Navigation compl&egrave;te</strong> (application monopage)</td>
+            </tr>
+            <tr>
+              <td>Monster</td>
+              <td>Acc&egrave;s direct</td>
+            </tr>
+            <tr>
+              <td>Cadremploi</td>
+              <td>Acc&egrave;s direct</td>
+            </tr>
+            <tr>
+              <td>HelloWork</td>
+              <td>Acc&egrave;s direct</td>
+            </tr>
+            <tr>
+              <td>LesJeudis</td>
+              <td>Acc&egrave;s direct</td>
+            </tr>
+            <tr>
+              <td>Meteojob</td>
+              <td>Acc&egrave;s direct</td>
+            </tr>
+            <tr>
+              <td>Workday</td>
+              <td>Navigation compl&egrave;te</td>
+            </tr>
+            <tr>
+              <td><em>Tout autre site</em></td>
+              <td>Acc&egrave;s direct avec fallback navigation automatique</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <div class="callout-title">D&eacute;tection universelle</div>
+          <p>Le syst&egrave;me n'est pas limit&eacute; aux sites connus. Gr&acirc;ce au fallback automatique, <strong>n'importe quel site d'emploi</strong> peut &ecirc;tre trait&eacute; : si l'acc&egrave;s direct &eacute;choue, la navigation furtive prend le relais de mani&egrave;re transparente.</p>
+        </div>
+
+        <!-- ==================== NETTOYAGE ET PREPARATION ==================== -->
+        <h2>Nettoyage et Pr&eacute;paration du Contenu</h2>
+
+        <p>
+          Avant l'analyse IA, le contenu brut des pages web est <strong>nettoy&eacute; et structur&eacute;</strong> en deux &eacute;tapes :
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><span class="badge badge-primary">1</span> Extraction du contenu principal</h4>
+            <p>L'algorithme du <strong>mode lecture</strong> (le m&ecirc;me que celui utilis&eacute; par Firefox) isole le contenu principal en supprimant la navigation, les publicit&eacute;s, les barres lat&eacute;rales et les footers.</p>
+          </div>
+          <div class="card">
+            <h4><span class="badge badge-primary">2</span> Conversion en texte structur&eacute;</h4>
+            <p>Le HTML nettoy&eacute; est converti en <strong>texte structur&eacute;</strong> (Markdown) qui pr&eacute;serve les titres, listes et mise en forme, optimisant la qualit&eacute; d'extraction par l'IA.</p>
+          </div>
+        </div>
+
+        <!-- ==================== GARDES-FOU ==================== -->
+        <h2>Gardes-Fous Avant l'Appel IA</h2>
+
+        <p>Le syst&egrave;me int&egrave;gre plusieurs v&eacute;rifications <strong>avant de solliciter l'IA</strong>, &eacute;vitant toute consommation de cr&eacute;dits inutile :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>D&eacute;tection des offres expir&eacute;es</h4>
+            <p>Les offres supprim&eacute;es ou expir&eacute;es sont d&eacute;tect&eacute;es <strong>avant</strong> tout appel IA. Le syst&egrave;me analyse le contenu de la page pour rep&eacute;rer les indicateurs d'expiration, &eacute;conomisant tokens et cr&eacute;dits.</p>
+          </div>
+          <div class="card">
+            <h4>Validation post-extraction</h4>
+            <p>Apr&egrave;s extraction, le syst&egrave;me v&eacute;rifie que le contenu constitue bien une offre d'emploi exploitable : titre pr&eacute;sent, et au moins des responsabilit&eacute;s, des comp&eacute;tences ou une description substantielle.</p>
+          </div>
+          <div class="card">
+            <h4>Pages bloqu&eacute;es</h4>
+            <p>Les pages prot&eacute;g&eacute;es qui ne r&eacute;v&egrave;lent pas leur contenu m&ecirc;me apr&egrave;s navigation furtive sont rejet&eacute;es sans d&eacute;bit de cr&eacute;dit.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Protection financi&egrave;re</div>
+          <p>Aucun cr&eacute;dit n'est d&eacute;bit&eacute; pour une offre invalide, expir&eacute;e, bloqu&eacute;e ou d&eacute;j&agrave; en cache. L'utilisateur ne paye que pour des extractions r&eacute;ussies.</p>
+        </div>
+
+        <!-- ==================== DEDUPLICATION ==================== -->
+        <h2>D&eacute;duplication Intelligente</h2>
+
+        <p>
+          Le syst&egrave;me &eacute;vite les analyses redondantes gr&acirc;ce &agrave; une <strong>triple strat&eacute;gie de d&eacute;duplication</strong> :
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Normalisation des URLs</h4>
+            <p>La m&ecirc;me offre post&eacute;e avec des liens de tracking diff&eacute;rents (param&egrave;tres UTM, etc.) est reconnue comme identique. Les param&egrave;tres non significatifs sont supprim&eacute;s avant comparaison.</p>
+          </div>
+          <div class="card">
+            <h4>Empreinte de contenu</h4>
+            <p>Les PDFs identiques sont d&eacute;tect&eacute;s m&ecirc;me avec des noms de fichiers diff&eacute;rents gr&acirc;ce &agrave; une <strong>empreinte unique</strong> calcul&eacute;e sur le contenu textuel extrait.</p>
+          </div>
+          <div class="card">
+            <h4>Unicit&eacute; par utilisateur</h4>
+            <p>Impossible d'extraire deux fois la m&ecirc;me offre. Si elle existe d&eacute;j&agrave;, le r&eacute;sultat est retourn&eacute; <strong>instantan&eacute;ment depuis le cache</strong> sans consommer de cr&eacute;dits IA.</p>
+          </div>
+        </div>
+
+        <!-- ==================== PIPELINE PDF ==================== -->
+        <h2>Extraction depuis PDF</h2>
+
+        <p>
+          Le pipeline PDF suit un processus similaire au pipeline URL, avec les m&ecirc;mes gardes-fous (cache, validation, d&eacute;duplication) :
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Extraction textuelle</h4>
+            <p>Le texte est extrait directement du PDF. Contrairement &agrave; l'import de CV (qui utilise l'analyse visuelle IA pour g&eacute;rer les mises en page complexes), les offres d'emploi en PDF sont trait&eacute;es par extraction textuelle &mdash; plus rapide et plus &eacute;conomique.</p>
+          </div>
+          <div class="card">
+            <h4>Choix architectural</h4>
+            <p>Le syst&egrave;me distingue <strong>deux types de documents PDF</strong> et adapte sa strat&eacute;gie : extraction textuelle pour les offres (texte structur&eacute;, co&ucirc;t faible) vs. analyse visuelle pour les CV (mise en page complexe avec colonnes et design graphique).</p>
+          </div>
+        </div>
+
+        <!-- ==================== DETECTION LANGUE ==================== -->
+        <h2>D&eacute;tection Automatique de la Langue</h2>
+
+        <p>
+          Le syst&egrave;me d&eacute;tecte automatiquement la langue de l'offre en analysant le contenu extrait (responsabilit&eacute;s, avantages). Cette d&eacute;tection est essentielle car elle d&eacute;termine la langue dans laquelle le CV sera g&eacute;n&eacute;r&eacute;.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>D&eacute;tail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Langues support&eacute;es</strong></td>
+              <td>Fran&ccedil;ais, Anglais, Espagnol, Allemand</td>
+            </tr>
+            <tr>
+              <td><strong>Source d'analyse</strong></td>
+              <td>Contenu de l'offre (responsabilit&eacute;s, avantages) &mdash; pas l'URL</td>
+            </tr>
+            <tr>
+              <td><strong>Impact</strong></td>
+              <td>D&eacute;termine la langue de g&eacute;n&eacute;ration du CV adapt&eacute;</td>
+            </tr>
+            <tr>
+              <td><strong>Gestion cross-language</strong></td>
+              <td>Si le CV et l'offre sont dans des langues diff&eacute;rentes, le pipeline de scoring s'adapte automatiquement</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== EXTENSION NAVIGATEUR ==================== -->
+        <h2>Flux Extension Navigateur</h2>
+
+        <p>
+          L'<a href="./04-extension-navigateur.html">extension navigateur</a> constitue le canal d'entr&eacute;e le plus efficace : le contenu est extrait c&ocirc;t&eacute; client par l'extension, converti en texte structur&eacute;, puis envoy&eacute; directement au serveur. Aucun scraping serveur n'est n&eacute;cessaire.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'extraction via l'extension navigateur</div>
+          <div class="mermaid">
+flowchart LR
+    Page["Page d'offre<br/>dans le navigateur"]
+    Ext["Extension<br/>détecte l'offre"]
+    Extract["Extraction<br/>côté client"]
+    MD["Texte structuré<br/>(Markdown)"]
+    Server["Serveur<br/>FitMyCV"]
+    IA["Extraction IA<br/>schéma strict"]
+    JSON["Offre structurée<br/>13 champs"]
+
+    Page --> Ext --> Extract --> MD --> Server --> IA --> JSON
+
+    style Page fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Ext fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Extract fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style MD fill:#64748b,stroke:#475569,color:#fff
+    style Server fill:#6366f1,stroke:#4f46e5,color:#fff
+    style IA fill:#6366f1,stroke:#4f46e5,color:#fff
+    style JSON fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== RECAPITULATIF ==================== -->
+        <h2>R&eacute;capitulatif</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>D&eacute;tail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Canaux d'entr&eacute;e</strong></td>
+              <td>3 (URL, PDF, extension navigateur) &rarr; format de sortie unique</td>
+            </tr>
+            <tr>
+              <td><strong>Champs extraits</strong></td>
+              <td>13 cat&eacute;gories d'information structur&eacute;e</td>
+            </tr>
+            <tr>
+              <td><strong>Cat&eacute;gories de comp&eacute;tences</strong></td>
+              <td>4 (techniques, outils, m&eacute;thodologies, savoir-&ecirc;tre) avec distinction requis/souhait&eacute;</td>
+            </tr>
+            <tr>
+              <td><strong>Sites d'emploi</strong></td>
+              <td>14+ nativement + d&eacute;tection universelle sur tout site inconnu</td>
+            </tr>
+            <tr>
+              <td><strong>Niveaux de scraping</strong></td>
+              <td>3 (acc&egrave;s direct, navigation furtive, fallback automatique)</td>
+            </tr>
+            <tr>
+              <td><strong>Langues d&eacute;tect&eacute;es</strong></td>
+              <td>4 (fran&ccedil;ais, anglais, espagnol, allemand)</td>
+            </tr>
+            <tr>
+              <td><strong>D&eacute;duplication</strong></td>
+              <td>Triple strat&eacute;gie (normalisation URL, empreinte contenu, unicit&eacute; utilisateur)</td>
+            </tr>
+            <tr>
+              <td><strong>Protection financi&egrave;re</strong></td>
+              <td>Z&eacute;ro cr&eacute;dit pour les doublons, offres expir&eacute;es ou invalides</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="./assets/js/layout.js?v=1.0.5"></script>
+  <script src="./assets/js/main.js?v=1.0.7"></script>
+</body>
+</html>

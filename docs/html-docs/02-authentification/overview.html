@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -32,141 +32,135 @@
 
         <h1>Authentification</h1>
         <p class="lead">
-          FitMyCV.io utilise NextAuth.js v5 pour gérer l'authentification avec support multi-providers : credentials (email/password), Google OAuth et LinkedIn OAuth.
+          FitMyCV.io utilise NextAuth.js v4 avec le PrismaAdapter pour gérer l'authentification multi-providers :
+          Credentials (email/password), Google OAuth, GitHub OAuth et Apple Sign-In. La stratégie de session
+          repose sur des JWT signés avec une durée de vie de 7 jours.
         </p>
 
         <h2>Architecture d'Authentification</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Flux d'authentification</div>
+          <div class="diagram-title">Vue d'ensemble des flux d'authentification</div>
           <div class="mermaid">
 flowchart TB
     subgraph Client["CLIENT"]
-        Login["Page Login"]
-        Register["Page Register"]
-        App["Application"]
+        Login["Page de connexion<br/>et d'inscription"]
+        ExtPage["Page d'authentification<br/>extension"]
+        Account["Page du compte"]
     end
 
-    subgraph NextAuth["NEXTAUTH.JS"]
-        Providers["Providers"]
-        Callbacks["Callbacks"]
-        Session["Session Management"]
+    subgraph NextAuth["NEXTAUTH.JS v4"]
+        Providers["Fournisseurs d'identité<br/>(conditionnels)"]
+        Callbacks["Points de contrôle<br/>(token, session, connexion)"]
+        Events["Événements<br/>(création utilisateur)"]
     end
 
-    subgraph Providers_Detail["PROVIDERS"]
-        Creds["Credentials<br/>(Email/Password)"]
+    subgraph Providers_Detail["FOURNISSEURS D'IDENTITE"]
+        Creds["Identifiants<br/>(Email / Mot de passe)"]
         Google["Google OAuth"]
-        LinkedIn["LinkedIn OAuth"]
+        GitHub["GitHub OAuth"]
+        Apple["Apple Sign-In"]
+    end
+
+    subgraph ExtAuth["AUTH EXTENSION"]
+        ExtToken["Jeton d'accès extension<br/>(valide 7 jours)"]
+        ExtMiddleware["Vérification d'accès<br/>extension"]
     end
 
     subgraph Storage["STOCKAGE"]
-        DB[(PostgreSQL)]
-        JWT["JWT Token"]
+        DB[(PostgreSQL<br/>via Prisma)]
+        JWT["Session sécurisée<br/>(7 jours)"]
+    end
+
+    subgraph Security["SECURITE"]
+        ReCaptcha["reCAPTCHA v3"]
+        PasswordPolicy["Politique de<br/>mot de passe"]
+        XSS["Protection contre<br/>les injections"]
+        CSRF["Protection contre<br/>la falsification"]
     end
 
     Login --> NextAuth
-    Register --> NextAuth
     NextAuth --> Providers_Detail
-
-    Creds --> DB
-    Google --> DB
-    LinkedIn --> DB
-
+    Providers_Detail --> DB
     Callbacks --> JWT
-    Session --> App
+    ExtPage --> ExtToken
+    Account --> Providers_Detail
+
+    ExtToken --> ExtMiddleware
+    Security -.-> Providers_Detail
+
+    style Login fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ExtPage fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Account fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Providers fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Callbacks fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Events fill:#64748b,stroke:#475569,color:#fff
+    style Creds fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Google fill:#6366f1,stroke:#4f46e5,color:#fff
+    style GitHub fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Apple fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ExtToken fill:#f59e0b,stroke:#d97706,color:#fff
+    style ExtMiddleware fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style JWT fill:#f59e0b,stroke:#d97706,color:#fff
+    style ReCaptcha fill:#64748b,stroke:#475569,color:#fff
+    style PasswordPolicy fill:#64748b,stroke:#475569,color:#fff
+    style XSS fill:#64748b,stroke:#475569,color:#fff
+    style CSRF fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 
         <h2>Configuration NextAuth</h2>
 
-        <pre><code>// lib/auth/options.js
-import NextAuth from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
-import LinkedInProvider from 'next-auth/providers/linkedin';
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import prisma from '@/lib/prisma';
-import bcrypt from 'bcrypt';
+        <p>La configuration centrale se trouve dans <code>lib/auth/options.js</code>. Les providers OAuth sont
+        conditionnels : ils ne sont activés que si les variables d'environnement correspondantes sont définies,
+        via la fonction utilitaire <code>maybeProvider()</code>.</p>
+
+        <pre><code class="language-javascript">// lib/auth/options.js (extrait simplifié)
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import GoogleProvider from "next-auth/providers/google";
+import GithubProvider from "next-auth/providers/github";
+import AppleProvider from "next-auth/providers/apple";
+import CredentialsProvider from "next-auth/providers/credentials";
+
+function maybeProvider(condition, providerFactory) {
+  return condition ? providerFactory() : null;
+}
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
 
-  providers: [
-    // Provider Credentials
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
-      },
-      async authorize(credentials) {
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
-
-        if (!user || !user.hashedPassword) {
-          throw new Error('Invalid credentials');
-        }
-
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.hashedPassword
-        );
-
-        if (!isValid) {
-          throw new Error('Invalid credentials');
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role
-        };
-      }
-    }),
-
-    // Google OAuth
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET
-    }),
-
-    // LinkedIn OAuth
-    LinkedInProvider({
-      clientId: process.env.LINKEDIN_CLIENT_ID,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET
-    })
-  ],
-
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-      }
-      return token;
-    },
-
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-      }
-      return session;
-    }
-  },
-
   session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60 // 30 jours
+    strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,   // 7 jours
+    updateAge: 24 * 60 * 60,     // Refresh toutes les 24h
   },
 
   pages: {
-    signIn: '/login',
-    signOut: '/logout',
-    error: '/auth/error'
-  }
+    signIn: "/auth",
+    error: "/auth",
+  },
+
+  providers: [
+    maybeProvider(
+      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+      () => GoogleProvider({ ... })
+    ),
+    maybeProvider(
+      process.env.GITHUB_ID && process.env.GITHUB_SECRET,
+      () => GithubProvider({ ... })
+    ),
+    maybeProvider(
+      process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET
+        && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID
+        && process.env.APPLE_PRIVATE_KEY,
+      () => AppleProvider({ ... })
+    ),
+    CredentialsProvider({ ... }),
+  ].filter(Boolean),
+
+  callbacks: { jwt, session, signIn },
+  events: { createUser },
 };</code></pre>
 
         <h2>Providers Disponibles</h2>
@@ -176,35 +170,85 @@ export const authOptions = {
             <h4>Credentials</h4>
             <ul>
               <li>Email + mot de passe</li>
-              <li>Hachage bcrypt (10 rounds)</li>
-              <li>Validation côté serveur</li>
-              <li>Reset password par email</li>
+              <li>Hachage bcryptjs (10 rounds)</li>
+              <li>reCAPTCHA v3 (score &ge; 0.5)</li>
+              <li>Mode auto-signin (après vérification email)</li>
+              <li>Vérification mode maintenance</li>
             </ul>
           </div>
           <div class="card">
             <h4>Google OAuth</h4>
             <ul>
-              <li>OAuth 2.0</li>
-              <li>Récupération profil automatique</li>
-              <li>Liaison compte existant</li>
-              <li>Scope: email, profile</li>
+              <li>OAuth 2.0 (prompt: select_account)</li>
+              <li>Scope : openid, email, profile</li>
+              <li>Email auto-vérifié à la création</li>
+              <li>Conditionnel (<code>GOOGLE_CLIENT_ID</code>)</li>
             </ul>
           </div>
           <div class="card">
-            <h4>LinkedIn OAuth</h4>
+            <h4>GitHub OAuth</h4>
             <ul>
-              <li>OAuth 2.0</li>
-              <li>Import données professionnelles</li>
-              <li>Scope: r_liteprofile, r_emailaddress</li>
+              <li>OAuth 2.0 (prompt: select_account)</li>
+              <li>Scope : read:user, user:email</li>
+              <li>Récupération email primaire vérifié</li>
+              <li>Conditionnel (<code>GITHUB_ID</code>)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Apple Sign-In</h4>
+            <ul>
+              <li>OAuth 2.0 (prompt: login)</li>
+              <li>Requiert 5 variables d'environnement</li>
+              <li>JWT client secret (private key)</li>
+              <li>Conditionnel (<code>APPLE_CLIENT_ID</code>)</li>
             </ul>
           </div>
         </div>
+
+        <h2>Callbacks NextAuth</h2>
+
+        <h3>Callback JWT</h3>
+        <p>Exécuté à chaque rafraîchissement du token JWT. Il enrichit le token avec les données fraîches de la base de données :</p>
+        <ul>
+          <li>Ajoute <code>id</code>, <code>name</code>, <code>email</code> lors du premier login</li>
+          <li>Rafraîchit <code>emailVerified</code> et <code>role</code> depuis la DB à chaque mise à jour</li>
+          <li>Auto-vérifie l'email des utilisateurs OAuth (pas de <code>passwordHash</code>)</li>
+          <li>Marque le token comme <code>invalid</code> si l'utilisateur n'existe plus en DB</li>
+        </ul>
+
+        <h3>Callback Session</h3>
+        <p>Construit l'objet session retourné au client :</p>
+        <ul>
+          <li>Vérifie que l'utilisateur existe toujours en DB (double vérification)</li>
+          <li>Invalide la session si mode maintenance actif (sauf ADMIN)</li>
+          <li>Retourne les données fraîches : <code>id</code>, <code>name</code>, <code>email</code>, <code>emailVerified</code>, <code>role</code></li>
+          <li>Throttle les logs d'invalidation (1 par minute par utilisateur)</li>
+        </ul>
+
+        <h3>Callback signIn</h3>
+        <p>Contrôle l'autorisation de connexion :</p>
+        <ul>
+          <li>Vérifie le setting <code>registration_enabled</code> pour bloquer les nouvelles inscriptions OAuth</li>
+          <li>Vérifie le mode maintenance (bloque les non-admins)</li>
+          <li>Supprime automatiquement les utilisateurs OAuth créés pendant un blocage</li>
+          <li>Attribue le plan par défaut via <code>assignDefaultPlan()</code></li>
+          <li>Met à jour <code>lastLoginAt</code> (suivi RGPD)</li>
+          <li>Track la télémétrie de connexion</li>
+        </ul>
 
         <h2>Récupération de Session</h2>
 
         <h3>Côté Serveur (API Routes)</h3>
 
-        <pre><code>// Dans une API Route
+        <pre><code class="language-javascript">// lib/auth/session.js
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/options";
+
+export async function auth() {
+  return getServerSession(authOptions);
+}
+
+// Utilisation dans une API Route
 import { auth } from '@/lib/auth/session';
 
 export async function GET(request) {
@@ -215,39 +259,101 @@ export async function GET(request) {
   }
 
   // session.user contient :
-  // - id: string
+  // - id: string (UUID)
   // - email: string
   // - name: string | null
+  // - emailVerified: Date | null
   // - role: 'USER' | 'ADMIN'
-
-  return Response.json({ user: session.user });
 }</code></pre>
 
         <h3>Côté Client (Composants)</h3>
 
-        <pre><code>// Dans un composant React
-'use client';
+        <pre><code class="language-javascript">'use client';
 
 import { useSession, signIn, signOut } from 'next-auth/react';
 
 export function AuthButton() {
   const { data: session, status } = useSession();
 
-  if (status === 'loading') {
-    return <div>Chargement...</div>;
-  }
+  if (status === 'loading') return &lt;div&gt;Chargement...&lt;/div&gt;;
 
   if (session) {
     return (
-      <div>
-        <p>Connecté en tant que {session.user.email}</p>
-        <button onClick={() => signOut()}>Déconnexion</button>
-      </div>
+      &lt;div&gt;
+        &lt;p&gt;Connecté : {session.user.email}&lt;/p&gt;
+        &lt;p&gt;Rôle : {session.user.role}&lt;/p&gt;
+        &lt;button onClick={() =&gt; signOut()}&gt;Déconnexion&lt;/button&gt;
+      &lt;/div&gt;
     );
   }
 
-  return <button onClick={() => signIn()}>Connexion</button>;
+  return &lt;button onClick={() =&gt; signIn()}&gt;Connexion&lt;/button&gt;;
 }</code></pre>
+
+        <h2>Authentification Extension Navigateur</h2>
+
+        <p>L'extension Chrome/Firefox utilise un système JWT indépendant de NextAuth, basé sur la bibliothèque <code>jose</code> (algorithme HS256, signé avec <code>NEXTAUTH_SECRET</code>).</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux d'authentification extension</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Login["Connexion"]
+        A["Email /<br/>Mot de passe"] -->|"Connexion par identifiants"| B["Jeton d'accès<br/>(7 jours)"]
+        C["Session Web"] -->|"Depuis la session web"| B
+    end
+
+    subgraph Usage["Utilisation"]
+        B -->|"Envoi du jeton"| D["Vérification du jeton"]
+        D --> E["API de l'extension"]
+    end
+
+    subgraph Refresh["Renouvellement"]
+        B -->|"Renouvellement"| F["Nouveau jeton<br/>(7 jours)"]
+    end
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#f59e0b,stroke:#d97706,color:#fff
+    style C fill:#64748b,stroke:#475569,color:#fff
+    style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style E fill:#6366f1,stroke:#4f46e5,color:#fff
+    style F fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/auth/extension-token</code></td>
+              <td>POST</td>
+              <td>Login par email/password, retourne JWT extension (vérifie <code>emailVerified</code> + mode maintenance)</td>
+            </tr>
+            <tr>
+              <td><code>/api/auth/extension-token/from-session</code></td>
+              <td>GET</td>
+              <td>Génère JWT extension depuis une session NextAuth</td>
+            </tr>
+            <tr>
+              <td><code>/api/auth/extension-token/refresh</code></td>
+              <td>POST</td>
+              <td>Renouvelle un JWT extension encore valide (vérifie mode maintenance)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">JWT Extension vs Session NextAuth</div>
+          <p>Le JWT extension (<code>lib/auth/extensionToken.js</code>) est un token autonome signé avec HS256.
+          Il contient <code>sub</code> (userId), <code>type: "extension"</code>, <code>name</code> et <code>email</code>.
+          Le middleware <code>withExtensionAuth</code> vérifie ce token et charge l'utilisateur depuis la DB à chaque requête.</p>
+        </div>
 
         <h2>Rôles Utilisateurs</h2>
 
@@ -263,73 +369,106 @@ export function AuthButton() {
             <tr>
               <td><code>USER</code></td>
               <td>Utilisateur standard</td>
-              <td>Dashboard, CV, Génération, Profil</td>
+              <td>Dashboard, CV, Génération, Profil, Account</td>
             </tr>
             <tr>
               <td><code>ADMIN</code></td>
               <td>Administrateur</td>
-              <td>Tout + Dashboard Admin</td>
+              <td>Tout + Dashboard Admin + Accès en maintenance</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Vérification Rôle Admin</h3>
+        <h2>Gestion de Compte</h2>
 
-        <pre><code>// Middleware de vérification admin
-import { auth } from '@/lib/auth/session';
-import { apiError, CommonErrors } from '@/lib/api/apiErrors';
-
-export async function requireAdmin() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return apiError(CommonErrors.notAuthenticated());
-  }
-
-  if (session.user.role !== 'ADMIN') {
-    return apiError(CommonErrors.notAuthorized());
-  }
-
-  return session;
-}</code></pre>
-
-        <h2>Flux d'Inscription</h2>
-
-        <div class="diagram">
-          <div class="diagram-title">Processus d'inscription</div>
-          <div class="mermaid">
-sequenceDiagram
-    participant U as Utilisateur
-    participant F as Frontend
-    participant A as API /register
-    participant DB as PostgreSQL
-    participant E as Email Service
-
-    U->>F: Remplit formulaire
-    F->>A: POST /api/auth/register
-    A->>A: Valide données (Zod)
-    A->>DB: Vérifie email unique
-    A->>A: Hash password (bcrypt)
-    A->>DB: Créer User
-    A->>DB: Créer CreditBalance (welcome credits)
-    A->>E: Envoyer email bienvenue
-    A->>F: 201 Created
-    F->>U: Redirection login
-          </div>
-        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Méthode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/account/profile</code></td>
+              <td>PUT</td>
+              <td>Modifier nom et/ou email (avec vérification)</td>
+            </tr>
+            <tr>
+              <td><code>/api/account/password</code></td>
+              <td>PUT</td>
+              <td>Changer le mot de passe (vérifie l'ancien)</td>
+            </tr>
+            <tr>
+              <td><code>/api/account/linked-accounts</code></td>
+              <td>GET</td>
+              <td>Lister les comptes OAuth liés + providers disponibles</td>
+            </tr>
+            <tr>
+              <td><code>/api/account/link-oauth</code></td>
+              <td>POST</td>
+              <td>Initier la liaison d'un nouveau provider OAuth</td>
+            </tr>
+            <tr>
+              <td><code>/api/account/unlink-oauth</code></td>
+              <td>DELETE</td>
+              <td>Supprimer un lien OAuth (si &gt; 1 provider lié)</td>
+            </tr>
+            <tr>
+              <td><code>/api/account/delete</code></td>
+              <td>DELETE</td>
+              <td>Supprimer le compte (cascade + annulation Stripe)</td>
+            </tr>
+          </tbody>
+        </table>
 
         <h2>Sécurité</h2>
 
         <div class="callout callout-warning">
           <div class="callout-title">Mesures de sécurité</div>
           <ul>
-            <li>Mots de passe hachés avec bcrypt (10 rounds)</li>
-            <li>JWT signés avec secret NEXTAUTH_SECRET</li>
-            <li>CSRF protection automatique</li>
-            <li>Session expiration après 30 jours</li>
-            <li>Rate limiting sur endpoints auth</li>
+            <li><strong>Hachage</strong> : bcryptjs avec 10 salt rounds</li>
+            <li><strong>JWT</strong> : signés avec <code>NEXTAUTH_SECRET</code>, durée 7 jours</li>
+            <li><strong>Cookies</strong> : <code>httpOnly</code>, <code>sameSite: lax</code>, <code>secure</code> en production (prefixe <code>__Secure-</code> / <code>__Host-</code>)</li>
+            <li><strong>CSRF</strong> : protection automatique NextAuth + state token pour OAuth linking</li>
+            <li><strong>reCAPTCHA v3</strong> : sur register, login, resend-verification, request-reset, link-oauth (score &ge; 0.5)</li>
+            <li><strong>Password Policy</strong> : min 8 chars, majuscule, minuscule, chiffre, caractère spécial, max 128 chars, blacklist mots courants</li>
+            <li><strong>XSS</strong> : sanitization via <code>stripHtml()</code>, <code>sanitizeEmail()</code></li>
+            <li><strong>Rate limiting</strong> : 1 resend verification/min, 60s cooldown changement email</li>
+            <li><strong>Mode maintenance</strong> : bloque tous les non-admins (login + session)</li>
+            <li><strong>Toggle inscription</strong> : setting <code>registration_enabled</code> pour désactiver les inscriptions</li>
           </ul>
         </div>
+
+        <h2>Cookies de Session</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Cookie</th>
+              <th>Prod Name</th>
+              <th>Flags</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Session Token</td>
+              <td><code>__Secure-next-auth.session-token</code></td>
+              <td>httpOnly, sameSite: lax, secure, maxAge: 7j</td>
+            </tr>
+            <tr>
+              <td>Callback URL</td>
+              <td><code>__Secure-next-auth.callback-url</code></td>
+              <td>sameSite: lax, secure</td>
+            </tr>
+            <tr>
+              <td>CSRF Token</td>
+              <td><code>__Host-next-auth.csrf-token</code></td>
+              <td>httpOnly, sameSite: lax, secure</td>
+            </tr>
+          </tbody>
+        </table>
 
         <h2>Fichiers Clés</h2>
 
@@ -343,23 +482,84 @@ sequenceDiagram
           <tbody>
             <tr>
               <td><code>lib/auth/options.js</code></td>
-              <td>Configuration NextAuth</td>
+              <td>Configuration NextAuth (providers, callbacks, events, session)</td>
             </tr>
             <tr>
               <td><code>lib/auth/session.js</code></td>
-              <td>Helper récupération session</td>
+              <td>Helper <code>auth()</code> pour récupérer la session serveur</td>
+            </tr>
+            <tr>
+              <td><code>lib/auth/extensionToken.js</code></td>
+              <td>Sign/verify JWT extension (jose, HS256)</td>
+            </tr>
+            <tr>
+              <td><code>lib/auth/autoSignIn.js</code></td>
+              <td>Tokens de connexion auto après vérification email (5 min, usage unique)</td>
+            </tr>
+            <tr>
+              <td><code>lib/api/withExtensionAuth.js</code></td>
+              <td>Middleware auth pour les routes API extension</td>
+            </tr>
+            <tr>
+              <td><code>lib/security/passwordPolicy.js</code></td>
+              <td>Validation politique de mots de passe</td>
+            </tr>
+            <tr>
+              <td><code>lib/security/xssSanitization.js</code></td>
+              <td>Sanitization XSS (stripHtml, sanitizeEmail, escapeHtml)</td>
             </tr>
             <tr>
               <td><code>app/api/auth/[...nextauth]/route.js</code></td>
-              <td>Handler NextAuth</td>
+              <td>Handler NextAuth (GET + POST)</td>
             </tr>
             <tr>
               <td><code>app/api/auth/register/route.js</code></td>
               <td>Inscription credentials</td>
             </tr>
             <tr>
-              <td><code>components/auth/LoginForm.jsx</code></td>
-              <td>Formulaire connexion</td>
+              <td><code>app/extension-auth/page.jsx</code></td>
+              <td>Page bridge extension : session web &rarr; JWT extension</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Variables d'Environnement</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NEXTAUTH_SECRET</code></td>
+              <td>Secret pour signer les JWT (NextAuth + extension)</td>
+            </tr>
+            <tr>
+              <td><code>NEXTAUTH_URL</code></td>
+              <td>URL de base pour les callbacks NextAuth</td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code></td>
+              <td>Credentials Google OAuth</td>
+            </tr>
+            <tr>
+              <td><code>GITHUB_ID</code> / <code>GITHUB_SECRET</code></td>
+              <td>Credentials GitHub OAuth</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_CLIENT_ID</code> / <code>APPLE_CLIENT_SECRET</code></td>
+              <td>Credentials Apple Sign-In</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_TEAM_ID</code> / <code>APPLE_KEY_ID</code> / <code>APPLE_PRIVATE_KEY</code></td>
+              <td>Clés Apple Sign-In supplémentaires</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_RECAPTCHA_SITE_KEY</code></td>
+              <td>Clé publique reCAPTCHA v3</td>
             </tr>
           </tbody>
         </table>
@@ -367,9 +567,9 @@ sequenceDiagram
         <h2>Prochaines Sections</h2>
 
         <ul>
-          <li><a href="./credentials-flow.html">Flux Credentials</a> - Authentification email/password</li>
-          <li><a href="./oauth-flow.html">Flux OAuth</a> - Google et LinkedIn</li>
-          <li><a href="./email-verification.html">Vérification Email</a> - Confirmation et reset</li>
+          <li><a href="./oauth-flow.html">Flux OAuth</a> - Google, GitHub, Apple + liaison/déliaison de comptes</li>
+          <li><a href="./credentials-flow.html">Flux Credentials</a> - Inscription, connexion, réinitialisation mot de passe</li>
+          <li><a href="./email-verification.html">Vérification Email</a> - Confirmation, renvoi, changement d'email, connexion automatique</li>
         </ul>
       </div>
     </main>

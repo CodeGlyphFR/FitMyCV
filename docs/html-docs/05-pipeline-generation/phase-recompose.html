@@ -3,77 +3,986 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phase Recomposition | FitMyCV.io</title>
+  <title>Phase Recomposition - Pipeline G&eacute;n&eacute;ration | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Pipeline Generation</a>
+          <a href="./overview.html">Pipeline G&eacute;n&eacute;ration</a>
           <span>/</span>
           <span>Recomposition</span>
         </div>
 
-
-        <h1>Phase Recomposition</h1>
+        <h1>Phase 2 : Recomposition</h1>
         <p class="lead">
-          Phase finale du pipeline qui assemble toutes les sections generees en un CV complet et coherent.
+          La phase de recomposition est l'&eacute;tape finale du pipeline <strong>cv-adaptation</strong>. Purement algorithmique &mdash; <strong>aucun appel OpenAI</strong> &mdash;, elle assemble le CV adapt&eacute; final &agrave; partir de tous les r&eacute;sultats des 7 batches, cr&eacute;e les enregistrements en base de donn&eacute;es (<code>CvFile</code>, <code>CvVersion v0</code>), et initialise le syst&egrave;me de <em>change tracking</em> pour la revue utilisateur.
         </p>
 
-        <h2>Objectif</h2>
-        <p>La recomposition prend les sorties des phases precedentes (classification, batches) et les assemble en respectant :</p>
-        <ul>
-          <li>La structure JSON standard du CV</li>
-          <li>L'ordre logique des sections</li>
-          <li>La coherence globale du document</li>
-        </ul>
+        <div class="callout callout-info">
+          <div class="callout-title">Phase purement algorithmique</div>
+          <p>Contrairement aux phases 0, 0.5 et 1 qui font appel &agrave; l'API OpenAI, la phase 2 n'effectue <strong>aucun appel IA</strong>. Elle se contente d'assembler, nettoyer et persister les donn&eacute;es produites par les batches pr&eacute;c&eacute;dents. Son co&ucirc;t en tokens est donc nul, et son ex&eacute;cution est quasi-instantan&eacute;e (typiquement &lt; 200ms).</p>
+        </div>
 
-        <h2>Implementation</h2>
+        <!-- ==================== FICHIERS SOURCES ==================== -->
+        <h2>Fichiers Sources</h2>
 
-        <pre><code>// lib/cv-generation/phases/recompose.js
-export async function recomposeCv(classificationResult, batchResults, originalCv) {
-  const recomposedCv = {
-    header: originalCv.header,
-    sections: {
-      summary: batchResults.summary,
-      experiences: filterAndOrder(
-        batchResults.experiences,
-        classificationResult.experiences
-      ),
-      skills: batchResults.skills,
-      education: originalCv.sections.education,
-      projects: mergeProjects(
-        originalCv.sections.projects,
-        classificationResult.movedToProjects
-      )
-    },
-    metadata: {
-      ...originalCv.metadata,
-      generatedAt: new Date().toISOString(),
-      targetJobId: jobOffer.id
-    }
-  };
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/features/cv-adaptation/phases/recompose.js</code></td>
+              <td>Fonction principale <code>executeRecomposition()</code> + fonctions internes d'extraction et fusion des changements</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/changeTracking.js</code></td>
+              <td>R&eacute;-exports de <code>initializeReviewState()</code>, <code>generateChangeId()</code>, <code>computeCvDiff()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/modifications/diff.js</code></td>
+              <td><code>computeCvDiff()</code>, <code>computeArrayItemDiff()</code> &mdash; D&eacute;tection programmatique des diff&eacute;rences</td>
+            </tr>
+            <tr>
+              <td><code>lib/cv-core/review/state.js</code></td>
+              <td><code>initializeReviewState()</code> &mdash; Persistence de l'&eacute;tat de revue dans <code>CvFile.pendingChanges</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/features/cv-adaptation/phases/parseSkillsResponse.js</code></td>
+              <td><code>processSkillsResponse()</code> &mdash; Post-traitement des skills (nettoyage <code>_raw</code>, review UI)</td>
+            </tr>
+            <tr>
+              <td><code>lib/features/cv-adaptation/utils/sanitize.js</code></td>
+              <td><code>sanitizeForPostgres()</code> &mdash; Nettoyage des caract&egrave;res nuls <code>\u0000</code> pour PostgreSQL</td>
+            </tr>
+          </tbody>
+        </table>
 
-  return recomposedCv;
+        <!-- ==================== FLOWCHART ASSEMBLAGE ==================== -->
+        <h2>Workflow d'Assemblage</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Processus complet de la phase Recomposition</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph InputBatch["ENTREES - RESULTATS DES BATCHES"]
+        direction LR
+        BR_EXP["Expériences<br/>adaptées"]
+        BR_PROJ["Projets<br/>adaptés"]
+        BR_SKILLS["Compétences<br/>adaptées + données brutes"]
+        BR_SUMMARY["Résumé professionnel<br/>adapté"]
+        BR_EXTRAS["Extras adaptés<br/>+ modifications"]
+        BR_EDU["Formation adaptée<br/>+ modifications"]
+        BR_LANG["Langues adaptées<br/>+ modifications"]
+    end
+
+    subgraph SourceCV["CV SOURCE"]
+        SRC_CV["CV source<br/>Contenu JSON"]
+        SRC_NAME["Nom du fichier CV source"]
+    end
+
+    subgraph AssemblyStep["ASSEMBLAGE ALGORITHMIQUE"]
+        direction TB
+        A1["1. En-tête du CV<br/>+ titre du poste visé"]
+        A2["2. Résumé professionnel"]
+        A3["3. Expériences conservées"]
+        A4["4. Projets conservés<br/>+ expériences déplacées"]
+        A5["5. Compétences nettoyées<br/>sans données internes"]
+        A6["6. Formation adaptée"]
+        A7["7. Langues adaptées"]
+        A8["8. Extras adaptés"]
+        A1 --> A2 --> A3 --> A4 --> A5 --> A6 --> A7 --> A8
+    end
+
+    subgraph SanitizeStep["NETTOYAGE"]
+        SAN["Nettoyage des caractères<br/>invalides pour la base"]
+    end
+
+    subgraph DBPersist["PERSISTENCE"]
+        direction TB
+        CF["Créer le fichier CV<br/>généré par le pipeline"]
+        CV0["Créer la version 0<br/>référence source"]
+        UPD["Lier le CV généré<br/>à l'offre"]
+    end
+
+    subgraph ChangeTrack["SUIVI DES MODIFICATIONS"]
+        direction TB
+        EXTRACTCH["Extraire les modifications<br/>IA avant/après/raison"]
+        DIFFCH["Calculer les différences<br/>éléments ajoutés/supprimés"]
+        DEDUPCH["Déduplication<br/>des modifications"]
+        MERGECH["Fusionner les paires<br/>de traduction"]
+        INITCH["Initialiser l'état de revue<br/>Modifications en attente"]
+        EXTRACTCH --> DEDUPCH
+        DIFFCH --> DEDUPCH
+        DEDUPCH --> MERGECH --> INITCH
+    end
+
+    InputBatch --> AssemblyStep
+    SourceCV --> AssemblyStep
+    AssemblyStep --> SanitizeStep
+    SanitizeStep --> DBPersist
+    DBPersist --> ChangeTrack
+
+    style BR_EXP fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_PROJ fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_SKILLS fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_SUMMARY fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_EXTRAS fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_EDU fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BR_LANG fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SRC_CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SRC_NAME fill:#64748b,stroke:#475569,color:#fff
+    style A1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A4 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A5 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A6 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A7 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A8 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SAN fill:#64748b,stroke:#475569,color:#fff
+    style CF fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CV0 fill:#14b8a6,stroke:#0d9488,color:#fff
+    style UPD fill:#14b8a6,stroke:#0d9488,color:#fff
+    style EXTRACTCH fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DIFFCH fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DEDUPCH fill:#f59e0b,stroke:#d97706,color:#fff
+    style MERGECH fill:#f59e0b,stroke:#d97706,color:#fff
+    style INITCH fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== SIGNATURE FONCTION ==================== -->
+        <h2>Signature de executeRecomposition()</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/recompose.js</code></p>
+
+        <pre><code class="language-javascript">export async function executeRecomposition({
+  offerId,        // ID de la CvGenerationOffer
+  sourceCv,       // CV source complet (JSON)
+  sourceCvFileName, // Nom du fichier CV source
+  batchResults,   // Resultats de tous les batches (7 sections)
+  jobOffer,       // Offre d'emploi (contenu JSON)
+  jobOfferId,     // ID de la JobOffer en base de donnees
+  targetLanguage, // Langue cible ('francais', 'anglais', 'allemand', 'espagnol')
+  userId,         // ID de l'utilisateur
+  signal,         // AbortSignal pour annulation
+})</code></pre>
+
+        <!-- ==================== DATA FLOW INPUTS/OUTPUTS ==================== -->
+        <h2>Flux de Donn&eacute;es (Entr&eacute;es / Sorties)</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">RECOMPOSITION &mdash; Assemblage du CV final adapt&eacute;</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;es (7 r&eacute;sultats de batches)</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Cl&eacute; batchResults</th>
+                  <th>Source (Phase 1)</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>experiences</code></td>
+                  <td>batch-experiences.js</td>
+                  <td><code>Array&lt;Object&gt;</code></td>
+                  <td>Exp&eacute;riences KEEP adapt&eacute;es avec <code>_title_reason</code>, <code>_description_reason</code>, <code>_responsibilities_reason</code>, <code>_deliverables_reason</code>, <code>skill_changes</code></td>
+                </tr>
+                <tr>
+                  <td><code>projects</code></td>
+                  <td>batch-projects.js</td>
+                  <td><code>Array&lt;Object&gt;</code></td>
+                  <td>Projets KEEP + exp&eacute;riences converties depuis MOVE_TO_PROJECTS</td>
+                </tr>
+                <tr>
+                  <td><code>skills</code></td>
+                  <td>batch-skills.js</td>
+                  <td><code>Object</code></td>
+                  <td>Skills par cat&eacute;gorie (<code>hard_skills</code>, <code>soft_skills</code>, <code>tools</code>, <code>methodologies</code>) + donn&eacute;es <code>_raw</code> pour le review</td>
+                </tr>
+                <tr>
+                  <td><code>summary</code></td>
+                  <td>batch-summary.js</td>
+                  <td><code>Object</code></td>
+                  <td>R&eacute;sum&eacute; professionnel adapt&eacute; avec <code>modifications[]</code> (champ, action, reason)</td>
+                </tr>
+                <tr>
+                  <td><code>extras</code></td>
+                  <td>batch-extras.js</td>
+                  <td><code>Array&lt;Object&gt;</code></td>
+                  <td>Certifications, b&eacute;n&eacute;volat, hobbies, publications adapt&eacute;s</td>
+                </tr>
+                <tr>
+                  <td><code>extras_modifications</code></td>
+                  <td>batch-extras.js</td>
+                  <td><code>Array&lt;Object&gt;</code></td>
+                  <td>Mapping before/after pour chaque extra (<code>action</code>: kept, modified, removed, added)</td>
+                </tr>
+                <tr>
+                  <td><code>education</code></td>
+                  <td>batch-education.js</td>
+                  <td><code>Array&lt;Object&gt;</code></td>
+                  <td>Formations avec <code>degree</code> et <code>field_of_study</code> traduits</td>
+                </tr>
+                <tr>
+                  <td><code>education_modifications</code></td>
+                  <td>batch-education.js</td>
+                  <td><code>Array&lt;Object&gt;</code></td>
+                  <td>Mapping before/after pour degree et field_of_study</td>
+                </tr>
+                <tr>
+                  <td><code>languages</code></td>
+                  <td>batch-languages.js</td>
+                  <td><code>Array&lt;Object&gt;</code></td>
+                  <td>Langues avec noms et niveaux traduits</td>
+                </tr>
+                <tr>
+                  <td><code>language_modifications</code></td>
+                  <td>batch-languages.js</td>
+                  <td><code>Array&lt;Object&gt;</code></td>
+                  <td>Mapping before/after pour nom et niveau de chaque langue</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Processus d'assemblage (8 &eacute;tapes)</div>
+            <ol>
+              <li><strong>Header :</strong> Copie <code>sourceCv.header</code>, remplace <code>current_title</code> par le titre de l'offre d'emploi (<code>jobOfferContent.title</code>)</li>
+              <li><strong>Summary :</strong> Ins&egrave;re <code>batchResults.summary</code> (r&eacute;sum&eacute; professionnel r&eacute;&eacute;crit pour le poste cible)</li>
+              <li><strong>Experience :</strong> Int&egrave;gre <code>batchResults.experiences</code> (uniquement les exp&eacute;riences class&eacute;es KEEP)</li>
+              <li><strong>Projects :</strong> Fusionne <code>batchResults.projects</code> (projets KEEP + exp&eacute;riences converties via MOVE_TO_PROJECTS)</li>
+              <li><strong>Skills :</strong> Construit <code>cleanSkills</code> sans les donn&eacute;es internes <code>_raw</code> utilis&eacute;es pour le review &mdash; conserve uniquement <code>hard_skills</code>, <code>soft_skills</code>, <code>tools</code>, <code>methodologies</code></li>
+              <li><strong>Education :</strong> Int&egrave;gre <code>batchResults.education</code> (formations avec traductions)</li>
+              <li><strong>Languages :</strong> Int&egrave;gre <code>batchResults.languages</code> (langues adapt&eacute;es)</li>
+              <li><strong>Extras :</strong> Int&egrave;gre <code>batchResults.extras</code> (extras adapt&eacute;s)</li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie &mdash; CV adapt&eacute; final (JSON)</div>
+            <pre><code class="language-javascript">// Retour de executeRecomposition()
+{
+  success: true,
+  cvFileId: "clx...",            // ID du CvFile cree
+  filename: "cv_adapted_...",    // Nom genere automatiquement
+  adaptedCv: { ... },           // Contenu JSON complet du CV adapte
+  educationModifications: [...], // Modifications education (before/after)
+  languageModifications: [...],  // Modifications langues (before/after)
+  subtaskId: "clx...",          // ID de la CvGenerationSubtask
+  duration: 142,                // Duree en ms
 }</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== STRUCTURE CV ADAPTE ==================== -->
+        <h2>Structure du CV Adapt&eacute; Final</h2>
+
+        <p>Le CV assembl&eacute; est pass&eacute; par <code>sanitizeForPostgres()</code> pour supprimer les caract&egrave;res <code>\u0000</code> incompatibles avec PostgreSQL, puis stock&eacute; dans <code>CvFile.content</code>.</p>
+
+        <pre><code class="language-javascript">const adaptedCv = sanitizeForPostgres({
+  generated_at: new Date().toISOString(),
+  header: {
+    ...sourceCv.header,
+    current_title: jobTitle || sourceCv.header?.current_title,
+  },
+  summary: batchResults.summary || sourceCv.summary,
+  skills: cleanSkills,    // Sans _raw
+  experience: batchResults.experiences || sourceCv.experience || [],
+  projects: batchResults.projects || sourceCv.projects || [],
+  education: batchResults.education || sourceCv.education || [],
+  languages: batchResults.languages || sourceCv.languages || [],
+  extras: batchResults.extras || sourceCv.extras || [],
+  section_order: sourceCv.section_order,
+  _keptSkillReasons: keptSkillReasons,  // Raisons des skills conserves (bouton "i")
+});</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Fallback sur le CV source</div>
+          <p>Chaque section utilise le pattern <code>batchResults.xxx || sourceCv.xxx || []</code>. Si un batch &eacute;choue ou ne retourne pas de donn&eacute;es, la section correspondante est conserv&eacute;e telle quelle depuis le CV source. Cela garantit qu'un CV complet est toujours produit, m&ecirc;me en cas d'erreur partielle.</p>
+        </div>
+
+        <!-- ==================== NETTOYAGE SKILLS ==================== -->
+        <h2>Nettoyage des Skills (<code>cleanSkills</code>)</h2>
+
+        <p>Les r&eacute;sultats du batch skills contiennent une cl&eacute; interne <code>_raw</code> qui stocke les donn&eacute;es brutes de l'IA avec les informations de review (action, reason, probability, review color, popover content). Ces donn&eacute;es sont utilis&eacute;es par <code>extractChangesFromBatchResults()</code> pour construire le change tracking, mais ne doivent <strong>pas</strong> appara&icirc;tre dans le CV final.</p>
+
+        <pre><code class="language-javascript">// Extraction des skills sans les donnees de review (_raw)
+const cleanSkills = batchResults.skills ? {
+  hard_skills: batchResults.skills.hard_skills,
+  soft_skills: batchResults.skills.soft_skills,
+  tools: batchResults.skills.tools,
+  methodologies: batchResults.skills.methodologies,
+} : sourceCv.skills;</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">_keptSkillReasons</div>
+          <p>En parall&egrave;le du nettoyage, la recomposition collecte les raisons des skills <strong>conserv&eacute;s sans modification</strong> (action <code>'kept'</code> sans <code>review.required</code>). Ces raisons sont stock&eacute;es dans <code>adaptedCv._keptSkillReasons</code> et alimentent le bouton <strong>&laquo; i &raquo;</strong> informatif dans l'UI, sans n&eacute;cessiter de revue utilisateur.</p>
+        </div>
+
+        <!-- ==================== OPERATIONS BASE DE DONNEES ==================== -->
+        <h2>Op&eacute;rations Base de Donn&eacute;es</h2>
+
+        <p>La recomposition effectue 4 op&eacute;rations Prisma principales, dans l'ordre suivant :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Op&eacute;ration</th>
+              <th>Table</th>
+              <th>Champs cl&eacute;s</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">1</span></td>
+              <td><code>create</code></td>
+              <td><code>CvGenerationSubtask</code></td>
+              <td><code>offerId, type: 'recompose', status: 'running'</code></td>
+              <td>Cr&eacute;e la subtask de tra&ccedil;abilit&eacute; au d&eacute;but de la phase</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">2</span></td>
+              <td><code>create</code></td>
+              <td><code>CvFile</code></td>
+              <td><code>userId, filename, content, sourceType, jobOfferId, createdBy: 'generate-cv'</code></td>
+              <td>Cr&eacute;e le fichier CV adapt&eacute; avec le contenu JSON final</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">3</span></td>
+              <td><code>create</code></td>
+              <td><code>CvVersion</code></td>
+              <td><code>cvFileId, version: 0, content: sourceCv, changeType: 'import'</code></td>
+              <td>Cr&eacute;e la version 0 (r&eacute;f&eacute;rence source) pour le syst&egrave;me de diff</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">4</span></td>
+              <td><code>update</code></td>
+              <td><code>CvGenerationOffer</code></td>
+              <td><code>generatedCvFileId, generatedCvFileName, batchResults</code></td>
+              <td>Lie le CV g&eacute;n&eacute;r&eacute; &agrave; l'offre et sauvegarde tous les r&eacute;sultats de batches</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Cr&eacute;ation du CvFile</h3>
+
+        <pre><code class="language-javascript">const cvFile = await prisma.cvFile.create({
+  data: {
+    userId,
+    filename: generatedFileName,
+    content: adaptedCv,
+    contentVersion: 1,       // v1 = version actuelle, v0 = source pour le diff
+    sourceType: jobOfferRecord?.sourceType === 'pdf' ? 'pdf' : 'link',
+    sourceValue: jobOfferRecord?.sourceValue || offerId,
+    jobOfferId: jobOfferId || null,
+    jobOfferSnapshot: jobOfferContent ? {
+      sourceType: jobOfferRecord?.sourceType || 'url',
+      sourceValue: jobOfferRecord?.sourceValue || offerId,
+      extractedAt: jobOfferRecord?.extractedAt
+        ? new Date(jobOfferRecord.extractedAt).toISOString()
+        : new Date().toISOString(),
+      content: jobOfferContent,
+    } : null,
+    language: targetLanguage === 'francais' ? 'fr' :
+              targetLanguage === 'anglais' ? 'en' :
+              targetLanguage === 'allemand' ? 'de' :
+              targetLanguage === 'espagnol' ? 'es' : 'fr',
+    createdBy: 'generate-cv',        // Logo IA dans la liste des CVs
+    originalCreatedBy: sourceCv.header?.name || 'User',
+  },
+});</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">createdBy = 'generate-cv'</div>
+          <p>La valeur <code>'generate-cv'</code> est <strong>critique</strong> pour l'UI : elle d&eacute;clenche l'affichage du logo IA dans la liste des CVs et active les fonctionnalit&eacute;s sp&eacute;cifiques aux CVs g&eacute;n&eacute;r&eacute;s (score de matching, bouton de revue des changements, ic&ocirc;ne info).</p>
+        </div>
+
+        <h3>Cr&eacute;ation de la CvVersion v0</h3>
+
+        <pre><code class="language-javascript">await prisma.cvVersion.create({
+  data: {
+    cvFileId: cvFile.id,
+    version: 0,                     // Version source de reference
+    content: sourceCv,              // CV original AVANT adaptation
+    changelog: 'Version source (reference)',
+    changeType: 'import',
+    sourceFile: sourceCvFileName,
+  },
+});</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">R&ocirc;le de la version 0</div>
+          <p>La <code>CvVersion v0</code> est <strong>filtr&eacute;e dans l'API versions</strong> (elle n'appara&icirc;t pas dans l'historique utilisateur). Elle sert uniquement de r&eacute;f&eacute;rence pour le syst&egrave;me de diff : quand l'utilisateur consulte les changements, le syst&egrave;me compare le contenu actuel (<code>CvFile.content</code>, version 1+) avec cette version 0 pour d&eacute;tecter les diff&eacute;rences.</p>
+        </div>
+
+        <h3>G&eacute;n&eacute;ration du nom de fichier</h3>
+
+        <p>La fonction <code>generateCvFileName()</code> produit un nom unique avec timestamp pr&eacute;cis + suffixe al&eacute;atoire pour garantir l'unicit&eacute; m&ecirc;me en cas de g&eacute;n&eacute;rations simultan&eacute;es.</p>
+
+        <pre><code class="language-javascript">function generateCvFileName(sourceCvFileName, jobOfferTitle) {
+  const now = new Date();
+  const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, '');
+  const randomSuffix = Math.random().toString(36).substring(2, 6);
+  const sanitizedTitle = (jobOfferTitle || 'offer')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .slice(0, 30);
+  const baseName = sourceCvFileName.replace(/\.json$/, '');
+  return `${baseName}_adapted_${sanitizedTitle}_${timestamp}_${randomSuffix}.json`;
+}
+
+// Exemple de sortie :
+// "mon-cv_adapted_senior-developer-react_20260216143022_a7k2.json"</code></pre>
+
+        <!-- ==================== CHANGE TRACKING ==================== -->
+        <h2>Syst&egrave;me de Change Tracking</h2>
+
+        <p>Le change tracking est le m&eacute;canisme qui permet &agrave; l'utilisateur de <strong>revoir, accepter ou rejeter</strong> chaque modification apport&eacute;e par l'IA. Il s'ex&eacute;cute en 4 &eacute;tapes s&eacute;quentielles apr&egrave;s la cr&eacute;ation du CvFile.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline de Change Tracking</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Step1["Etape 1"]
+        EXTRACT2["Extraire les modifications IA<br/>avant/après/raison"]
+    end
+
+    subgraph Step2["Etape 2"]
+        DIFF2["Calcul des différences<br/>éléments ajoutés/supprimés"]
+    end
+
+    subgraph Step3["Etape 3"]
+        DEDUP2["Déduplication<br/>des modifications<br/>par clés uniques"]
+    end
+
+    subgraph Step4["Etape 4"]
+        MERGE2["Fusionner les paires<br/>de traduction"]
+    end
+
+    subgraph Step5["Etape 5"]
+        INIT2["Initialiser l'état de revue<br/>Modifications en attente"]
+    end
+
+    Step1 --> Step3
+    Step2 --> Step3
+    Step3 --> Step4 --> Step5
+
+    style EXTRACT2 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DIFF2 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DEDUP2 fill:#f59e0b,stroke:#d97706,color:#fff
+    style MERGE2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style INIT2 fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== extractChangesFromBatchResults ==================== -->
+        <h3>extractChangesFromBatchResults()</h3>
+
+        <p>Cette fonction interne parcourt tous les <code>batchResults</code> pour extraire les modifications document&eacute;es par l'IA. Chaque modification est transform&eacute;e en un objet <code>change</code> avec les champs <code>before</code>, <code>after</code> et <code>reason</code>.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Experiences</h4>
+            <p>D&eacute;tecte les modifications sur 5 champs par exp&eacute;rience :</p>
+            <ul>
+              <li><code>title</code> &mdash; si <code>_title_reason</code> pr&eacute;sent</li>
+              <li><code>description</code> &mdash; si <code>_description_reason</code> pr&eacute;sent</li>
+              <li><code>responsibilities</code> &mdash; si <code>_responsibilities_reason</code> pr&eacute;sent</li>
+              <li><code>deliverables</code> &mdash; si <code>_deliverables_reason</code> pr&eacute;sent</li>
+              <li><code>skills_used</code> &mdash; via <code>skill_changes[]</code> ou fallback <code>computeArrayItemDiff()</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Summary</h4>
+            <p>Parcourt <code>batchResults.summary.modifications[]</code> :</p>
+            <ul>
+              <li>Champ <code>description</code> avec action <code>'generated'</code></li>
+              <li>Compare avant/apr&egrave;s pour d&eacute;tecter les changements r&eacute;els</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Skills</h4>
+            <p>Traite les 4 cat&eacute;gories depuis <code>batchResults.skills._raw</code> :</p>
+            <ul>
+              <li><code>renamed</code> &rarr; changeType <code>'modified'</code></li>
+              <li><code>kept</code> + <code>review.required</code> &rarr; changeType <code>'modified'</code> (traduit ou s&eacute;par&eacute;)</li>
+              <li><code>deleted</code> &rarr; changeType <code>'removed'</code></li>
+              <li><code>consolidated_from</code> (2+ items) &rarr; changeType <code>'multi_renamed'</code></li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Extras / Education / Languages</h4>
+            <p>Parcourt les tableaux <code>*_modifications</code> :</p>
+            <ul>
+              <li><strong>Extras :</strong> action <code>modified</code>, <code>removed</code>, <code>added</code> (saute <code>kept</code>)</li>
+              <li><strong>Education :</strong> compare <code>degree_before/after</code> et <code>field_before/after</code></li>
+              <li><strong>Languages :</strong> compare <code>name_before/after</code> et <code>level_before/after</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <h4>Structure d'un objet change</h4>
+
+        <pre><code class="language-javascript">// Exemple : modification de titre d'experience
+{
+  id: "chg_a7b3c9d2",            // ID unique (generateChangeId())
+  section: 'experience',          // Section du CV
+  field: 'title',                 // Champ modifie
+  path: 'experience[0].title',   // Chemin JSON complet
+  expIndex: 0,                   // Index de l'experience (si applicable)
+  changeType: 'modified',        // 'modified' | 'removed' | 'added' | 'multi_renamed' | 'experience_removed'
+  itemName: 'Titre',             // Nom pour l'affichage
+  beforeValue: 'Lead Developer', // Valeur avant
+  afterValue: 'Lead Developer Full Stack',  // Valeur apres
+  beforeDisplay: 'Lead Developer',
+  afterDisplay: 'Lead Developer Full Stack',
+  change: 'Titre modifie dans "Lead Developer Full Stack"',
+  reason: 'Alignement avec le titre du poste cible',
+  status: 'pending',             // 'pending' | 'accepted' | 'rejected'
+}
+
+// Exemple : skill consolide (multi_renamed)
+{
+  id: "chg_f4e5d6c7",
+  section: 'skills',
+  field: 'hard_skills',
+  path: 'skills.hard_skills',
+  changeType: 'multi_renamed',
+  itemName: 'React',
+  afterValue: { name: 'React', proficiency: 90 },
+  items: [
+    { original_value: 'React.js', proficiency: 85, reason: 'Meme technologie', score: 0.95 },
+    { original_value: 'ReactJS', proficiency: 80, reason: 'Doublon', score: 0.98 },
+  ],
+  change: '2 competences consolidees en "React"',
+  reason: 'Consolidation de competences similaires',
+  status: 'pending',
+}</code></pre>
+
+        <!-- ==================== DEDUPLICATION ==================== -->
+        <h3>D&eacute;duplication des Changements</h3>
+
+        <p>Apr&egrave;s l'extraction des changements IA et le diff programmatique, un processus de d&eacute;duplication &eacute;limine les doublons en utilisant 5 <code>Set</code> de cl&eacute;s :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Set</th>
+              <th>Contenu</th>
+              <th>Probl&egrave;me r&eacute;solu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>aiChangeKeys</code></td>
+              <td>Cl&eacute;s <code>section|field|itemName|expIndex</code> des changements IA</td>
+              <td>&Eacute;vite les doublons quand le diff programmatique d&eacute;tecte le m&ecirc;me changement que l'IA</td>
+            </tr>
+            <tr>
+              <td><code>modifiedBeforeValues</code></td>
+              <td>Cl&eacute;s <code>section|field|beforeValue|expIndex</code> des skills modifi&eacute;s</td>
+              <td>Un skill renomm&eacute; par l'IA est d&eacute;tect&eacute; comme &laquo; supprim&eacute; &raquo; par le diff &mdash; ce Set l'exclut</td>
+            </tr>
+            <tr>
+              <td><code>modifiedObjectBeforeNames</code></td>
+              <td>Cl&eacute;s <code>section|field|beforeValue.name|expIndex</code> des objets modifi&eacute;s</td>
+              <td>M&ecirc;me logique pour les langues, extras, education dont le <code>beforeValue</code> est un objet</td>
+            </tr>
+            <tr>
+              <td><code>removedOriginalNames</code></td>
+              <td>Cl&eacute;s <code>section|field|beforeDisplay|expIndex</code> des skills supprim&eacute;s</td>
+              <td>Un skill supprim&eacute; par l'IA g&eacute;n&egrave;re un <code>beforeDisplay</code> = nom original &mdash; le diff le d&eacute;tecte aussi comme manquant</td>
+            </tr>
+            <tr>
+              <td><code>consolidatedOriginalKeys</code></td>
+              <td>Cl&eacute;s <code>section|field|original_value|</code> des skills dans <code>multi_renamed.items</code></td>
+              <td>Les skills originaux d'une consolidation sont d&eacute;tect&eacute;s comme &laquo; supprim&eacute;s &raquo; par le diff &mdash; d&eacute;j&agrave; g&eacute;r&eacute;s par le <code>multi_renamed</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// Filtrage des suppressions detectees par le diff programmatique
+const uniqueRemovedItems = removedItems.filter(c => {
+  const key = `${c.section}|${c.field}|${c.itemName || ''}|${c.expIndex ?? ''}`.toLowerCase();
+  return !aiChangeKeys.has(key)
+      && !modifiedBeforeValues.has(key)
+      && !removedOriginalNames.has(key)
+      && !consolidatedOriginalKeys.has(key)
+      && !modifiedObjectBeforeNames.has(key);
+});
+
+// Filtrage des ajouts detectes par le diff programmatique
+const uniqueAddedItems = addedItems.filter(c => {
+  const key = `${c.section}|${c.field}|${c.itemName || ''}|${c.expIndex ?? ''}`.toLowerCase();
+  return !aiChangeKeys.has(key);
+});
+
+// Fusion finale
+const deduplicatedChanges = [...aiChanges, ...uniqueRemovedItems, ...uniqueAddedItems];</code></pre>
+
+        <!-- ==================== mergeTranslationPairs ==================== -->
+        <h3>mergeTranslationPairs()</h3>
+
+        <p>Apr&egrave;s d&eacute;duplication, il reste un probl&egrave;me courant : le diff programmatique d&eacute;tecte un skill <strong>supprim&eacute;</strong> (l'ancien nom) et un skill <strong>ajout&eacute;</strong> (le nouveau nom traduit) qui sont en r&eacute;alit&eacute; <strong>le m&ecirc;me &eacute;l&eacute;ment traduit</strong>. La fonction <code>mergeTranslationPairs()</code> fusionne ces paires en un seul changement de type <code>'modified'</code>.</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Exemple concret</div>
+          <p>
+            <strong>CV source (EN) :</strong> &laquo; Project Management &raquo;<br>
+            <strong>CV adapt&eacute; (FR) :</strong> &laquo; Gestion de projet &raquo;<br>
+            <strong>Diff programmatique :</strong> &laquo; Project Management &raquo; supprim&eacute; + &laquo; Gestion de projet &raquo; ajout&eacute;<br>
+            <strong>Apr&egrave;s mergeTranslationPairs() :</strong> &laquo; Project Management &raquo; &rarr; &laquo; Gestion de projet &raquo; (modified)
+          </p>
+        </div>
+
+        <h4>Algorithme</h4>
+
+        <ol>
+          <li>S&eacute;parer les changements en 3 groupes : <code>removed</code>, <code>added</code>, <code>others</code> (modified, multi_renamed, etc.)</li>
+          <li>Pour chaque <code>added</code>, chercher un <code>removed</code> correspondant dans la m&ecirc;me section, m&ecirc;me champ, m&ecirc;me <code>expIndex</code></li>
+          <li>V&eacute;rifier la correspondance via <code>isLikelyTranslation()</code></li>
+          <li>Si correspondance trouv&eacute;e &rarr; fusionner en un changement <code>modified</code> avec before/after</li>
+          <li>Les <code>removed</code> et <code>added</code> non fusionn&eacute;s sont conserv&eacute;s tels quels</li>
+        </ol>
+
+        <pre><code class="language-javascript">function mergeTranslationPairs(changes) {
+  const removed = changes.filter(c => c.changeType === 'removed');
+  const added = changes.filter(c => c.changeType === 'added');
+  const others = changes.filter(c => !['removed', 'added'].includes(c.changeType));
+
+  const merged = [];
+  const usedRemovedIds = new Set();
+  const usedAddedIds = new Set();
+
+  for (const addedChange of added) {
+    const matchingRemoved = removed.find(r =>
+      r.section === addedChange.section &&
+      r.field === addedChange.field &&
+      r.expIndex === addedChange.expIndex &&
+      !usedRemovedIds.has(r.id) &&
+      isLikelyTranslation(r.itemName || r.beforeValue, addedChange.itemName || addedChange.afterValue)
+    );
+
+    if (matchingRemoved) {
+      merged.push({
+        ...addedChange,
+        id: matchingRemoved.id,
+        changeType: 'modified',
+        beforeValue: matchingRemoved.beforeValue || matchingRemoved.itemName,
+        afterValue: addedChange.afterValue || addedChange.itemName,
+        beforeDisplay: matchingRemoved.beforeDisplay || matchingRemoved.itemName,
+        afterDisplay: addedChange.afterDisplay || addedChange.itemName,
+        itemName: addedChange.itemName,
+        change: `"${matchingRemoved.itemName}" -> "${addedChange.itemName}"`,
+        reason: addedChange.reason || matchingRemoved.reason || 'Traduction',
+      });
+      usedRemovedIds.add(matchingRemoved.id);
+      usedAddedIds.add(addedChange.id);
+    }
+  }
+
+  const unusedRemoved = removed.filter(r => !usedRemovedIds.has(r.id));
+  const unusedAdded = added.filter(a => !usedAddedIds.has(a.id));
+
+  return [...others, ...merged, ...unusedRemoved, ...unusedAdded];
+}</code></pre>
+
+        <!-- ==================== isLikelyTranslation ==================== -->
+        <h3>isLikelyTranslation()</h3>
+
+        <p>La fonction de d&eacute;tection de traductions utilise deux strat&eacute;gies combin&eacute;es :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>1. Dictionnaire de traductions connues</h4>
+            <p>Un mapping statique EN&rarr;FR couvre les comp&eacute;tences les plus courantes :</p>
+            <pre><code class="language-javascript">const knownTranslations = {
+  'project management': 'gestion de projet',
+  'change management': 'gestion du changement',
+  'team player': 'esprit d\'equipe',
+  'data analytics': 'analyse de donnees',
+  'problem solving': 'resolution de problemes',
+  'attention to detail': 'rigueur',
+  'self-motivated': 'autonomie',
+  // ... 20 paires au total
+};</code></pre>
+          </div>
+          <div class="card">
+            <h4>2. Similarit&eacute; lexicale</h4>
+            <p>Pour les traductions non couvertes par le dictionnaire :</p>
+            <ul>
+              <li>Ignorer les strings de plus de 4 mots (trop longs pour &ecirc;tre fiables)</li>
+              <li>Chercher des sous-cha&icirc;nes communes significatives (&gt; 3 caract&egrave;res)</li>
+              <li>Si au moins 1 mot commun &rarr; probable traduction</li>
+              <li>Exemples : &laquo; Communication &raquo; / &laquo; Communication &raquo;, &laquo; Adaptability &raquo; / &laquo; Adaptabilit&eacute; &raquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ==================== initializeReviewState ==================== -->
+        <h3>initializeReviewState()</h3>
+
+        <p><strong>Fichier :</strong> <code>lib/cv-core/review/state.js</code></p>
+
+        <p>Cette fonction persiste la liste finale des changements dans le champ <code>CvFile.pendingChanges</code> (JSON) et le num&eacute;ro de version source dans <code>CvFile.pendingSourceVersion</code>.</p>
+
+        <pre><code class="language-javascript">// Appel dans executeRecomposition()
+await initializeReviewState(userId, generatedFileName, changesMade, 0);
+// -> Met a jour CvFile.pendingChanges = changesMade (array JSON)
+// -> Met a jour CvFile.pendingSourceVersion = 0</code></pre>
+
+        <div class="callout callout-error">
+          <div class="callout-title">R&eacute;silience du review</div>
+          <p>L'initialisation du review state est encapsul&eacute;e dans un <code>try/catch</code> ind&eacute;pendant. Si elle &eacute;choue, la g&eacute;n&eacute;ration du CV <strong>n'est pas annul&eacute;e</strong> : un warning est log&eacute; et stock&eacute; dans la subtask, mais le CV adapt&eacute; reste disponible. L'utilisateur pourra simplement utiliser le CV sans le syst&egrave;me de revue des changements.</p>
+        </div>
+
+        <!-- ==================== MISE A JOUR OFFER ==================== -->
+        <h2>Mise &agrave; Jour de CvGenerationOffer</h2>
+
+        <p>La derni&egrave;re &eacute;tape lie le CV g&eacute;n&eacute;r&eacute; &agrave; l'offre de g&eacute;n&eacute;ration et sauvegarde l'ensemble des r&eacute;sultats des batches pour tra&ccedil;abilit&eacute;.</p>
+
+        <pre><code class="language-javascript">await prisma.cvGenerationOffer.update({
+  where: { id: offerId },
+  data: {
+    generatedCvFileId: cvFile.id,
+    generatedCvFileName: generatedFileName,
+    batchResults: sanitizeForPostgres({
+      experiences: batchResults.experiences,
+      projects: batchResults.projects,
+      skills: batchResults.skills,
+      summary: batchResults.summary,
+      extras: batchResults.extras,
+      education: batchResults.education,
+      languages: batchResults.languages,
+      education_modifications: batchResults.education_modifications,
+      language_modifications: batchResults.language_modifications,
+    }),
+  },
+});</code></pre>
+
+        <!-- ==================== SUBTASK TRACKING ==================== -->
+        <h2>Tra&ccedil;abilit&eacute; (Subtask)</h2>
+
+        <p>Comme toutes les phases du pipeline, la recomposition cr&eacute;e une <code>CvGenerationSubtask</code> pour la tra&ccedil;abilit&eacute;. Contrairement aux batches IA, cette subtask n'a <strong>pas de tokens ni de co&ucirc;t estim&eacute;</strong> (pas d'appel OpenAI).</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Valeur (succ&egrave;s)</th>
+              <th>Valeur (&eacute;chec)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>type</code></td>
+              <td><code>'recompose'</code></td>
+              <td><code>'recompose'</code></td>
+            </tr>
+            <tr>
+              <td><code>status</code></td>
+              <td><code>'completed'</code></td>
+              <td><code>'failed'</code></td>
+            </tr>
+            <tr>
+              <td><code>output</code></td>
+              <td><code>{ cvFileId, filename, educationModifications, languageModifications }</code></td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td><code>error</code></td>
+              <td>&mdash;</td>
+              <td><code>error.message</code></td>
+            </tr>
+            <tr>
+              <td><code>durationMs</code></td>
+              <td>Dur&eacute;e r&eacute;elle (typiquement &lt; 200ms)</td>
+              <td>Dur&eacute;e jusqu'&agrave; l'erreur</td>
+            </tr>
+            <tr>
+              <td><code>promptTokens</code></td>
+              <td><em>Non d&eacute;fini</em> (pas d'appel IA)</td>
+              <td><em>Non d&eacute;fini</em></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== GESTION DES ERREURS ==================== -->
+        <h2>Gestion des Erreurs</h2>
+
+        <p>La fonction <code>executeRecomposition()</code> encapsule tout son corps dans un <code>try/catch</code> et retourne toujours un objet structur&eacute;, qu'il y ait succ&egrave;s ou &eacute;chec :</p>
+
+        <pre><code class="language-javascript">// En cas de succes
+return {
+  success: true,
+  cvFileId: cvFile.id,
+  filename: generatedFileName,
+  adaptedCv,
+  educationModifications: batchResults.education_modifications || [],
+  languageModifications: batchResults.language_modifications || [],
+  subtaskId: subtask.id,
+  duration,
+};
+
+// En cas d'echec
+return {
+  success: false,
+  error: error.message,
+  subtaskId: subtask.id,
+  duration,
+};</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Deux niveaux de try/catch</div>
+          <p>La recomposition contient <strong>deux niveaux</strong> de gestion d'erreur :</p>
+          <ul>
+            <li><strong>Niveau principal :</strong> Englobe tout le processus. Si la cr&eacute;ation du CvFile ou CvVersion &eacute;choue, la subtask est marqu&eacute;e <code>failed</code> et l'erreur est remont&eacute;e.</li>
+            <li><strong>Niveau review :</strong> L'initialisation du review state (<code>initializeReviewState</code>) a son propre <code>try/catch</code>. Un &eacute;chec du review <strong>ne fait pas &eacute;chouer</strong> la g&eacute;n&eacute;ration &mdash; le CV est quand m&ecirc;me cr&eacute;&eacute;.</li>
+          </ul>
+        </div>
+
+        <!-- ==================== JOBOFFERSNAPSHOT ==================== -->
+        <h2>Snapshot de l'Offre d'Emploi</h2>
+
+        <p>Lors de la cr&eacute;ation du <code>CvFile</code>, un <strong>snapshot complet de l'offre d'emploi</strong> est stock&eacute; dans le champ <code>jobOfferSnapshot</code>. Cela garantit l'autonomie du CV m&ecirc;me si l'offre originale est supprim&eacute;e ult&eacute;rieurement.</p>
+
+        <pre><code class="language-javascript">jobOfferSnapshot: jobOfferContent ? {
+  sourceType: jobOfferRecord?.sourceType || 'url',
+  sourceValue: jobOfferRecord?.sourceValue || offerId,
+  extractedAt: jobOfferRecord?.extractedAt
+    ? new Date(jobOfferRecord.extractedAt).toISOString()
+    : new Date().toISOString(),
+  content: jobOfferContent,   // Contenu JSON complet de l'offre
+} : null,</code></pre>
+
+        <!-- ==================== MAPPING LANGUES ==================== -->
+        <h2>Mapping des Langues</h2>
+
+        <p>La langue cible (<code>targetLanguage</code>) est convertie en code ISO 2 lettres pour le champ <code>CvFile.language</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>targetLanguage</th>
+              <th>Code ISO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>'francais'</code></td>
+              <td><code>'fr'</code></td>
+            </tr>
+            <tr>
+              <td><code>'anglais'</code></td>
+              <td><code>'en'</code></td>
+            </tr>
+            <tr>
+              <td><code>'allemand'</code></td>
+              <td><code>'de'</code></td>
+            </tr>
+            <tr>
+              <td><code>'espagnol'</code></td>
+              <td><code>'es'</code></td>
+            </tr>
+            <tr>
+              <td><em>Autre / non reconnu</em></td>
+              <td><code>'fr'</code> (d&eacute;faut)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== RESUME CHANGEMENTS PAR SECTION ==================== -->
+        <h2>Types de Changements par Section</h2>
+
+        <p>R&eacute;capitulatif de tous les types de changements (<code>changeType</code>) que la recomposition peut g&eacute;n&eacute;rer, class&eacute;s par section :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>Champs surveill&eacute;s</th>
+              <th>changeTypes possibles</th>
+              <th>Source de d&eacute;tection</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>experience</code></td>
+              <td><code>title</code>, <code>description</code>, <code>responsibilities</code>, <code>deliverables</code>, <code>skills_used</code></td>
+              <td><code>modified</code>, <code>removed</code>, <code>experience_removed</code></td>
+              <td>IA (<code>_*_reason</code>, <code>skill_changes</code>) + diff programmatique</td>
+            </tr>
+            <tr>
+              <td><code>summary</code></td>
+              <td><code>description</code></td>
+              <td><code>modified</code></td>
+              <td>IA (<code>modifications[]</code>)</td>
+            </tr>
+            <tr>
+              <td><code>skills</code></td>
+              <td><code>hard_skills</code>, <code>soft_skills</code>, <code>tools</code>, <code>methodologies</code></td>
+              <td><code>modified</code>, <code>removed</code>, <code>added</code>, <code>multi_renamed</code></td>
+              <td>IA (<code>_raw</code>) + diff programmatique + <code>mergeTranslationPairs()</code></td>
+            </tr>
+            <tr>
+              <td><code>extras</code></td>
+              <td><code>name</code>, contenu</td>
+              <td><code>modified</code>, <code>removed</code>, <code>added</code></td>
+              <td>IA (<code>extras_modifications[]</code>)</td>
+            </tr>
+            <tr>
+              <td><code>education</code></td>
+              <td><code>degree</code>, <code>field_of_study</code></td>
+              <td><code>modified</code></td>
+              <td>IA (<code>education_modifications[]</code>)</td>
+            </tr>
+            <tr>
+              <td><code>languages</code></td>
+              <td><code>name</code>, <code>level</code></td>
+              <td><code>modified</code></td>
+              <td>IA (<code>language_modifications[]</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== LIENS ==================== -->
+        <h2>Voir Aussi</h2>
+
+        <ul>
+          <li><a href="./overview.html">Vue d'ensemble du Pipeline</a> &mdash; Architecture compl&egrave;te des 10 &eacute;tapes</li>
+          <li><a href="./orchestrator.html">Orchestrateur</a> &mdash; Lifecycle, coordination, cr&eacute;dits, retry, SSE</li>
+          <li><a href="./phase-classification.html">Phase Classification</a> &mdash; D&eacute;cisions KEEP / REMOVE / MOVE_TO_PROJECTS</li>
+          <li><a href="./phase-batches.html">Phase Batches</a> &mdash; 7 batches d&eacute;taill&eacute;s avec data-flow</li>
+          <li><a href="./schemas-io.html">Schemas I/O</a> &mdash; 10 JSON Schemas, Structured Outputs, actions</li>
+        </ul>
       </div>
     </main>
   </div>
@@ -88,7 +997,6 @@ export async function recomposeCv(classificationResult, batchResults, originalCv
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

@@ -3,89 +3,338 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Types de Taches | FitMyCV.io</title>
+  <title>Types de tâches | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
           <a href="./overview.html">Background Jobs</a>
           <span>/</span>
-          <span>Types de Taches</span>
+          <span>Types de tâches</span>
         </div>
 
-
-        <h1>Types de Taches</h1>
+        <h1>Types de tâches</h1>
         <p class="lead">
-          Liste des differents types de taches asynchrones gerees par le système.
+          7 types de background tasks définis dans <code>taskTypes.js</code>, chacun avec sa route API dans <code>app/api/background-tasks/</code> et un job configuré via <code>createJobRunner</code>.
         </p>
 
-        <h2>Types Disponibles</h2>
+        <h2>Constantes TASK_TYPES</h2>
 
         <table>
           <thead>
             <tr>
-              <th>Type</th>
+              <th>Constante</th>
+              <th>Valeur</th>
+              <th>Route API</th>
+              <th>Durée estimée</th>
               <th>Description</th>
-              <th>Duree moyenne</th>
             </tr>
           </thead>
           <tbody>
             <tr>
+              <td><code>GENERATION</code></td>
+              <td><code>generation</code></td>
+              <td><code>/api/background-tasks/generate-cv</code></td>
+              <td>~35s</td>
+              <td>Génération de CV adaptés à une offre d'emploi (URL ou PDF)</td>
+            </tr>
+            <tr>
+              <td><code>CV_GENERATION</code></td>
               <td><code>cv_generation</code></td>
-              <td>Generation de CV optimise</td>
-              <td>30-60s</td>
+              <td><code>/api/background-tasks/generate-cv</code></td>
+              <td>~35s</td>
+              <td>Pipeline de génération CV via le système multi-offres</td>
             </tr>
             <tr>
-              <td><code>pdf_import</code></td>
-              <td>Import et extraction PDF</td>
-              <td>15-30s</td>
+              <td><code>TEMPLATE_CREATION</code></td>
+              <td><code>template-creation</code></td>
+              <td><code>/api/background-tasks/create-template-cv</code></td>
+              <td>~40s</td>
+              <td>Création d'un CV depuis un template IA (sans offre d'emploi)</td>
             </tr>
             <tr>
-              <td><code>cv_translation</code></td>
-              <td>Traduction de CV</td>
-              <td>20-40s</td>
+              <td><code>IMPORT_PDF</code></td>
+              <td><code>import-pdf</code></td>
+              <td><code>/api/background-tasks/import-pdf</code></td>
+              <td>~60s</td>
+              <td>Import et extraction de CV depuis un fichier PDF</td>
             </tr>
             <tr>
-              <td><code>batch_generation</code></td>
-              <td>Generation multiple</td>
-              <td>Variable</td>
+              <td><code>TRANSLATE</code></td>
+              <td><code>translate-cv</code></td>
+              <td><code>/api/background-tasks/translate-cv</code></td>
+              <td>~20s</td>
+              <td>Traduction d'un CV dans une autre langue (fr, en, es, de)</td>
+            </tr>
+            <tr>
+              <td><code>MATCH_SCORE</code></td>
+              <td><code>calculate-match-score</code></td>
+              <td><code>/api/background-tasks/calculate-match-score</code></td>
+              <td>~15s</td>
+              <td>Calcul du score de correspondance CV ↔ offre d'emploi</td>
+            </tr>
+            <tr>
+              <td><code>IMPROVE</code></td>
+              <td><code>improve-cv</code></td>
+              <td>—</td>
+              <td>~25s</td>
+              <td>Optimisation ATS du CV (classification, expériences, projets, summary)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Modèle BackgroundTask</h2>
+        <h2>Sous-groupes</h2>
 
-        <pre><code>model BackgroundTask {
-  id          String   @id @default(cuid())
-  userId      String
-  type        String
-  status      String   // pending, running, completed, failed
-  progress    Int      @default(0)
-  result      Json?
-  error       String?
-  startedAt   DateTime?
-  completedAt DateTime?
-  createdAt   DateTime @default(now())
+        <h3>AI_GENERATION_TYPES</h3>
+        <p>Types considérés comme des "générations IA" — utilisés pour la validation de l'étape 2 d'onboarding :</p>
+        <pre><code class="language-javascript">export const AI_GENERATION_TYPES = [
+  TASK_TYPES.GENERATION,       // 'generation'
+  TASK_TYPES.CV_GENERATION,    // 'cv_generation'
+  TASK_TYPES.TEMPLATE_CREATION // 'template-creation'
+];</code></pre>
+
+        <h3>Helpers de vérification</h3>
+        <pre><code class="language-javascript">isAiGenerationTask(task)  // true si type ∈ AI_GENERATION_TYPES
+isMatchScoreTask(task)    // true si type === 'calculate-match-score'
+isImprovementTask(task)   // true si type === 'improve-cv'</code></pre>
+
+        <h2>Mapping télémétrie</h2>
+
+        <p>Le fichier <code>taskFeatureMapping.js</code> associe chaque type de tâche à ses <code>featureNames</code> pour le tracking OpenAI :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type de tâche</th>
+              <th>Feature Names</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>generation</code></td>
+              <td><code>generate_cv_url</code>, <code>generate_cv_pdf</code></td>
+            </tr>
+            <tr>
+              <td><code>template-creation</code></td>
+              <td><code>create_template_cv_url</code>, <code>create_template_cv_pdf</code></td>
+            </tr>
+            <tr>
+              <td><code>import</code></td>
+              <td><code>first_import_pdf</code>, <code>import_pdf</code></td>
+            </tr>
+            <tr>
+              <td><code>translate-cv</code></td>
+              <td><code>translate_cv</code></td>
+            </tr>
+            <tr>
+              <td><code>calculate-match-score</code></td>
+              <td><code>match_score</code></td>
+            </tr>
+            <tr>
+              <td><code>job-title-generation</code></td>
+              <td><code>generate_from_job_title</code></td>
+            </tr>
+            <tr>
+              <td><code>improve-cv</code></td>
+              <td><code>optimize_cv</code>, <code>cv_improvement_preprocess</code>, <code>cv_improvement_experience</code>, <code>cv_improvement_project</code>, <code>cv_improvement_summary</code>, <code>cv_improvement_classify</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Durées par défaut (DEFAULT_DURATIONS)</h3>
+
+        <p>Utilisées pour la barre de progression quand pas assez de données télémétrie (<code>MIN_CALLS_FOR_AVERAGE = 1</code>) :</p>
+
+        <pre><code class="language-javascript">// lib/background-jobs/taskFeatureMapping.js
+
+export const DEFAULT_DURATIONS = {
+  'generation': 35000,             // 35s - Génération CV complète
+  'template-creation': 40000,      // 40s - Template création
+  'import': 60000,                 // 60s - Import PDF avec extraction
+  'translate-cv': 20000,           // 20s - Traduction CV
+  'calculate-match-score': 15000,  // 15s - Calcul score match
+  'job-title-generation': 30000,   // 30s - Génération depuis job title
+  'improve-cv': 25000,             // 25s - Optimisation CV
+};</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Durées dynamiques</strong> — Dès qu'au moins 1 appel OpenAI a été mesuré pour un type de tâche, la durée moyenne réelle remplace la durée par défaut. La fonction <code>getDefaultDuration(taskType)</code> retourne 30s comme fallback générique.
+        </div>
+
+        <h3>Configuration des phases (TASK_PHASES)</h3>
+
+        <pre><code class="language-javascript">// lib/background-jobs/taskFeatureMapping.js
+
+export const TASK_PHASES = {
+  'improve-cv': [
+    { name: 'Classification + Preprocessing', weight: 0.2 },
+    { name: 'Amélioration expériences', weight: 0.4 },
+    { name: 'Amélioration projets', weight: 0.2 },
+    { name: 'Summary + Fusion', weight: 0.2 },
+  ],
+};
+
+// Helpers
+export function getFeaturesForTaskType(taskType) {
+  return TASK_TYPE_TO_FEATURES[taskType] || [];
+}
+
+export function getDefaultDuration(taskType) {
+  return DEFAULT_DURATIONS[taskType] || 30000; // 30s fallback
 }</code></pre>
+
+        <h2>Phases de progression (improve-cv)</h2>
+
+        <p>Le type <code>improve-cv</code> est le seul avec une progression multi-phases :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Poids</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Classification + Preprocessing</td>
+              <td>20%</td>
+              <td>Analyse et classification du contenu existant</td>
+            </tr>
+            <tr>
+              <td>Amélioration expériences</td>
+              <td>40%</td>
+              <td>Optimisation des descriptions d'expérience</td>
+            </tr>
+            <tr>
+              <td>Amélioration projets</td>
+              <td>20%</td>
+              <td>Optimisation des projets personnels</td>
+            </tr>
+            <tr>
+              <td>Summary + Fusion</td>
+              <td>20%</td>
+              <td>Régénération du résumé et fusion des modifications</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Pattern createJobRunner</h2>
+
+        <p>Chaque type de tâche est implémenté via le framework <code>createJobRunner(config)</code> :</p>
+
+        <pre><code class="language-javascript">// lib/translation/job.js — Exemple : traduction de CV
+const { schedule, run } = createJobRunner({
+  name: 'translateCv',
+
+  getService: async () => {
+    const module = await import("@/lib/translation/service");
+    return module.translateCv;
+  },
+
+  beforeRun: async ({ user }) => {
+    await ensureUserCvDir(user.id);
+  },
+
+  prepareInput: async ({ user, sourceFile, targetLanguage }, signal) => ({
+    cvContent: await readUserCvFile(user.id, sourceFile),
+    targetLanguage,
+    signal,
+    userId: user.id,
+  }),
+
+  handleResult: async ({ jobInput, result, userId }) => {
+    // Sauvegarder le CV traduit + créer CvFile en DB
+    return { data: { files: [filename] }, trackingData: { targetLanguage } };
+  },
+
+  trackSuccess: async ({ userId, duration, targetLanguage }) => {
+    await trackEvent({ type: EventTypes.CV_TRANSLATED, ... });
+  },
+
+  trackError: async ({ userId, duration, error }) => {
+    await trackEvent({ type: EventTypes.CV_TRANSLATED, status: 'error', ... });
+  },
+});</code></pre>
+
+        <div class="callout callout-success">
+          <strong>Lazy loading</strong> — <code>getService</code> utilise un <code>import()</code> dynamique pour charger le service uniquement au moment de l'exécution, réduisant le temps de démarrage du serveur.
+        </div>
+
+        <h2>Cycle de vie complet d'une tâche</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'une BackgroundTask</div>
+          <div class="mermaid">
+graph TD
+    START(("Début")) --> QUEUED["En attente<br/>Création de la tâche"]
+    QUEUED -->|"Depile de la queue"| RUNNING["En cours"]
+    RUNNING -->|"Job termine avec succes"| COMPLETED["Terminée"]
+    RUNNING -->|"Erreur / delai depasse"| FAILED["Échouée<br/>Remboursement des crédits"]
+    RUNNING -->|"Utilisateur annule"| CANCELLED["Annulée<br/>Remboursement des crédits"]
+
+    style START fill:#64748b,stroke:#475569,color:#fff
+    style QUEUED fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RUNNING fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style COMPLETED fill:#22c55e,stroke:#16a34a,color:#fff
+    style FAILED fill:#ef4444,stroke:#dc2626,color:#fff
+    style CANCELLED fill:#f59e0b,stroke:#d97706,color:#fff
+          </div>
+        </div>
+
+        <h2>Constantes TASK_TYPES (code source)</h2>
+
+        <pre><code class="language-javascript">// lib/background-jobs/taskTypes.js
+
+export const TASK_TYPES = {
+  GENERATION: 'generation',
+  CV_GENERATION: 'cv_generation',
+  TEMPLATE_CREATION: 'template-creation',
+  IMPORT_PDF: 'import-pdf',
+  TRANSLATE: 'translate-cv',
+  MATCH_SCORE: 'calculate-match-score',
+  IMPROVE: 'improve-cv',
+};
+
+export const AI_GENERATION_TYPES = [
+  TASK_TYPES.GENERATION,
+  TASK_TYPES.CV_GENERATION,
+  TASK_TYPES.TEMPLATE_CREATION,
+];
+
+export function isAiGenerationTask(task) {
+  return task &amp;&amp; AI_GENERATION_TYPES.includes(task.type);
+}
+
+export function isMatchScoreTask(task) {
+  return task &amp;&amp; task.type === TASK_TYPES.MATCH_SCORE;
+}
+
+export function isImprovementTask(task) {
+  return task &amp;&amp; task.type === TASK_TYPES.IMPROVE;
+}</code></pre>
+
+        <h2>Tri des tâches pour l'affichage</h2>
+
+        <p>Le module <code>sortTasks.js</code> trie les tâches avec 2 critères :</p>
+        <ol>
+          <li><strong>Priorité par statut</strong> — <code>running</code> en premier (priorité 0), tous les autres à égalité (priorité 1)</li>
+          <li><strong>Date de création</strong> — les plus récentes en premier (tri décroissant)</li>
+        </ol>
+
       </div>
     </main>
   </div>
@@ -100,7 +349,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RGPD &amp; Consentement | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>RGPD &amp; Consentement</span>
+        </div>
+
+        <h1>RGPD &amp; Consentement</h1>
+        <p class="lead">
+          Gestion complète de la conformité RGPD : consentement cookies v2.0 (2 catégories simplifiées), registre des cookies, audit trail en base de données, rétention automatisée des données et suppression des comptes inactifs.
+        </p>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 1 : Architecture RGPD -->
+        <!-- ============================================================ -->
+        <h2 id="architecture">Architecture RGPD</h2>
+        <p>
+          L'architecture RGPD de FitMyCV repose sur un modèle <strong>opt-in par défaut</strong> avec un consentement granulaire par catégorie de cookie. Le système est conçu en couches séparées : gestion client-side du consentement, logging serveur-side pour l'audit, et jobs CRON pour la rétention des données.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture globale RGPD</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Client["Client (Navigateur)"]
+        Banner["Bannière de<br/>consentement"]
+        ConsentJS["Gestion du<br/>consentement"]
+        Registry["Registre des<br/>cookies"]
+        BC["Synchronisation<br/>multi-onglets"]
+    end
+
+    subgraph Server["Serveur (Next.js API)"]
+        LogAPI["Enregistrer le<br/>consentement"]
+        HistoryAPI["Historique des<br/>consentements"]
+        ConsentLogger["Journal d'audit<br/>du consentement"]
+        Prisma["Client base<br/>de données"]
+    end
+
+    subgraph CRON["Jobs CRON"]
+        RetentionAPI["Lancer la rétention<br/>des données"]
+        DataRetention["Jobs de rétention<br/>automatisés"]
+    end
+
+    subgraph DB["PostgreSQL"]
+        ConsentLog["Historique du<br/>consentement"]
+        EmailLog["Historique des<br/>emails"]
+        User["Utilisateurs"]
+    end
+
+    Banner --> ConsentJS
+    ConsentJS --> Registry
+    ConsentJS --> BC
+    ConsentJS -->|"Enregistrer"| LogAPI
+    LogAPI --> ConsentLogger
+    HistoryAPI --> ConsentLogger
+    ConsentLogger --> Prisma
+    Prisma --> ConsentLog
+    RetentionAPI --> DataRetention
+    DataRetention --> Prisma
+    Prisma --> EmailLog
+    Prisma --> User
+
+    style Banner fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ConsentJS fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Registry fill:#14b8a6,stroke:#0d9488,color:#fff
+    style BC fill:#64748b,stroke:#475569,color:#fff
+    style LogAPI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style HistoryAPI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ConsentLogger fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Prisma fill:#14b8a6,stroke:#0d9488,color:#fff
+    style RetentionAPI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DataRetention fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ConsentLog fill:#14b8a6,stroke:#0d9488,color:#fff
+    style EmailLog fill:#14b8a6,stroke:#0d9488,color:#fff
+    style User fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <strong>Principe opt-in RGPD</strong> : Tous les cookies non-nécessaires sont désactivés par défaut. L'utilisateur doit donner son consentement explicite avant toute activation. En cas d'erreur de lecture du consentement, le système refuse par défaut (<code>return false</code>).
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 2 : Gestion du Consentement -->
+        <!-- ============================================================ -->
+        <h2 id="consentement">Gestion du Consentement (v2.0)</h2>
+        <p>
+          Le système de consentement v2.0 simplifie le modèle à <strong>2 catégories</strong> (contre 4 en v1). Le numéro de version est stocké dans le cookie et un changement de version force automatiquement un re-consentement de l'utilisateur.
+        </p>
+
+        <h3 id="categories">Catégories de cookies</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Clé</th>
+              <th>Défaut</th>
+              <th>Modifiable</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Nécessaires</strong></td>
+              <td><code>necessary</code></td>
+              <td><code>true</code></td>
+              <td>Non</td>
+              <td>Session NextAuth, CSRF, consentement, langue. Toujours actifs.</td>
+            </tr>
+            <tr>
+              <td><strong>Analytiques</strong></td>
+              <td><code>analytics</code></td>
+              <td><code>false</code></td>
+              <td>Oui</td>
+              <td>Préparé pour Plausible Analytics (privacy-friendly). Opt-in requis.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>v2.0 : Catégories supprimées</strong> : Les catégories <code>functional</code> et <code>marketing</code> ont été retirées car elles n'étaient pas utilisées. La préférence de langue a été reclassée comme <em>nécessaire</em> (UX essentielle). La télémétrie interne (erreurs, usage API) est collectée sur base d'<strong>intérêt légitime</strong> (sécurité/monitoring) et ne nécessite pas de consentement.
+        </div>
+
+        <h3 id="structure-consentement">Structure du consentement</h3>
+        <p>Le consentement est stocké dans un cookie nommé <code>cookie_consent</code> avec une durée de validité de <strong>6 mois</strong>.</p>
+        <pre><code class="language-javascript">// Structure par défaut (consent.js)
+export const DEFAULT_CONSENT = {
+  necessary: true,     // Toujours actif
+  analytics: false,    // Analytics tiers (Plausible) - opt-in
+  timestamp: null,     // Date du consentement (ms)
+  version: '2.0',      // Force re-consentement si changé
+};
+
+// Constantes
+export const CONSENT_DURATION = 6 * 30 * 24 * 60 * 60 * 1000; // ~6 mois
+export const CONSENT_COOKIE_NAME = 'cookie_consent';</code></pre>
+
+        <h3 id="api-client">API Client (consent.js)</h3>
+        <p>Le module <code>lib/cookies/consent.js</code> expose les fonctions suivantes :</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Description</th>
+              <th>Retour</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>getConsent()</code></td>
+              <td>Lit le cookie de consentement. Retourne <code>null</code> si expiré ou absent.</td>
+              <td><code>Object | null</code></td>
+            </tr>
+            <tr>
+              <td><code>saveConsent(consent)</code></td>
+              <td>Sauvegarde le consentement, révoque les cookies retirés, log en DB, notifie via BroadcastChannel.</td>
+              <td><code>void</code></td>
+            </tr>
+            <tr>
+              <td><code>acceptAllCookies()</code></td>
+              <td>Accepte toutes les catégories (<code>necessary: true, analytics: true</code>).</td>
+              <td><code>Object</code></td>
+            </tr>
+            <tr>
+              <td><code>rejectAllCookies()</code></td>
+              <td>Refuse tout sauf les nécessaires. Révoque les cookies non essentiels.</td>
+              <td><code>Object</code></td>
+            </tr>
+            <tr>
+              <td><code>isCategoryAccepted(category)</code></td>
+              <td>Vérifie si une catégorie spécifique est acceptée.</td>
+              <td><code>boolean</code></td>
+            </tr>
+            <tr>
+              <td><code>clearConsent()</code></td>
+              <td>Supprime le consentement (log la révocation, notifie les onglets).</td>
+              <td><code>void</code></td>
+            </tr>
+            <tr>
+              <td><code>revokeCookiesByCategory(category)</code></td>
+              <td>Supprime cookies, localStorage et sessionStorage de la catégorie.</td>
+              <td><code>void</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="workflow-consentement">Workflow de consentement</h3>
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie du consentement</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant B as Bannière Cookie
+    participant C as Gestion consentement
+    participant BC as Sync multi-onglets
+    participant API as API consentement
+    participant DB as Base de données
+
+    U->>B: Visite le site
+    B->>C: Lire le consentement
+    C-->>B: Aucun consentement trouve
+    B->>U: Affiche la bannière
+
+    alt Accepter tout
+        U->>B: Clic "Accepter tout"
+        B->>C: Accepter tous les cookies
+        C->>C: Sauvegarder (tout accepte)
+    else Refuser tout
+        U->>B: Clic "Refuser"
+        B->>C: Refuser les cookies non essentiels
+        C->>C: Supprimer les cookies non essentiels
+        C->>C: Sauvegarder (refus analytiques)
+    else Personnaliser
+        U->>B: Clic "Personnaliser"
+        B->>U: Affiche les categories
+        U->>B: Selectionne les categories
+        B->>C: Sauvegarder les preferences
+    end
+
+    C->>C: Ecrire le cookie de consentement
+    C->>BC: Notifier les autres onglets
+    C->>API: Enregistrer en base (non-bloquant)
+    API->>DB: Creer l'entree d'audit
+          </div>
+        </div>
+
+        <h3 id="sync-onglets">Synchronisation multi-onglets</h3>
+        <p>
+          Le consentement est synchronisé entre les onglets du navigateur via l'API <code>BroadcastChannel</code>. Lorsqu'un utilisateur modifie ses préférences dans un onglet, tous les autres onglets reçoivent la mise à jour instantanément.
+        </p>
+        <pre><code class="language-javascript">// Envoi de la notification (consent.js - saveConsent)
+const channel = new BroadcastChannel('cookie_consent_channel');
+channel.postMessage({ type: 'consent-updated', consent: consentWithTimestamp });
+channel.close();</code></pre>
+
+        <h3 id="revocation">Révocation des cookies</h3>
+        <p>
+          Lors d'un retrait de consentement, le système supprime automatiquement tous les cookies, entrées <code>localStorage</code> et <code>sessionStorage</code> associés à la catégorie révoquée. La suppression couvre tous les chemins et domaines possibles.
+        </p>
+        <pre><code class="language-javascript">// Suppression d'un cookie sur tous les chemins/domaines (consent.js)
+function deleteCookie(name) {
+  document.cookie = `${name}=; path=/; max-age=0`;
+  document.cookie = `${name}=; path=/; max-age=0; domain=${window.location.hostname}`;
+  document.cookie = `${name}=; path=/; max-age=0; domain=.${window.location.hostname}`;
+}
+
+// Nettoyage localStorage pour la catégorie analytics
+Object.keys(localStorage).forEach(key => {
+  if (key.includes('plausible') || key.includes('analytics')) {
+    localStorage.removeItem(key);
+  }
+});</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 3 : Registre des Cookies -->
+        <!-- ============================================================ -->
+        <h2 id="registre">Registre des Cookies</h2>
+        <p>
+          Le registre <code>lib/cookies/registry.js</code> maintient une liste exhaustive de tous les cookies utilisés sur le site, conformément aux obligations RGPD de transparence. Chaque cookie est documenté avec sa catégorie, durée, finalité, fournisseur et type de stockage.
+        </p>
+
+        <h3 id="cookies-necessaires">Cookies Nécessaires</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Durée</th>
+              <th>Finalité</th>
+              <th>Fournisseur</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>cookie_consent</code></td>
+              <td>6 mois</td>
+              <td>Stockage des préférences de consentement</td>
+              <td>First-party</td>
+              <td>cookie</td>
+            </tr>
+            <tr>
+              <td><code>next-auth.session-token</code></td>
+              <td>7 jours</td>
+              <td>Jeton de session NextAuth.js</td>
+              <td>First-party (NextAuth.js)</td>
+              <td>cookie</td>
+            </tr>
+            <tr>
+              <td><code>__Secure-next-auth.session-token</code></td>
+              <td>7 jours</td>
+              <td>Jeton de session sécurisé (HTTPS)</td>
+              <td>First-party (NextAuth.js)</td>
+              <td>cookie</td>
+            </tr>
+            <tr>
+              <td><code>next-auth.csrf-token</code></td>
+              <td>Session</td>
+              <td>Protection CSRF</td>
+              <td>First-party (NextAuth.js)</td>
+              <td>cookie</td>
+            </tr>
+            <tr>
+              <td><code>__Host-next-auth.csrf-token</code></td>
+              <td>Session</td>
+              <td>Protection CSRF sécurisée</td>
+              <td>First-party (NextAuth.js)</td>
+              <td>cookie</td>
+            </tr>
+            <tr>
+              <td><code>next-auth.callback-url</code></td>
+              <td>Session</td>
+              <td>URL de callback d'authentification</td>
+              <td>First-party (NextAuth.js)</td>
+              <td>cookie</td>
+            </tr>
+            <tr>
+              <td><code>language</code></td>
+              <td>1 an</td>
+              <td>Préférence de langue (UX essentielle)</td>
+              <td>First-party</td>
+              <td>localStorage</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="cookies-analytiques">Cookies Analytiques</h3>
+        <div class="callout callout-info">
+          <strong>Plausible Analytics</strong> : La catégorie analytique est préparée pour Plausible, un outil d'analytics <em>privacy-friendly</em> qui fonctionne <strong>sans cookies par défaut</strong>. Les cookies ne seront ajoutés au registre que si Plausible est configuré avec des cookies optionnels.
+        </div>
+
+        <h3 id="fonctions-registre">Fonctions utilitaires du registre</h3>
+        <pre><code class="language-javascript">import { getCookiesByCategory, getCookieByName, getCookieCountByCategory, getThirdPartyProviders } from '@/lib/cookies/registry';
+
+// Récupérer tous les cookies d'une catégorie
+const necessaryCookies = getCookiesByCategory('necessary');
+
+// Récupérer un cookie par son nom
+const sessionCookie = getCookieByName('next-auth.session-token');
+
+// Compter les cookies par catégorie
+const counts = getCookieCountByCategory();
+// { necessary: 7, analytics: 0 }
+
+// Lister les fournisseurs tiers
+const thirdParty = getThirdPartyProviders();
+// [] (actuellement aucun fournisseur tiers)</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 4 : Logging & Audit -->
+        <!-- ============================================================ -->
+        <h2 id="audit">Logging &amp; Audit Trail</h2>
+        <p>
+          Chaque changement de consentement est enregistré en base de données via <code>lib/cookies/consentLogger.js</code> pour constituer un audit trail complet conforme RGPD. Le logging est <strong>non-bloquant</strong> : en cas d'erreur, l'utilisateur n'est pas impacté.
+        </p>
+
+        <h3 id="modele-consentlog">Modèle ConsentLog</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td>
+              <td>String (cuid)</td>
+              <td>Identifiant unique du log</td>
+            </tr>
+            <tr>
+              <td><code>userId</code></td>
+              <td>String (FK)</td>
+              <td>Référence vers l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><code>action</code></td>
+              <td>String</td>
+              <td><code>"created"</code>, <code>"updated"</code> ou <code>"revoked"</code></td>
+            </tr>
+            <tr>
+              <td><code>preferences</code></td>
+              <td>String (JSON)</td>
+              <td>Préférences sérialisées (<code>{necessary, analytics}</code>)</td>
+            </tr>
+            <tr>
+              <td><code>ip</code></td>
+              <td>String (nullable)</td>
+              <td>Adresse IP (via <code>x-forwarded-for</code> ou <code>x-real-ip</code>)</td>
+            </tr>
+            <tr>
+              <td><code>userAgent</code></td>
+              <td>String (nullable)</td>
+              <td>User-Agent du navigateur</td>
+            </tr>
+            <tr>
+              <td><code>createdAt</code></td>
+              <td>DateTime</td>
+              <td>Date de l'enregistrement</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="fonctions-logger">Fonctions du ConsentLogger</h3>
+        <pre><code class="language-javascript">import { logConsent, getConsentHistory, hasConsentForCategory, cleanOldConsentLogs } from '@/lib/cookies/consentLogger';
+
+// Enregistrer un changement de consentement
+await logConsent(userId, 'created', { necessary: true, analytics: false }, request);
+
+// Récupérer l'historique d'un utilisateur (max 50 par défaut)
+const history = await getConsentHistory(userId, 50);
+// [{ id, userId, action, preferences: { necessary, analytics }, ip, userAgent, createdAt }]
+
+// Vérifier si un utilisateur a accepté une catégorie
+const hasAnalytics = await hasConsentForCategory(userId, 'analytics');
+// false (opt-in RGPD par défaut)
+
+// Nettoyer les anciens logs (minimisation des données)
+const deleted = await cleanOldConsentLogs(sixMonthsAgo);
+// Retourne le nombre de logs supprimés</code></pre>
+
+        <div class="callout callout-warning">
+          <strong>Comportement en cas d'erreur</strong> : Le logger ne bloque jamais l'utilisateur. Si la connexion DB échoue, l'erreur est logguée en console et <code>null</code> est retourné. La vérification <code>hasConsentForCategory()</code> retourne <code>false</code> par défaut en cas d'erreur (principe RGPD).
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 5 : API Endpoints -->
+        <!-- ============================================================ -->
+        <h2 id="api-endpoints">API Endpoints</h2>
+
+        <h3 id="endpoint-log">POST /api/consent/log</h3>
+        <p>Enregistre un changement de consentement en base de données.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Paramètre</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>action</code></td>
+              <td>String</td>
+              <td>Oui</td>
+              <td><code>"created"</code>, <code>"updated"</code> ou <code>"revoked"</code></td>
+            </tr>
+            <tr>
+              <td><code>preferences</code></td>
+              <td>Object</td>
+              <td>Oui</td>
+              <td><code>{ necessary: boolean, analytics: boolean }</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// Exemple d'appel (effectué automatiquement par consent.js)
+const response = await fetch('/api/consent/log', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    action: 'created',
+    preferences: { necessary: true, analytics: false }
+  }),
+});
+
+// Réponse succès
+{ success: true, log: { id: "clx...", action: "created", createdAt: "2024-..." } }
+
+// Utilisateur non connecté (succès silencieux)
+{ success: true, skipped: true }</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Comportement gracieux</strong> : Si l'utilisateur n'est pas connecté, l'API retourne un succès silencieux (<code>skipped: true</code>). Le consentement sera loggé lorsque l'utilisateur se connectera.
+        </div>
+
+        <h3 id="endpoint-history">GET /api/consent/history</h3>
+        <p>Récupère l'historique des consentements de l'utilisateur connecté.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Paramètre</th>
+              <th>Type</th>
+              <th>Défaut</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>limit</code> (query)</td>
+              <td>Number</td>
+              <td>50</td>
+              <td>Nombre max de logs (plafonné à 100)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// Exemple d'appel
+const response = await fetch('/api/consent/history?limit=10');
+
+// Réponse
+{
+  success: true,
+  history: [
+    {
+      id: "clx...",
+      userId: "user_...",
+      action: "updated",
+      preferences: { necessary: true, analytics: true },
+      ip: "192.168.1.1",
+      userAgent: "Mozilla/5.0...",
+      createdAt: "2024-01-15T10:30:00Z"
+    }
+  ],
+  count: 1
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 6 : Rétention des Données -->
+        <!-- ============================================================ -->
+        <h2 id="retention">Rétention des Données (Jobs CRON)</h2>
+        <p>
+          La rétention des données est gérée automatiquement par un job CRON qui exécute 4 tâches de nettoyage. Le job est déclenché via l'endpoint <code>POST /api/cron/data-retention</code>, sécurisé par un <code>CRON_SECRET</code> dans le header <code>Authorization</code>.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Jobs de rétention des données</div>
+          <div class="mermaid">
+flowchart LR
+    CRON["Planificateur<br/>CRON"] -->|"Appel securise"| API["Point d'entrée<br/>rétention des données"]
+    API --> Runner["Lancer toutes les<br/>tâches de rétention"]
+
+    Runner --> J1["Nettoyer les logs<br/>d'emails"]
+    Runner --> J2["Nettoyer les logs<br/>de consentement"]
+    Runner --> J3["Avertir les comptes<br/>inactifs"]
+    Runner --> J4["Supprimer les comptes<br/>inactifs"]
+
+    J1 -->|"Anciens > 12 mois"| EmailLog["Supprimer les logs<br/>d'emails"]
+    J2 -->|"Anciens > 6 mois"| ConsentLog["Supprimer les logs<br/>de consentement"]
+    J3 -->|"35 mois inactif"| Email["Email d'avertissement"]
+    J4 -->|"Inactif > 3 ans"| UserDel["Supprimer le compte<br/>complètement"]
+
+    style CRON fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style API fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Runner fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style J1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style J2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style J3 fill:#f59e0b,stroke:#d97706,color:#fff
+    style J4 fill:#ef4444,stroke:#dc2626,color:#fff
+    style EmailLog fill:#14b8a6,stroke:#0d9488,color:#fff
+    style ConsentLog fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Email fill:#64748b,stroke:#475569,color:#fff
+    style UserDel fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <h3 id="jobs-detail">Détail des jobs</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Fonction</th>
+              <th>Seuil</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Cleanup Email Logs</strong></td>
+              <td><code>cleanupEmailLogs()</code></td>
+              <td>&gt; 12 mois</td>
+              <td>Supprime les logs d'emails anciens (<code>EmailLog</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Cleanup Consent Logs</strong></td>
+              <td><code>cleanupConsentLogs()</code></td>
+              <td>&gt; 6 mois</td>
+              <td>Supprime les logs de consentement anciens (<code>ConsentLog</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Notify Inactive</strong></td>
+              <td><code>notifyInactiveAccounts()</code></td>
+              <td>35 mois inactif</td>
+              <td>Envoie un email d'avertissement (30j avant suppression)</td>
+            </tr>
+            <tr>
+              <td><strong>Cleanup Inactive</strong></td>
+              <td><code>cleanupInactiveAccounts()</code></td>
+              <td>&gt; 3 ans</td>
+              <td>Supprime complètement le compte via <code>deleteUserCompletely()</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="securite-cron">Sécurité du CRON</h3>
+        <pre><code class="language-bash"># Appel du job de rétention (sécurisé par CRON_SECRET)
+curl -X POST https://fitmycv.io/api/cron/data-retention \
+  -H "Authorization: Bearer $CRON_SECRET"</code></pre>
+
+        <pre><code class="language-javascript">// Vérification d'authentification (route.js)
+const authHeader = request.headers.get('Authorization');
+const cronSecret = process.env.CRON_SECRET;
+const expectedAuth = `Bearer ${cronSecret}`;
+
+if (authHeader !== expectedAuth) {
+  return Response.json({ error: 'Unauthorized' }, { status: 401 });
+}</code></pre>
+
+        <h3 id="cycle-inactivite">Cycle de vie des comptes inactifs</h3>
+        <div class="diagram">
+          <div class="diagram-title">Timeline de gestion des comptes inactifs</div>
+          <div class="mermaid">
+gantt
+    title Cycle de vie d'un compte inactif
+    dateFormat  YYYY-MM-DD
+    axisFormat  %Y
+
+    section Compte actif
+    Dernière connexion           :milestone, m1, 2023-01-01, 0d
+    Période d'activité normale   :active, a1, 2023-01-01, 730d
+
+    section Avertissement
+    Email d'avertissement (35 mois) :crit, w1, 2025-12-01, 30d
+
+    section Suppression
+    Suppression du compte (36 mois) :milestone, m2, 2026-01-01, 0d
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <strong>Protection admin</strong> : Les comptes avec le rôle <code>ADMIN</code> ne sont <strong>jamais</strong> notifiés ni supprimés, quel que soit leur temps d'inactivité. La détection utilise <code>lastLoginAt</code> en priorité, avec fallback sur <code>createdAt</code> si <code>lastLoginAt</code> est <code>null</code>.
+        </div>
+
+        <h3 id="reponse-cron">Réponse du job CRON</h3>
+        <pre><code class="language-json">{
+  "success": true,
+  "message": "Data retention jobs completed",
+  "duration": 1523,
+  "results": {
+    "emailLogs": { "success": true, "count": 42 },
+    "consentLogs": { "success": true, "count": 15 },
+    "inactiveNotifications": { "success": true, "notified": 3, "total": 3 },
+    "inactiveAccounts": { "success": true, "deleted": 1, "total": 1 }
+  }
+}</code></pre>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 7 : Fichiers Clés -->
+        <!-- ============================================================ -->
+        <h2 id="fichiers">Fichiers Clés</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/cookies/consent.js</code></td>
+              <td>Gestion client-side du consentement (lecture, écriture, révocation, sync multi-onglets)</td>
+            </tr>
+            <tr>
+              <td><code>lib/cookies/registry.js</code></td>
+              <td>Registre exhaustif des cookies avec métadonnées RGPD</td>
+            </tr>
+            <tr>
+              <td><code>lib/cookies/consentLogger.js</code></td>
+              <td>Logger serveur-side pour l'audit trail en base de données (Prisma)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/consent/log/route.js</code></td>
+              <td>API endpoint POST pour enregistrer un changement de consentement</td>
+            </tr>
+            <tr>
+              <td><code>app/api/consent/history/route.js</code></td>
+              <td>API endpoint GET pour consulter l'historique des consentements</td>
+            </tr>
+            <tr>
+              <td><code>app/api/cron/data-retention/route.js</code></td>
+              <td>Endpoint CRON pour déclencher les jobs de rétention des données</td>
+            </tr>
+            <tr>
+              <td><code>lib/background-jobs/dataRetention.js</code></td>
+              <td>Implémentation des 4 jobs de rétention (emails, consentement, inactivité)</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

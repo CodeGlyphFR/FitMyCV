@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
@@ -83,6 +83,10 @@
               <td><strong>IA</strong></td>
               <td>OpenAI API (modèles configurables)</td>
             </tr>
+            <tr>
+              <td><strong>Extension</strong></td>
+              <td>Chrome/Firefox Manifest V3</td>
+            </tr>
           </tbody>
         </table>
 
@@ -92,32 +96,36 @@
           <div class="diagram-title">Vue globale de l'architecture</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Presentation["PRÉSENTATION"]
-        RC["React Components (138)"]
-        TW["Tailwind CSS"]
+    subgraph Presentation["PRESENTATION"]
+        RC["Composants React (175+)"]
+        TW["Tailwind CSS 4"]
         FM["Framer Motion"]
     end
 
-    subgraph APILayer["API LAYER"]
-        AR["Next.js API Routes (113)"]
-        subgraph Categories["Catégories"]
-            Auth["Auth (9)"]
-            CV["CV (15)"]
-            Sub["Subscription (14)"]
-            Admin["Admin (38)"]
+    subgraph APILayer["COUCHE API"]
+        AR["Routes API Next.js (123)"]
+        subgraph Categories["CATEGORIES"]
+            Auth["Authentification<br/>et Compte (18)"]
+            CV["Gestion des CV (15)"]
+            Sub["Abonnements<br/>et Crédits (15)"]
+            Admin["Administration<br/>et Statistiques (44)"]
+            BT["Tâches en<br/>arrière-plan (7)"]
+            Ext["Extension (5)"]
+            Other["Autres (19)"]
         end
     end
 
-    subgraph Business["BUSINESS LOGIC"]
-        subgraph Modules["lib/ modules (31)"]
-            CVC["cv-core"]
-            OAI["openai-core"]
-            SUB["subscription"]
-            BJ["background-jobs"]
+    subgraph Business["LOGIQUE METIER"]
+        subgraph Modules["MODULES METIER (34)"]
+            CVC["Moteur CV"]
+            OAI["Client IA"]
+            FEAT["5 pipelines IA"]
+            SUB["Abonnements"]
+            BJ["Tâches asynchrones"]
         end
     end
 
-    subgraph Data["DATA ACCESS"]
+    subgraph Data["ACCES AUX DONNEES"]
         PR["Prisma ORM"]
         Models["34 modèles"]
     end
@@ -126,7 +134,7 @@ flowchart TB
         PG[(PostgreSQL)]
         OpenAI["OpenAI API"]
         Stripe["Stripe API"]
-        Email["SMTP/Resend"]
+        Email["Service d'emails"]
     end
 
     Presentation --> APILayer
@@ -136,6 +144,29 @@ flowchart TB
     Business --> OpenAI
     Business --> Stripe
     Business --> Email
+
+    style RC fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style TW fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style FM fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style AR fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Auth fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CV fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Sub fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Admin fill:#6366f1,stroke:#4f46e5,color:#fff
+    style BT fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Ext fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Other fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CVC fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style OAI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FEAT fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SUB fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BJ fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style PR fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Models fill:#14b8a6,stroke:#0d9488,color:#fff
+    style PG fill:#14b8a6,stroke:#0d9488,color:#fff
+    style OpenAI fill:#64748b,stroke:#475569,color:#fff
+    style Stripe fill:#f59e0b,stroke:#d97706,color:#fff
+    style Email fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 
@@ -145,79 +176,90 @@ flowchart TB
           <div class="diagram-title">Flux request/response</div>
           <div class="mermaid">
 sequenceDiagram
-    participant C as Client React
-    participant A as API Routes
-    participant L as lib/ modules
+    participant C as Interface utilisateur
+    participant A as Routes API
+    participant L as Modules métier
     participant P as Prisma
     participant DB as PostgreSQL
     participant E as Services Externes
 
-    C->>A: Request HTTP
-    A->>A: Auth (NextAuth)
-    A->>L: Business Logic
-    L->>P: Query
+    C->>A: Requête HTTP
+    A->>A: Authentification
+    A->>L: Logique métier
+    L->>P: Requête
     P->>DB: SQL
-    DB-->>P: Result
-    L->>E: OpenAI/Stripe
-    E-->>L: Response
-    L-->>A: Data
-    A-->>C: JSON Response
+    DB-->>P: Résultat
+    L->>E: OpenAI / Stripe
+    E-->>L: Réponse
+    L-->>A: Données
+    A-->>C: Réponse JSON
           </div>
         </div>
 
         <h2>Organisation des Modules Métier</h2>
 
-        <p>Le dossier <code>lib/</code> contient 31 modules organisés par domaine fonctionnel :</p>
+        <p>Le dossier <code>lib/</code> contient 34 modules organisés par domaine fonctionnel :</p>
 
         <div class="card-grid">
           <div class="card">
-            <h4>Authentification</h4>
+            <h4>Authentification & Sécurité</h4>
             <ul>
-              <li><code>auth/</code> - NextAuth config + session</li>
-              <li><code>security/</code> - Validation, sanitization</li>
+              <li><code>auth/</code> - NextAuth 4 config, session, extension token</li>
+              <li><code>security/</code> - Validation fichiers, politique mots de passe, XSS</li>
               <li><code>recaptcha/</code> - Protection bot</li>
+              <li><code>cookies/</code> - Consent RGPD, registre cookies</li>
             </ul>
           </div>
 
           <div class="card">
             <h4>CV Core</h4>
             <ul>
-              <li><code>cv-core/</code> - Storage, validation, versioning</li>
-              <li><code>job-offer/</code> - Extraction offres</li>
+              <li><code>cv-core/</code> - Storage DB, validation, versioning, review</li>
+              <li><code>job-offer/</code> - Extraction structurée offres (JSON)</li>
               <li><code>scoring/</code> - Match score CV/offre</li>
-              <li><code>translation/</code> - Traduction CV</li>
+              <li><code>translation/</code> - Traduction CV (4 langues)</li>
+              <li><code>export/</code> - Templates et sélections export</li>
             </ul>
           </div>
 
           <div class="card">
             <h4>Intelligence Artificielle</h4>
             <ul>
-              <li><code>openai-core/</code> - Client API, helpers</li>
-              <li><code>features/cv-adaptation/</code> - Pipeline génération</li>
+              <li><code>openai-core/</code> - Client API, schema loader, prompt loader</li>
+              <li><code>features/cv-adaptation/</code> - Pipeline adaptation CV</li>
               <li><code>features/cv-improvement/</code> - Pipeline optimisation</li>
-              <li><code>prompts-shared/</code> - Prompts réutilisables</li>
+              <li><code>features/import-pdf/</code> - Import PDF via IA</li>
+              <li><code>features/template-generation/</code> - Génération templates</li>
+              <li><code>features/job-title-generation/</code> - Génération depuis intitulé</li>
+              <li><code>prompts-shared/</code> - Prompts et règles partagés</li>
             </ul>
           </div>
 
           <div class="card">
-            <h4>Billing</h4>
+            <h4>Billing & Abonnements</h4>
             <ul>
-              <li><code>subscription/</code> - Plans, crédits, limites</li>
+              <li><code>subscription/</code> - Plans, crédits, limites, Stripe sync</li>
+              <li><code>stripe/</code> - Checkout locale</li>
+              <li><code>creditCosts/</code> - Context coûts crédits</li>
             </ul>
           </div>
 
           <div class="card">
             <h4>Async Processing</h4>
             <ul>
-              <li><code>background-jobs/</code> - Queue tâches (max 3 concurrent)</li>
+              <li><code>background-jobs/</code> - Queue, runner, process registry</li>
+              <li><code>events/</code> - Event emitter DB temps réel</li>
+              <li><code>loading/</code> - Événements de chargement</li>
             </ul>
           </div>
 
           <div class="card">
-            <h4>Communication</h4>
+            <h4>Communication & Monitoring</h4>
             <ul>
-              <li><code>email/</code> - SMTP + Resend</li>
-              <li><code>events/</code> - Event emitter temps réel</li>
+              <li><code>email/</code> - SMTP + Resend, templates, triggers</li>
+              <li><code>telemetry/</code> - Tracking, OpenAI usage, analytics</li>
+              <li><code>i18n/</code> - Labels CV, language context</li>
+              <li><code>onboarding/</code> - Steps, state, config</li>
             </ul>
           </div>
         </div>
@@ -228,21 +270,51 @@ sequenceDiagram
           <div class="diagram-title">Graphe de dépendances</div>
           <div class="mermaid">
 flowchart LR
-    auth --> subscription
-    auth --> email
-    auth --> telemetry
+    auth["Authentification"] --> subscription["Abonnements"]
+    auth --> email["Email"]
+    auth --> telemetry["Télémétrie"]
 
-    cv-core --> settings
-    cv-core --> utils
+    cv-core["Moteur CV"] --> settings["Configuration"]
+    cv-core --> utils["Utilitaires"]
+    cv-core --> prisma["Base de données"]
+
+    features["Pipelines IA"] --> openai-core["Client IA"]
+    features --> cv-core
+    features --> job-offer["Offres d'emploi"]
+    features --> prompts-shared["Instructions IA<br/>partagées"]
 
     subscription --> settings
-    subscription --> events
+    subscription --> events["Événements"]
     subscription --> prisma
 
-    background-jobs --> subscription
+    background-jobs["Tâches asynchrones"] --> subscription
     background-jobs --> telemetry
+    background-jobs --> features
 
     openai-core --> settings
+    openai-core --> telemetry
+
+    scoring["Scoring"] --> openai-core
+    scoring --> prompts-shared
+
+    email --> prisma
+    email --> settings
+
+    style auth fill:#6366f1,stroke:#4f46e5,color:#fff
+    style subscription fill:#f59e0b,stroke:#d97706,color:#fff
+    style email fill:#64748b,stroke:#475569,color:#fff
+    style telemetry fill:#64748b,stroke:#475569,color:#fff
+    style cv-core fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style settings fill:#64748b,stroke:#475569,color:#fff
+    style utils fill:#64748b,stroke:#475569,color:#fff
+    style prisma fill:#14b8a6,stroke:#0d9488,color:#fff
+    style features fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style openai-core fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style job-offer fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style prompts-shared fill:#64748b,stroke:#475569,color:#fff
+    style events fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style background-jobs fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style scoring fill:#8b5cf6,stroke:#7c3aed,color:#fff
           </div>
         </div>
 
@@ -254,13 +326,13 @@ flowchart LR
         </div>
 
         <div class="callout callout-success">
-          <div class="callout-title">Pipelines IA Parallélisés</div>
-          <p>Les pipelines de génération et d'optimisation CV utilisent une architecture par phases avec parallélisation (max 5 appels OpenAI concurrents) et cache intelligent pour optimiser les coûts.</p>
+          <div class="callout-title">5 Pipelines IA Spécialisés</div>
+          <p>Le dossier <code>lib/features/</code> contient 5 pipelines IA indépendants : adaptation CV, amélioration CV, import PDF, génération depuis intitulé de poste, et génération de templates. Chaque pipeline utilise des appels OpenAI parallélisés avec structured output (JSON Schema).</p>
         </div>
 
         <div class="callout callout-warning">
           <div class="callout-title">Background Jobs In-Process</div>
-          <p>La queue de jobs est gérée en mémoire (pas de Redis/RabbitMQ). Cela simplifie le déploiement mais limite la scalabilité horizontale. Max 3 jobs globaux en parallèle.</p>
+          <p>La queue de jobs est gérée en mémoire (pas de Redis/RabbitMQ). Cela simplifie le déploiement mais limite la scalabilité horizontale. Le <code>processRegistry</code> gère la concurrence des tâches.</p>
         </div>
 
         <h2>Fichiers Clés</h2>
@@ -277,7 +349,7 @@ flowchart LR
             <tr>
               <td>Config Next.js</td>
               <td><code>next.config.js</code></td>
-              <td>Configuration framework</td>
+              <td>Standalone output, Turbopack, image optimization</td>
             </tr>
             <tr>
               <td>Schéma DB</td>
@@ -287,32 +359,42 @@ flowchart LR
             <tr>
               <td>Auth</td>
               <td><code>lib/auth/options.js</code></td>
-              <td>Configuration NextAuth</td>
+              <td>Configuration NextAuth 4</td>
+            </tr>
+            <tr>
+              <td>Session</td>
+              <td><code>lib/auth/session.js</code></td>
+              <td>Helper getServerSession</td>
             </tr>
             <tr>
               <td>CV Storage</td>
               <td><code>lib/cv-core/storage.js</code></td>
-              <td>Read/Write CV JSON</td>
+              <td>CRUD CV en base (content JSON)</td>
             </tr>
             <tr>
               <td>OpenAI</td>
               <td><code>lib/openai-core/client.js</code></td>
-              <td>Client et helpers</td>
+              <td>Client OpenAI avec telemetry</td>
             </tr>
             <tr>
               <td>Abonnements</td>
               <td><code>lib/subscription/featureUsage.js</code></td>
-              <td>Limites et compteurs</td>
+              <td>Limites et compteurs par feature</td>
             </tr>
             <tr>
               <td>Jobs</td>
               <td><code>lib/background-jobs/jobQueue.js</code></td>
-              <td>Queue avec concurrence</td>
+              <td>Queue et runner de tâches</td>
             </tr>
             <tr>
               <td>Erreurs</td>
               <td><code>lib/api/apiErrors.js</code></td>
-              <td>Factory erreurs i18n</td>
+              <td>Factory erreurs i18n par domaine</td>
+            </tr>
+            <tr>
+              <td>Prisma</td>
+              <td><code>lib/prisma.js</code></td>
+              <td>Singleton PrismaClient</td>
             </tr>
           </tbody>
         </table>

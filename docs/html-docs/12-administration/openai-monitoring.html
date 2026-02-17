@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -32,41 +29,481 @@
           <span>Monitoring OpenAI</span>
         </div>
 
-
         <h1>Monitoring OpenAI</h1>
         <p class="lead">
-          Suivi des couts et de l'utilisation de l'API OpenAI.
+          Syst&egrave;me complet de suivi des co&ucirc;ts, de la consommation et des alertes li&eacute;es &agrave; l'API OpenAI. Le module couvre la <strong>tarification par mod&egrave;le</strong>, le <strong>suivi du solde du compte</strong>, la <strong>journalisation de chaque appel</strong> et un <strong>syst&egrave;me d'alertes configurable</strong> avec d&eacute;tection de d&eacute;passement en temps r&eacute;el.
         </p>
 
-        <h2>Metriques Suivies</h2>
-        <ul>
-          <li>Tokens utilises (prompt + completion)</li>
-          <li>Cout estime par requête</li>
-          <li>Cout total par jour/mois</li>
-          <li>Repartition par feature</li>
-        </ul>
+        <h2>Architecture du Monitoring</h2>
 
-        <h2>Modèle OpenAIUsageLog</h2>
+        <div class="diagram">
+          <div class="diagram-title">Flux de donn&eacute;es du monitoring OpenAI</div>
+          <div class="mermaid">
+graph TB
+    subgraph Calls["APPELS API"]
+        FeatureIA["Fonctionnalité IA<br/>génération, import, scoring"]
+        APICall["Appel API OpenAI"]
+    end
 
-        <pre><code>model OpenAIUsageLog {
+    subgraph Logging["JOURNALISATION"]
+        OAICall[("Détail par appel<br/>utilisateur, modèle, tokens,<br/>coût estimé, durée")]
+        OAIUsage[("Agrégation journalière<br/>par utilisateur, fonctionnalité<br/>et modèle")]
+    end
+
+    subgraph Pricing["TARIFICATION"]
+        OAIPricing[("Tarification<br/>prix entrée, sortie,<br/>cache, priorité")]
+        PriorityMode{"Mode Priorité<br/>actif ?"}
+    end
+
+    subgraph Alerts["ALERTES"]
+        AlertConfig[("Configuration alertes<br/>type, seuil,<br/>activée")]
+        Triggered["Alertes déclenchées<br/>valeur réelle vs seuil"]
+    end
+
+    subgraph BalanceBlock["SOLDE COMPTE"]
+        BalanceAPI["API OpenAI<br/>facturation"]
+        BalanceCache["Cache 5 min"]
+    end
+
+    FeatureIA --> APICall
+    APICall --> OAICall
+    OAICall --> OAIUsage
+    OAIPricing --> PriorityMode
+    PriorityMode -->|"Oui"| OAICall
+    PriorityMode -->|"Non"| OAICall
+    OAIUsage --> Triggered
+    AlertConfig --> Triggered
+    BalanceAPI --> BalanceCache
+
+    style FeatureIA fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style APICall fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style OAICall fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OAIUsage fill:#6366f1,stroke:#4f46e5,color:#fff
+    style OAIPricing fill:#14b8a6,stroke:#0d9488,color:#fff
+    style PriorityMode fill:#f59e0b,stroke:#d97706,color:#fff
+    style AlertConfig fill:#ef4444,stroke:#dc2626,color:#fff
+    style Triggered fill:#ef4444,stroke:#dc2626,color:#fff
+    style BalanceAPI fill:#64748b,stroke:#475569,color:#fff
+    style BalanceCache fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <h2>Endpoints API</h2>
+
+        <h3>Pricing &mdash; Tarification par Mod&egrave;le</h3>
+
+        <p>Gestion compl&egrave;te de la tarification OpenAI avec support du <strong>mode priorit&eacute;</strong> (mod&egrave;les plus performants &agrave; co&ucirc;t sup&eacute;rieur).</p>
+
+        <h4>GET /api/admin/openai-pricing</h4>
+
+        <p>Retourne toutes les configurations de tarification avec le flag <code>isPriorityMode</code> global.</p>
+
+        <pre><code class="language-json">// R&eacute;ponse
+{
+  "pricings": [
+    {
+      "modelName": "gpt-4o",
+      "inputPricePerMToken": 2.50,
+      "outputPricePerMToken": 10.00,
+      "cachePricePerMToken": 1.25,
+      "inputPricePerMTokenPriority": 5.00,
+      "outputPricePerMTokenPriority": 20.00,
+      "cachePricePerMTokenPriority": 2.50,
+      "description": "Mod&egrave;le principal",
+      "isActive": true
+    }
+  ],
+  "isPriorityMode": false
+}</code></pre>
+
+        <h4>POST /api/admin/openai-pricing</h4>
+
+        <p>Cr&eacute;er ou mettre &agrave; jour la tarification d'un mod&egrave;le (upsert sur <code>modelName</code>).</p>
+
+        <pre><code class="language-json">// Body
+{
+  "modelName": "gpt-4o-mini",
+  "inputPricePerMToken": 0.15,
+  "outputPricePerMToken": 0.60,
+  "cachePricePerMToken": 0.075,
+  "inputPricePerMTokenPriority": 0.30,
+  "outputPricePerMTokenPriority": 1.20,
+  "cachePricePerMTokenPriority": 0.15,
+  "description": "Mod&egrave;le optimis&eacute; co&ucirc;t",
+  "isActive": true
+}</code></pre>
+
+        <h4>DELETE /api/admin/openai-pricing</h4>
+
+        <p>Supprime la tarification d'un mod&egrave;le. Query param : <code>?modelName=gpt-4o-mini</code></p>
+
+        <h4>PATCH /api/admin/openai-pricing</h4>
+
+        <p>Bascule le mode priorit&eacute; global. Quand activ&eacute;, les champs <code>*Priority</code> sont utilis&eacute;s pour le calcul des co&ucirc;ts.</p>
+
+        <pre><code class="language-json">// Body
+{ "isPriorityMode": true }</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Mode Priorit&eacute;</div>
+          <p>Le mode priorit&eacute; permet de basculer entre deux jeux de tarifs (standard et prioritaire) sans modifier les configurations existantes. Utile pour les p&eacute;riodes de forte charge o&ugrave; des mod&egrave;les plus rapides/co&ucirc;teux sont n&eacute;cessaires.</p>
+        </div>
+
+        <h3>Balance &mdash; Solde du Compte OpenAI</h3>
+
+        <h4>GET /api/admin/openai-balance</h4>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Endpoint public</div>
+          <p>Cet endpoint ne n&eacute;cessite <strong>aucune authentification</strong>. Il est con&ccedil;u pour &ecirc;tre interrog&eacute; par des syst&egrave;mes de monitoring externes.</p>
+        </div>
+
+        <pre><code class="language-json">// R&eacute;ponse
+{
+  "balance": 42.57,
+  "cached": true,
+  "accountType": "pay-as-you-go"
+}</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>balance</code></td>
+              <td>Float | null</td>
+              <td>Solde restant en USD. <code>null</code> si l'API OpenAI est inaccessible</td>
+            </tr>
+            <tr>
+              <td><code>cached</code></td>
+              <td>Boolean</td>
+              <td><code>true</code> si la valeur provient du cache (TTL : 5 minutes)</td>
+            </tr>
+            <tr>
+              <td><code>accountType</code></td>
+              <td>String</td>
+              <td><code>"pay-as-you-go"</code> ou <code>"monthly-subscription"</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Alerts &mdash; Configuration des Alertes</h3>
+
+        <h4>GET /api/admin/openai-alerts</h4>
+
+        <p>Retourne toutes les configurations d'alertes.</p>
+
+        <h4>POST /api/admin/openai-alerts</h4>
+
+        <p>Cr&eacute;er ou mettre &agrave; jour une alerte. Si <code>id</code> est fourni, mise &agrave; jour ; sinon, cr&eacute;ation.</p>
+
+        <pre><code class="language-json">// Body
+{
+  "id": "clx...",
+  "type": "user_monthly",
+  "threshold": 5.00,
+  "enabled": true,
+  "name": "Budget mensuel par utilisateur",
+  "description": "Alerte si un utilisateur d&eacute;passe 5$ par mois"
+}</code></pre>
+
+        <h4>DELETE /api/admin/openai-alerts</h4>
+
+        <p>Supprime une alerte. Query param : <code>?id=clx...</code></p>
+
+        <h3>Types d'Alertes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Port&eacute;e</th>
+              <th>P&eacute;riode</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>user_daily</code></td>
+              <td>Par utilisateur</td>
+              <td>Jour</td>
+              <td>Co&ucirc;t journalier d'un utilisateur individuel</td>
+            </tr>
+            <tr>
+              <td><code>user_monthly</code></td>
+              <td>Par utilisateur</td>
+              <td>Mois</td>
+              <td>Co&ucirc;t mensuel d'un utilisateur (supporte billing Stripe ou calendrier)</td>
+            </tr>
+            <tr>
+              <td><code>global_daily</code></td>
+              <td>Global</td>
+              <td>Jour</td>
+              <td>Co&ucirc;t total journalier de toute la plateforme</td>
+            </tr>
+            <tr>
+              <td><code>global_monthly</code></td>
+              <td>Global</td>
+              <td>Mois</td>
+              <td>Co&ucirc;t total mensuel de toute la plateforme</td>
+            </tr>
+            <tr>
+              <td><code>feature_daily</code></td>
+              <td>Par feature</td>
+              <td>Jour</td>
+              <td>Co&ucirc;t journalier d'une feature IA sp&eacute;cifique</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Alertes D&eacute;clench&eacute;es</h3>
+
+        <h4>GET /api/admin/openai-alerts/triggered</h4>
+
+        <p>Retourne les alertes dont la valeur courante d&eacute;passe ou atteint le seuil configur&eacute;.</p>
+
+        <pre><code class="language-json">// R&eacute;ponse
+{
+  "triggeredAlerts": [
+    {
+      "id": "clx...",
+      "name": "Budget mensuel par utilisateur",
+      "type": "user_monthly",
+      "threshold": 5.00,
+      "actualValue": 7.23,
+      "exceeded": true,
+      "exceededPercentage": 44.6,
+      "affectedUsers": [
+        {
+          "userId": "usr_abc",
+          "name": "Jean Dupont",
+          "email": "jean@example.com",
+          "cost": 7.23,
+          "exceededAmount": 2.23
+        }
+      ],
+      "billingType": "stripe"
+    }
+  ]
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Billing Type pour user_monthly</div>
+          <p>Pour les alertes de type <code>user_monthly</code>, le calcul de la p&eacute;riode d&eacute;pend du type de facturation :</p>
+          <ul>
+            <li><strong>stripe</strong> : utilise la p&eacute;riode de facturation Stripe de l'utilisateur</li>
+            <li><strong>calendar</strong> : utilise le mois calendaire (1er au dernier jour)</li>
+          </ul>
+        </div>
+
+        <h2>Mod&egrave;les Prisma</h2>
+
+        <h3>OpenAIPricing</h3>
+
+        <pre><code class="language-javascript">model OpenAIPricing {
+  id                          String   @id @default(cuid())
+  modelName                   String   @unique
+  inputPricePerMToken         Float    // Prix par million de tokens en entr&eacute;e
+  outputPricePerMToken        Float    // Prix par million de tokens en sortie
+  cachePricePerMToken         Float?   // Prix par million de tokens cach&eacute;s (optionnel)
+  inputPricePerMTokenPriority  Float?  // Variante prioritaire entr&eacute;e
+  outputPricePerMTokenPriority Float?  // Variante prioritaire sortie
+  cachePricePerMTokenPriority  Float?  // Variante prioritaire cache
+  description                 String?
+  isActive                    Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}</code></pre>
+
+        <h3>OpenAIAlert</h3>
+
+        <pre><code class="language-javascript">model OpenAIAlert {
+  id          String   @id @default(cuid())
+  type        String   // user_daily, user_monthly, global_daily, global_monthly, feature_daily
+  threshold   Float    // Seuil en USD
+  enabled     Boolean  @default(true)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}</code></pre>
+
+        <h3>OpenAIUsage (Agr&eacute;gation Journali&egrave;re)</h3>
+
+        <pre><code class="language-javascript">model OpenAIUsage {
+  id               String   @id @default(cuid())
+  userId           String
+  featureName      String
+  model            String
+  date             DateTime // Date du jour (sans heure)
+  promptTokens     Int      @default(0)
+  cachedTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  estimatedCost    Float    @default(0)
+  callsCount       Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, featureName, model, date])
+}</code></pre>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Contrainte d'unicit&eacute;</div>
+          <p>La combinaison <code>userId + featureName + model + date</code> est unique. Chaque nouvel appel pour la m&ecirc;me combinaison <strong>incr&eacute;mente</strong> les compteurs existants (tokens, co&ucirc;t, callsCount) au lieu de cr&eacute;er une nouvelle entr&eacute;e. Cela permet une agr&eacute;gation efficace sans exploser le nombre de lignes.</p>
+        </div>
+
+        <h3>OpenAICall (D&eacute;tail par Appel)</h3>
+
+        <pre><code class="language-javascript">model OpenAICall {
   id               String   @id @default(cuid())
   userId           String?
   featureName      String
   model            String
   promptTokens     Int
+  cachedTokens     Int      @default(0)
   completionTokens Int
   totalTokens      Int
-  estimatedCost    Decimal
-  duration         Int      // ms
+  estimatedCost    Float
+  duration         Int      // Dur&eacute;e en millisecondes
+  metadata         String?  // JSON libre (param&egrave;tres, contexte)
   createdAt        DateTime @default(now())
 }</code></pre>
 
-        <h2>Dashboard</h2>
-        <ul>
-          <li>Graphique des couts journaliers</li>
-          <li>Top features par cout</li>
-          <li>Alertes de depassement de budget</li>
-        </ul>
+        <h2>Flux de Calcul des Co&ucirc;ts</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline de calcul du co&ucirc;t estim&eacute; d'un appel</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant F as Fonctionnalité IA
+    participant API as API OpenAI
+    participant Log as Journaliseur
+    participant P as Tarification
+    participant U as Agrégation
+    participant C as Détail appel
+
+    F->>API: Appel completion (modele, messages)
+    API-->>F: Reponse + utilisation (tokens)
+
+    F->>P: Recuperer tarif pour le modele
+    P-->>F: Prix entree, sortie, cache
+
+    F->>Log: Calculer le cout estime
+    Note over Log: cout = (tokens entree * prix entree<br/>+ tokens cache * prix cache<br/>+ tokens sortie * prix sortie)<br/>/ 1 000 000
+
+    Log->>C: Creer le detail de l appel
+    Log->>U: Mettre a jour l agregation
+    Note over U: Incrementer tokens,<br/>cout et compteur d appels
+          </div>
+        </div>
+
+        <h2>R&eacute;capitulatif des Endpoints</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>M&eacute;thode</th>
+              <th>Endpoint</th>
+              <th>Auth</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/openai-pricing</code></td>
+              <td>Admin</td>
+              <td>Liste des tarifs + flag isPriorityMode</td>
+            </tr>
+            <tr>
+              <td>POST</td>
+              <td><code>/api/admin/openai-pricing</code></td>
+              <td>Admin</td>
+              <td>Cr&eacute;er/MAJ tarif mod&egrave;le (upsert)</td>
+            </tr>
+            <tr>
+              <td>DELETE</td>
+              <td><code>/api/admin/openai-pricing</code></td>
+              <td>Admin</td>
+              <td>Supprimer tarif mod&egrave;le</td>
+            </tr>
+            <tr>
+              <td>PATCH</td>
+              <td><code>/api/admin/openai-pricing</code></td>
+              <td>Admin</td>
+              <td>Basculer mode priorit&eacute;</td>
+            </tr>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/openai-balance</code></td>
+              <td>Public</td>
+              <td>Solde compte OpenAI (cach&eacute; 5 min)</td>
+            </tr>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/openai-alerts</code></td>
+              <td>Admin</td>
+              <td>Liste des alertes configur&eacute;es</td>
+            </tr>
+            <tr>
+              <td>POST</td>
+              <td><code>/api/admin/openai-alerts</code></td>
+              <td>Admin</td>
+              <td>Cr&eacute;er/MAJ une alerte</td>
+            </tr>
+            <tr>
+              <td>DELETE</td>
+              <td><code>/api/admin/openai-alerts</code></td>
+              <td>Admin</td>
+              <td>Supprimer une alerte</td>
+            </tr>
+            <tr>
+              <td>GET</td>
+              <td><code>/api/admin/openai-alerts/triggered</code></td>
+              <td>Admin</td>
+              <td>Alertes d&eacute;clench&eacute;es avec d&eacute;tails</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fichiers Cl&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>R&ocirc;le</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/api/admin/openai-pricing/route.js</code></td>
+              <td>CRUD tarification + toggle mode priorit&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/openai-balance/route.js</code></td>
+              <td>Proxy cach&eacute; vers l'API OpenAI billing</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/openai-alerts/route.js</code></td>
+              <td>CRUD alertes de co&ucirc;ts</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/openai-alerts/triggered/route.js</code></td>
+              <td>D&eacute;tection des d&eacute;passements de seuils</td>
+            </tr>
+            <tr>
+              <td><code>components/admin/OpenAICostsTab.jsx</code></td>
+              <td>Dashboard admin &mdash; onglet co&ucirc;ts OpenAI</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

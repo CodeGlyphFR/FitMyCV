@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -34,9 +28,68 @@
 
         <h1>CRUD CV</h1>
         <p class="lead">
-          Operations de creation, lecture, mise a jour et suppression des CV.
+          Operations de creation, lecture, mise a jour et suppression des CV. Les endpoints utilisent le pattern filename-based (pas d'ID numerique). Authentification via <code>auth()</code> (next-auth session).
         </p>
 
+        <!-- Diagramme CRUD Flow -->
+        <h2>Vue d'ensemble</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux CRUD des CV</div>
+          <div class="mermaid">
+flowchart LR
+    Client["Navigateur"]
+
+    subgraph API["ROUTES API DES CV"]
+        Create["Créer"]
+        List["Lister"]
+        ReadRoute["Lire"]
+        Delete["Supprimer"]
+        DeleteBulk["Supprimer en masse"]
+    end
+
+    subgraph Storage["Couche de stockage"]
+        Write["Écrire un CV"]
+        ReadFn["Lire un CV"]
+        ListFn["Lister les CV"]
+        DeleteFn["Supprimer un CV"]
+    end
+
+    DB[("PostgreSQL<br/>Table des CV")]
+
+    Client -->|"nom, titre, email"| Create
+    Client --> List
+    Client -->|"nom du fichier"| ReadRoute
+    Client -->|"nom du fichier"| Delete
+    Client -->|"liste de fichiers"| DeleteBulk
+
+    Create --> Write
+    List --> ListFn
+    List --> ReadFn
+    ReadRoute --> ReadFn
+    Delete --> DeleteFn
+    DeleteBulk --> DeleteFn
+
+    Write --> DB
+    ReadFn --> DB
+    ListFn --> DB
+    DeleteFn --> DB
+
+    style Client fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Create fill:#6366f1,stroke:#4f46e5,color:#fff
+    style List fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ReadRoute fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Delete fill:#ef4444,stroke:#dc2626,color:#fff
+    style DeleteBulk fill:#ef4444,stroke:#dc2626,color:#fff
+    style Write fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ReadFn fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ListFn fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style DeleteFn fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <!-- Section: API Endpoints Summary -->
         <h2>API Endpoints</h2>
 
         <table>
@@ -44,178 +97,574 @@
             <tr>
               <th>Operation</th>
               <th>Endpoint</th>
+              <th>Methode</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
+              <td><strong>List</strong></td>
+              <td><code>/api/cvs</code></td>
+              <td>GET</td>
+              <td>Lister tous les CV avec metadonnees</td>
+            </tr>
+            <tr>
               <td><strong>Create</strong></td>
-              <td><code>POST /api/cv</code></td>
-              <td>Creer un nouveau CV</td>
+              <td><code>/api/cvs/create</code></td>
+              <td>POST</td>
+              <td>Creer un CV vide</td>
             </tr>
             <tr>
-              <td><strong>Read (liste)</strong></td>
-              <td><code>GET /api/cv</code></td>
-              <td>Lister tous les CV de l'utilisateur</td>
-            </tr>
-            <tr>
-              <td><strong>Read (detail)</strong></td>
-              <td><code>GET /api/cv/[id]</code></td>
-              <td>Recuperer un CV spécifique</td>
-            </tr>
-            <tr>
-              <td><strong>Update</strong></td>
-              <td><code>PUT /api/cv/[id]</code></td>
-              <td>Mettre a jour le contenu</td>
+              <td><strong>Read</strong></td>
+              <td><code>/api/cvs/read?file=xxx.json</code></td>
+              <td>GET</td>
+              <td>Lire le contenu JSON d'un CV</td>
             </tr>
             <tr>
               <td><strong>Delete</strong></td>
-              <td><code>DELETE /api/cv/[id]</code></td>
+              <td><code>/api/cvs/delete</code></td>
+              <td>POST</td>
               <td>Supprimer un CV</td>
+            </tr>
+            <tr>
+              <td><strong>Delete Bulk</strong></td>
+              <td><code>/api/cvs/delete-bulk</code></td>
+              <td>POST</td>
+              <td>Supprimer plusieurs CV (max 50)</td>
             </tr>
           </tbody>
         </table>
 
+        <!-- Section: Creation d'un CV -->
         <h2>Creation d'un CV</h2>
+        <p><code>POST /api/cvs/create</code> &mdash; <strong>app/api/cvs/create/route.js</strong></p>
 
-        <pre><code>// POST /api/cv
-import { auth } from '@/lib/auth/session';
-import prisma from '@/lib/prisma';
-import { createEmptyCv } from '@/lib/cv-core/templates';
-
-export async function POST(request) {
-  const session = await auth();
-  const { name, templateId } = await request.json();
-
-  // Creer le CV en base
-  const cvFile = await prisma.cvFile.create({
-    data: {
-      userId: session.user.id,
-      filename: generateFilename(name),
-      content: createEmptyCv(templateId),
-      isDefault: false
-    }
-  });
-
-  // Creer la version initiale
-  await prisma.cvVersion.create({
-    data: {
-      cvFileId: cvFile.id,
-      versionNumber: 1,
-      content: cvFile.content,
-      origin: 'creation'
-    }
-  });
-
-  return Response.json({ data: cvFile });
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">INPUT</span>
+            <span class="data-flow-title">Body JSON</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-json">{
+  "full_name": "Jean Dupont",
+  "current_title": "Developpeur Full-Stack",
+  "email": "jean@example.com",
+  "recaptchaToken": "03AGdBq24..."
 }</code></pre>
+          </div>
+        </div>
 
-        <h2>Lecture des CV</h2>
+        <h3>Etapes du traitement</h3>
+        <ol>
+          <li><strong>Authentification</strong> : Verification de la session via <code>auth()</code></li>
+          <li><strong>reCAPTCHA</strong> : Validation du token via <code>verifyRecaptcha(recaptchaToken, { callerName: 'create-cv', scoreThreshold: 0.5 })</code></li>
+          <li><strong>Limites d'utilisation</strong> : Verification et incrementation du compteur via <code>incrementFeatureCounter(userId, 'create_cv_manual')</code></li>
+          <li><strong>Creation du JSON</strong> : Structure vide avec 8 sections</li>
+          <li><strong>Generation du filename</strong> : <code>{timestamp}.json</code> (auto-genere, unicite verifiee)</li>
+          <li><strong>Ecriture en DB</strong> : Via <code>writeUserCvFile()</code> puis <code>prisma.cvFile.upsert()</code></li>
+          <li><strong>Cookie</strong> : Definition du cookie <code>cvFile</code> pour selection immediate</li>
+          <li><strong>Telemetrie</strong> : Tracking via <code>trackCvCreation()</code></li>
+        </ol>
 
-        <pre><code>// GET /api/cv
+        <h3>Structure CV vide (8 sections)</h3>
+
+        <pre><code class="language-javascript">// app/api/cvs/create/route.js
+
+var cv = {
+  header: { full_name, current_title, contact: { email, links: [], location: {} } },
+  summary: { description: "" },
+  skills: { hard_skills: [], tools: [], methodologies: [], soft_skills: [] },
+  experience: [],
+  education: [],
+  languages: [],
+  extras: [],
+  projects: []
+};</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Filename unique</div>
+          <p>Le nom de fichier est genere a partir de <code>Date.now()</code>. Si un fichier du meme nom existe deja, le timestamp est incremente jusqu'a obtenir un nom unique.</p>
+        </div>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">Reponse JSON + Cookie</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-json">{
+  "ok": true,
+  "file": "1234567890.json"
+}</code></pre>
+            <h5>Cookie</h5>
+            <p><code>cvFile=1234567890.json</code> (path: <code>/</code>, maxAge: 1 an, sameSite: lax)</p>
+          </div>
+        </div>
+
+        <!-- Section: Liste des CV -->
+        <h2>Liste des CV</h2>
+        <p><code>GET /api/cvs</code> &mdash; <strong>app/api/cvs/route.js</strong></p>
+
+        <p>Retourne la liste complete des CV de l'utilisateur avec leurs metadonnees, triee par <code>createdAt</code> descendant (DB).</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">Reponse JSON</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-json">{
+  "items": [
+    {
+      "file": "1707123456789.json",
+      "label": "15/02/2026 - Developpeur Full-Stack",
+      "title": "Developpeur Full-Stack",
+      "hasTitle": true,
+      "dateLabel": "15/02/2026",
+      "sourceType": "link",
+      "sourceValue": "https://example.com/offre",
+      "createdBy": "generate-cv",
+      "originalCreatedBy": null,
+      "isGenerated": true,
+      "isImported": false,
+      "isManual": false,
+      "isTranslated": false,
+      "language": "fr",
+      "createdAt": "2026-02-15T10:30:00.000Z",
+      "updatedAt": "2026-02-15T11:00:00.000Z"
+    }
+  ],
+  "current": "1707123456789.json"
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Proprietes de chaque item</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Propriete</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>file</code></td>
+              <td>string</td>
+              <td>Nom du fichier (<code>timestamp.json</code>)</td>
+            </tr>
+            <tr>
+              <td><code>label</code></td>
+              <td>string</td>
+              <td>Label d'affichage : <code>date - titre</code></td>
+            </tr>
+            <tr>
+              <td><code>title</code></td>
+              <td>string</td>
+              <td>Titre du poste (<code>header.current_title</code>)</td>
+            </tr>
+            <tr>
+              <td><code>hasTitle</code></td>
+              <td>boolean</td>
+              <td><code>true</code> si le titre n'est pas vide</td>
+            </tr>
+            <tr>
+              <td><code>dateLabel</code></td>
+              <td>string|null</td>
+              <td>Date formatee pour affichage</td>
+            </tr>
+            <tr>
+              <td><code>sourceType</code></td>
+              <td>string|null</td>
+              <td><code>'link'</code>, <code>'pdf'</code>, ou <code>null</code></td>
+            </tr>
+            <tr>
+              <td><code>sourceValue</code></td>
+              <td>string|null</td>
+              <td>URL ou nom de fichier PDF source</td>
+            </tr>
+            <tr>
+              <td><code>createdBy</code></td>
+              <td>string|null</td>
+              <td><code>'generate-cv'</code>, <code>'import-pdf'</code>, <code>'translate-cv'</code>, ou <code>null</code></td>
+            </tr>
+            <tr>
+              <td><code>originalCreatedBy</code></td>
+              <td>string|null</td>
+              <td>createdBy original pour les CV traduits</td>
+            </tr>
+            <tr>
+              <td><code>isGenerated</code></td>
+              <td>boolean</td>
+              <td><code>true</code> si <code>createdBy === 'generate-cv'</code></td>
+            </tr>
+            <tr>
+              <td><code>isImported</code></td>
+              <td>boolean</td>
+              <td><code>true</code> si <code>createdBy === 'import-pdf'</code></td>
+            </tr>
+            <tr>
+              <td><code>isManual</code></td>
+              <td>boolean</td>
+              <td><code>true</code> si <code>createdBy === null</code></td>
+            </tr>
+            <tr>
+              <td><code>isTranslated</code></td>
+              <td>boolean</td>
+              <td><code>true</code> si c'est un CV traduit</td>
+            </tr>
+            <tr>
+              <td><code>language</code></td>
+              <td>string|null</td>
+              <td>Langue du CV (<code>'fr'</code>, <code>'en'</code>, etc.)</td>
+            </tr>
+            <tr>
+              <td><code>createdAt</code></td>
+              <td>string|null</td>
+              <td>Date de creation (ISO 8601)</td>
+            </tr>
+            <tr>
+              <td><code>updatedAt</code></td>
+              <td>string|null</td>
+              <td>Date de derniere modification (ISO 8601)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Selection du CV courant</div>
+          <p>Le champ <code>current</code> est determine depuis le cookie <code>cvFile</code>. Si le cookie ne correspond a aucun fichier existant, le premier fichier de la liste est utilise.</p>
+        </div>
+
+        <!-- Section: Lecture d'un CV -->
+        <h2>Lecture d'un CV</h2>
+        <p><code>GET /api/cvs/read?file=xxx.json</code> &mdash; <strong>app/api/cvs/read/route.js</strong></p>
+
+        <p>Retourne le contenu JSON complet d'un CV specifique via <code>readUserCvFile()</code>.</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">INPUT</span>
+            <span class="data-flow-title">Query Parameter</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-bash">GET /api/cvs/read?file=1234567890.json</code></pre>
+          </div>
+        </div>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">Reponse JSON</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-json">{
+  "cv": {
+    "header": {
+      "full_name": "Jean Dupont",
+      "current_title": "Developpeur Full-Stack",
+      "contact": { "email": "jean@example.com", "links": [], "location": {} }
+    },
+    "summary": { "description": "..." },
+    "skills": { "hard_skills": [], "tools": [], "methodologies": [], "soft_skills": [] },
+    "experience": [],
+    "education": [],
+    "languages": [],
+    "extras": [],
+    "projects": []
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <pre><code class="language-javascript">// app/api/cvs/read/route.js
+
 export async function GET(request) {
   const session = await auth();
-
-  const cvFiles = await prisma.cvFile.findMany({
-    where: { userId: session.user.id },
-    orderBy: { updatedAt: 'desc' },
-    select: {
-      id: true,
-      filename: true,
-      matchScore: true,
-      isDefault: true,
-      updatedAt: true,
-      jobOffer: {
-        select: { title: true, company: true }
-      }
-    }
-  });
-
-  return Response.json({ data: cvFiles });
-}</code></pre>
-
-        <h2>Mise a jour</h2>
-
-        <pre><code>// PUT /api/cv/[id]
-export async function PUT(request, { params }) {
-  const session = await auth();
-  const { content, createVersion } = await request.json();
-
-  // Verifier la propriete
-  const cvFile = await prisma.cvFile.findFirst({
-    where: { id: params.id, userId: session.user.id }
-  });
-
-  if (!cvFile) {
-    return apiError(CommonErrors.notFound('CV'));
+  if (!session?.user?.id) {
+    return CommonErrors.notAuthenticated();
   }
 
-  // Creer une version si demande
-  if (createVersion) {
-    const lastVersion = await prisma.cvVersion.findFirst({
-      where: { cvFileId: cvFile.id },
-      orderBy: { versionNumber: 'desc' }
-    });
+  const { searchParams } = new URL(request.url);
+  const filename = searchParams.get('file');
 
-    await prisma.cvVersion.create({
-      data: {
-        cvFileId: cvFile.id,
-        versionNumber: (lastVersion?.versionNumber || 0) + 1,
-        content: cvFile.content,
-        origin: 'manual_edit'
-      }
-    });
+  if (!filename) {
+    return CvErrors.missingFilename();
   }
 
-  // Mettre a jour le CV
-  const updated = await prisma.cvFile.update({
-    where: { id: params.id },
-    data: { content }
-  });
+  const cvContent = await readUserCvFile(session.user.id, filename);
+  const cv = JSON.parse(cvContent);
 
-  return Response.json({ data: updated });
+  return NextResponse.json({ cv });
 }</code></pre>
 
+        <!-- Section: Suppression -->
         <h2>Suppression</h2>
+        <p><code>POST /api/cvs/delete</code> &mdash; <strong>app/api/cvs/delete/route.js</strong></p>
 
-        <pre><code>// DELETE /api/cv/[id]
-export async function DELETE(request, { params }) {
-  const session = await auth();
-
-  // Supprimer les versions associees
-  await prisma.cvVersion.deleteMany({
-    where: { cvFileId: params.id }
-  });
-
-  // Supprimer le CV
-  await prisma.cvFile.delete({
-    where: { id: params.id, userId: session.user.id }
-  });
-
-  return Response.json({ success: true });
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">INPUT</span>
+            <span class="data-flow-title">Body JSON</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-json">{
+  "file": "1234567890.json"
 }</code></pre>
+          </div>
+        </div>
 
-        <h2>Helpers</h2>
+        <h3>Etapes du traitement</h3>
+        <ol>
+          <li><strong>Authentification</strong> : Verification session via <code>auth()</code></li>
+          <li><strong>Validation filename</strong> : Pas de <code>/</code> ni <code>\</code>, doit finir par <code>.json</code> (fonction <code>isJsonFileSafe()</code>)</li>
+          <li><strong>Verification existence</strong> : Via <code>cvFileExists(userId, file)</code></li>
+          <li><strong>Suppression</strong> : Via <code>deleteUserCvFile()</code> &mdash; cascade Prisma supprime les versions associees</li>
+          <li><strong>Selection suivante</strong> : Choix du prochain CV via <code>pickNextFile()</code> (le plus recent par <code>createdAt</code> DB)</li>
+          <li><strong>Telemetrie</strong> : Tracking via <code>trackEvent(EventTypes.CV_DELETED)</code></li>
+        </ol>
 
-        <pre><code>// lib/cv-core/storage.js
+        <pre><code class="language-javascript">// app/api/cvs/delete/route.js
 
-export async function readUserCvFile(userId, cvFileId) {
-  const cv = await prisma.cvFile.findFirst({
-    where: { id: cvFileId, userId }
-  });
-  return cv?.content;
+function isJsonFileSafe(name) {
+  if (typeof name !== 'string') return false;
+  if (name.includes('/') || name.includes('\\')) return false;
+  return name.toLowerCase().endsWith('.json');
 }
 
-export async function writeUserCvFile(userId, cvFileId, content) {
-  return prisma.cvFile.update({
-    where: { id: cvFileId, userId },
-    data: { content, updatedAt: new Date() }
+async function pickNextFile(userId) {
+  const nextCv = await prisma.cvFile.findFirst({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    select: { filename: true },
   });
+  return nextCv?.filename || null;
 }</code></pre>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">Reponse JSON</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-json">{
+  "ok": true,
+  "nextFile": "9876543210.json"
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Section: Suppression en masse -->
+        <h2>Suppression en masse</h2>
+        <p><code>POST /api/cvs/delete-bulk</code> &mdash; <strong>app/api/cvs/delete-bulk/route.js</strong></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge input">INPUT</span>
+            <span class="data-flow-title">Body JSON</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-json">{
+  "files": ["1234567890.json", "9876543210.json"]
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Contraintes</h3>
+        <ul>
+          <li><strong>Minimum</strong> : 1 fichier requis (sinon erreur <code>NO_FILES</code>)</li>
+          <li><strong>Maximum</strong> : 50 fichiers par requete (sinon erreur <code>TOO_MANY_FILES</code>)</li>
+          <li><strong>Validation</strong> : Chaque filename passe par <code>isJsonFileSafe()</code></li>
+          <li><strong>Non-bloquant</strong> : Si un fichier echoue, les autres continuent</li>
+        </ul>
+
+        <div class="data-flow">
+          <div class="data-flow-header">
+            <span class="data-flow-badge output">OUTPUT</span>
+            <span class="data-flow-title">Reponse JSON</span>
+          </div>
+          <div class="data-flow-content">
+            <pre><code class="language-json">{
+  "ok": true,
+  "deletedCount": 2,
+  "errors": undefined
+}</code></pre>
+            <p>Le champ <code>errors</code> contient la liste des filenames en echec (present uniquement si au moins un fichier a echoue).</p>
+          </div>
+        </div>
+
+        <!-- Section: Storage Layer -->
+        <h2>Storage Layer</h2>
+        <p><strong>lib/cv-core/storage.js</strong> &mdash; Implementation DB via Prisma (migration depuis filesystem).</p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Architecture</div>
+          <p>Toutes les operations passent par PostgreSQL via Prisma. Les signatures des fonctions sont conservees pour compatibilite avec le reste du codebase (migration depuis filesystem). Le contenu JSON est stocke dans la colonne <code>content</code> (type <code>Json</code>) de la table <code>CvFile</code>.</p>
+        </div>
+
+        <h3>writeUserCvFile(userId, filename, content)</h3>
+        <p>Ecrit ou met a jour le contenu d'un CV via Prisma <code>upsert</code>. Sanitize les null bytes via <code>removeNullBytes()</code> (PostgreSQL ne supporte pas <code>\u0000</code> dans les colonnes JSON).</p>
+
+        <pre><code class="language-javascript">// lib/cv-core/storage.js
+
+export async function writeUserCvFile(userId, filename, content) {
+  const rawData = typeof content === 'string' ? JSON.parse(content) : content;
+  // Sanitize null bytes - PostgreSQL doesn't support \u0000 in text/json columns
+  const cvData = removeNullBytes(rawData);
+
+  await prisma.cvFile.upsert({
+    where: { userId_filename: { userId, filename } },
+    update: {
+      content: cvData,
+      updatedAt: new Date(),
+    },
+    create: {
+      userId,
+      filename,
+      content: cvData,
+      contentVersion: 1,
+    },
+  });
+
+  return `db://users/${userId}/cvs/${filename}`;
+}</code></pre>
+
+        <h3>readUserCvFile(userId, filename)</h3>
+        <p>Retourne le contenu du CV sous forme de string JSON (<code>JSON.stringify(content)</code>).</p>
+
+        <pre><code class="language-javascript">// lib/cv-core/storage.js
+
+export async function readUserCvFile(userId, filename) {
+  const cvFile = await prisma.cvFile.findUnique({
+    where: { userId_filename: { userId, filename } },
+    select: { content: true },
+  });
+
+  if (!cvFile?.content) {
+    throw new Error(`CV file not found: ${filename}`);
+  }
+
+  return JSON.stringify(cvFile.content);
+}</code></pre>
+
+        <h3>deleteUserCvFile(userId, filename)</h3>
+        <p>Supprime un CV. Gere l'erreur Prisma <code>P2025</code> (record not found) en retournant <code>false</code> au lieu de throw.</p>
+
+        <pre><code class="language-javascript">// lib/cv-core/storage.js
+
+export async function deleteUserCvFile(userId, filename) {
+  try {
+    await prisma.cvFile.delete({
+      where: { userId_filename: { userId, filename } },
+    });
+    return true;
+  } catch (error) {
+    // P2025 = Record not found
+    if (error.code === 'P2025') {
+      return false;
+    }
+    throw error;
+  }
+}</code></pre>
+
+        <h3>listUserCvFiles(userId)</h3>
+        <p>Retourne la liste des noms de fichiers, triee par <code>createdAt</code> descendant.</p>
+
+        <pre><code class="language-javascript">// lib/cv-core/storage.js
+
+export async function listUserCvFiles(userId) {
+  const files = await prisma.cvFile.findMany({
+    where: { userId },
+    select: { filename: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  return files.map((f) => f.filename);
+}</code></pre>
+
+        <h3>Fonctions utilitaires</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ensureUserCvDir(userId)</code></td>
+              <td>No-op (compatibilite filesystem). Retourne <code>db://users/{userId}/cvs</code></td>
+            </tr>
+            <tr>
+              <td><code>cvFileExists(userId, filename)</code></td>
+              <td>Verifie l'existence d'un CV via <code>findUnique</code></td>
+            </tr>
+            <tr>
+              <td><code>readUserCvFileWithMeta(userId, filename)</code></td>
+              <td>Retourne le contenu + metadonnees (language, contentVersion, createdAt, updatedAt)</td>
+            </tr>
+            <tr>
+              <td><code>detectNewFiles(userId, before)</code></td>
+              <td>Compare la liste actuelle avec une reference pour detecter les nouveaux fichiers</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Section: Securite -->
+        <h2>Securite</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Mesure</th>
+              <th>Implementation</th>
+              <th>Fichier</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Authentification</strong></td>
+              <td>Verification <code>auth()</code> session sur chaque endpoint. Retourne 401 si absent.</td>
+              <td>Tous les endpoints</td>
+            </tr>
+            <tr>
+              <td><strong>Validation filename</strong></td>
+              <td><code>isJsonFileSafe()</code> : pas de <code>/</code> ni <code>\</code> (anti path-traversal), doit finir par <code>.json</code></td>
+              <td>delete/route.js, delete-bulk/route.js</td>
+            </tr>
+            <tr>
+              <td><strong>Limites d'utilisation</strong></td>
+              <td><code>incrementFeatureCounter(userId, 'create_cv_manual')</code> verifie les quotas du plan d'abonnement</td>
+              <td>create/route.js</td>
+            </tr>
+            <tr>
+              <td><strong>reCAPTCHA</strong></td>
+              <td>Validation Google reCAPTCHA v3 avec seuil de score a 0.5</td>
+              <td>create/route.js</td>
+            </tr>
+            <tr>
+              <td><strong>Isolation utilisateur</strong></td>
+              <td>Toutes les requetes Prisma filtrent par <code>userId</code> (index composite <code>userId_filename</code>)</td>
+              <td>storage.js</td>
+            </tr>
+            <tr>
+              <td><strong>Sanitization</strong></td>
+              <td><code>removeNullBytes()</code> sur le contenu avant ecriture, <code>sanitizeInMemory()</code> a la lecture</td>
+              <td>storage.js, route.js (list)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Erreurs centralisees</div>
+          <p>Les reponses d'erreur sont gerees par les helpers <code>CommonErrors</code> et <code>CvErrors</code> depuis <code>lib/api/apiErrors.js</code>, garantissant un format de reponse uniforme sur tous les endpoints CV.</p>
+        </div>
+
       </div>
     </main>
   </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
@@ -226,7 +675,6 @@ export async function writeUserCvFile(userId, cvFileId, content) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

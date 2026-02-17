@@ -3,591 +3,931 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schemas I/O - Pipeline Génération | FitMyCV.io</title>
+  <title>Schemas I/O - Pipeline G&eacute;n&eacute;ration | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Pipeline Génération</a>
+          <a href="./overview.html">Pipeline G&eacute;n&eacute;ration</a>
           <span>/</span>
           <span>Schemas I/O</span>
         </div>
 
         <h1>Schemas I/O</h1>
         <p class="lead">
-          Le pipeline utilise des JSON Schemas stricts pour garantir la structure des réponses OpenAI via <strong>Structured Outputs</strong>. Chaque phase a son schema d'entrée et de sortie.
+          Le pipeline utilise <strong>10 JSON Schemas</strong> pour garantir la structure des r&eacute;ponses OpenAI via <strong>Structured Outputs</strong> (<code>strict: true</code>). Chaque phase dispose d'un schema qui d&eacute;finit pr&eacute;cis&eacute;ment le format de sortie attendu, &eacute;liminant toute ambigu&iuml;t&eacute; dans les r&eacute;ponses de l'IA.
         </p>
 
-        <h2>Organisation des Fichiers</h2>
-
-        <pre><code>lib/features/cv-adaptation/schemas/
-├── classificationSchema.json       # Output phase classification
-├── batchExperienceSchema.json      # Output batch experience
-├── batchProjectSchema.json         # Output batch project
-├── batchSkillsSchema.json          # Output batch skills
-├── batchSummarySchema.json         # Output batch summary
-├── batchExtrasSchema.json          # Output batch extras
-└── recomposeLanguagesSchema.json   # Output recompose langues</code></pre>
-
+        <!-- ==================== STRUCTURED OUTPUTS ==================== -->
         <h2>Structured Outputs OpenAI</h2>
 
-        <p>Les schemas sont utilisés avec le paramètre <code>response_format</code> de l'API OpenAI :</p>
+        <div class="callout callout-info">
+          <div class="callout-title">Mode strict</div>
+          <p>Avec <code>strict: true</code>, OpenAI garantit que la r&eacute;ponse respecte exactement le schema. Aucun champ suppl&eacute;mentaire, aucune valeur hors &eacute;num&eacute;ration. Tous les schemas du pipeline utilisent <code>additionalProperties: false</code> pour un contr&ocirc;le total.</p>
+        </div>
 
-        <pre><code>const response = await openai.chat.completions.create({
-  model: 'gpt-4o',
-  messages: [...],
+        <pre><code class="language-javascript">// Utilisation dans chaque phase du pipeline
+const response = await openai.chat.completions.create({
+  model: modelName,
+  messages: [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ],
   response_format: {
     type: 'json_schema',
     json_schema: {
-      name: 'classification_output',
-      schema: classificationSchema,
-      strict: true  // Validation stricte
+      name: 'batch_experience',    // Nom unique du schema
+      schema: schema,              // Contenu du fichier JSON
+      strict: true                 // Validation stricte
     }
   }
 });</code></pre>
 
-        <div class="callout callout-info">
-          <div class="callout-title">Mode strict</div>
-          <p>Avec <code>strict: true</code>, OpenAI garantit que la réponse respecte exactement le schema. Aucun champ supplémentaire, aucune valeur hors énumération.</p>
-        </div>
+        <!-- ==================== STRUCTURE DES FICHIERS ==================== -->
+        <h2>Structure des Fichiers</h2>
 
-        <h2>Schema : Classification Output</h2>
+        <pre><code class="language-bash">lib/features/cv-adaptation/schemas/
+├── classificationSchema.json       # Phase 0.5 : Classification (cv_classification)
+├── batchExperienceSchema.json      # Phase 1a : Exp&eacute;riences (adapted_experience)
+├── batchProjectSchema.json         # Phase 1b : Projets (adapted_project)
+├── batchExtrasSchema.json          # Phase 1c : Extras (adapted_extras)
+├── batchEducationSchema.json       # Phase 1d : Education (adapted_education)
+├── batchLanguagesSchema.json       # Phase 1e : Langues (adapted_languages)
+├── batchSkillsSchema.json          # Phase 1f : Skills (adapted_skills)
+├── batchSummarySchema.json         # Phase 1g : Summary (cv_summary)
+├── skillsMatchSchema.json          # Sous-phase skills : Correspondance (skills_match_result)
+└── recomposeLanguagesSchema.json   # Post-traitement : Langues (adapted_languages)</code></pre>
+
+        <!-- ==================== SCHEMA 1 : CLASSIFICATION ==================== -->
+        <h2>1. classificationSchema.json</h2>
+
+        <p><span class="badge badge-primary">Phase 0.5</span> <strong>Nom :</strong> <code>cv_classification</code></p>
 
         <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">classificationSchema.json</span>
-          </div>
-          <div class="data-flow-content">
-            <pre><code>{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "experiences": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "ID de l'expérience source"
-          },
-          "decision": {
-            "type": "string",
-            "enum": ["KEEP", "REMOVE", "MOVE_TO_PROJECTS"]
-          },
-          "reason": {
-            "type": "string",
-            "description": "Justification de la décision"
-          },
-          "relevanceScore": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100
-          }
-        },
-        "required": ["id", "decision", "reason", "relevanceScore"]
-      }
+          <div class="data-flow-header">CLASSIFICATION &mdash; Tri des exp&eacute;riences et projets</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Structure de sortie</div>
+            <pre><code class="language-json">{
+  "experiences": [
+    {
+      "index": 0,
+      "action": "KEEP",
+      "reason": "Exp&eacute;rience en cours, emploi principal du candidat"
     },
-    "projects": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "decision": {
-            "type": "string",
-            "enum": ["KEEP", "REMOVE"]
-          },
-          "reason": { "type": "string" },
-          "relevanceScore": { "type": "number" }
-        },
-        "required": ["id", "decision", "reason", "relevanceScore"]
-      }
+    {
+      "index": 1,
+      "action": "MOVE_TO_PROJECTS",
+      "reason": "Projet personnel termin&eacute;, pertinent pour le poste"
+    },
+    {
+      "index": 2,
+      "action": "REMOVE",
+      "reason": "Hors fen&ecirc;tre temporelle et non pertinent pour le poste"
     }
-  },
-  "required": ["experiences", "projects"]
+  ],
+  "projects": [
+    {
+      "index": 0,
+      "action": "KEEP",
+      "reason": "Technologies align&eacute;es avec l'offre"
+    }
+  ]
 }</code></pre>
           </div>
         </div>
 
-        <h2>Schema : Experience Output</h2>
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>experiences[].index</code></td><td><code>integer</code></td><td>Index 0-based de l'exp&eacute;rience dans le tableau source</td></tr>
+            <tr><td><code>experiences[].action</code></td><td><code>enum</code></td><td><code>KEEP</code>, <code>REMOVE</code>, <code>MOVE_TO_PROJECTS</code></td></tr>
+            <tr><td><code>experiences[].reason</code></td><td><code>string</code></td><td>Explication concise de la d&eacute;cision</td></tr>
+            <tr><td><code>projects[].index</code></td><td><code>integer</code></td><td>Index 0-based du projet dans le tableau source</td></tr>
+            <tr><td><code>projects[].action</code></td><td><code>enum</code></td><td><code>KEEP</code>, <code>REMOVE</code> (pas de MOVE_TO_PROJECTS)</td></tr>
+            <tr><td><code>projects[].reason</code></td><td><code>string</code></td><td>Explication concise de la d&eacute;cision</td></tr>
+          </tbody>
+        </table>
 
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">batchExperienceSchema.json</span>
-          </div>
-          <div class="data-flow-content">
-            <pre><code>{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "adaptedExperience": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "company": { "type": "string" },
-        "location": { "type": "string" },
-        "startDate": { "type": "string" },
-        "endDate": { "type": ["string", "null"] },
-        "current": { "type": "boolean" },
-        "responsibilities": {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 1,
-          "maxItems": 6
-        }
-      },
-      "required": ["id", "title", "company", "startDate", "responsibilities"]
-    },
-    "modifications": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "field": { "type": "string" },
-          "action": {
-            "type": "string",
-            "enum": ["kept", "modified", "reordered", "removed"]
-          },
-          "before": { "type": "string" },
-          "after": { "type": "string" },
-          "reason": { "type": "string" }
-        },
-        "required": ["field", "action", "reason"]
-      }
-    },
-    "keywordsUsed": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Mots-clés de l'offre intégrés"
-    }
-  },
-  "required": ["adaptedExperience", "modifications", "keywordsUsed"]
-}</code></pre>
-          </div>
-        </div>
+        <!-- ==================== SCHEMA 2 : EXPERIENCE ==================== -->
+        <h2>2. batchExperienceSchema.json</h2>
 
-        <h2>Schema : Skills Output (Batch Skills)</h2>
+        <p><span class="badge badge-warning">Phase 1a</span> <strong>Nom :</strong> <code>adapted_experience</code></p>
 
         <div class="callout callout-warning">
-          <div class="callout-title">Pattern before/after</div>
-          <p>Le sch&eacute;ma Skills utilise le m&ecirc;me pattern que les exp&eacute;riences avec <code>before</code>/<code>after</code> pour tracker les modifications et permettre le rollback.</p>
+          <div class="callout-title">Pattern {value, reason} | null</div>
+          <p>Les champs modifiables (<code>description</code>, <code>responsibilities</code>, <code>deliverables</code>) utilisent un pattern sp&eacute;cifique : <code>{"value": ..., "reason": "..."}</code> si modifi&eacute;, <code>null</code> si identique &agrave; la source. Le champ <code>title</code> retourne toujours un objet <code>{value, reason}</code> (jamais null).</p>
         </div>
 
         <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">batchSkillsSchema.json</span>
-          </div>
-          <div class="data-flow-content">
-            <pre><code>{
-  "type": "object",
-  "properties": {
-    "hard_skills": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" },
-          "proficiency": {
-            "type": "integer",
-            "enum": [0, 1, 2, 3, 4, 5],
-            "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert"
-          }
-        },
-        "required": ["name", "proficiency"]
-      }
-    },
-    "soft_skills": {
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "tools": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" },
-          "proficiency": {
-            "type": "integer",
-            "enum": [0, 1, 2, 3, 4, 5]
-          }
-        },
-        "required": ["name", "proficiency"]
-      }
-    },
-    "methodologies": {
-      "type": "array",
-      "items": { "type": "string" }
-    },
-    "modifications": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "category": {
-            "type": "string",
-            "enum": ["hard_skills", "soft_skills", "tools", "methodologies"]
-          },
-          "before": { "type": ["string", "null"] },
-          "after": { "type": ["string", "null"] },
-          "action": {
-            "type": "string",
-            "enum": ["kept", "modified", "removed", "added", "level_adjusted", "split", "moved", "merged", "inferred"]
-          },
-          "reason": { "type": "string" },
-          "translated": {
-            "type": ["string", "null"],
-            "description": "OBLIGATOIRE si action=removed, pour rollback"
-          }
-        },
-        "required": ["category", "before", "after", "action", "reason", "translated"]
-      }
-    }
+          <div class="data-flow-header">EXPERIENCE &mdash; Adaptation avec tra&ccedil;abilit&eacute;</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple de sortie</div>
+            <pre><code class="language-json">{
+  "title": {
+    "value": "Responsable Grands Comptes",
+    "reason": "Titre ATS standard pour ce r&ocirc;le commercial"
   },
-  "required": ["hard_skills", "soft_skills", "tools", "methodologies", "modifications"]
+  "description": null,
+  "responsibilities": {
+    "value": ["G&eacute;rer le portefeuille clients", "N&eacute;gocier les contrats"],
+    "reason": "Simplification et alignement avec l'offre"
+  },
+  "deliverables": null,
+  "skill_changes": [
+    {
+      "before": "Photoshop",
+      "after": null,
+      "reason": "Non pertinent pour le poste"
+    },
+    {
+      "before": "Sheets",
+      "after": "Excel",
+      "reason": "&Eacute;quivalence directe"
+    }
+  ],
+  "domain": "Commercial",
+  "years_in_domain": 2.5
 }</code></pre>
           </div>
         </div>
 
-        <h3>Actions de modification</h3>
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>title</code></td><td><code>{value, reason}</code></td><td>Titre de poste ATS-friendly (toujours retourn&eacute;)</td></tr>
+            <tr><td><code>description</code></td><td><code>{value, reason} | null</code></td><td>Description modifi&eacute;e ou null si inchang&eacute;e</td></tr>
+            <tr><td><code>responsibilities</code></td><td><code>{value: string[], reason} | null</code></td><td>Responsabilit&eacute;s modifi&eacute;es ou null</td></tr>
+            <tr><td><code>deliverables</code></td><td><code>{value: string[], reason} | null</code></td><td>R&eacute;sultats chiffr&eacute;s modifi&eacute;s ou null</td></tr>
+            <tr><td><code>skill_changes</code></td><td><code>array</code></td><td>UNIQUEMENT les skills modifi&eacute;s/supprim&eacute;s (pas les conserv&eacute;s)</td></tr>
+            <tr><td><code>skill_changes[].before</code></td><td><code>string</code></td><td>Nom du skill original</td></tr>
+            <tr><td><code>skill_changes[].after</code></td><td><code>string | null</code></td><td>Nouveau nom (null si supprim&eacute;)</td></tr>
+            <tr><td><code>domain</code></td><td><code>string</code></td><td>Domaine m&eacute;tier (ex: &laquo; D&eacute;veloppement logiciel &raquo;)</td></tr>
+            <tr><td><code>years_in_domain</code></td><td><code>number</code></td><td>Dur&eacute;e en ann&eacute;es (copie de <code>_calculated_years</code>)</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== SCHEMA 3 : PROJECT ==================== -->
+        <h2>3. batchProjectSchema.json</h2>
+
+        <p><span class="badge badge-warning">Phase 1b</span> <strong>Nom :</strong> <code>adapted_project</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">PROJECT &mdash; Projet adapt&eacute; avec tra&ccedil;abilit&eacute;</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple de sortie</div>
+            <pre><code class="language-json">{
+  "name": "E-commerce Platform",
+  "role": "D&eacute;veloppeur Full Stack",
+  "start_date": "2022-01",
+  "end_date": "2023-06",
+  "summary": "Plateforme e-commerce B2C d&eacute;velopp&eacute;e avec React et Node.js...",
+  "tech_stack": ["React", "Node.js", "PostgreSQL", "Docker"],
+  "url": "https://github.com/user/ecommerce",
+  "modifications": [
+    {
+      "field": "summary",
+      "action": "modified",
+      "before": "Site de vente en ligne cr&eacute;&eacute; avec React.",
+      "after": "Plateforme e-commerce B2C d&eacute;velopp&eacute;e avec React et Node.js...",
+      "reason": "Mise en avant des technologies demand&eacute;es dans l'offre"
+    },
+    {
+      "field": "tech_stack",
+      "action": "reordered",
+      "before": "PostgreSQL, Docker, React, Node.js",
+      "after": "React, Node.js, PostgreSQL, Docker",
+      "reason": "React et Node.js en priorit&eacute; (demand&eacute;s dans l'offre)"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>name</code></td><td><code>string</code></td><td>Nom du projet</td></tr>
+            <tr><td><code>role</code></td><td><code>string</code></td><td>R&ocirc;le sur le projet</td></tr>
+            <tr><td><code>start_date</code></td><td><code>string</code></td><td>Format YYYY-MM ou YYYY</td></tr>
+            <tr><td><code>end_date</code></td><td><code>string</code></td><td>Format YYYY-MM, YYYY, ou &laquo; present &raquo;</td></tr>
+            <tr><td><code>summary</code></td><td><code>string</code></td><td>Description adapt&eacute;e avec mots-cl&eacute;s</td></tr>
+            <tr><td><code>tech_stack</code></td><td><code>string[]</code></td><td>Technologies r&eacute;ordonn&eacute;es par pertinence</td></tr>
+            <tr><td><code>url</code></td><td><code>string | null</code></td><td>URL du projet (inchang&eacute;e)</td></tr>
+            <tr><td><code>modifications[]</code></td><td><code>array</code></td><td>Tra&ccedil;abilit&eacute; des modifications</td></tr>
+            <tr><td><code>modifications[].action</code></td><td><code>enum</code></td><td><code>modified</code>, <code>removed</code>, <code>reordered</code>, <code>converted</code></td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== SCHEMA 4 : EXTRAS ==================== -->
+        <h2>4. batchExtrasSchema.json</h2>
+
+        <p><span class="badge badge-warning">Phase 1c</span> <strong>Nom :</strong> <code>adapted_extras</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">EXTRAS &mdash; Informations compl&eacute;mentaires adapt&eacute;es</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Structure de sortie (3 sections)</div>
+            <pre><code class="language-json">{
+  "extras": [
+    { "name": "Permis", "summary": "Permis B" },
+    { "name": "Loisirs", "summary": "Randonn&eacute;e, photographie, &eacute;checs" },
+    { "name": "T&eacute;l&eacute;travail", "summary": "Disponible en remote" }
+  ],
+  "modifications": [
+    {
+      "field": "V&eacute;hicule",
+      "action": "removed",
+      "before": "V&eacute;hicule personnel",
+      "after": "",
+      "reason": "Offre sans d&eacute;placement"
+    },
+    {
+      "field": "T&eacute;l&eacute;travail",
+      "action": "added",
+      "before": "",
+      "after": "Disponible en remote",
+      "reason": "Offre mentionne t&eacute;l&eacute;travail hybride"
+    }
+  ],
+  "extras_modifications": [
+    {
+      "before_name": "Permis",
+      "after_name": "Permis",
+      "action": "kept",
+      "reason": "Offre mentionne d&eacute;placements"
+    },
+    {
+      "before_name": "V&eacute;hicule",
+      "after_name": null,
+      "action": "removed",
+      "reason": "Non pertinent pour le poste"
+    },
+    {
+      "before_name": null,
+      "after_name": "T&eacute;l&eacute;travail",
+      "action": "added",
+      "reason": "Offre mentionne t&eacute;l&eacute;travail"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Double tra&ccedil;abilit&eacute;</div>
+          <p>Le schema exige deux niveaux de tra&ccedil;abilit&eacute; : <code>modifications[]</code> pour les changements d&eacute;taill&eacute;s (before/after/reason) et <code>extras_modifications[]</code> pour le mapping explicite entre extras source et extras adapt&eacute;s. Les actions possibles dans <code>extras_modifications</code> sont : <code>kept</code>, <code>modified</code>, <code>removed</code>, <code>added</code>.</p>
+        </div>
+
+        <!-- ==================== SCHEMA 5 : EDUCATION ==================== -->
+        <h2>5. batchEducationSchema.json</h2>
+
+        <p><span class="badge badge-warning">Phase 1d</span> <strong>Nom :</strong> <code>adapted_education</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">EDUCATION &mdash; Formations traduites</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple de sortie</div>
+            <pre><code class="language-json">{
+  "education": [
+    {
+      "institution": "&Eacute;cole Polytechnique",
+      "degree": "Engineering Degree",
+      "field_of_study": "Computer Science",
+      "start_date": "2015-09",
+      "end_date": "2018-06",
+      "location": {
+        "city": "Palaiseau",
+        "region": "&Icirc;le-de-France",
+        "country_code": "FR"
+      }
+    }
+  ],
+  "education_modifications": [
+    {
+      "education_index": 0,
+      "degree_before": "Dipl&ocirc;me d'Ing&eacute;nieur",
+      "degree_after": "Engineering Degree",
+      "field_before": "Informatique",
+      "field_after": "Computer Science",
+      "action": "modified",
+      "reason": "Traduction vers anglais"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>education[].institution</code></td><td><code>string</code></td><td>Nom propre, conserv&eacute; tel quel</td></tr>
+            <tr><td><code>education[].degree</code></td><td><code>string</code></td><td>Dipl&ocirc;me traduit dans la langue cible</td></tr>
+            <tr><td><code>education[].field_of_study</code></td><td><code>string</code></td><td>Domaine d'&eacute;tudes traduit</td></tr>
+            <tr><td><code>education[].location</code></td><td><code>object | null</code></td><td>Objet avec <code>city</code>, <code>region</code>, <code>country_code</code></td></tr>
+            <tr><td><code>education_modifications[].action</code></td><td><code>enum</code></td><td><code>kept</code> ou <code>modified</code></td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== SCHEMA 6 : LANGUAGES ==================== -->
+        <h2>6. batchLanguagesSchema.json</h2>
+
+        <p><span class="badge badge-warning">Phase 1e</span> <strong>Nom :</strong> <code>adapted_languages</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">LANGUAGES &mdash; Langues traduites et align&eacute;es</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple de sortie</div>
+            <pre><code class="language-json">{
+  "languages": [
+    { "name": "English", "level": "Fluent" },
+    { "name": "French", "level": "Native" },
+    { "name": "German", "level": "B1" }
+  ],
+  "language_modifications": [
+    {
+      "language_index": 0,
+      "language_name": "English",
+      "name_before": "Anglais",
+      "name_after": "English",
+      "level_before": "C1",
+      "level_after": "Fluent",
+      "action": "modified",
+      "reason": "Traduction vers anglais et alignement avec exigence 'Fluent English'"
+    },
+    {
+      "language_index": 2,
+      "language_name": "German",
+      "name_before": "Allemand",
+      "name_after": "German",
+      "level_before": "B1",
+      "level_after": "B1",
+      "action": "modified",
+      "reason": "Traduction du nom vers anglais, niveau conserv&eacute;"
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>languages[].name</code></td><td><code>string</code></td><td>Nom de la langue dans la langue cible</td></tr>
+            <tr><td><code>languages[].level</code></td><td><code>string</code></td><td>Niveau traduit/align&eacute;</td></tr>
+            <tr><td><code>language_modifications[].action</code></td><td><code>enum</code></td><td><code>kept</code> (aucun changement de texte) ou <code>modified</code> (toute modification)</td></tr>
+            <tr><td><code>language_modifications[].name_before</code></td><td><code>string</code></td><td>Nom avant modification</td></tr>
+            <tr><td><code>language_modifications[].level_before</code></td><td><code>string</code></td><td>Niveau avant modification</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== SCHEMA 7 : SKILLS ==================== -->
+        <h2>7. batchSkillsSchema.json</h2>
+
+        <p><span class="badge badge-warning">Phase 1f</span> <strong>Nom :</strong> <code>adapted_skills</code></p>
+
+        <div class="callout callout-error">
+          <div class="callout-title">Schema le plus complexe du pipeline</div>
+          <p>Ce schema utilise des d&eacute;finitions r&eacute;f&eacute;renc&eacute;es (<code>$defs</code>) pour deux types de skills : <code>skill_with_proficiency</code> (hard_skills, tools) et <code>skill_simple</code> (soft_skills, methodologies). Chaque skill retourn&eacute; inclut un score de probabilit&eacute; de correspondance avec l'offre.</p>
+        </div>
+
+        <div class="data-flow">
+          <div class="data-flow-header">SKILLS &mdash; 4 cat&eacute;gories avec actions et probabilit&eacute;s</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple de sortie</div>
+            <pre><code class="language-json">{
+  "hard_skills": [
+    {
+      "action": "renamed",
+      "skill_final": "React",
+      "proficiency": 4,
+      "probability": 100,
+      "reason": "Correspondance exacte avec l'offre",
+      "original_value": "React.js",
+      "original_position": 0
+    },
+    {
+      "action": "deleted",
+      "skill_final": "Photoshop",
+      "proficiency": 2,
+      "probability": 0,
+      "reason": "Aucune correspondance avec les comp&eacute;tences demand&eacute;es",
+      "original_value": "Photoshop",
+      "original_position": 3
+    }
+  ],
+  "soft_skills": [
+    {
+      "action": "kept",
+      "skill_final": "Leadership",
+      "probability": 75,
+      "reason": null,
+      "original_value": "Leadership",
+      "original_position": 0
+    }
+  ],
+  "tools": [],
+  "methodologies": []
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Type skill_with_proficiency (hard_skills, tools)</h3>
+
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>action</code></td><td><code>enum</code></td><td><code>renamed</code>, <code>kept</code>, <code>deleted</code></td></tr>
+            <tr><td><code>skill_final</code></td><td><code>string</code></td><td>Nom final dans la langue de l'offre</td></tr>
+            <tr><td><code>proficiency</code></td><td><code>integer (0-5)</code></td><td>0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert</td></tr>
+            <tr><td><code>probability</code></td><td><code>integer (0-100)</code></td><td>Score de correspondance avec l'offre</td></tr>
+            <tr><td><code>reason</code></td><td><code>string | null</code></td><td>Explication (null si action=kept et m&ecirc;me langue)</td></tr>
+            <tr><td><code>original_value</code></td><td><code>string</code></td><td>Nom original dans le CV source</td></tr>
+            <tr><td><code>original_position</code></td><td><code>integer</code></td><td>Index de position dans la cat&eacute;gorie source (0-indexed)</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Type skill_simple (soft_skills, methodologies)</h3>
+
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>action</code></td><td><code>enum</code></td><td><code>renamed</code>, <code>kept</code>, <code>deleted</code></td></tr>
+            <tr><td><code>skill_final</code></td><td><code>string</code></td><td>Nom final dans la langue de l'offre</td></tr>
+            <tr><td><code>probability</code></td><td><code>integer (0-100)</code></td><td>Score de correspondance</td></tr>
+            <tr><td><code>reason</code></td><td><code>string | null</code></td><td>Explication</td></tr>
+            <tr><td><code>original_value</code></td><td><code>string</code></td><td>Nom original dans le CV source</td></tr>
+            <tr><td><code>original_position</code></td><td><code>integer</code></td><td>Index de position source</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Actions et leurs r&egrave;gles</h3>
 
         <table>
           <thead>
             <tr>
               <th>Action</th>
-              <th>before</th>
-              <th>after</th>
-              <th>translated</th>
-              <th>Usage</th>
+              <th>Probabilit&eacute;</th>
+              <th><code>skill_final</code> =</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>kept</code></td>
-              <td>nom</td>
-              <td>nom</td>
-              <td>null</td>
-              <td>Skill conserv&eacute; tel quel</td>
+              <td><span class="badge badge-success">renamed</span></td>
+              <td>&ge; 80%</td>
+              <td>Nom EXACT de l'offre</td>
+              <td>Match fort : le skill est renomm&eacute; pour utiliser la terminologie de l'offre</td>
             </tr>
             <tr>
-              <td><code>modified</code></td>
-              <td>original</td>
-              <td>traduit</td>
-              <td>null</td>
-              <td>Skill traduit/reformul&eacute;</td>
+              <td><span class="badge badge-primary">kept</span></td>
+              <td>60-79%</td>
+              <td>Nom du CV (traduit si langues &ne;)</td>
+              <td>Match partiel : le skill est conserv&eacute; avec son nom original</td>
             </tr>
             <tr>
-              <td><code>removed</code></td>
-              <td>original</td>
-              <td>null</td>
-              <td><strong>TRADUCTION</strong></td>
-              <td>Skill supprim&eacute; (rollback possible)</td>
-            </tr>
-            <tr>
-              <td><code>added</code></td>
-              <td>null</td>
-              <td>nom</td>
-              <td>null</td>
-              <td>Skill ajout&eacute;</td>
-            </tr>
-            <tr>
-              <td><code>level_adjusted</code></td>
-              <td>nom</td>
-              <td>nom</td>
-              <td>null</td>
-              <td>Proficiency modifi&eacute;</td>
-            </tr>
-            <tr>
-              <td><code>split</code></td>
-              <td>original</td>
-              <td>partie</td>
-              <td>null</td>
-              <td>Skill s&eacute;par&eacute; (React / Vue)</td>
-            </tr>
-            <tr>
-              <td><code>moved</code></td>
-              <td>nom</td>
-              <td>nom</td>
-              <td>null</td>
-              <td>Changement de cat&eacute;gorie</td>
-            </tr>
-            <tr>
-              <td><code>merged</code></td>
-              <td>original</td>
-              <td>gard&eacute;</td>
-              <td>null</td>
-              <td>Doublon fusionn&eacute;</td>
-            </tr>
-            <tr>
-              <td><code>inferred</code></td>
-              <td>null</td>
-              <td>nom</td>
-              <td>null</td>
-              <td>M&eacute;thodologie d&eacute;duite</td>
+              <td><span class="badge badge-error">deleted</span></td>
+              <td>&lt; 60%</td>
+              <td>Nom du CV (traduit si langues &ne;)</td>
+              <td>Pas de match : le skill est marqu&eacute; pour suppression</td>
             </tr>
           </tbody>
         </table>
 
+        <div class="callout callout-warning">
+          <div class="callout-title">Compl&eacute;tude obligatoire</div>
+          <p>Chaque skill du CV source DOIT appara&icirc;tre dans la sortie, m&ecirc;me s'il est <code>deleted</code> avec <code>probability: 0</code>. Le nombre total de skills retourn&eacute;s par cat&eacute;gorie DOIT &ecirc;tre &ge; au nombre de skills source. Maximum 6 <code>soft_skills</code> dans le r&eacute;sultat final.</p>
+        </div>
+
+        <!-- ==================== SCHEMA 8 : SUMMARY ==================== -->
+        <h2>8. batchSummarySchema.json</h2>
+
+        <p><span class="badge badge-warning">Phase 1g</span> <strong>Nom :</strong> <code>cv_summary</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">SUMMARY &mdash; R&eacute;sum&eacute; professionnel</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple de sortie</div>
+            <pre><code class="language-json">{
+  "description": "8 ans d'exp&eacute;rience en d&eacute;veloppement logiciel avec expertise full-stack. Am&eacute;lioration de 40% des performances API gr&acirc;ce &agrave; l'optimisation des requ&ecirc;tes et la mise en cache. Ma&icirc;trise de React, Node.js et AWS pour des applications scalables et performantes.",
+  "reason": "R&eacute;sum&eacute; adapt&eacute; pour poste Senior Full-Stack Developer : mise en avant des comp&eacute;tences React, Node.js, AWS demand&eacute;es."
+}</code></pre>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>description</code></td><td><code>string</code></td><td>R&eacute;sum&eacute; professionnel (2-4 phrases, 50-75 mots, langue cible)</td></tr>
+            <tr><td><code>reason</code></td><td><code>string</code></td><td>Raison de la g&eacute;n&eacute;ration (langue interface)</td></tr>
+          </tbody>
+        </table>
+
         <div class="callout callout-info">
-          <div class="callout-title">Champ translated (rollback)</div>
-          <p>Le champ <code>translated</code> est <strong>obligatoire</strong> pour les skills supprim&eacute;s (<code>action: removed</code>). Il contient la traduction du skill dans la langue cible pour permettre un rollback coh&eacute;rent lors de la review.</p>
+          <div class="callout-title">Schema le plus simple</div>
+          <p>Seulement 2 champs obligatoires. La complexit&eacute; est enti&egrave;rement dans le prompt system qui d&eacute;finit la structure DOMAINE + ACCOMPLISSEMENT + VALEUR, les interdictions (pas de titre en d&eacute;but, pas de pronoms personnels, pas de buzzwords) et la validation anti-hallucination.</p>
         </div>
 
-        <h2>Schema : Summary Output</h2>
+        <!-- ==================== SCHEMA 9 : SKILLS MATCH ==================== -->
+        <h2>9. skillsMatchSchema.json</h2>
+
+        <p><span class="badge badge-primary">Sous-phase skills</span> <strong>Nom :</strong> <code>skills_match_result</code></p>
 
         <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">batchSummarySchema.json</span>
-          </div>
-          <div class="data-flow-content">
-            <pre><code>{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "summary": {
-      "type": "object",
-      "properties": {
-        "content": {
-          "type": "string",
-          "minLength": 100,
-          "maxLength": 500,
-          "description": "Résumé professionnel (3-5 phrases)"
-        }
-      },
-      "required": ["content"]
+          <div class="data-flow-header">SKILLS MATCH &mdash; Correspondance par cat&eacute;gorie (matrice de scores)</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple de sortie</div>
+            <pre><code class="language-json">{
+  "matches": [
+    {
+      "cv_skill": "React.js",
+      "offer_skill": "React",
+      "score": 100,
+      "reason": "Variante technique identique",
+      "adapted_name": "React"
     },
-    "keywordsIntegrated": {
-      "type": "array",
-      "items": { "type": "string" },
-      "description": "Mots-clés de l'offre intégrés dans le résumé"
+    {
+      "cv_skill": "Comptabilit&eacute; fournisseurs",
+      "offer_skill": "Accounts Payable",
+      "score": 90,
+      "reason": "Traduction directe du terme comptable",
+      "adapted_name": "Accounts Payable"
     },
-    "structure": {
-      "type": "object",
-      "properties": {
-        "hook": { "type": "string" },
-        "expertise": { "type": "string" },
-        "achievement": { "type": "string" },
-        "value": { "type": "string" }
-      }
+    {
+      "cv_skill": "Sage",
+      "offer_skill": "SAP",
+      "score": 70,
+      "reason": "Logiciels ERP de m&ecirc;me cat&eacute;gorie",
+      "adapted_name": "SAP"
     }
-  },
-  "required": ["summary", "keywordsIntegrated"]
+  ]
 }</code></pre>
           </div>
         </div>
 
-        <h2>Schema : CV Final</h2>
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>matches[].cv_skill</code></td><td><code>string</code></td><td>Recopie EXACTE du nom dans le CV (jamais modifi&eacute;)</td></tr>
+            <tr><td><code>matches[].offer_skill</code></td><td><code>string | null</code></td><td>Skill de l'offre qui matche (null seulement si l'offre est vide)</td></tr>
+            <tr><td><code>matches[].score</code></td><td><code>integer (0-100)</code></td><td>Score de correspondance</td></tr>
+            <tr><td><code>matches[].reason</code></td><td><code>string | null</code></td><td>Explication (langue interface)</td></tr>
+            <tr><td><code>matches[].adapted_name</code></td><td><code>string</code></td><td>Nom adapt&eacute;/traduit dans la langue de l'offre</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Filtrage par score</div>
+          <p>Seuls les skills avec un score &ge; 60 sont retourn&eacute;s dans <code>matches[]</code>. Les skills en dessous de 60 sont filtr&eacute;s par le prompt (pas par le schema). Le champ <code>offer_skill</code> ne peut &ecirc;tre <code>null</code> que si l'offre n'a AUCUN &eacute;l&eacute;ment pour cette cat&eacute;gorie.</p>
+        </div>
+
+        <!-- ==================== SCHEMA 10 : RECOMPOSE LANGUAGES ==================== -->
+        <h2>10. recomposeLanguagesSchema.json</h2>
+
+        <p><span class="badge badge-success">Post-traitement</span> <strong>Nom :</strong> <code>adapted_languages</code></p>
 
         <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">cv-final.json (après recomposition)</span>
+          <div class="data-flow-header">RECOMPOSE LANGUAGES &mdash; Alignement format niveaux</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple de sortie</div>
+            <pre><code class="language-json">{
+  "languages": [
+    { "name": "Anglais", "level": "Courant" },
+    { "name": "Allemand", "level": "B1" }
+  ],
+  "modifications": {
+    "adapted": [
+      {
+        "name": "Anglais",
+        "from": "C1",
+        "to": "Courant",
+        "reason": "Alignement avec l'exigence 'Anglais courant' de l'offre"
+      }
+    ],
+    "unchanged": ["Allemand"]
+  }
+}</code></pre>
           </div>
-          <div class="data-flow-content">
-            <pre><code>{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "header": {
-      "type": "object",
-      "properties": {
-        "firstName": { "type": "string" },
-        "lastName": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "phone": { "type": "string" },
-        "location": { "type": "string" },
-        "linkedIn": { "type": "string" },
-        "portfolio": { "type": "string" }
-      },
-      "required": ["firstName", "lastName", "email"]
-    },
-    "sections": {
-      "type": "object",
-      "properties": {
-        "summary": {
-          "type": "object",
-          "properties": {
-            "content": { "type": "string" }
-          }
-        },
-        "experiences": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/experience" }
-        },
-        "projects": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/project" }
-        },
-        "skills": { "$ref": "#/$defs/skills" },
-        "education": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/education" }
-        },
-        "certifications": { "type": "array" },
-        "extras": { "type": "array" }
-      }
-    },
-    "metadata": {
-      "type": "object",
-      "properties": {
-        "language": { "type": "string" },
-        "generatedAt": { "type": "string" },
-        "sourceJobOfferId": { "type": "integer" },
-        "matchScore": { "type": "integer" }
-      }
-    }
-  },
-  "required": ["header", "sections"],
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>languages[]</code></td><td><code>array</code></td><td>Langues avec niveaux adapt&eacute;s</td></tr>
+            <tr><td><code>modifications.adapted[]</code></td><td><code>array</code></td><td>Langues dont le format a &eacute;t&eacute; adapt&eacute; (<code>name</code>, <code>from</code>, <code>to</code>, <code>reason</code>)</td></tr>
+            <tr><td><code>modifications.unchanged[]</code></td><td><code>string[]</code></td><td>Noms des langues conserv&eacute;es sans modification</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== RECAPITULATIF ==================== -->
+        <h2>R&eacute;capitulatif des 10 Schemas</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Fichier</th>
+              <th>Nom schema</th>
+              <th>Champs principaux</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">0.5</span></td>
+              <td><code>classificationSchema.json</code></td>
+              <td><code>cv_classification</code></td>
+              <td>index, action (KEEP/REMOVE/MOVE_TO_PROJECTS), reason</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1a</span></td>
+              <td><code>batchExperienceSchema.json</code></td>
+              <td><code>adapted_experience</code></td>
+              <td>title, description, responsibilities, deliverables ({value,reason}|null), skill_changes, domain</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1b</span></td>
+              <td><code>batchProjectSchema.json</code></td>
+              <td><code>adapted_project</code></td>
+              <td>name, role, summary, tech_stack, url, modifications[]</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1c</span></td>
+              <td><code>batchExtrasSchema.json</code></td>
+              <td><code>adapted_extras</code></td>
+              <td>extras[], modifications[], extras_modifications[]</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1d</span></td>
+              <td><code>batchEducationSchema.json</code></td>
+              <td><code>adapted_education</code></td>
+              <td>education[], education_modifications[] (degree/field before/after)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1e</span></td>
+              <td><code>batchLanguagesSchema.json</code></td>
+              <td><code>adapted_languages</code></td>
+              <td>languages[], language_modifications[] (name/level before/after)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1f</span></td>
+              <td><code>batchSkillsSchema.json</code></td>
+              <td><code>adapted_skills</code></td>
+              <td>hard_skills[], soft_skills[], tools[], methodologies[] (action, skill_final, probability)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1g</span></td>
+              <td><code>batchSummarySchema.json</code></td>
+              <td><code>cv_summary</code></td>
+              <td>description, reason</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">sub</span></td>
+              <td><code>skillsMatchSchema.json</code></td>
+              <td><code>skills_match_result</code></td>
+              <td>matches[] (cv_skill, offer_skill, score, adapted_name)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">post</span></td>
+              <td><code>recomposeLanguagesSchema.json</code></td>
+              <td><code>adapted_languages</code></td>
+              <td>languages[], modifications (adapted[], unchanged[])</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== DEFINITIONS $defs ==================== -->
+        <h2>D&eacute;finitions r&eacute;f&eacute;renc&eacute;es ($defs)</h2>
+
+        <p>Le schema <code>batchSkillsSchema.json</code> utilise le m&eacute;canisme <code>$defs</code> / <code>$ref</code> de JSON Schema pour factoriser deux types de skills. Voici la structure exacte issue du fichier source :</p>
+
+        <pre><code class="language-json">// batchSkillsSchema.json (extrait $defs)
+{
   "$defs": {
-    "experience": {
+    "skill_with_proficiency": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "company": { "type": "string" },
-        "location": { "type": "string" },
-        "startDate": { "type": "string" },
-        "endDate": { "type": ["string", "null"] },
-        "current": { "type": "boolean" },
-        "responsibilities": {
-          "type": "array",
-          "items": { "type": "string" }
-        }
+        "action": { "type": "string", "enum": ["renamed", "kept", "deleted"] },
+        "skill_final": { "type": "string", "description": "Nom final dans la langue de l'offre" },
+        "proficiency": {
+          "type": "integer",
+          "enum": [0, 1, 2, 3, 4, 5],
+          "description": "0=Awareness, 1=Beginner, 2=Intermediate, 3=Proficient, 4=Advanced, 5=Expert"
+        },
+        "probability": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "reason": { "type": ["string", "null"] },
+        "original_value": { "type": "string" },
+        "original_position": { "type": "integer" }
       },
-      "required": ["title", "company", "startDate", "responsibilities"]
+      "required": ["action", "skill_final", "proficiency", "probability",
+                    "reason", "original_value", "original_position"],
+      "additionalProperties": false
     },
-    "project": {
+    "skill_simple": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "technologies": { "type": "array", "items": { "type": "string" } },
-        "url": { "type": "string" }
+        "action": { "type": "string", "enum": ["renamed", "kept", "deleted"] },
+        "skill_final": { "type": "string" },
+        "probability": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "reason": { "type": ["string", "null"] },
+        "original_value": { "type": "string" },
+        "original_position": { "type": "integer" }
       },
-      "required": ["name", "description"]
-    },
-    "skills": {
-      "type": "object",
-      "properties": {
-        "technical": { "type": "array", "items": { "type": "string" } },
-        "soft": { "type": "array", "items": { "type": "string" } },
-        "languages": { "type": "array" },
-        "methodologies": { "type": "array", "items": { "type": "string" } }
-      }
-    },
-    "education": {
-      "type": "object",
-      "properties": {
-        "degree": { "type": "string" },
-        "institution": { "type": "string" },
-        "year": { "type": "string" }
-      }
+      "required": ["action", "skill_final", "probability",
+                    "reason", "original_value", "original_position"],
+      "additionalProperties": false
     }
   }
 }</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Diff&eacute;rence cl&eacute; : proficiency</div>
+          <p><code>skill_with_proficiency</code> (utilis&eacute; par <code>hard_skills</code> et <code>tools</code>) contient un champ <code>proficiency</code> avec une <strong>enum stricte [0-5]</strong>. <code>skill_simple</code> (utilis&eacute; par <code>soft_skills</code> et <code>methodologies</code>) n'a <strong>pas de proficiency</strong> &mdash; ces cat&eacute;gories n'utilisent pas de niveaux.</p>
+        </div>
+
+        <!-- ==================== SCHEMA EXPERIENCE DETAIL ==================== -->
+        <h2>D&eacute;tails Schema batchExperienceSchema.json</h2>
+
+        <p>Le schema d'exp&eacute;rience est le plus repr&eacute;sentatif du pattern <code>{value, reason} | null</code> utilis&eacute; dans le pipeline. Voici la d&eacute;finition exacte de chaque propri&eacute;t&eacute; :</p>
+
+        <pre><code class="language-json">// batchExperienceSchema.json (structure complète)
+{
+  "name": "adapted_experience",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "object",
+        "description": "Titre de poste ATS-friendly (TOUJOURS retourné)",
+        "properties": {
+          "value": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["value", "reason"]
+      },
+      "description": {
+        "type": ["object", "null"],
+        "description": "null si non modifiée",
+        "properties": { "value": { "type": "string" }, "reason": { "type": "string" } }
+      },
+      "responsibilities": {
+        "type": ["object", "null"],
+        "properties": {
+          "value": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": "string" }
+        }
+      },
+      "deliverables": {
+        "type": ["object", "null"],
+        "properties": {
+          "value": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": "string" }
+        }
+      },
+      "skill_changes": {
+        "type": "array",
+        "items": {
+          "properties": {
+            "before": { "type": "string" },
+            "after": { "type": ["string", "null"] },
+            "reason": { "type": "string" }
+          }
+        }
+      },
+      "domain": { "type": "string" },
+      "years_in_domain": { "type": "number" }
+    },
+    "required": ["title", "description", "responsibilities",
+                  "deliverables", "skill_changes", "domain", "years_in_domain"]
+  }
+}</code></pre>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Asym&eacute;trie title vs autres champs</div>
+          <p><code>title</code> est d&eacute;fini comme <code>"type": "object"</code> (jamais null) car le titre est <strong>toujours</strong> retourn&eacute;. Les champs <code>description</code>, <code>responsibilities</code> et <code>deliverables</code> sont <code>"type": ["object", "null"]</code> (null si inchang&eacute;s). Cette diff&eacute;rence est volontaire : le titre est syst&eacute;matiquement &eacute;valu&eacute; pour optimisation ATS.</p>
+        </div>
+
+        <!-- ==================== SCHEMA CLASSIFICATION DETAIL ==================== -->
+        <h2>D&eacute;tails Schema classificationSchema.json</h2>
+
+        <p>Le schema de classification est le plus simple du pipeline mais impose des contraintes strictes sur les &eacute;num&eacute;rations :</p>
+
+        <table>
+          <thead>
+            <tr><th>Cible</th><th>Enum <code>action</code></th><th>Diff&eacute;rence</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>experiences[]</code></td>
+              <td><code>["KEEP", "REMOVE", "MOVE_TO_PROJECTS"]</code></td>
+              <td>3 actions possibles (d&eacute;placement vers projets)</td>
+            </tr>
+            <tr>
+              <td><code>projects[]</code></td>
+              <td><code>["KEEP", "REMOVE"]</code></td>
+              <td>2 actions seulement (pas de MOVE_TO_PROJECTS)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>Chaque &eacute;l&eacute;ment requiert exactement 3 champs : <code>index</code> (integer, 0-based), <code>action</code> (enum), <code>reason</code> (string). <code>additionalProperties: false</code> sur chaque item.</p>
+
+        <!-- ==================== VALIDATION & CHARGEMENT ==================== -->
+        <h2>Chargement et Validation des Schemas</h2>
+
+        <p>Les schemas sont charg&eacute;s comme des fichiers JSON standard et pass&eacute;s &agrave; l'API OpenAI via le param&egrave;tre <code>response_format</code>. Le mode <code>strict: true</code> active la validation c&ocirc;t&eacute; serveur :</p>
+
+        <pre><code class="language-javascript">import classificationSchema from '@/lib/features/cv-adaptation/schemas/classificationSchema.json';
+
+const response = await openai.chat.completions.create({
+  model: modelName,
+  messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
+  response_format: {
+    type: 'json_schema',
+    json_schema: classificationSchema  // { name, strict, schema }
+  }
+});
+
+// La réponse est GARANTIE de respecter le schema
+const result = JSON.parse(response.choices[0].message.content);</code></pre>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Garantie de conformit&eacute;</div>
+          <p>Avec <code>strict: true</code>, OpenAI utilise le <strong>guided decoding</strong> pour s'assurer que chaque token g&eacute;n&eacute;r&eacute; respecte le schema. Pas besoin de validation c&ocirc;t&eacute; client. Cela &eacute;limine les erreurs de format (champs manquants, types incorrects, valeurs hors enum) qui &eacute;taient fr&eacute;quentes avec le mode JSON libre.</p>
+        </div>
+
+        <!-- ==================== CONVENTIONS ==================== -->
+        <h2>Conventions Transversales</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>strict: true</h4>
+            <p>Tous les schemas utilisent <code>strict: true</code> et <code>additionalProperties: false</code>. OpenAI garantit que la r&eacute;ponse ne contient aucun champ suppl&eacute;mentaire.</p>
+          </div>
+          <div class="card">
+            <h4>Tra&ccedil;abilit&eacute;</h4>
+            <p>Chaque schema inclut un m&eacute;canisme de tra&ccedil;abilit&eacute; : <code>modifications[]</code>, <code>reason</code>, ou <code>before/after</code> pour documenter chaque changement effectu&eacute; par l'IA.</p>
+          </div>
+          <div class="card">
+            <h4>Types nullables</h4>
+            <p>Les champs optionnels utilisent <code>type: ["string", "null"]</code> ou <code>type: ["object", "null"]</code> plut&ocirc;t que <code>required: false</code>, conform&eacute;ment aux exigences de Structured Outputs.</p>
+          </div>
+          <div class="card">
+            <h4>Enums strictes</h4>
+            <p>Les actions sont toujours d&eacute;finies par des <code>enum</code> (ex: <code>["KEEP", "REMOVE", "MOVE_TO_PROJECTS"]</code>, <code>["renamed", "kept", "deleted"]</code>) pour &eacute;viter toute valeur inattendue.</p>
           </div>
         </div>
 
-        <h2>Chargement des Schemas</h2>
+        <!-- ==================== LIENS ==================== -->
+        <h2>Voir aussi</h2>
 
-        <pre><code>// lib/openai-core/schemaLoader.js
-import fs from 'fs/promises';
-import path from 'path';
-
-const SCHEMAS_CACHE = new Map();
-
-export async function loadSchema(schemaPath) {
-  // Check cache
-  if (SCHEMAS_CACHE.has(schemaPath)) {
-    return SCHEMAS_CACHE.get(schemaPath);
-  }
-
-  // Determine base path based on feature
-  const fullPath = path.join(
-    process.cwd(),
-    'lib/features',
-    schemaPath.replace('/', '/schemas/') + '.json'
-  );
-
-  const content = await fs.readFile(fullPath, 'utf-8');
-  const schema = JSON.parse(content);
-
-  // Cache for reuse
-  SCHEMAS_CACHE.set(schemaPath, schema);
-
-  return schema;
-}
-
-// Usage
-const schema = await loadSchema('cv-adaptation/batchExperience');
-
-const response = await callOpenAI({
-  messages: [...],
-  responseFormat: {
-    type: 'json_schema',
-    json_schema: {
-      name: 'batch_experience',
-      schema: schema,
-      strict: true
-    }
-  }
-});</code></pre>
-
-        <h2>Validation Post-Réponse</h2>
-
-        <pre><code>// lib/openai-core/validation.js
-import Ajv from 'ajv';
-
-const ajv = new Ajv({ allErrors: true });
-
-export function validateResponse(data, schema) {
-  const validate = ajv.compile(schema);
-  const valid = validate(data);
-
-  if (!valid) {
-    return {
-      valid: false,
-      errors: validate.errors
-    };
-  }
-
-  return { valid: true, data };
-}
-
-// Usage dans le pipeline
-const response = await callOpenAI({ ... });
-const parsed = JSON.parse(response.choices[0].message.content);
-
-const validation = validateResponse(parsed, batchExperienceSchema);
-if (!validation.valid) {
-  console.error('Schema validation failed:', validation.errors);
-  throw new Error('Invalid AI response structure');
-}</code></pre>
+        <ul>
+          <li><a href="./overview.html">Vue d'ensemble du pipeline</a> &mdash; Workflow global et phases</li>
+          <li><a href="./prompts.html">Prompts IA</a> &mdash; 20 fichiers prompts, structure, hi&eacute;rarchie</li>
+          <li><a href="./phase-batches.html">Phase Batches</a> &mdash; 7 batches d&eacute;taill&eacute;s avec data-flow</li>
+        </ul>
       </div>
     </main>
   </div>
@@ -602,7 +942,6 @@ if (!validation.valid) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

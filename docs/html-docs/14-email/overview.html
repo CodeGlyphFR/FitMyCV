@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Système Email | FitMyCV.io</title>
+  <title>Email - Vue d'ensemble | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,298 +26,249 @@
 
         <h1>Système Email</h1>
         <p class="lead">
-          FitMyCV.io utilise Resend pour l'envoi d'emails transactionnels. Les templates sont stockés en base de données et éditables via l'interface admin.
+          Double transport (SMTP OVH + Resend en fallback), factory pattern <code>createEmailSender()</code>, templates Maily stockés en DB avec fallback HTML hardcodé, et logging systématique de chaque envoi.
         </p>
 
         <h2>Architecture</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Flux d'envoi d'emails</div>
+          <div class="diagram-title">Flux d'envoi d'email</div>
           <div class="mermaid">
-flowchart TB
-    subgraph Triggers["DÉCLENCHEURS"]
-        Auth["Inscription"]
-        Sub["Abonnement"]
-        CV["CV généré"]
-        Alert["Alerte OpenAI"]
+graph TB
+    subgraph TriggersBlock["DECLENCHEURS"]
+        AuthTrigger["Authentification<br/>vérification, reset, changement"]
+        WelcomeTrigger["Inscription<br/>bienvenue"]
+        PurchaseTrigger["Achat de crédits"]
+        RetentionTrigger["Rétention<br/>inactivité"]
     end
 
-    subgraph System["SYSTÈME"]
-        Queue["Email Queue"]
-        Template["Template Engine"]
-        Resend["Resend API"]
+    subgraph FactoryBlock["FABRIQUE D ENVOI"]
+        CreateSender["Créer l'envoyeur<br/>d'email"]
+        LoadTemplate["Charger le modèle<br/>depuis la base"]
+        RenderTpl["Rendre le modèle<br/>Maily ou HTML"]
+        SubstituteVars["Substituer les variables<br/>nom, url..."]
+        FallbackTpl["Secours - modèle<br/>HTML par défaut"]
     end
 
-    subgraph Storage["STOCKAGE"]
-        Templates[(EmailTemplate)]
-        Logs[(EmailLog)]
+    subgraph TransportBlock["TRANSPORT D ENVOI"]
+        ProviderMode["Mode de transport<br/>auto"]
+        SMTPTransport["SMTP OVH"]
+        ResendTransport["Resend API"]
+        TransportFallback["Secours si<br/>SMTP échoue"]
     end
 
-    Triggers --> Queue
-    Queue --> Template
-    Template --> Templates
-    Template --> Resend
-    Resend --> Logs
+    subgraph LoggingBlock["JOURNALISATION"]
+        EmailLogDB["Journal des emails<br/>en base"]
+    end
+
+    AuthTrigger --> CreateSender
+    WelcomeTrigger --> CreateSender
+    PurchaseTrigger --> CreateSender
+    RetentionTrigger --> CreateSender
+    CreateSender --> LoadTemplate
+    LoadTemplate -->|"Modele trouve"| RenderTpl --> SubstituteVars
+    LoadTemplate -->|"Pas de modele"| FallbackTpl
+    SubstituteVars --> ProviderMode
+    FallbackTpl --> ProviderMode
+    ProviderMode -->|"Principal"| SMTPTransport
+    SMTPTransport -->|"Erreur"| TransportFallback --> ResendTransport
+    ProviderMode -->|"Direct"| ResendTransport
+    SMTPTransport --> EmailLogDB
+    ResendTransport --> EmailLogDB
+
+    style AuthTrigger fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style WelcomeTrigger fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PurchaseTrigger fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RetentionTrigger fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CreateSender fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style LoadTemplate fill:#6366f1,stroke:#4f46e5,color:#fff
+    style RenderTpl fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SubstituteVars fill:#6366f1,stroke:#4f46e5,color:#fff
+    style FallbackTpl fill:#64748b,stroke:#475569,color:#fff
+    style ProviderMode fill:#f59e0b,stroke:#d97706,color:#fff
+    style SMTPTransport fill:#22c55e,stroke:#16a34a,color:#fff
+    style ResendTransport fill:#22c55e,stroke:#16a34a,color:#fff
+    style TransportFallback fill:#ef4444,stroke:#dc2626,color:#fff
+    style EmailLogDB fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 
-        <h2>Modèles de Données</h2>
+        <h2>Transports</h2>
 
-        <h3>EmailTemplate</h3>
-
-        <pre><code>model EmailTemplate {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique  // welcome, password_reset, etc.
-  subject     String
-  htmlContent String    @db.Text
-  textContent String?   @db.Text
-  trigger     String?   // Event qui déclenche l'envoi
-  isActive    Boolean   @default(true)
-  variables   Json?     // Variables disponibles
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  logs        EmailLog[]
-}</code></pre>
-
-        <h3>EmailLog</h3>
-
-        <pre><code>model EmailLog {
-  id          Int       @id @default(autoincrement())
-  templateId  Int
-  recipient   String
-  subject     String
-  status      String    // sent, failed, bounced
-  resendId    String?   // ID Resend pour tracking
-  error       String?
-  sentAt      DateTime  @default(now())
-
-  template    EmailTemplate @relation(fields: [templateId], references: [id])
-}</code></pre>
-
-        <h2>Templates Disponibles</h2>
+        <p>Le module <code>transports.js</code> gère deux transports d'envoi d'email :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Template</th>
+              <th>Transport</th>
+              <th>Fournisseur</th>
+              <th>Bibliothèque</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SMTP</td>
+              <td>OVH</td>
+              <td><code>nodemailer</code></td>
+              <td>Transport principal (par défaut)</td>
+            </tr>
+            <tr>
+              <td>API</td>
+              <td>Resend</td>
+              <td><code>resend</code></td>
+              <td>Transport de fallback en cas d'échec SMTP</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Modes de transport</h3>
+
+        <p>La variable d'environnement <code>EMAIL_PROVIDER</code> contrôle le comportement :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Mode</th>
+              <th>Comportement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>smtp</code></td>
+              <td>SMTP uniquement, pas de fallback</td>
+            </tr>
+            <tr>
+              <td><code>resend</code></td>
+              <td>Resend uniquement, pas de SMTP</td>
+            </tr>
+            <tr>
+              <td><code>auto</code> (défaut)</td>
+              <td>SMTP en priorité, Resend en fallback si SMTP échoue</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// Initialisation lazy des transports
+let smtpTransporter = null;
+let resendClient = null;
+
+function getSmtpTransporter() {
+  if (!smtpTransporter) {
+    smtpTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+  }
+  return smtpTransporter;
+}</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Initialisation lazy</strong> — Les transports SMTP et Resend sont initialisés à la première utilisation, pas au démarrage du serveur. La fonction <code>verifySmtpConnection()</code> permet de vérifier la connectivité SMTP.
+        </div>
+
+        <h2>Factory Pattern</h2>
+
+        <p>La fonction <code>createEmailSender(triggerName, config)</code> dans <code>emailSenderFactory.js</code> génère un envoyeur d'email complet :</p>
+
+        <pre><code class="language-javascript">const sendVerificationEmail = createEmailSender('email_verification', {
+  getSubject: (vars) => `Vérifiez votre email`,
+  getVariables: (user, extraData) => ({
+    name: user.name,
+    url: extraData.verificationUrl,
+  }),
+});</code></pre>
+
+        <h3>Pipeline de rendu</h3>
+
+        <ol>
+          <li><strong>Charger le template</strong> — Recherche dans <code>EmailTemplate</code> par <code>triggerName</code></li>
+          <li><strong>Rendre le HTML</strong> — Si <code>designJson</code> existe (Maily), rendu via le moteur Maily. Sinon, utilise <code>htmlContent</code> brut.</li>
+          <li><strong>Substituer les variables</strong> — Remplace les placeholders <code>{{nom}}</code>, <code>{{url}}</code>, etc.</li>
+          <li><strong>Fallback</strong> — Si aucun template en DB, utilise les templates HTML hardcodés dans <code>fallbackTemplates.js</code></li>
+          <li><strong>Envoyer</strong> — Via le transport configuré (SMTP/Resend/auto)</li>
+          <li><strong>Logger</strong> — Enregistre dans <code>EmailLog</code> (succès ou erreur)</li>
+        </ol>
+
+        <h2>Services email</h2>
+
+        <p>Le module <code>emailService.js</code> expose 6 fonctions d'envoi créées via la factory :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
               <th>Trigger</th>
-              <th>Variables</th>
+              <th>Usage</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>welcome</code></td>
-              <td>Inscription</td>
-              <td>userName, welcomeCredits</td>
+              <td><code>sendVerificationEmail()</code></td>
+              <td><code>email_verification</code></td>
+              <td>Vérification d'adresse email à l'inscription</td>
             </tr>
             <tr>
+              <td><code>sendPasswordResetEmail()</code></td>
               <td><code>password_reset</code></td>
-              <td>Demande reset</td>
-              <td>userName, resetUrl</td>
+              <td>Réinitialisation de mot de passe</td>
             </tr>
             <tr>
-              <td><code>subscription_created</code></td>
-              <td>Nouvel abonnement</td>
-              <td>userName, planName, price</td>
+              <td><code>sendEmailChangeVerification()</code></td>
+              <td><code>email_change</code></td>
+              <td>Confirmation de changement d'adresse email</td>
             </tr>
             <tr>
-              <td><code>subscription_canceled</code></td>
-              <td>Annulation</td>
-              <td>userName, endDate</td>
+              <td><code>sendWelcomeEmail()</code></td>
+              <td><code>welcome</code></td>
+              <td>Email de bienvenue après inscription</td>
             </tr>
             <tr>
-              <td><code>payment_failed</code></td>
-              <td>Échec paiement</td>
-              <td>userName, retryUrl</td>
+              <td><code>sendPurchaseCreditsEmail()</code></td>
+              <td><code>purchase_credits</code></td>
+              <td>Confirmation d'achat de crédits</td>
             </tr>
             <tr>
-              <td><code>cv_generation_complete</code></td>
-              <td>CV généré</td>
-              <td>userName, cvName, dashboardUrl</td>
-            </tr>
-            <tr>
-              <td><code>credits_low</code></td>
-              <td>Crédits < seuil</td>
-              <td>userName, balance, buyUrl</td>
-            </tr>
-            <tr>
-              <td><code>openai_cost_alert</code></td>
-              <td>Alerte coûts</td>
-              <td>alertType, currentValue, threshold</td>
+              <td><code>sendInactivityWarningEmail()</code></td>
+              <td>—</td>
+              <td>Avertissement de suppression de compte inactif (RGPD)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Envoi d'Email</h2>
+        <h2>Gestion des tokens</h2>
 
-        <pre><code>// lib/email/sender.js
-import { Resend } from 'resend';
+        <p>Le module <code>emailService.js</code> gère aussi les tokens de vérification :</p>
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+        <ul>
+          <li><code>createVerificationToken()</code> — Crée un token unique pour la vérification d'email (24h d'expiration)</li>
+          <li><code>verifyToken()</code> — Vérifie et valide un token de vérification email</li>
+          <li><code>createPasswordResetToken()</code> — Crée un token pour la réinitialisation de mot de passe (1h d'expiration)</li>
+          <li><code>createEmailChangeRequest()</code> — Crée un token pour le changement d'email (24h d'expiration)</li>
+        </ul>
 
-export async function sendEmail(templateName, recipient, variables = {}) {
-  // 1. Charger le template
-  const template = await prisma.emailTemplate.findUnique({
-    where: { name: templateName }
-  });
+        <h2>Logging</h2>
 
-  if (!template || !template.isActive) {
-    throw new Error(`Template ${templateName} not found or inactive`);
-  }
+        <p>Chaque envoi d'email est enregistré dans le modèle <code>EmailLog</code> en base de données, avec :</p>
 
-  // 2. Interpoler les variables
-  const subject = interpolate(template.subject, variables);
-  const html = interpolate(template.htmlContent, variables);
-  const text = template.textContent
-    ? interpolate(template.textContent, variables)
-    : null;
+        <ul>
+          <li>L'adresse du destinataire</li>
+          <li>Le trigger qui a déclenché l'envoi</li>
+          <li>Le statut (succès ou erreur)</li>
+          <li>Le transport utilisé (SMTP ou Resend)</li>
+          <li>L'horodatage</li>
+        </ul>
 
-  // 3. Envoyer via Resend
-  try {
-    const result = await resend.emails.send({
-      from: 'FitMyCV <noreply@fitmycv.io>',
-      to: recipient,
-      subject,
-      html,
-      text
-    });
-
-    // 4. Logger l'envoi
-    await prisma.emailLog.create({
-      data: {
-        templateId: template.id,
-        recipient,
-        subject,
-        status: 'sent',
-        resendId: result.id
-      }
-    });
-
-    return result;
-
-  } catch (error) {
-    // Logger l'échec
-    await prisma.emailLog.create({
-      data: {
-        templateId: template.id,
-        recipient,
-        subject,
-        status: 'failed',
-        error: error.message
-      }
-    });
-
-    throw error;
-  }
-}
-
-function interpolate(text, variables) {
-  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => variables[key] || '');
-}</code></pre>
-
-        <h2>Triggers Automatiques</h2>
-
-        <pre><code>// lib/email/triggers.js
-
-export async function onUserCreated(user) {
-  const welcomeCredits = await getSetting('welcome_credits');
-
-  await sendEmail('welcome', user.email, {
-    userName: user.name || user.email,
-    welcomeCredits
-  });
-}
-
-export async function onSubscriptionCreated(userId, subscription) {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  const plan = await prisma.subscriptionPlan.findUnique({
-    where: { stripePriceId: subscription.stripePriceId }
-  });
-
-  await sendEmail('subscription_created', user.email, {
-    userName: user.name,
-    planName: plan.displayName,
-    price: `${plan.priceMonthly}€/mois`
-  });
-}
-
-export async function onCvGenerationComplete(userId, cvFile) {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-
-  await sendEmail('cv_generation_complete', user.email, {
-    userName: user.name,
-    cvName: cvFile.filename,
-    dashboardUrl: `${process.env.NEXTAUTH_URL}/dashboard`
-  });
-}</code></pre>
-
-        <h2>Administration</h2>
-
-        <p>Les templates sont éditables via le dashboard admin :</p>
-
-        <div class="card-grid">
-          <div class="card">
-            <h4>Éditeur de Templates</h4>
-            <ul>
-              <li>Édition HTML avec prévisualisation</li>
-              <li>Variables disponibles listées</li>
-              <li>Activation/désactivation</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>Historique d'Envoi</h4>
-            <ul>
-              <li>Logs avec statut</li>
-              <li>Filtres par template/statut</li>
-              <li>Détails d'erreur</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h4>Test d'Envoi</h4>
-            <ul>
-              <li>Envoi de test à une adresse</li>
-              <li>Variables de test pré-remplies</li>
-              <li>Validation avant mise en prod</li>
-            </ul>
-          </div>
+        <div class="callout callout-warning">
+          <strong>Rétention RGPD</strong> — Les <code>EmailLog</code> de plus de 12 mois sont automatiquement supprimés par le job <code>cleanupEmailLogs()</code> dans <code>dataRetention.js</code>.
         </div>
 
-        <h2>API Endpoints</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>/api/admin/email-templates</code></td>
-              <td>GET</td>
-              <td>Lister les templates</td>
-            </tr>
-            <tr>
-              <td><code>/api/admin/email-templates/[id]</code></td>
-              <td>PUT</td>
-              <td>Modifier un template</td>
-            </tr>
-            <tr>
-              <td><code>/api/admin/email-templates/test</code></td>
-              <td>POST</td>
-              <td>Envoyer un test</td>
-            </tr>
-            <tr>
-              <td><code>/api/admin/email-logs</code></td>
-              <td>GET</td>
-              <td>Historique d'envoi</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h2>Fichiers Clés</h2>
+        <h2>Fichiers clés</h2>
 
         <table>
           <thead>
@@ -334,28 +279,31 @@ export async function onCvGenerationComplete(userId, cvFile) {
           </thead>
           <tbody>
             <tr>
-              <td><code>lib/email/sender.js</code></td>
-              <td>Fonction d'envoi principale</td>
+              <td><code>lib/email/emailService.js</code></td>
+              <td>6 fonctions d'envoi + gestion des tokens de vérification</td>
+            </tr>
+            <tr>
+              <td><code>lib/email/emailSenderFactory.js</code></td>
+              <td>Factory <code>createEmailSender()</code> — chargement template, rendu, envoi, logging</td>
+            </tr>
+            <tr>
+              <td><code>lib/email/transports.js</code></td>
+              <td>Double transport SMTP (OVH) + Resend avec mode auto/smtp/resend</td>
             </tr>
             <tr>
               <td><code>lib/email/triggers.js</code></td>
-              <td>Triggers automatiques</td>
+              <td>5 triggers d'email avec catégories (authentication, account, payments)</td>
             </tr>
             <tr>
-              <td><code>components/admin/email/</code></td>
-              <td>Composants admin email</td>
-            </tr>
-            <tr>
-              <td><code>app/api/admin/email-*/</code></td>
-              <td>Endpoints API admin</td>
+              <td><code>lib/email/templates/fallbackTemplates.js</code></td>
+              <td>6 templates HTML hardcodés de fallback</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Prochaines Sections</h2>
-
+        <h2>Prochaines sections</h2>
         <ul>
-          <li><a href="./templates.html">Templates Email</a> - Gestion et édition des templates</li>
+          <li><a href="./templates.html">Templates</a> — Détails des triggers, templates DB et fallbacks HTML</li>
         </ul>
       </div>
     </main>
@@ -371,7 +319,6 @@ export async function onCvGenerationComplete(userId, cvFile) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

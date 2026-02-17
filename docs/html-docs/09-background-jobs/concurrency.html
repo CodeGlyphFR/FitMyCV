@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,66 +26,262 @@
           <span>Concurrence</span>
         </div>
 
-
-        <h1>Gestion de la Concurrence</h1>
+        <h1>Concurrence</h1>
         <p class="lead">
-          Mecanismes de limitation et gestion des taches paralleles.
+          Gestion des limites de concurrence à 3 niveaux : global (processus Node.js), par type de tâche par utilisateur, et exception pour <code>cv_generation</code>.
         </p>
 
-        <h2>Limites de Concurrence</h2>
+        <h2>Constantes de concurrence</h2>
 
-        <div class="callout callout-warning">
-          <div class="callout-title">Limite globale</div>
-          <p>Maximum <strong>3 taches simultanees</strong> par utilisateur pour eviter la surcharge.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Constante</th>
+              <th>Valeur</th>
+              <th>Portée</th>
+              <th>Règle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>MAX_CONCURRENT_JOBS</code></td>
+              <td>3</td>
+              <td>Globale (processus)</td>
+              <td>Maximum de jobs en exécution simultanée dans le processus Node.js. Les jobs en excès restent dans la queue FIFO.</td>
+            </tr>
+            <tr>
+              <td><code>MAX_CONCURRENT_TASK_TYPES</code></td>
+              <td>3</td>
+              <td>Par utilisateur</td>
+              <td>Maximum de types de tâches différents en parallèle pour un même utilisateur.</td>
+            </tr>
+            <tr>
+              <td><code>MAX_CV_GENERATION_PER_USER</code></td>
+              <td>3</td>
+              <td>Par utilisateur, type <code>cv_generation</code></td>
+              <td>Exception : <code>cv_generation</code> peut avoir plusieurs instances simultanées (jusqu'à 3) contrairement aux autres types limités à 1.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Fonction canStartTaskType()</h2>
+
+        <p>Avant de lancer un job, chaque route API appelle <code>canStartTaskType(userId, taskType)</code> qui vérifie 3 conditions en cascade :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Logique de canStartTaskType()</div>
+          <div class="mermaid">
+graph TD
+    Start["Vérifier si la tâche<br/>peut démarrer"]
+    CheckActive{"Utilisateur a des<br/>tâches actives ?"}
+    CheckType{"Type de tâche =<br/>génération CV ?"}
+    CheckCvCount{"Nombre en cours<br/>>= 3 ?"}
+    CheckSingleCount{"Déjà une tâche active<br/>pour ce type ?"}
+    CheckTypesLimit{"Nombre de types<br/>actifs >= 3 ?"}
+    Allowed["Autorisé"]
+    DeniedCvMax["Refusé : max.<br/>générations CV atteint"]
+    DeniedRunning["Refusé : type déjà<br/>en cours d'exécution"]
+    DeniedTypes["Refusé : max. types<br/>simultanés atteint"]
+
+    Start --> CheckActive
+    CheckActive -->|"Non"| Allowed
+    CheckActive -->|"Oui"| CheckType
+    CheckType -->|"Oui"| CheckCvCount
+    CheckType -->|"Non"| CheckSingleCount
+    CheckCvCount -->|"Oui"| DeniedCvMax
+    CheckCvCount -->|"Non"| Allowed
+    CheckSingleCount -->|"Oui"| DeniedRunning
+    CheckSingleCount -->|"Non"| CheckTypesLimit
+    CheckTypesLimit -->|"Oui"| DeniedTypes
+    CheckTypesLimit -->|"Non"| Allowed
+
+    style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CheckActive fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckType fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckCvCount fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckSingleCount fill:#f59e0b,stroke:#d97706,color:#fff
+    style CheckTypesLimit fill:#f59e0b,stroke:#d97706,color:#fff
+    style Allowed fill:#22c55e,stroke:#16a34a,color:#fff
+    style DeniedCvMax fill:#ef4444,stroke:#dc2626,color:#fff
+    style DeniedRunning fill:#ef4444,stroke:#dc2626,color:#fff
+    style DeniedTypes fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
         </div>
 
-        <h2>Implementation</h2>
+        <h3>Raisons de refus</h3>
 
-        <pre><code>// lib/background-jobs/jobQueue.js
-const MAX_CONCURRENT_JOBS = 3;
+        <table>
+          <thead>
+            <tr>
+              <th>Reason</th>
+              <th>Message</th>
+              <th>Quand</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>max_cv_generation_reached</code></td>
+              <td>Maximum 3 générations CV simultanées</td>
+              <td>L'utilisateur a déjà 3 <code>cv_generation</code> en cours</td>
+            </tr>
+            <tr>
+              <td><code>task_type_already_running</code></td>
+              <td>Une tâche de type "X" est déjà en cours</td>
+              <td>Un autre type de tâche (non cv_generation) est déjà actif</td>
+            </tr>
+            <tr>
+              <td><code>max_concurrent_types_reached</code></td>
+              <td>Maximum 3 types de tâches différents en parallèle</td>
+              <td>L'utilisateur a déjà 3 types différents en cours</td>
+            </tr>
+          </tbody>
+        </table>
 
-export async function enqueueJob(userId, jobFn) {
-  // Verifier les jobs en cours
-  const runningJobs = await prisma.backgroundTask.count({
-    where: {
-      userId,
-      status: { in: ['pending', 'running'] }
+        <h2>Tracking en mémoire</h2>
+
+        <p>Le tracking utilise une structure <code>Map&lt;userId, Map&lt;taskType, count&gt;&gt;</code> en mémoire :</p>
+
+        <pre><code class="language-javascript">// Enregistrer le démarrage d'une tâche
+export function registerTaskTypeStart(userId, taskType) {
+  if (!activeTaskTypes.has(userId)) {
+    activeTaskTypes.set(userId, new Map());
+  }
+  const userTypes = activeTaskTypes.get(userId);
+  userTypes.set(taskType, (userTypes.get(taskType) || 0) + 1);
+}
+
+// Enregistrer la fin d'une tâche
+export function registerTaskTypeEnd(userId, taskType) {
+  const userTypes = activeTaskTypes.get(userId);
+  if (userTypes &amp;&amp; userTypes.has(taskType)) {
+    const current = userTypes.get(taskType);
+    if (current <= 1) {
+      userTypes.delete(taskType);
+    } else {
+      userTypes.set(taskType, current - 1);
     }
-  });
+    if (userTypes.size === 0) {
+      activeTaskTypes.delete(userId);
+    }
+  }
+}</code></pre>
 
-  if (runningJobs >= MAX_CONCURRENT_JOBS) {
-    throw new Error('Too many concurrent jobs');
+        <div class="callout callout-warning">
+          <strong>Volatile</strong> — Ce tracking est en mémoire. Un redémarrage du serveur réinitialise les compteurs. Le module <code>cleanupOrphanedTasks.js</code> compense en passant les tâches orphelines (<code>running</code>/<code>queued</code>) en <code>failed</code> au boot.
+        </div>
+
+        <h2>Queue FIFO globale</h2>
+
+        <p>La queue est un simple tableau JavaScript :</p>
+
+        <pre><code class="language-javascript">const jobQueue = [];
+let activeJobs = 0;
+
+export function enqueueJob(jobRunner) {
+  jobQueue.push(jobRunner);
+  processQueue();
+}
+
+function processQueue() {
+  if (activeJobs >= MAX_CONCURRENT_JOBS) return;
+  const nextJob = jobQueue.shift();
+  if (!nextJob) return;
+
+  activeJobs += 1;
+  Promise.resolve(nextJob())
+    .finally(() => {
+      activeJobs -= 1;
+      setImmediate(processQueue); // Dépiler le suivant
+    });
+}</code></pre>
+
+        <h3>Snapshot de la queue</h3>
+
+        <pre><code class="language-javascript">export function getQueueSnapshot() {
+  return {
+    pending: jobQueue.length, // Jobs en attente
+    active: activeJobs,       // Jobs en exécution
+    max: MAX_CONCURRENT_JOBS, // Limite max (3)
+  };
+}</code></pre>
+
+        <h2>Code complet canStartTaskType()</h2>
+
+        <pre><code class="language-javascript">// lib/background-jobs/jobQueue.js
+
+export function canStartTaskType(userId, taskType) {
+  const userTypes = activeTaskTypes.get(userId);
+
+  // Pas de tâches actives pour cet utilisateur
+  if (!userTypes || userTypes.size === 0) {
+    return { allowed: true };
   }
 
-  // Creer et executer le job
-  const task = await prisma.backgroundTask.create({
-    data: { userId, status: 'pending' }
-  });
-
-  // Execution asynchrone
-  setImmediate(async () => {
-    try {
-      await prisma.backgroundTask.update({
-        where: { id: task.id },
-        data: { status: 'running', startedAt: new Date() }
-      });
-
-      const result = await jobFn();
-
-      await prisma.backgroundTask.update({
-        where: { id: task.id },
-        data: { status: 'completed', result, completedAt: new Date() }
-      });
-    } catch (error) {
-      await prisma.backgroundTask.update({
-        where: { id: task.id },
-        data: { status: 'failed', error: error.message }
-      });
+  // Pour cv_generation: permettre plusieurs avec limite
+  if (taskType === 'cv_generation') {
+    const currentCount = userTypes.get('cv_generation') || 0;
+    if (currentCount &gt;= MAX_CV_GENERATION_PER_USER) {
+      return {
+        allowed: false,
+        reason: 'max_cv_generation_reached',
+        message: `Maximum ${MAX_CV_GENERATION_PER_USER} générations CV simultanées`
+      };
     }
-  });
+    return { allowed: true };
+  }
 
-  return task;
+  // Autres types: 1 seul à la fois
+  const currentCount = userTypes.get(taskType) || 0;
+  if (currentCount &gt; 0) {
+    return {
+      allowed: false,
+      reason: 'task_type_already_running',
+      message: `Une tâche de type "${taskType}" est déjà en cours`
+    };
+  }
+
+  // Vérifier la limite de types concurrents
+  const activeTypesCount = [...userTypes.values()].filter(c =&gt; c &gt; 0).length;
+  if (activeTypesCount &gt;= MAX_CONCURRENT_TASK_TYPES) {
+    return {
+      allowed: false,
+      reason: 'max_concurrent_types_reached',
+      message: `Maximum ${MAX_CONCURRENT_TASK_TYPES} types de tâches en parallèle`
+    };
+  }
+
+  return { allowed: true };
 }</code></pre>
+
+        <h2>getActiveTaskTypes()</h2>
+
+        <pre><code class="language-javascript">// lib/background-jobs/jobQueue.js
+
+export function getActiveTaskTypes(userId) {
+  const userTypes = activeTaskTypes.get(userId);
+  return userTypes ? Array.from(userTypes.keys()) : [];
+}</code></pre>
+
+        <h2>Annulation de tâches</h2>
+
+        <p>Le registre <code>processRegistry.js</code> permet d'annuler n'importe quelle tâche en cours via son <code>taskId</code> :</p>
+
+        <pre><code class="language-javascript">// Enregistrement au démarrage du job (dans jobRunner.js)
+const abortController = new AbortController();
+registerAbortController(taskId, abortController);
+
+// Annulation via l'API sync (DELETE ?action=cancel)
+const killResult = await killRegisteredProcess(taskId);
+// → { killed: true, reason: 'aborted' }</code></pre>
+
+        <p>L'annulation déclenche automatiquement :</p>
+        <ul>
+          <li>Le signal <code>AbortController.abort()</code> qui arrête le service en cours</li>
+          <li>Le remboursement des crédits via <code>refundFeatureUsage(taskId)</code></li>
+          <li>La mise à jour du status en <code>cancelled</code></li>
+          <li>La réinitialisation des statuts CV (<code>optimiseStatus</code> / <code>matchScoreStatus</code> → <code>idle</code>)</li>
+        </ul>
+
       </div>
     </main>
   </div>
@@ -106,7 +296,6 @@ export async function enqueueJob(userId, jobFn) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

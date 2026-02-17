@@ -9,18 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -32,39 +29,96 @@
 
         <h1>API Reference</h1>
         <p class="lead">
-          FitMyCV.io expose <strong>113 endpoints API</strong> organisés en domaines fonctionnels. Toutes les API utilisent REST avec JSON.
+          FitMyCV.io expose <strong>160+ endpoints HTTP</strong> r&eacute;partis sur <strong>123 routes API</strong>, organis&eacute;s en domaines fonctionnels. Toutes les API utilisent REST avec JSON.
         </p>
 
         <h2>Base URL</h2>
 
-        <pre><code>https://app.fitmycv.io/api</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>Environnement</th>
+              <th>URL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Production</td>
+              <td><code>https://app.fitmycv.io/api</code></td>
+            </tr>
+            <tr>
+              <td>Pre-production</td>
+              <td><code>https://dev.fitmycv.io/api</code></td>
+            </tr>
+            <tr>
+              <td>Dev local</td>
+              <td><code>http://localhost:3001/api</code></td>
+            </tr>
+          </tbody>
+        </table>
 
         <h2>Authentification</h2>
 
-        <p>La plupart des endpoints nécessitent une session authentifiée via NextAuth.js :</p>
+        <p>4 niveaux d'authentification sont utilis&eacute;s :</p>
 
-        <pre><code>// Cookie de session automatique
-// Ou header Authorization pour API externe
-Authorization: Bearer {session_token}</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>Niveau</th>
+              <th>M&eacute;canisme</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-success">Public</span></td>
+              <td>Aucun</td>
+              <td>Accessible sans authentification</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">Session</span></td>
+              <td>Cookie NextAuth.js</td>
+              <td>Session utilisateur via <code>auth()</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">Admin</span></td>
+              <td>Cookie + r&ocirc;le ADMIN</td>
+              <td>V&eacute;rifie <code>session.user.role === 'ADMIN'</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">Extension JWT</span></td>
+              <td>Header Bearer</td>
+              <td>JWT v&eacute;rifi&eacute; par <code>withExtensionAuth</code></td>
+            </tr>
+          </tbody>
+        </table>
 
-        <h2>Format des Réponses</h2>
+        <pre><code class="language-http">// Session (cookie automatique dans le navigateur)
+Cookie: next-auth.session-token=...
 
-        <h3>Succès</h3>
+// Extension (header Bearer JWT)
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...</code></pre>
 
-        <pre><code>{
+        <h2>Format des R&eacute;ponses</h2>
+
+        <h3>Succ&egrave;s</h3>
+
+        <pre><code class="language-json">{
   "data": { ... },
   "meta": {
-    "timestamp": "2024-01-15T10:30:00Z"
+    "page": 1,
+    "limit": 20,
+    "total": 45,
+    "totalPages": 3
   }
 }</code></pre>
 
         <h3>Erreur</h3>
 
-        <pre><code>{
+        <pre><code class="language-json">{
   "error": "Description de l'erreur",
   "code": "ERROR_CODE",
-  "details": { ... },  // Optionnel
-  "timestamp": "2024-01-15T10:30:00Z"
+  "details": { ... }
 }</code></pre>
 
         <h2>Codes d'Erreur HTTP</h2>
@@ -80,38 +134,43 @@ Authorization: Bearer {session_token}</code></pre>
           <tbody>
             <tr>
               <td><code>200</code></td>
-              <td>Succès</td>
-              <td>GET, PUT réussi</td>
+              <td>Succ&egrave;s</td>
+              <td>GET, PUT, PATCH r&eacute;ussi</td>
             </tr>
             <tr>
               <td><code>201</code></td>
-              <td>Créé</td>
-              <td>POST réussi</td>
+              <td>Cr&eacute;&eacute;</td>
+              <td>POST cr&eacute;ation r&eacute;ussie</td>
+            </tr>
+            <tr>
+              <td><code>202</code></td>
+              <td>Accept&eacute;</td>
+              <td>T&acirc;che background lanc&eacute;e</td>
             </tr>
             <tr>
               <td><code>400</code></td>
               <td>Bad Request</td>
-              <td>Validation échouée</td>
+              <td>Validation &eacute;chou&eacute;e</td>
             </tr>
             <tr>
               <td><code>401</code></td>
-              <td>Non authentifié</td>
-              <td>Session manquante/expirée</td>
+              <td>Non authentifi&eacute;</td>
+              <td>Session manquante/expir&eacute;e</td>
             </tr>
             <tr>
               <td><code>403</code></td>
-              <td>Accès refusé</td>
-              <td>Pas les droits requis</td>
+              <td>Acc&egrave;s refus&eacute;</td>
+              <td>R&ocirc;le insuffisant, feature limit atteinte</td>
             </tr>
             <tr>
               <td><code>404</code></td>
-              <td>Non trouvé</td>
+              <td>Non trouv&eacute;</td>
               <td>Ressource inexistante</td>
             </tr>
             <tr>
               <td><code>429</code></td>
               <td>Limite atteinte</td>
-              <td>Feature limit / rate limit</td>
+              <td>Rate limit / feature limit</td>
             </tr>
             <tr>
               <td><code>500</code></td>
@@ -121,288 +180,153 @@ Authorization: Bearer {session_token}</code></pre>
           </tbody>
         </table>
 
-        <h2>Endpoints par Domaine</h2>
+        <h2>R&eacute;capitulatif par Cat&eacute;gorie</h2>
 
-        <h3>Authentication (5 endpoints)</h3>
+        <div class="diagram">
+          <div class="diagram-title">Architecture des endpoints API</div>
+          <div class="mermaid">
+graph TB
+    subgraph PublicBlock["PUBLIC aucune authentification"]
+        HealthEndpoint["Vérification de santé"]
+        AuthEndpoint["Authentification"]
+        RecaptchaEndpoint["Protection anti-spam"]
+        WebhooksEndpoint["Notifications Stripe"]
+    end
 
-        <table>
-          <thead>
-            <tr>
-              <th>Méthode</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/auth/session</code></td>
-              <td>Récupérer la session courante</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/auth/signin</code></td>
-              <td>Connexion (credentials/OAuth)</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/auth/signout</code></td>
-              <td>Déconnexion</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/auth/register</code></td>
-              <td>Inscription credentials</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/auth/reset-password</code></td>
-              <td>Réinitialiser mot de passe</td>
-            </tr>
-          </tbody>
-        </table>
+    subgraph SessionBlock["SESSION cookie de session"]
+        CvEndpoint["Gestion des CV"]
+        BgEndpoint["Tâches en arrière-plan"]
+        SubEndpoint["Abonnements"]
+        CredEndpoint["Crédits"]
+        ExportEndpoint["Export"]
+        AccountEndpoint["Compte utilisateur"]
+        OthersEndpoint["Retours, paramètres,<br/>événements, consentement,<br/>historique de liens,<br/>télémétrie, accueil"]
+    end
 
-        <h3>CV Management (15 endpoints)</h3>
+    subgraph AdminBlock["ADMIN role administrateur"]
+        AdminEndpoint["Administration"]
+        AnalyticsEndpoint["Statistiques"]
+    end
 
-        <table>
-          <thead>
-            <tr>
-              <th>Méthode</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/cv</code></td>
-              <td>Lister tous les CV</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/cv</code></td>
-              <td>Créer un CV</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/cv/[id]</code></td>
-              <td>Récupérer un CV</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-primary">PUT</span></td>
-              <td><code>/api/cv/[id]</code></td>
-              <td>Modifier un CV</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-error">DELETE</span></td>
-              <td><code>/api/cv/[id]</code></td>
-              <td>Supprimer un CV</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/cv/[id]/duplicate</code></td>
-              <td>Dupliquer un CV</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/cv/[id]/versions</code></td>
-              <td>Lister les versions</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/cv/[id]/versions/[vid]/restore</code></td>
-              <td>Restaurer une version</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/cv/[id]/export/pdf</code></td>
-              <td>Exporter en PDF</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/cv/[id]/export/docx</code></td>
-              <td>Exporter en DOCX</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/cv/[id]/translate</code></td>
-              <td>Traduire un CV</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/cv/import-pdf</code></td>
-              <td>Importer depuis PDF</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/cv/generate</code></td>
-              <td>Générer CV adapté</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/cv/optimize</code></td>
-              <td>Optimiser CV existant</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/cv/match-score</code></td>
-              <td>Calculer match score</td>
-            </tr>
-          </tbody>
-        </table>
+    subgraph ExtBlock["EXTENSION jeton authentification"]
+        ExtEndpoint["Extension navigateur"]
+    end
 
-        <h3>Job Offers (6 endpoints)</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Méthode</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/job-offers</code></td>
-              <td>Lister les offres</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/job-offers</code></td>
-              <td>Créer/extraire une offre</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/job-offers/[id]</code></td>
-              <td>Récupérer une offre</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-error">DELETE</span></td>
-              <td><code>/api/job-offers/[id]</code></td>
-              <td>Supprimer une offre</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Subscription & Credits (10 endpoints)</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Méthode</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/subscription</code></td>
-              <td>Récupérer l'abonnement</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/subscription/checkout</code></td>
-              <td>Créer session Stripe</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/subscription/portal</code></td>
-              <td>Accéder Customer Portal</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/subscription/cancel</code></td>
-              <td>Annuler abonnement</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/credits/balance</code></td>
-              <td>Récupérer solde</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-success">GET</span></td>
-              <td><code>/api/credits/transactions</code></td>
-              <td>Historique transactions</td>
-            </tr>
-            <tr>
-              <td><span class="badge badge-warning">POST</span></td>
-              <td><code>/api/credits/purchase</code></td>
-              <td>Acheter crédits</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Admin (38 endpoints)</h3>
-
-        <div class="callout callout-warning">
-          <div class="callout-title">Accès restreint</div>
-          <p>Tous les endpoints <code>/api/admin/*</code> nécessitent le rôle <code>ADMIN</code>.</p>
+    style HealthEndpoint fill:#22c55e,stroke:#16a34a,color:#fff
+    style AuthEndpoint fill:#22c55e,stroke:#16a34a,color:#fff
+    style RecaptchaEndpoint fill:#22c55e,stroke:#16a34a,color:#fff
+    style WebhooksEndpoint fill:#22c55e,stroke:#16a34a,color:#fff
+    style CvEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style BgEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SubEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CredEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ExportEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style AccountEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style OthersEndpoint fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style AdminEndpoint fill:#ef4444,stroke:#dc2626,color:#fff
+    style AnalyticsEndpoint fill:#ef4444,stroke:#dc2626,color:#fff
+    style ExtEndpoint fill:#f59e0b,stroke:#d97706,color:#fff
+          </div>
         </div>
 
         <table>
           <thead>
             <tr>
-              <th>Groupe</th>
+              <th>Cat&eacute;gorie</th>
+              <th>Auth</th>
+              <th>Routes</th>
               <th>Endpoints</th>
-              <th>Nombre</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Utilisateurs</td>
-              <td><code>/api/admin/users/*</code></td>
-              <td>5</td>
+              <td><strong>Auth &amp; Public</strong></td>
+              <td><span class="badge badge-success">Public</span></td>
+              <td>14</td>
+              <td>~18</td>
             </tr>
             <tr>
-              <td>Plans</td>
-              <td><code>/api/admin/subscription-plans/*</code></td>
+              <td><strong>Account</strong></td>
+              <td><span class="badge badge-primary">Session</span></td>
+              <td>6</td>
               <td>6</td>
             </tr>
             <tr>
-              <td>Crédits</td>
-              <td><code>/api/admin/credit-packs/*</code></td>
-              <td>4</td>
+              <td><strong>CV &amp; CVs</strong></td>
+              <td><span class="badge badge-primary">Session</span></td>
+              <td>15</td>
+              <td>17</td>
             </tr>
             <tr>
-              <td>Email</td>
-              <td><code>/api/admin/email-*</code></td>
-              <td>8</td>
-            </tr>
-            <tr>
-              <td>OpenAI</td>
-              <td><code>/api/admin/openai-*</code></td>
-              <td>4</td>
-            </tr>
-            <tr>
-              <td>Settings</td>
-              <td><code>/api/admin/settings/*</code></td>
-              <td>4</td>
-            </tr>
-            <tr>
-              <td>Analytics</td>
-              <td><code>/api/analytics/*</code></td>
+              <td><strong>Background Tasks</strong></td>
+              <td><span class="badge badge-primary">Session</span></td>
+              <td>7</td>
               <td>9</td>
+            </tr>
+            <tr>
+              <td><strong>Subscription</strong></td>
+              <td><span class="badge badge-primary">Session</span></td>
+              <td>10</td>
+              <td>10</td>
+            </tr>
+            <tr>
+              <td><strong>Credits &amp; Checkout</strong></td>
+              <td><span class="badge badge-primary">Session</span></td>
+              <td>5</td>
+              <td>5</td>
+            </tr>
+            <tr>
+              <td><strong>Export</strong></td>
+              <td><span class="badge badge-primary">Session</span></td>
+              <td>4</td>
+              <td>6</td>
+            </tr>
+            <tr>
+              <td><strong>Autres (session)</strong></td>
+              <td><span class="badge badge-primary">Session</span></td>
+              <td>12</td>
+              <td>17</td>
+            </tr>
+            <tr>
+              <td><strong>Admin</strong></td>
+              <td><span class="badge badge-error">Admin</span></td>
+              <td>34</td>
+              <td>53</td>
+            </tr>
+            <tr>
+              <td><strong>Analytics</strong></td>
+              <td><span class="badge badge-error">Admin</span></td>
+              <td>10</td>
+              <td>12</td>
+            </tr>
+            <tr>
+              <td><strong>Extension</strong></td>
+              <td><span class="badge badge-warning">JWT</span></td>
+              <td>5</td>
+              <td>6</td>
+            </tr>
+            <tr>
+              <td><strong>Cron &amp; Webhooks</strong></td>
+              <td>Interne</td>
+              <td>2</td>
+              <td>2</td>
             </tr>
           </tbody>
         </table>
 
         <h2>Pagination</h2>
 
-        <p>Les endpoints de liste supportent la pagination :</p>
+        <p>Les endpoints de liste supportent la pagination via query params :</p>
 
-        <pre><code>GET /api/cv?page=1&limit=20
+        <pre><code class="language-http">GET /api/admin/users?page=1&amp;limit=20&amp;search=jean&amp;sortBy=newest
 
 // Response
 {
-  "data": [...],
-  "meta": {
-    "page": 1,
-    "limit": 20,
-    "total": 45,
-    "totalPages": 3
-  }
+  "users": [...],
+  "total": 45,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 3
 }</code></pre>
 
         <h2>Rate Limiting</h2>
@@ -410,25 +334,25 @@ Authorization: Bearer {session_token}</code></pre>
         <table>
           <thead>
             <tr>
-              <th>Endpoint</th>
+              <th>Cat&eacute;gorie</th>
               <th>Limite</th>
-              <th>Fenêtre</th>
+              <th>Fen&ecirc;tre</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Auth</td>
-              <td>10 requêtes</td>
+              <td>Auth (login, register)</td>
+              <td>10 requ&ecirc;tes</td>
               <td>1 minute</td>
             </tr>
             <tr>
               <td>API standard</td>
-              <td>100 requêtes</td>
+              <td>100 requ&ecirc;tes</td>
               <td>1 minute</td>
             </tr>
             <tr>
-              <td>Génération IA</td>
-              <td>5 requêtes</td>
+              <td>G&eacute;n&eacute;ration IA</td>
+              <td>5 requ&ecirc;tes</td>
               <td>1 minute</td>
             </tr>
           </tbody>
@@ -446,9 +370,9 @@ Authorization: Bearer {session_token}</code></pre>
           </thead>
           <tbody>
             <tr>
-              <td><code>/api/webhooks/stripe</code></td>
+              <td><code>POST /api/webhooks/stripe</code></td>
               <td>Stripe</td>
-              <td>checkout.*, subscription.*, invoice.*</td>
+              <td>checkout.session.completed, customer.subscription.*, invoice.*</td>
             </tr>
           </tbody>
         </table>
@@ -456,9 +380,10 @@ Authorization: Bearer {session_token}</code></pre>
         <h2>Prochaines Sections</h2>
 
         <ul>
-          <li><a href="./public.html">Endpoints Publics</a> - APIs sans authentification</li>
-          <li><a href="./authenticated.html">Endpoints Authentifiés</a> - APIs utilisateur</li>
-          <li><a href="./admin.html">Endpoints Admin</a> - APIs administration</li>
+          <li><a href="./public.html">Endpoints Publics</a> &mdash; Auth, health, recaptcha, webhooks</li>
+          <li><a href="./authenticated.html">Endpoints Authentifi&eacute;s</a> &mdash; CV, background tasks, subscription, credits, export</li>
+          <li><a href="./admin.html">Endpoints Admin</a> &mdash; Administration, analytics</li>
+          <li><a href="./extension.html">Endpoints Extension</a> &mdash; API extension navigateur (JWT)</li>
         </ul>
       </div>
     </main>

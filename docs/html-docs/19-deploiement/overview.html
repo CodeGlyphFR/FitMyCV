@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Déploiement &amp; Infrastructure | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Déploiement</span>
+        </div>
+
+        <h1>Déploiement &amp; Infrastructure</h1>
+        <p class="lead">
+          Architecture Docker multi-stage, pipelines CI/CD GitHub Actions sur runner auto-hébergé, variables d'environnement, health checks et configuration Next.js 16 standalone. Le déploiement couvre deux environnements : pre-prod (<code>dev.fitmycv.io</code>) et production (<code>app.fitmycv.io</code>).
+        </p>
+
+        <!-- ==================== ARCHITECTURE DOCKER ==================== -->
+        <h2>Architecture Docker</h2>
+
+        <p>Le <code>Dockerfile</code> utilise un build multi-stage en <strong>4 étapes</strong> pour optimiser la taille de l'image finale et séparer les dépendances de build des dépendances de production.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Build Docker multi-stage</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph S1["Stage 1 — deps"]
+        direction TB
+        A1["Image Node.js 20 Alpine"]
+        A2["Paquets système<br/>(compilation native)"]
+        A3["Installer toutes<br/>les dépendances"]
+        A4["Ignorer le téléchargement<br/>de Puppeteer"]
+        A1 --> A2 --> A3 --> A4
+    end
+
+    subgraph S2["Stage 2 — production-deps"]
+        direction TB
+        B1["Image Node.js 20 Alpine"]
+        B2["Installer les dépendances<br/>de production"]
+        B3["Dépendances de<br/>production uniquement"]
+        B1 --> B2 --> B3
+    end
+
+    subgraph S3["Stage 3 — builder"]
+        direction TB
+        C1["Copier les dépendances<br/>depuis le stage 1"]
+        C2["Copie du code source<br/>complet"]
+        C3["Injecter les variables<br/>publiques"]
+        C4["Générer le client<br/>base de données"]
+        C5["Compiler l'application"]
+        C1 --> C2 --> C3 --> C4 --> C5
+    end
+
+    subgraph S4["Stage 4 — runner"]
+        direction TB
+        D1["Image Node.js 20 Alpine"]
+        D2["Paquets système<br/>(navigateur, polices,<br/>outils PDF)"]
+        D3["Copier les dépendances<br/>de production"]
+        D4["Copier le serveur<br/>et les fichiers statiques"]
+        D5["Copier les migrations<br/>et scripts"]
+        D6["Vérification de santé<br/>et démarrage serveur"]
+        D1 --> D2 --> D3 --> D4 --> D5 --> D6
+    end
+
+    S1 -->|"Toutes les dependances"| S3
+    S2 -->|"Dependances production"| S4
+    S3 -->|"Serveur et fichiers statiques"| S4
+    style A1 fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style A2 fill:#64748b,stroke:#475569,color:#fff
+    style A3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style A4 fill:#64748b,stroke:#475569,color:#fff
+    style B1 fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B3 fill:#22c55e,stroke:#16a34a,color:#fff
+    style C1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C3 fill:#f59e0b,stroke:#d97706,color:#fff
+    style C4 fill:#14b8a6,stroke:#0d9488,color:#fff
+    style C5 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style D1 fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style D2 fill:#64748b,stroke:#475569,color:#fff
+    style D3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D4 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D5 fill:#14b8a6,stroke:#0d9488,color:#fff
+    style D6 fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Stage 1 — <code>deps</code> (Toutes les dépendances)</h3>
+        <p>Installe l'ensemble des dépendances (build + dev) nécessaires à la compilation. Les packages natifs (<code>python3</code>, <code>make</code>, <code>g++</code>) sont requis pour compiler certains modules Node.js natifs.</p>
+
+        <pre><code class="language-bash">FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat python3 make g++
+WORKDIR /app
+COPY package*.json ./
+COPY prisma ./prisma
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN npm ci</code></pre>
+
+        <h3>Stage 2 — <code>production-deps</code> (Dépendances de production)</h3>
+        <p>Stage séparé qui installe uniquement les dépendances de production (<code>--omit=dev</code>). Cela permet d'obtenir un <code>node_modules</code> minimal pour l'image finale.</p>
+
+        <pre><code class="language-bash">FROM node:20-alpine AS production-deps
+RUN apk add --no-cache python3 make g++
+WORKDIR /app
+COPY package*.json ./
+COPY prisma ./prisma
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN npm ci --omit=dev</code></pre>
+
+        <div class="callout callout-info">
+          <strong>DATABASE_URL dummy</strong> — Une URL factice est fournie car Prisma valide la variable lors du <code>postinstall</code>. La vraie URL sera injectée au runtime via Docker Compose.
+        </div>
+
+        <h3>Stage 3 — <code>builder</code> (Compilation)</h3>
+        <p>Compile l'application Next.js en mode production. Les variables <code>NEXT_PUBLIC_*</code> sont injectées comme <code>ARG</code> Docker car Next.js les intègre (bake) dans le JavaScript client au moment du build.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Build ARG</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>NEXT_PUBLIC_RECAPTCHA_SITE_KEY</code></td>
+              <td>Clé publique reCAPTCHA v3 pour le frontend</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code></td>
+              <td>Clé publique Stripe pour le checkout côté client</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_SITE_URL</code></td>
+              <td>URL publique du site (ex: <code>https://app.fitmycv.io</code>)</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_APP_URL</code></td>
+              <td>URL de l'application (identique à SITE_URL en production)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Stage 4 — <code>runner</code> (Image finale)</h3>
+        <p>L'image de production embarque les outils système nécessaires au fonctionnement de l'application :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Package</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>chromium</code></td>
+              <td>Navigateur headless pour Puppeteer (export PDF des CV + extraction d'URL)</td>
+            </tr>
+            <tr>
+              <td><code>font-noto</code>, <code>font-freefont</code></td>
+              <td>Polices pour le rendu correct des PDF avec Chromium</td>
+            </tr>
+            <tr>
+              <td><code>graphicsmagick</code></td>
+              <td>Conversion PDF → images lors de l'import de CV (via <code>pdf2pic</code>)</td>
+            </tr>
+            <tr>
+              <td><code>ghostscript</code></td>
+              <td>Backend de rendu PDF pour GraphicsMagick</td>
+            </tr>
+            <tr>
+              <td><code>openssl</code></td>
+              <td>Requis par Prisma pour les connexions SSL à PostgreSQL</td>
+            </tr>
+            <tr>
+              <td><code>libc6-compat</code></td>
+              <td>Compatibilité glibc requise par certains binaires natifs Node.js sur Alpine</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Puppeteer</strong> — La variable <code>PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser</code> force Puppeteer à utiliser le Chromium système au lieu de télécharger sa propre version, ce qui réduit la taille de l'image.
+        </div>
+
+        <p>L'image finale copie 5 éléments depuis les stages précédents :</p>
+
+        <pre><code class="language-bash"># 1. Production node_modules (Prisma CLI, stripe, etc.)
+COPY --from=production-deps /app/node_modules ./node_modules
+
+# 2. Next.js standalone server
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# 3. Prisma (schema + migrations + data-migrations)
+COPY --from=builder /app/prisma ./prisma
+
+# 4. Post-deploy scripts (migrations runner, stripe sync)
+COPY --from=builder /app/scripts ./scripts
+
+# 5. package.json (needed for npm run scripts)
+COPY --from=builder /app/package.json ./package.json</code></pre>
+
+        <!-- ==================== HEALTH CHECK ==================== -->
+        <h2>Health Check</h2>
+
+        <p>Le conteneur Docker embarque un health check natif qui interroge l'endpoint <code>/api/health</code> :</p>
+
+        <pre><code class="language-bash">HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "fetch('http://localhost:'+(process.env.PORT||3000)+'/api/health') \
+    .then(r=>{if(r.ok)process.exit(0);else process.exit(1)}) \
+    .catch(()=>process.exit(1))"</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Paramètre</th>
+              <th>Valeur</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>interval</code></td>
+              <td>30s</td>
+              <td>Fréquence de vérification</td>
+            </tr>
+            <tr>
+              <td><code>timeout</code></td>
+              <td>10s</td>
+              <td>Temps max d'attente de la réponse</td>
+            </tr>
+            <tr>
+              <td><code>start-period</code></td>
+              <td>40s</td>
+              <td>Délai de grâce au démarrage du conteneur</td>
+            </tr>
+            <tr>
+              <td><code>retries</code></td>
+              <td>3</td>
+              <td>Échecs consécutifs avant de marquer le conteneur <code>unhealthy</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== CI/CD PIPELINES ==================== -->
+        <h2>Pipelines CI/CD</h2>
+
+        <p>Deux workflows GitHub Actions gèrent le cycle de vie complet du déploiement sur un <strong>runner auto-hébergé</strong>. Le runner a un accès direct à la machine de production, ce qui permet des opérations Docker et base de données locales.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Vue d'ensemble des pipelines CI/CD</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph PR["Pull Request vers main"]
+        direction TB
+        CI["Validation du build<br/>et audit"]
+        CD["Build Docker et<br/>déploiement staging"]
+        DB["Cloner la base de données<br/>production vers staging"]
+        Stripe["Synchronisation<br/>Stripe test"]
+        CI --> CD --> DB --> Stripe
+    end
+
+    subgraph Merge["Merge sur main"]
+        direction TB
+        Version["Versioning automatique"]
+        Build["Construire l'image<br/>Docker production"]
+        Deploy["Déploiement et<br/>vérification de santé"]
+        Migrate["Migrations de schéma<br/>et de données"]
+        Sync["Synchroniser les branches<br/>release et dev"]
+        Version --> Build --> Deploy --> Migrate
+        Version --> Sync
+    end
+
+    subgraph Close["Fermeture PR"]
+        direction TB
+        Stop["Arrêter le conteneur<br/>staging"]
+        Drop["Supprimer la base<br/>de données staging"]
+        Stop --> Drop
+    end
+
+    PR -->|"merge"| Merge
+    PR -->|"close"| Close
+    style CI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CD fill:#6366f1,stroke:#4f46e5,color:#fff
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Stripe fill:#f59e0b,stroke:#d97706,color:#fff
+    style Version fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Build fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Deploy fill:#22c55e,stroke:#16a34a,color:#fff
+    style Migrate fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Sync fill:#64748b,stroke:#475569,color:#fff
+    style Stop fill:#ef4444,stroke:#dc2626,color:#fff
+    style Drop fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <!-- ===== PREPROD ===== -->
+        <h3>Pipeline Pre-prod (<code>preprod.yml</code>)</h3>
+
+        <p>Déclenché sur chaque <strong>Pull Request vers <code>main</code></strong> (opened, synchronize, reopened, closed). Comprend 3 jobs :</p>
+
+        <h4>Job 1 — CI (Validation du build)</h4>
+        <p>Vérifie que l'application compile correctement sans Docker :</p>
+
+        <pre><code class="language-yaml">ci:
+  if: github.event.action != 'closed'
+  steps:
+    - npm ci
+    - cp .env.example .env && npx prisma generate
+    - npm run build  # NODE_ENV=production
+    - npm audit --audit-level=critical || true</code></pre>
+
+        <h4>Job 2 — Deploy Preview (Staging)</h4>
+        <p>Déploie l'application sur <code>dev.fitmycv.io</code> (port 3001) avec une base de données clonée depuis la production :</p>
+
+        <ol>
+          <li><strong>Clone DB</strong> — <code>pg_dump fitmycv_prod</code> → <code>fitmycv_release</code> (uniquement à l'ouverture de la PR)</li>
+          <li><strong>Sanitize</strong> — Supprime toutes les références Stripe Live pour éviter les opérations accidentelles sur les données de paiement réelles</li>
+          <li><strong>Docker Build</strong> — Build avec les clés publiques de staging</li>
+          <li><strong>Deploy</strong> — <code>docker compose -p fitmycv-staging up -d</code></li>
+          <li><strong>Health Check</strong> — Attend jusqu'à 150s (30 tentatives × 5s) que l'application réponde</li>
+          <li><strong>Migrations</strong> — <code>prisma migrate deploy</code> + <code>run-data-migrations.js</code></li>
+          <li><strong>Stripe Sync</strong> — Synchronise les produits et coupons depuis Stripe Live vers Stripe Test</li>
+        </ol>
+
+        <div class="callout callout-warning">
+          <strong>Sanitization de la base de données</strong> — Les champs <code>stripeCustomerId</code>, <code>stripeSubscriptionId</code> et <code>stripePriceId</code> sont effacés ou remplacés par des préfixes <code>staging_</code> pour éviter toute interaction avec l'API Stripe en mode live.
+        </div>
+
+        <pre><code class="language-sql">-- Sanitization des données Stripe lors du clone staging
+UPDATE "User" SET "stripeCustomerId" = NULL;
+UPDATE "Subscription" SET
+  "stripeCustomerId" = 'staging_' || "id",
+  "stripeSubscriptionId" = NULL,
+  "stripePriceId" = NULL,
+  "status" = 'canceled';</code></pre>
+
+        <h4>Job 3 — Cleanup (Fermeture PR)</h4>
+        <p>Nettoyage automatique lorsque la PR est fermée (merge ou rejet) :</p>
+
+        <pre><code class="language-yaml">cleanup:
+  if: github.event.action == 'closed'
+  steps:
+    - docker compose -p fitmycv-staging down
+    - docker rm -f fitmycv-preview
+    - dropdb --if-exists fitmycv_release</code></pre>
+
+        <!-- ===== PROD ===== -->
+        <h3>Pipeline Production (<code>prod.yml</code>)</h3>
+
+        <p>Déclenché sur chaque <strong>push sur <code>main</code></strong> (après merge d'une PR). Exécute les étapes suivantes dans un seul job :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline de déploiement production</div>
+          <div class="mermaid">
+flowchart TB
+    A["Push sur main"] --> B["Récupérer le code<br/>(historique complet)"]
+    B --> C["Versioning automatique"]
+    C --> D["Créer le tag de version<br/>et publier"]
+    D --> E["Synchroniser les branches<br/>release et dev"]
+    E --> F["Extraire la configuration<br/>publique"]
+    F --> G["Construire l'image Docker"]
+    G --> H["Démarrer les conteneurs"]
+    H --> I["Vérification de santé<br/>(30 x 5s)"]
+    I -->|"✅ OK"| J["Migrations de schéma"]
+    I -->|"❌ Echec"| K["Afficher les logs<br/>et signaler l'erreur"]
+    J --> L["Migrations de données"]
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#64748b,stroke:#475569,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style E fill:#64748b,stroke:#475569,color:#fff
+    style F fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style G fill:#6366f1,stroke:#4f46e5,color:#fff
+    style H fill:#6366f1,stroke:#4f46e5,color:#fff
+    style I fill:#f59e0b,stroke:#d97706,color:#fff
+    style J fill:#14b8a6,stroke:#0d9488,color:#fff
+    style K fill:#ef4444,stroke:#dc2626,color:#fff
+    style L fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <h4>1. Versioning automatique</h4>
+        <p>Le script <code>scripts/bump-version.sh</code> analyse les messages de commit de la PR et incrémente la version selon les <strong>Conventional Commits</strong> (voir CLAUDE.md pour le détail des règles).</p>
+
+        <pre><code class="language-bash"># Exécuté automatiquement dans le pipeline
+./scripts/bump-version.sh "$COMMIT_MESSAGE"
+NEW_VERSION=$(node -p "require('./package.json').version")
+git add . && git commit -m "chore(release): v$NEW_VERSION [skip ci]"
+git tag "v$NEW_VERSION"
+git push origin main --tags</code></pre>
+
+        <div class="callout callout-info">
+          <strong>[skip ci]</strong> — Le commit de versioning utilise <code>[skip ci]</code> dans son message pour éviter de déclencher une boucle infinie de déploiements.
+        </div>
+
+        <h4>2. Synchronisation des branches</h4>
+        <p>Après le versioning, les branches <code>release</code> et <code>dev</code> sont automatiquement synchronisées avec <code>main</code> pour que toutes les branches de travail héritent de la nouvelle version.</p>
+
+        <h4>3. Build &amp; Deploy</h4>
+        <p>Les variables publiques sont extraites depuis le fichier <code>.env</code> du serveur de production et injectées comme <code>--build-arg</code> Docker :</p>
+
+        <pre><code class="language-bash">docker build \
+  --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY="$RECAPTCHA_KEY" \
+  --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="$STRIPE_PK" \
+  --build-arg NEXT_PUBLIC_SITE_URL="$APP_URL" \
+  --build-arg NEXT_PUBLIC_APP_URL="$APP_URL" \
+  -t fitmycv:latest .</code></pre>
+
+        <h4>4. Health check post-deploy</h4>
+        <p>Après le déploiement, le pipeline attend que l'application soit prête avant de lancer les migrations. La boucle effectue <strong>30 tentatives</strong> espacées de <strong>5 secondes</strong> (150s max) :</p>
+
+        <pre><code class="language-bash">for i in $(seq 1 30); do
+  if docker exec fitmycv-prod node -e \
+    "fetch('http://localhost:'+(process.env.PORT||3000)+'/api/health') \
+     .then(r=>{if(r.ok)process.exit(0);else process.exit(1)}) \
+     .catch(()=>process.exit(1))" 2>/dev/null; then
+    echo "✅ Application is ready!"
+    exit 0
+  fi
+  sleep 5
+done</code></pre>
+
+        <h4>5. Migrations post-deploy</h4>
+        <p>Une fois le health check passé, les migrations sont exécutées <strong>à l'intérieur du conteneur</strong> :</p>
+
+        <pre><code class="language-bash"># Migrations de schéma Prisma
+docker exec fitmycv-prod npx prisma migrate deploy
+
+# Migrations de données (scripts JS dans prisma/data-migrations/)
+docker exec fitmycv-prod node scripts/run-data-migrations.js</code></pre>
+
+        <!-- ==================== VARIABLES D'ENVIRONNEMENT ==================== -->
+        <h2>Variables d'environnement</h2>
+
+        <p>Toutes les variables définies dans <code>.env.example</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Catégorie</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>DATABASE_URL</code></td>
+              <td>Base de données</td>
+              <td>URL de connexion PostgreSQL</td>
+            </tr>
+            <tr>
+              <td><code>NODE_ENV</code></td>
+              <td>Runtime</td>
+              <td><code>production</code> ou <code>development</code></td>
+            </tr>
+            <tr>
+              <td><code>PORT</code></td>
+              <td>Runtime</td>
+              <td>Port d'écoute (3000 en prod, 3001 en staging)</td>
+            </tr>
+            <tr>
+              <td><code>NEXTAUTH_SECRET</code></td>
+              <td>Auth</td>
+              <td>Clé secrète pour le chiffrement des sessions NextAuth</td>
+            </tr>
+            <tr>
+              <td><code>NEXTAUTH_URL</code></td>
+              <td>Auth</td>
+              <td>URL canonique de l'application pour NextAuth</td>
+            </tr>
+            <tr>
+              <td><code>NEXTAUTH_URL_INTERNAL</code></td>
+              <td>Auth</td>
+              <td>URL interne (identique en production, peut différer derrière un reverse proxy)</td>
+            </tr>
+            <tr>
+              <td><code>OPENAI_API_KEY</code></td>
+              <td>IA</td>
+              <td>Clé API OpenAI pour la génération/optimisation de CV</td>
+            </tr>
+            <tr>
+              <td><code>EMAIL_PROVIDER</code></td>
+              <td>Email</td>
+              <td>Provider : <code>auto</code> (SMTP + Resend fallback), <code>smtp</code>, ou <code>resend</code></td>
+            </tr>
+            <tr>
+              <td><code>EMAIL_FROM</code></td>
+              <td>Email</td>
+              <td>Adresse d'expédition (ex: <code>FitMyCV &lt;noreply@fitmycv.io&gt;</code>)</td>
+            </tr>
+            <tr>
+              <td><code>TRUSTPILOT_INVITE_EMAIL</code></td>
+              <td>Email</td>
+              <td>BCC Trustpilot sur les emails de confirmation d'achat</td>
+            </tr>
+            <tr>
+              <td><code>SMTP_HOST</code></td>
+              <td>Email / SMTP</td>
+              <td>Hôte SMTP OVH (<code>ssl0.ovh.net</code> mutualisé, <code>pro1.mail.ovh.net</code> Pro)</td>
+            </tr>
+            <tr>
+              <td><code>SMTP_PORT</code></td>
+              <td>Email / SMTP</td>
+              <td>Port SMTP (587 pour STARTTLS)</td>
+            </tr>
+            <tr>
+              <td><code>SMTP_SECURE</code></td>
+              <td>Email / SMTP</td>
+              <td>Connexion SSL directe (<code>false</code> pour STARTTLS)</td>
+            </tr>
+            <tr>
+              <td><code>SMTP_USER</code> / <code>SMTP_PASSWORD</code></td>
+              <td>Email / SMTP</td>
+              <td>Identifiants SMTP</td>
+            </tr>
+            <tr>
+              <td><code>RESEND_API_KEY</code></td>
+              <td>Email / Resend</td>
+              <td>Clé API Resend (provider de fallback)</td>
+            </tr>
+            <tr>
+              <td><code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code></td>
+              <td>OAuth</td>
+              <td>Identifiants OAuth Google</td>
+            </tr>
+            <tr>
+              <td><code>GITHUB_ID</code> / <code>GITHUB_SECRET</code></td>
+              <td>OAuth</td>
+              <td>Identifiants OAuth GitHub</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_CLIENT_ID</code> / <code>APPLE_CLIENT_SECRET</code></td>
+              <td>OAuth</td>
+              <td>Identifiants OAuth Apple</td>
+            </tr>
+            <tr>
+              <td><code>APPLE_KEY_ID</code> / <code>APPLE_TEAM_ID</code></td>
+              <td>OAuth</td>
+              <td>Configuration Sign in with Apple</td>
+            </tr>
+            <tr>
+              <td><code>CV_ENCRYPTION_KEY</code></td>
+              <td>Sécurité</td>
+              <td>Clé AES pour le chiffrement des CV au repos (base64, 32 octets)</td>
+            </tr>
+            <tr>
+              <td><code>CRON_SECRET</code></td>
+              <td>Sécurité</td>
+              <td>Secret pour l'authentification des cron jobs internes</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_RECAPTCHA_SITE_KEY</code></td>
+              <td>reCAPTCHA</td>
+              <td>Clé publique reCAPTCHA v3 (injectée au build)</td>
+            </tr>
+            <tr>
+              <td><code>RECAPTCHA_SECRET_KEY</code></td>
+              <td>reCAPTCHA</td>
+              <td>Clé secrète reCAPTCHA v3 (vérification côté serveur)</td>
+            </tr>
+            <tr>
+              <td><code>BYPASS_RECAPTCHA</code></td>
+              <td>reCAPTCHA</td>
+              <td>Désactive la vérification reCAPTCHA (<code>false</code> en production)</td>
+            </tr>
+            <tr>
+              <td><code>STRIPE_SECRET_KEY</code></td>
+              <td>Stripe</td>
+              <td>Clé secrète Stripe (préfixe <code>sk_test_</code> ou <code>sk_live_</code>)</td>
+            </tr>
+            <tr>
+              <td><code>STRIPE_WEBHOOK_SECRET</code></td>
+              <td>Stripe</td>
+              <td>Secret de signature des webhooks Stripe</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code></td>
+              <td>Stripe</td>
+              <td>Clé publique Stripe (injectée au build)</td>
+            </tr>
+            <tr>
+              <td><code>STRIPE_INVOICE_TEMPLATE_ID</code></td>
+              <td>Stripe</td>
+              <td>Template de rendu des factures Stripe</td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_SITE_URL</code></td>
+              <td>App</td>
+              <td>URL publique du site (injectée au build)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Variables NEXT_PUBLIC_*</strong> — Ces variables sont intégrées dans le JavaScript client au moment du <code>docker build</code>. Elles ne peuvent pas être changées au runtime sans reconstruire l'image Docker.
+        </div>
+
+        <!-- ==================== CONFIGURATION NEXT.JS ==================== -->
+        <h2>Configuration Next.js</h2>
+
+        <p>Le fichier <code>next.config.js</code> configure Next.js 16 pour le déploiement en mode standalone :</p>
+
+        <pre><code class="language-javascript">const nextConfig = {
+  // Mode standalone pour Docker (génère un serveur autonome)
+  output: 'standalone',
+
+  // Version et nom du site injectés comme variables d'env
+  env: {
+    NEXT_PUBLIC_APP_VERSION: version,  // Depuis package.json
+    NEXT_PUBLIC_SITE_NAME: "FitMyCV.io",
+  },
+
+  // Optimisation des images (AVIF + WebP)
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+  },
+
+  // Compression activée
+  compress: true,
+
+  // Next.js 16 : Turbopack est le bundler par défaut
+  turbopack: {},
+
+  // Packages serveur non bundlés (Puppeteer)
+  serverExternalPackages: [
+    'puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'
+  ],
+
+  // Optimisation des imports de packages
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'next-auth'],
+  },
+};</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Valeur</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>output</code></td>
+              <td><code>'standalone'</code></td>
+              <td>Génère un serveur Node.js autonome avec uniquement les fichiers nécessaires, optimal pour Docker</td>
+            </tr>
+            <tr>
+              <td><code>turbopack</code></td>
+              <td><code>{}</code></td>
+              <td>Active Turbopack, le bundler par défaut de Next.js 16 (remplace Webpack)</td>
+            </tr>
+            <tr>
+              <td><code>compress</code></td>
+              <td><code>true</code></td>
+              <td>Active la compression gzip/brotli des réponses</td>
+            </tr>
+            <tr>
+              <td><code>serverExternalPackages</code></td>
+              <td>Puppeteer</td>
+              <td>Exclut Puppeteer du bundling côté serveur (binaire natif)</td>
+            </tr>
+            <tr>
+              <td><code>allowedDevOrigins</code></td>
+              <td><code>['dev.fitmycv.io']</code></td>
+              <td>Autorise les requêtes cross-origin en développement depuis le domaine de staging</td>
+            </tr>
+            <tr>
+              <td><code>transpilePackages</code></td>
+              <td><code>['swiper']</code></td>
+              <td>Compile Swiper pour compatibilité avec le bundler</td>
+            </tr>
+            <tr>
+              <td><code>optimizePackageImports</code></td>
+              <td><code>lucide-react</code>, <code>next-auth</code></td>
+              <td>Tree-shaking optimisé pour ces librairies volumineuses</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Webpack — Split Chunks (mode legacy)</h3>
+        <p>La configuration Webpack est conservée pour compatibilité avec le flag <code>--webpack</code> mais est <strong>ignorée par Turbopack</strong> (bundler par défaut en Next.js 16). Elle définit 4 groupes de cache :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Cache Group</th>
+              <th>Priorité</th>
+              <th>Contenu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>framework</code></td>
+              <td>40</td>
+              <td>React, React DOM, Scheduler, Next.js</td>
+            </tr>
+            <tr>
+              <td><code>auth</code></td>
+              <td>35</td>
+              <td>NextAuth.js</td>
+            </tr>
+            <tr>
+              <td><code>lib</code></td>
+              <td>30</td>
+              <td>Tous les autres <code>node_modules</code></td>
+            </tr>
+            <tr>
+              <td><code>commons</code></td>
+              <td>20</td>
+              <td>Modules partagés entre 2+ chunks</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== PROCESSUS COMPLET ==================== -->
+        <h2>Processus de déploiement complet</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'un déploiement FitMyCV</div>
+          <div class="mermaid">
+flowchart TB
+    Dev["Développeur push sur dev"] --> PR["Ouvre PR vers main"]
+    PR --> CI["Validation du build"]
+    CI --> Staging["Déploiement sur<br/>dev.fitmycv.io"]
+    Staging --> Clone["Cloner la base de<br/>données vers staging"]
+    Clone --> Test["Tests manuels<br/>sur staging"]
+    Test -->|"Approuve"| Merge["Merge PR dans main"]
+    Test -->|"Rejete"| Close["Fermer la PR"]
+    Close --> Cleanup["Nettoyage : arrêter<br/>le conteneur et supprimer<br/>la base"]
+    Merge --> Version["Incrémenter la version<br/>automatiquement"]
+    Version --> Tag["Créer le tag<br/>de version"]
+    Tag --> Build["Construire l'image<br/>Docker production"]
+    Build --> Deploy["Démarrer les conteneurs"]
+    Deploy --> Health["Vérification de santé<br/>(150s max)"]
+    Health -->|"✅"| Migrations["Migrations de schéma<br/>et de données"]
+    Health -->|"❌"| Fail["Afficher les logs<br/>et signaler l'echec"]
+    Migrations --> Live["🚀 En production"]
+    Version --> SyncDev["Synchroniser les branches<br/>release et dev"]
+    style Dev fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PR fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Staging fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Clone fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Test fill:#f59e0b,stroke:#d97706,color:#fff
+    style Merge fill:#22c55e,stroke:#16a34a,color:#fff
+    style Close fill:#ef4444,stroke:#dc2626,color:#fff
+    style Cleanup fill:#64748b,stroke:#475569,color:#fff
+    style Version fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Tag fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Build fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Deploy fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Health fill:#f59e0b,stroke:#d97706,color:#fff
+    style Migrations fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Fail fill:#ef4444,stroke:#dc2626,color:#fff
+    style Live fill:#22c55e,stroke:#16a34a,color:#fff
+    style SyncDev fill:#64748b,stroke:#475569,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== FICHIERS CLÉS ==================== -->
+        <h2>Fichiers clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Dockerfile</code></td>
+              <td>Build multi-stage Docker (4 étapes)</td>
+            </tr>
+            <tr>
+              <td><code>.github/workflows/prod.yml</code></td>
+              <td>Pipeline de déploiement production (push sur main)</td>
+            </tr>
+            <tr>
+              <td><code>.github/workflows/preprod.yml</code></td>
+              <td>Pipeline pre-prod (cycle de vie PR : CI + staging + cleanup)</td>
+            </tr>
+            <tr>
+              <td><code>.env.example</code></td>
+              <td>Template de toutes les variables d'environnement requises</td>
+            </tr>
+            <tr>
+              <td><code>next.config.js</code></td>
+              <td>Configuration Next.js 16 (standalone, Turbopack, images, Puppeteer)</td>
+            </tr>
+            <tr>
+              <td><code>scripts/bump-version.sh</code></td>
+              <td>Script de versioning automatique (Conventional Commits → 4 parties)</td>
+            </tr>
+            <tr>
+              <td><code>scripts/run-data-migrations.js</code></td>
+              <td>Runner des migrations de données post-deploy</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

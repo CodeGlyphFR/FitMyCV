@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion des CV | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb"><a href="./index.html">Accueil</a><span>/</span><span>Gestion des CV</span></div>
+
+        <h1>Gestion des CV</h1>
+        <p class="lead">
+          FitMyCV.io structure chaque CV en <strong>8 sections standardisées</strong> avec un format riche et validé automatiquement. Le cycle de vie complet du document est couvert : création manuelle, import PDF par IA, versioning intelligent, traduction en 4 langues et export professionnel en PDF ou Word.
+        </p>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- STRUCTURE 8 SECTIONS -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Format structuré en 8 sections</h2>
+
+        <p>Chaque CV est stocké dans un format structuré et validé automatiquement, bien au-delà d'un simple document texte. Ce format garantit la cohérence des données à travers toutes les opérations : édition, optimisation IA, traduction et export.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Hiérarchie des 8 sections du CV</div>
+          <div class="mermaid">
+graph TD
+    CV["CV structuré"]
+    CV --> H["En-tête *"]
+    CV --> S["Résumé professionnel *"]
+    CV --> SK["Compétences *"]
+    CV --> EX["Expériences *"]
+    CV --> ED["Formation"]
+    CV --> LA["Langues"]
+    CV --> XT["Informations complémentaires"]
+    CV --> PR["Projets"]
+
+    H --> FN["Nom complet"]
+    H --> CT["Poste actuel"]
+    H --> CO["Coordonnées<br/>(email, téléphone,<br/>liens, localisation)"]
+
+    SK --> HS["Compétences techniques"]
+    SK --> TO["Outils"]
+    SK --> ME["Méthodologies"]
+    SK --> SS["Qualités personnelles"]
+
+    EX --> EXI["Poste"]
+    EXI --> TI["Titre, entreprise, dates"]
+    EXI --> RE["Responsabilités"]
+    EXI --> DE["Réalisations"]
+    EXI --> SU["Compétences utilisées"]
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style H fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SK fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style EX fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ED fill:#6366f1,stroke:#4f46e5,color:#fff
+    style LA fill:#6366f1,stroke:#4f46e5,color:#fff
+    style XT fill:#6366f1,stroke:#4f46e5,color:#fff
+    style PR fill:#6366f1,stroke:#4f46e5,color:#fff
+    style FN fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CT fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CO fill:#14b8a6,stroke:#0d9488,color:#fff
+    style HS fill:#14b8a6,stroke:#0d9488,color:#fff
+    style TO fill:#14b8a6,stroke:#0d9488,color:#fff
+    style ME fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SS fill:#14b8a6,stroke:#0d9488,color:#fff
+    style EXI fill:#14b8a6,stroke:#0d9488,color:#fff
+    style TI fill:#14b8a6,stroke:#0d9488,color:#fff
+    style RE fill:#14b8a6,stroke:#0d9488,color:#fff
+    style DE fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SU fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+        <p><em>Les sections marquées * sont obligatoires.</em></p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>Obligatoire</th>
+              <th>Contenu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>En-tête</strong></td>
+              <td>Oui</td>
+              <td>Nom complet, poste actuel, coordonnées (email, téléphone, liens, localisation)</td>
+            </tr>
+            <tr>
+              <td><strong>Résumé professionnel</strong></td>
+              <td>Oui</td>
+              <td>Synthèse du profil en quelques lignes</td>
+            </tr>
+            <tr>
+              <td><strong>Compétences</strong></td>
+              <td>Oui</td>
+              <td>4 catégories (compétences techniques, outils, méthodologies, qualités personnelles) avec échelle de maîtrise 0-5</td>
+            </tr>
+            <tr>
+              <td><strong>Expériences</strong></td>
+              <td>Oui</td>
+              <td>Postes avec titre, entreprise, dates, responsabilités, réalisations et compétences utilisées</td>
+            </tr>
+            <tr>
+              <td><strong>Formation</strong></td>
+              <td>Non</td>
+              <td>Diplômes, établissements et dates</td>
+            </tr>
+            <tr>
+              <td><strong>Langues</strong></td>
+              <td>Non</td>
+              <td>Langues parlées avec niveaux CECRL (A1 à C2)</td>
+            </tr>
+            <tr>
+              <td><strong>Informations complémentaires</strong></td>
+              <td>Non</td>
+              <td>Centres d'intérêt, certifications, bénévolat</td>
+            </tr>
+            <tr>
+              <td><strong>Projets</strong></td>
+              <td>Non</td>
+              <td>Projets personnels ou open source avec descriptions et compétences utilisées</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Compétences structurées</h3>
+
+        <p>Les compétences sont classées en <strong>4 catégories</strong> avec une échelle de maîtrise de 0 à 5 pour chaque compétence. Cette structuration permet à l'IA de comparer précisément les compétences du candidat avec les exigences d'une offre d'emploi.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Exemples</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Compétences techniques</strong></td>
+              <td>JavaScript, Python, SQL, Machine Learning, Architecture logicielle</td>
+            </tr>
+            <tr>
+              <td><strong>Outils</strong></td>
+              <td>Git, Docker, VS Code, Figma, Jira</td>
+            </tr>
+            <tr>
+              <td><strong>Méthodologies</strong></td>
+              <td>Agile/Scrum, TDD, CI/CD, Design Thinking</td>
+            </tr>
+            <tr>
+              <td><strong>Qualités personnelles</strong></td>
+              <td>Leadership, Communication, Travail en équipe, Résolution de problèmes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Personnalisation de l'affichage</h3>
+
+        <p>L'<strong>ordre des sections est entièrement personnalisable</strong> par l'utilisateur. Les titres des sections sont automatiquement traduits dans la langue du CV (français, anglais, espagnol, allemand). Le format est validé automatiquement à chaque modification pour garantir la cohérence des données.</p>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- VERSIONING -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Versioning intelligent</h2>
+
+        <p>FitMyCV.io maintient un historique des versions de chaque CV, avec une approche <strong>sélective</strong> : seules les modifications effectuées par l'IA (optimisation, adaptation) créent une nouvelle version. Les éditions manuelles modifient directement le contenu sans versionner, pour éviter une prolifération inutile de versions.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie des versions</div>
+          <div class="mermaid">
+flowchart TD
+    A["CV actuel<br/>version N"] -->|"Optimisation IA"| B["Version N sauvegardée<br/>automatiquement"]
+    B --> C["CV mis à jour<br/>version N+1"]
+    C --> D["Rotation automatique<br/>(5 versions max)"]
+
+    C -->|"Restauration prudente"| E["Sauvegarde de l'état actuel<br/>puis retour à la version cible"]
+    E --> F["Historique complet<br/>préservé"]
+
+    C -->|"Restauration destructive"| G["Retour à la version cible"]
+    G --> H["Versions ultérieures<br/>supprimées"]
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#22c55e,stroke:#16a34a,color:#fff
+    style D fill:#64748b,stroke:#475569,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style F fill:#22c55e,stroke:#16a34a,color:#fff
+    style G fill:#ef4444,stroke:#dc2626,color:#fff
+    style H fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <h3>Principes clés</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Comportement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Création de version</strong></td>
+              <td>Uniquement lors des optimisations et adaptations IA. Les éditions manuelles ne créent pas de version.</td>
+            </tr>
+            <tr>
+              <td><strong>Version originale</strong></td>
+              <td>La version initiale du CV (avant toute optimisation) est toujours préservée comme référence.</td>
+            </tr>
+            <tr>
+              <td><strong>Restauration prudente</strong></td>
+              <td>L'état actuel est sauvegardé avant la restauration. Aucune donnée n'est perdue, tout l'historique est préservé.</td>
+            </tr>
+            <tr>
+              <td><strong>Restauration destructive</strong></td>
+              <td>Retour direct à une version antérieure avec suppression de toutes les versions plus récentes. Irréversible.</td>
+            </tr>
+            <tr>
+              <td><strong>Rotation automatique</strong></td>
+              <td>Maximum 5 versions conservées par CV (configurable). Les plus anciennes sont supprimées automatiquement au-delà de cette limite.</td>
+            </tr>
+            <tr>
+              <td><strong>Données préservées</strong></td>
+              <td>Chaque version sauvegarde le contenu complet du CV ainsi que les scores d'adéquation associés.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- IMPORT PDF -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Import PDF par vision IA</h2>
+
+        <p>FitMyCV.io permet d'importer un CV existant au format PDF. L'IA <strong>analyse visuellement</strong> chaque page du document et réfléchit à sa structure avant d'en extraire les informations. Cette approche par vision va bien au-delà d'un simple OCR : l'IA comprend la mise en page, identifie les sections et structure les données dans le format standardisé.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline d'import PDF en 5 étapes</div>
+          <div class="mermaid">
+flowchart LR
+    A["1. Envoi et<br/>validation"] --> B["2. Conversion<br/>en images"]
+    B --> C["3. Analyse visuelle<br/>par l'IA"]
+    C --> D["4. Reconstruction<br/>du CV structuré"]
+    D --> E{"Résultat<br/>valide ?"}
+    E -->|"Oui"| F["CV créé et<br/>disponible"]
+    E -->|"Non"| G["Crédits<br/>remboursés"]
+
+    style A fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#6366f1,stroke:#4f46e5,color:#fff
+    style D fill:#f59e0b,stroke:#d97706,color:#fff
+    style E fill:#f59e0b,stroke:#d97706,color:#fff
+    style F fill:#22c55e,stroke:#16a34a,color:#fff
+    style G fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <h3>Détail des étapes</h3>
+
+        <ol>
+          <li><strong>Envoi et validation</strong> : Vérification du type de fichier, de la taille (10 Mo maximum) et du nombre de pages (10 pages maximum)</li>
+          <li><strong>Conversion en images</strong> : Chaque page du PDF est convertie en image haute résolution, optimisée pour l'analyse visuelle</li>
+          <li><strong>Analyse visuelle par l'IA</strong> : L'IA examine les images et <em>réfléchit à haute voix</em> avant d'extraire : elle identifie la structure du document, la langue détectée, les éventuels problèmes de lisibilité et sa stratégie d'extraction. Le résultat est un format structuré garanti valide.</li>
+          <li><strong>Reconstruction du CV</strong> : Les données extraites sont normalisées et injectées dans les 8 sections standardisées</li>
+          <li><strong>Sauvegarde</strong> : Le CV est créé avec la source tracée (origine PDF), prêt à être édité ou optimisé par l'IA</li>
+        </ol>
+
+        <div class="callout callout-info">
+          <strong>Garanti sans risque</strong> : L'import s'exécute en tâche de fond, sans bloquer l'interface. En cas d'échec (document illisible, résultat invalide), les crédits sont automatiquement remboursés. L'utilisateur ne perd jamais de crédits pour un import échoué.
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- TRADUCTION -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Traduction en 4 langues</h2>
+
+        <p>FitMyCV.io permet de traduire un CV dans l'une des 4 langues supportées : <strong>français, anglais, espagnol et allemand</strong>. La traduction est réalisée par l'IA avec des règles intelligentes qui vont au-delà d'une simple traduction mot-à-mot.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de traduction</div>
+          <div class="mermaid">
+flowchart LR
+    A["CV original"] --> B["Choix de la<br/>langue cible"]
+    B --> C["Traduction IA<br/>(en tâche de fond)"]
+    C --> D["Nouveau CV traduit<br/>(original intact)"]
+
+    style A fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style B fill:#f59e0b,stroke:#d97706,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style D fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Règles de traduction intelligentes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Règle</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Préservation de la structure</strong></td>
+              <td>Seuls les contenus textuels sont traduits. La structure du CV (8 sections, ordre, compétences) reste identique.</td>
+            </tr>
+            <tr>
+              <td><strong>Niveaux de compétences</strong></td>
+              <td>Les niveaux de maîtrise sont traduits avec les équivalences locales (<em>Débutant</em> → <em>Beginner</em> / <em>Principiante</em> / <em>Anfänger</em>).</td>
+            </tr>
+            <tr>
+              <td><strong>Codes CECRL préservés</strong></td>
+              <td>Les codes de niveau de langue (A1, B2, C1...) restent inchangés pour la reconnaissance internationale. Seuls les libellés sont traduits.</td>
+            </tr>
+            <tr>
+              <td><strong>Titres de sections</strong></td>
+              <td>Les titres de sections sont automatiquement adaptés à la langue cible.</td>
+            </tr>
+            <tr>
+              <td><strong>Original intact</strong></td>
+              <td>La traduction crée un <strong>nouveau document</strong>. Le CV original n'est jamais modifié.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <strong>Traduction professionnelle</strong> : L'IA produit des traductions fidèles et culturellement adaptées, avec une terminologie professionnelle appropriée à chaque langue.
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- EXPORT -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Export professionnel (PDF et Word)</h2>
+
+        <p>FitMyCV.io permet d'exporter les CV en deux formats complémentaires, tous deux bénéficiant du même système de sélection granulaire.</p>
+
+        <h3>Deux formats d'export</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>PDF</th>
+              <th>Word (DOCX)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Usage idéal</strong></td>
+              <td>Candidature directe, envoi professionnel</td>
+              <td>Personnalisation manuelle avant envoi</td>
+            </tr>
+            <tr>
+              <td><strong>Modifiable</strong></td>
+              <td>Non</td>
+              <td>Oui (Word, Google Docs, LibreOffice)</td>
+            </tr>
+            <tr>
+              <td><strong>Fidélité visuelle</strong></td>
+              <td>Rendu haute fidélité par un moteur de navigateur</td>
+              <td>Bonne fidélité avec styles natifs Word</td>
+            </tr>
+            <tr>
+              <td><strong>Pagination</strong></td>
+              <td>Intelligente : pas de coupure au milieu d'une expérience ou d'un bloc</td>
+              <td>Gestion native par le traitement de texte</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Sélection granulaire avant export</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Parcours d'export</div>
+          <div class="mermaid">
+flowchart LR
+    A["Sélectionner les sections<br/>et éléments à inclure"] --> B["Personnaliser<br/>l'ordre des sections"]
+    B --> C["Choisir le format<br/>(PDF ou Word)"]
+    C --> D["Télécharger<br/>le fichier"]
+
+    style A fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style C fill:#f59e0b,stroke:#d97706,color:#fff
+    style D fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <p>L'utilisateur dispose d'un contrôle fin sur le contenu exporté :</p>
+
+        <ul>
+          <li><strong>Sélection par section</strong> : activer ou désactiver chaque section du CV</li>
+          <li><strong>Sélection par élément</strong> : masquer des expériences, compétences ou formations individuellement (idéal pour adapter le CV à une offre spécifique)</li>
+          <li><strong>Ordre personnalisable</strong> : réorganiser les sections pour mettre en avant les informations les plus pertinentes</li>
+          <li><strong>Templates de sélection</strong> : sauvegarder une configuration de sélection pour la réutiliser (ex: "CV développeur frontend" vs "CV fullstack")</li>
+        </ul>
+
+        <h3>Export multilingue</h3>
+
+        <p>Les libellés du CV exporté (titres de sections, niveaux de compétences, niveaux CECRL) sont automatiquement traduits dans la <strong>langue du CV</strong> parmi les 4 langues supportées.</p>
+
+        <div class="callout callout-info">
+          <strong>Remboursement automatique</strong> : Si l'export échoue pour quelque raison que ce soit, le crédit est automatiquement restitué. L'utilisateur ne perd jamais de crédits pour un service non rendu.
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- POINTS FORTS -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Points forts de la gestion des CV</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Format structuré riche</h3>
+            <p><strong>8 sections standardisées</strong> avec validation automatique. Compétences classées en 4 catégories avec échelle de maîtrise. Bien au-delà d'un simple document texte.</p>
+          </div>
+          <div class="card">
+            <h3>Versioning intelligent</h3>
+            <p>Historique des modifications IA avec <strong>restauration en un clic</strong>. La version originale est toujours préservée. Rotation automatique à 5 versions maximum.</p>
+          </div>
+          <div class="card">
+            <h3>Import PDF par vision IA</h3>
+            <p>L'IA <strong>analyse visuellement</strong> le PDF et comprend sa structure avant extraction. Remboursement garanti en cas d'échec.</p>
+          </div>
+          <div class="card">
+            <h3>Traduction professionnelle</h3>
+            <p><strong>4 langues</strong> avec règles intelligentes : équivalences locales des niveaux, codes CECRL préservés, structure intacte. L'original n'est jamais modifié.</p>
+          </div>
+          <div class="card">
+            <h3>Export personnalisable</h3>
+            <p><strong>PDF et Word</strong> avec sélection granulaire de chaque élément, ordre des sections modifiable et templates réutilisables.</p>
+          </div>
+          <div class="card">
+            <h3>Multilingue de bout en bout</h3>
+            <p>Titres de sections, niveaux de compétences et libellés automatiquement traduits dans la langue du CV pour un rendu professionnel dans les <strong>4 langues</strong>.</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script src="./assets/js/layout.js?v=1.0.5"></script>
+  <script src="./assets/js/main.js?v=1.0.7"></script>
+</body>
+</html>

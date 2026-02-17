@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline IA &mdash; Optimisation &amp; Scoring | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb"><a href="./index.html">Accueil</a><span>/</span><span>Pipeline IA &mdash; Optimisation &amp; Scoring</span></div>
+
+        <!-- ==================== INTRODUCTION ==================== -->
+        <h1>Pipeline IA &mdash; Optimisation &amp; Scoring</h1>
+        <p class="lead">
+          Un pipeline d'am&eacute;lioration cibl&eacute;e en <strong>4 &eacute;tapes</strong> qui optimise un CV existant &agrave; partir de <strong>suggestions intelligentes</strong> et d'un <strong>score d'ad&eacute;quation</strong> pond&eacute;r&eacute; sur 4 dimensions.
+        </p>
+
+        <p>
+          Compl&eacute;mentaire au <a href="./02-pipeline-adaptation.html">pipeline d'adaptation</a>, le pipeline d'optimisation se concentre sur l'<strong>am&eacute;lioration incr&eacute;mentale</strong>. Plut&ocirc;t que de transformer enti&egrave;rement le CV, il analyse l'ad&eacute;quation entre le CV et l'offre, g&eacute;n&egrave;re des suggestions prioris&eacute;es, puis applique uniquement les am&eacute;liorations <strong>s&eacute;lectionn&eacute;es par l'utilisateur</strong>.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">En bref</div>
+          <p><strong>4</strong> &eacute;tapes orchestr&eacute;es &bull; Score pond&eacute;r&eacute; sur <strong>4 dimensions</strong> &bull; Suggestions avec <strong>priorit&eacute; et impact</strong> &bull; Contexte personnel de l'utilisateur int&eacute;gr&eacute; &bull; Gestion <strong>cross-language</strong> automatique &bull; <strong>4</strong> langues support&eacute;es</p>
+        </div>
+
+        <!-- ==================== SCORING ==================== -->
+        <h2>Score d'Ad&eacute;quation CV / Offre</h2>
+
+        <p>
+          Le scoring &eacute;value la correspondance entre un CV et une offre d'emploi via un appel IA unique. Le score global (0&ndash;100) est <strong>recalcul&eacute; &agrave; partir des sous-scores</strong> pour garantir la coh&eacute;rence math&eacute;matique entre le score affich&eacute; et le d&eacute;tail par dimension.
+        </p>
+
+        <h3>Formule de pond&eacute;ration</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th>Poids</th>
+              <th>Ce que l'IA &eacute;value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">Comp&eacute;tences techniques</span></td>
+              <td><strong>35%</strong></td>
+              <td>Langages, frameworks, outils, technologies mentionn&eacute;s dans le CV par rapport &agrave; l'offre</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">Exp&eacute;rience</span></td>
+              <td><strong>30%</strong></td>
+              <td>Pertinence des exp&eacute;riences, dur&eacute;e, niveau de responsabilit&eacute;s</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">Formation</span></td>
+              <td><strong>20%</strong></td>
+              <td>Niveau de dipl&ocirc;me, domaine d'&eacute;tude, certifications</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">Savoir-&ecirc;tre &amp; Langues</span></td>
+              <td><strong>15%</strong></td>
+              <td>Comp&eacute;tences comportementales, langues ma&icirc;tris&eacute;es</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Score recalcul&eacute;, pas brut</div>
+          <p>Le score global affich&eacute; n'est <strong>pas</strong> le score brut retourn&eacute; par l'IA. Il est recalcul&eacute; math&eacute;matiquement &agrave; partir des 4 sous-scores pond&eacute;r&eacute;s (35% + 30% + 20% + 15%). Cela garantit une coh&eacute;rence parfaite entre le score global et les sous-scores affich&eacute;s &agrave; l'utilisateur.</p>
+        </div>
+
+        <!-- ==================== DIAGRAMME SCORING ==================== -->
+        <div class="diagram">
+          <div class="diagram-title">Processus complet de calcul du score</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉES"]
+        CV["CV"]
+        Offre["Offre d'emploi"]
+    end
+
+    subgraph Prepare["PRÉPARATION"]
+        Lang{"Langues<br/>différentes ?"}
+        Translate["Ajouter instruction<br/>de traduction"]
+    end
+
+    subgraph IA["ANALYSE IA"]
+        Call["Analyse par l'IA<br/>Température basse<br/>pour déterminisme"]
+    end
+
+    subgraph Calculate["RECALCUL"]
+        Sub["Extraire les<br/>4 sous-scores"]
+        Formula["Appliquer la formule<br/>de pondération"]
+    end
+
+    subgraph Output["RÉSULTATS"]
+        Score["Score global<br/>(0 à 100)"]
+        Sugg["Suggestions<br/>d'amélioration"]
+        Missing["Compétences<br/>manquantes"]
+        Matching["Compétences<br/>correspondantes"]
+    end
+
+    CV --> Lang
+    Offre --> Lang
+    Lang -->|"Oui"| Translate --> Call
+    Lang -->|"Non"| Call
+    Call --> Sub --> Formula --> Score
+    Call --> Sugg
+    Call --> Missing
+    Call --> Matching
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Offre fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Lang fill:#f59e0b,stroke:#d97706,color:#fff
+    style Translate fill:#64748b,stroke:#475569,color:#fff
+    style Call fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Sub fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Formula fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Score fill:#22c55e,stroke:#16a34a,color:#fff
+    style Sugg fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Missing fill:#ef4444,stroke:#dc2626,color:#fff
+    style Matching fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== CROSS-LANGUAGE ==================== -->
+        <h3>Gestion Cross-Language</h3>
+
+        <p>
+          Si le CV et l'offre d'emploi sont r&eacute;dig&eacute;s dans des <strong>langues diff&eacute;rentes</strong>, le syst&egrave;me le d&eacute;tecte automatiquement et injecte une instruction de traduction dans l'analyse IA. L'IA traduit mentalement l'offre dans la langue du CV avant d'effectuer le scoring, et formule toutes ses suggestions dans la langue du CV.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Exemple</div>
+          <p>Un CV en fran&ccedil;ais analys&eacute; avec une offre en anglais : l'IA traduit automatiquement l'offre et fournit ses suggestions en fran&ccedil;ais. Aucune intervention de l'utilisateur n'est n&eacute;cessaire.</p>
+        </div>
+
+        <!-- ==================== SUGGESTIONS ==================== -->
+        <h2>Syst&egrave;me de Suggestions</h2>
+
+        <p>
+          Le scoring produit simultan&eacute;ment le score et un ensemble de <strong>suggestions d'am&eacute;lioration prioris&eacute;es</strong>. Chaque suggestion identifie un point d'am&eacute;lioration concret avec une estimation de son impact sur le score.
+        </p>
+
+        <h3>Structure d'une suggestion</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Description</th>
+              <th>Exemple</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Titre</strong></td>
+              <td>R&eacute;sum&eacute; court de l'am&eacute;lioration</td>
+              <td>&laquo; Ajouter exp&eacute;rience Kubernetes &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Description</strong></td>
+              <td>D&eacute;tail de la modification propos&eacute;e</td>
+              <td>&laquo; Mentionner votre utilisation de Kubernetes dans le projet de migration cloud &raquo;</td>
+            </tr>
+            <tr>
+              <td><strong>Priorit&eacute;</strong></td>
+              <td>Niveau d'importance (<span class="badge badge-error">haute</span>, <span class="badge badge-warning">moyenne</span>, <span class="badge badge-success">basse</span>)</td>
+              <td>Haute</td>
+            </tr>
+            <tr>
+              <td><strong>Impact</strong></td>
+              <td>Estimation d'impact sur le score (1&ndash;10)</td>
+              <td>8/10</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== CYCLE DE VIE SUGGESTIONS ==================== -->
+        <h3>Cycle de vie des suggestions</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">De la g&eacute;n&eacute;ration &agrave; l'application</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Scoring["SCORING"]
+        Calc["Calculer le score<br/>et générer les<br/>suggestions"]
+    end
+
+    subgraph UI["INTERFACE"]
+        Display["Affichage des<br/>suggestions"]
+        Select["Sélection par<br/>l'utilisateur"]
+        Context["Ajout de contexte<br/>personnel"]
+    end
+
+    subgraph Pipeline["OPTIMISATION"]
+        Run["Pipeline<br/>d'amélioration"]
+        Review["Revue des<br/>modifications"]
+    end
+
+    Calc --> Display --> Select --> Context --> Run --> Review
+
+    style Calc fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Display fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Select fill:#f59e0b,stroke:#d97706,color:#fff
+    style Context fill:#64748b,stroke:#475569,color:#fff
+    style Run fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Review fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== COMPETENCES MANQUANTES ==================== -->
+        <h3>Comp&eacute;tences manquantes</h3>
+
+        <p>
+          En plus des suggestions textuelles, le scoring identifie les <strong>comp&eacute;tences requises par l'offre mais absentes du CV</strong>. L'utilisateur peut s&eacute;lectionner celles qu'il poss&egrave;de r&eacute;ellement et indiquer son <strong>niveau de ma&icirc;trise</strong> (d&eacute;butant, interm&eacute;diaire, avanc&eacute;). Les comp&eacute;tences ajout&eacute;es sont automatiquement class&eacute;es dans la bonne cat&eacute;gorie (techniques, m&eacute;thodologies, savoir-&ecirc;tre, outils) par l'IA.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Contexte personnel</div>
+          <p>L'utilisateur peut enrichir chaque suggestion avec du <strong>contexte libre</strong> (par exemple : &laquo; J'ai 3 ans d'exp&eacute;rience en React &raquo; ou &laquo; Certifi&eacute; AWS depuis 2024 &raquo;). Ce contexte est inject&eacute; dans les instructions IA pour guider l'am&eacute;lioration de mani&egrave;re plus pr&eacute;cise.</p>
+        </div>
+
+        <!-- ==================== PIPELINE 4 STAGES ==================== -->
+        <h2>Pipeline d'Optimisation en 4 &Eacute;tapes</h2>
+
+        <p>
+          Une fois les suggestions s&eacute;lectionn&eacute;es, le pipeline d'optimisation les applique au CV &agrave; travers <strong>4 &eacute;tapes orchestr&eacute;es</strong> avec ex&eacute;cution parall&egrave;le contr&ocirc;l&eacute;e.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Pipeline d'optimisation &mdash; 4 &eacute;tapes</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTRÉES"]
+        Sug["Suggestions sélectionnées<br/>+ contexte utilisateur"]
+        Skills["Compétences manquantes<br/>à ajouter + niveau"]
+        CV["CV existant"]
+        Job["Offre d'emploi"]
+    end
+
+    subgraph S12["ÉTAPE 1 & 2 — EN PARALLÈLE"]
+        S1["Classification<br/>des compétences<br/>par catégorie"]
+        S2["Analyse raisonnée<br/>des suggestions<br/>Routage par cible"]
+    end
+
+    subgraph S3["ÉTAPE 3 — AMÉLIORATIONS PARALLÈLES"]
+        S3E["Améliorer<br/>les expériences"]
+        S3P["Améliorer ou créer<br/>des projets"]
+        S3L["Améliorer<br/>les langues"]
+        S3X["Améliorer<br/>les extras"]
+    end
+
+    subgraph S4["ÉTAPE 4 — RÉSUMÉ"]
+        S4S["Améliorer le résumé<br/>professionnel"]
+    end
+
+    subgraph Output["SORTIE"]
+        Result["CV amélioré<br/>+ Modifications détaillées"]
+    end
+
+    Skills --> S1
+    Sug --> S2
+    CV --> S3
+    Job --> S3
+    S1 --> S3
+    S2 --> S3
+    S3E --> S4
+    S3P --> S4
+    S3L --> S4
+    S3X --> S4
+    S4 --> Result
+
+    style Sug fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Skills fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Job fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style S1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3P fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3L fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3X fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S4S fill:#22c55e,stroke:#16a34a,color:#fff
+    style Result fill:#0ea5e9,stroke:#0284c7,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== TABLEAU 4 ETAPES ==================== -->
+        <h3>D&eacute;tail des 4 &eacute;tapes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>&Eacute;tape</th>
+              <th>Nom</th>
+              <th>Description fonctionnelle</th>
+              <th>Ex&eacute;cution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">1</span></td>
+              <td>Classification des comp&eacute;tences</td>
+              <td>Classe automatiquement les comp&eacute;tences manquantes &agrave; ajouter dans la bonne cat&eacute;gorie (techniques, m&eacute;thodologies, savoir-&ecirc;tre, outils) et normalise les niveaux de ma&icirc;trise.</td>
+              <td>Parall&egrave;le (avec &eacute;tape 2)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">2</span></td>
+              <td>Analyse et routage</td>
+              <td>L'IA analyse chaque suggestion via un <strong>processus de r&eacute;flexion</strong> structur&eacute; et d&eacute;termine pour chacune : quelle section du CV cibler (exp&eacute;rience, projet, langue, extra), quel &eacute;l&eacute;ment pr&eacute;cis modifier, et quelle action concr&egrave;te effectuer.</td>
+              <td>Parall&egrave;le (avec &eacute;tape 1)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">3</span></td>
+              <td>Am&eacute;liorations cibl&eacute;es</td>
+              <td>Applique les am&eacute;liorations en parall&egrave;le avec gestion de la concurrence : modification des exp&eacute;riences, projets, langues et extras. Peut &eacute;galement <strong>cr&eacute;er de nouveaux projets</strong>.</td>
+              <td>Parall&egrave;le (concurrence contr&ocirc;l&eacute;e)</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">4</span></td>
+              <td>R&eacute;sum&eacute; professionnel</td>
+              <td>Le r&eacute;sum&eacute; est r&eacute;g&eacute;n&eacute;r&eacute; <strong>uniquement si des exp&eacute;riences ou projets ont &eacute;t&eacute; modifi&eacute;s</strong>. Cette ex&eacute;cution conditionnelle &eacute;vite un appel IA inutile.</td>
+              <td>S&eacute;quentiel (conditionnel)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== ROUTAGE INTELLIGENT ==================== -->
+        <h2>Routage Intelligent des Suggestions</h2>
+
+        <p>
+          L'&eacute;tape 2 (analyse et routage) est le c&oelig;ur du pipeline d'optimisation. L'IA utilise un <strong>processus de r&eacute;flexion structur&eacute;</strong> pour d&eacute;terminer la meilleure cible de chaque suggestion dans le CV.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>5 types de cibles</h4>
+            <table>
+              <tbody>
+                <tr>
+                  <td><span class="badge badge-primary">Exp&eacute;rience</span></td>
+                  <td>Modifier une exp&eacute;rience existante (responsabilit&eacute;s, r&eacute;alisations, comp&eacute;tences)</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-primary">Projet</span></td>
+                  <td>Modifier un projet existant (description, technologies)</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-success">Nouveau projet</span></td>
+                  <td>Cr&eacute;er un projet qui n'existait pas</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-warning">Langue</span></td>
+                  <td>Modifier un niveau ou ajouter une certification linguistique</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-warning">Extra</span></td>
+                  <td>Ajouter ou modifier une certification, un b&eacute;n&eacute;volat, etc.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <h4>Analyse raisonn&eacute;e par l'IA</h4>
+            <p>Pour chaque suggestion, l'IA produit :</p>
+            <ul>
+              <li>Un <strong>raisonnement d&eacute;taill&eacute;</strong> expliquant son choix de cible</li>
+              <li>Une <strong>description d'action</strong> concr&egrave;te (quoi modifier, quoi ajouter)</li>
+              <li>Un <strong>score de confiance</strong> pour le routage</li>
+              <li>Les <strong>informations extraites</strong> du contexte utilisateur (chiffres, comp&eacute;tences, contexte)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Fallback intelligent</div>
+          <p>Si l'analyse IA &eacute;choue, un m&eacute;canisme de s&eacute;curit&eacute; route automatiquement toutes les suggestions vers la premi&egrave;re exp&eacute;rience du CV. Le pipeline continue son ex&eacute;cution sans interruption.</p>
+        </div>
+
+        <!-- ==================== AMELIORATIONS ==================== -->
+        <h2>Types d'Am&eacute;liorations</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Exp&eacute;riences</h4>
+            <p>Enrichissement des responsabilit&eacute;s, des r&eacute;alisations cl&eacute;s et des comp&eacute;tences utilis&eacute;es. L'IA int&egrave;gre les mots-cl&eacute;s de l'offre en respectant la v&eacute;racit&eacute; du parcours du candidat.</p>
+          </div>
+          <div class="card">
+            <h4>Projets</h4>
+            <p>Modification des projets existants ou <strong>cr&eacute;ation de nouveaux projets</strong> si le contexte utilisateur le justifie. La stack technique est mise &agrave; jour pour correspondre aux termes de l'offre.</p>
+          </div>
+          <div class="card">
+            <h4>Langues</h4>
+            <p>Ajustement des niveaux de langue, ajout de certifications (ex : TOEFL, DELF), r&eacute;ordonnancement selon la pertinence pour le poste.</p>
+          </div>
+          <div class="card">
+            <h4>Extras</h4>
+            <p>Ajout ou modification de certifications, b&eacute;n&eacute;volat et autres informations compl&eacute;mentaires pertinentes pour l'offre.</p>
+          </div>
+        </div>
+
+        <!-- ==================== COMPARAISON ==================== -->
+        <h2>Adaptation vs. Optimisation</h2>
+
+        <p>Les deux pipelines IA de FitMyCV sont compl&eacute;mentaires :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Pipeline Adaptation</th>
+              <th>Pipeline Optimisation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Objectif</strong></td>
+              <td>Transformation compl&egrave;te du CV pour un poste</td>
+              <td>Am&eacute;lioration cibl&eacute;e sur les points faibles</td>
+            </tr>
+            <tr>
+              <td><strong>D&eacute;clencheur</strong></td>
+              <td>Offre d'emploi (URL, PDF ou extension)</td>
+              <td>S&eacute;lection de suggestions par l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><strong>Architecture</strong></td>
+              <td>10 &eacute;tapes (extraction &rarr; classification &rarr; 6 batches &rarr; recomposition)</td>
+              <td>4 &eacute;tapes (classification &rarr; analyse &rarr; am&eacute;liorations &rarr; r&eacute;sum&eacute;)</td>
+            </tr>
+            <tr>
+              <td><strong>Qui d&eacute;cide ?</strong></td>
+              <td>L'IA classe automatiquement (conserver / supprimer / d&eacute;placer)</td>
+              <td>L'utilisateur choisit les suggestions &agrave; appliquer</td>
+            </tr>
+            <tr>
+              <td><strong>Parall&eacute;lisation</strong></td>
+              <td>6 traitements simultan&eacute;s + 1 s&eacute;quentiel</td>
+              <td>Ex&eacute;cution parall&egrave;le avec concurrence contr&ocirc;l&eacute;e</td>
+            </tr>
+            <tr>
+              <td><strong>Cache IA</strong></td>
+              <td>Cache bicouche A/B + strat&eacute;gies d'ordonnancement</td>
+              <td>Pas de cache sp&eacute;cifique</td>
+            </tr>
+            <tr>
+              <td><strong>Revue</strong></td>
+              <td>Post-g&eacute;n&eacute;ration (accepter/rejeter chaque modification)</td>
+              <td>Int&eacute;gr&eacute;e au workflow (s&eacute;lection amont des suggestions)</td>
+            </tr>
+            <tr>
+              <td><strong>Sections trait&eacute;es</strong></td>
+              <td>8 sections compl&egrave;tes</td>
+              <td>Variable selon les suggestions choisies</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== REVIEW ==================== -->
+        <h2>Syst&egrave;me de Revue (Change Tracking)</h2>
+
+        <p>
+          Le syst&egrave;me de revue est <strong>partag&eacute; entre les deux pipelines</strong> (adaptation et optimisation). Apr&egrave;s chaque traitement IA, l'utilisateur conserve un <strong>contr&ocirc;le total</strong> sur les modifications.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie d'une modification</div>
+          <div class="mermaid">
+flowchart LR
+    Gen["Traitement IA<br/>terminé"]
+    Init["Initialisation<br/>de la revue"]
+    Review{"Décisions<br/>utilisateur"}
+    Accept["Accepté"]
+    Reject["Rejeté"]
+    Apply["Appliquer les<br/>décisions"]
+    Version["Nouvelle<br/>version créée"]
+
+    Gen --> Init --> Review
+    Review -->|"Accepter"| Accept --> Apply
+    Review -->|"Rejeter"| Reject --> Apply
+    Apply --> Version
+
+    style Gen fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Init fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Review fill:#f59e0b,stroke:#d97706,color:#fff
+    style Accept fill:#22c55e,stroke:#16a34a,color:#fff
+    style Reject fill:#ef4444,stroke:#dc2626,color:#fff
+    style Apply fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Version fill:#0ea5e9,stroke:#0284c7,color:#fff
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Chaque modification est document&eacute;e</h4>
+            <ul>
+              <li><strong>Valeur avant</strong> : contenu original du CV</li>
+              <li><strong>Valeur apr&egrave;s</strong> : contenu modifi&eacute; par l'IA</li>
+              <li><strong>Raison</strong> : justification de la modification par l'IA</li>
+              <li><strong>Statut</strong> : en attente, accept&eacute; ou rejet&eacute;</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Types de modifications</h4>
+            <ul>
+              <li><span class="badge badge-success">Ajout</span> : nouvel &eacute;l&eacute;ment (responsabilit&eacute;, comp&eacute;tence, certification)</li>
+              <li><span class="badge badge-warning">Modification</span> : reformulation, traduction, renommage</li>
+              <li><span class="badge badge-error">Suppression</span> : &eacute;l&eacute;ment retir&eacute; (non pertinent pour le poste)</li>
+              <li><span class="badge badge-primary">Consolidation</span> : plusieurs &eacute;l&eacute;ments fusionn&eacute;s en un seul</li>
+              <li><span class="badge badge-primary">R&eacute;ordonnancement</span> : &eacute;l&eacute;ments r&eacute;organis&eacute;s par pertinence</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Fusion intelligente des traductions</div>
+          <p>Lorsqu'une comp&eacute;tence est traduite (ex : &laquo; Gestion de projet &raquo; &rarr; &laquo; Project Management &raquo;), le syst&egrave;me d&eacute;tecte automatiquement qu'il s'agit d'une traduction et fusionne les deux &eacute;v&eacute;nements (suppression + ajout) en <strong>une seule modification</strong> pr&eacute;sent&eacute;e &agrave; l'utilisateur.</p>
+        </div>
+
+        <!-- ==================== SCORE REINITIALISATION ==================== -->
+        <h3>Impact sur le score</h3>
+
+        <p>
+          Apr&egrave;s l'application d'une revue, le contenu du CV a chang&eacute;. Le score et les suggestions sont automatiquement <strong>r&eacute;initialis&eacute;s</strong> car ils ne sont plus repr&eacute;sentatifs du nouveau contenu. L'utilisateur peut relancer un calcul de score pour mesurer l'am&eacute;lioration obtenue.
+        </p>
+
+        <!-- ==================== RESILIENCE ==================== -->
+        <h2>R&eacute;silience</h2>
+
+        <p>
+          Le pipeline d'optimisation est con&ccedil;u pour &ecirc;tre <strong>r&eacute;silient aux erreurs individuelles</strong> :
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>&Eacute;chec non bloquant</h4>
+            <p>Si l'am&eacute;lioration d'une exp&eacute;rience ou d'un projet individuel &eacute;choue, les <strong>autres am&eacute;liorations continuent</strong>. Seule l'annulation explicite par l'utilisateur arr&ecirc;te l'ensemble du pipeline.</p>
+          </div>
+          <div class="card">
+            <h4>R&eacute;sum&eacute; conditionnel</h4>
+            <p>Le r&eacute;sum&eacute; professionnel n'est r&eacute;g&eacute;n&eacute;r&eacute; que si des exp&eacute;riences ou projets ont &eacute;t&eacute; modifi&eacute;s. Et si cette &eacute;tape &eacute;choue, les modifications du stage pr&eacute;c&eacute;dent sont conserv&eacute;es.</p>
+          </div>
+          <div class="card">
+            <h4>Remboursement automatique</h4>
+            <p>En cas d'&eacute;chec global, les cr&eacute;dits consomm&eacute;s sont <strong>automatiquement rembours&eacute;s</strong>. L'utilisateur ne perd jamais de cr&eacute;dit pour un traitement &eacute;chou&eacute;.</p>
+          </div>
+          <div class="card">
+            <h4>Progression en temps r&eacute;el</h4>
+            <p>Chaque &eacute;tape &eacute;met des &eacute;v&eacute;nements en temps r&eacute;el pour permettre &agrave; l'interface d'afficher la progression : classification, analyse, am&eacute;lioration de chaque &eacute;l&eacute;ment, puis finalisation.</p>
+          </div>
+        </div>
+
+        <!-- ==================== RECAPITULATIF ==================== -->
+        <h2>R&eacute;capitulatif</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>D&eacute;tail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>&Eacute;tapes du pipeline</strong></td>
+              <td>4 (classification, analyse/routage, am&eacute;liorations parall&egrave;les, r&eacute;sum&eacute; conditionnel)</td>
+            </tr>
+            <tr>
+              <td><strong>Dimensions de scoring</strong></td>
+              <td>4 (comp&eacute;tences 35%, exp&eacute;rience 30%, formation 20%, savoir-&ecirc;tre 15%)</td>
+            </tr>
+            <tr>
+              <td><strong>Types de cibles</strong></td>
+              <td>5 (exp&eacute;rience, projet, nouveau projet, langue, extra)</td>
+            </tr>
+            <tr>
+              <td><strong>Cross-language</strong></td>
+              <td>D&eacute;tection automatique + traduction inject&eacute;e dans l'analyse IA</td>
+            </tr>
+            <tr>
+              <td><strong>Contexte utilisateur</strong></td>
+              <td>Texte libre par suggestion pour guider l'IA</td>
+            </tr>
+            <tr>
+              <td><strong>Types de modifications</strong></td>
+              <td>6 (ajout, modification, suppression, consolidation, suppression d'exp&eacute;rience, r&eacute;ordonnancement)</td>
+            </tr>
+            <tr>
+              <td><strong>Langues support&eacute;es</strong></td>
+              <td>4 (fran&ccedil;ais, anglais, espagnol, allemand)</td>
+            </tr>
+            <tr>
+              <td><strong>R&eacute;silience</strong></td>
+              <td>&Eacute;chec individuel non bloquant + remboursement automatique</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+  <script src="./assets/js/layout.js?v=1.0.5"></script>
+  <script src="./assets/js/main.js?v=1.0.7"></script>
+</body>
+</html>

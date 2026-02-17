@@ -31,7 +31,7 @@
 
         <div class="callout callout-info">
           <div class="callout-title">Version 1.1.0.0</div>
-          <p>Cette documentation reflète la codebase actuelle de FitMyCV.io. Elle est destinée à servir de référence technique complète pour le développement et la maintenance.</p>
+          <p>Cette documentation reflète la codebase actuelle de FitMyCV.io (mise à jour février 2026). Elle est destinée à servir de référence technique complète pour le développement et la maintenance.</p>
         </div>
 
         <div class="callout callout-warning">
@@ -50,15 +50,19 @@
           </div>
           <div class="card">
             <h4>Statistiques</h4>
-            <p>114 API Routes, 138 Composants React, 34 Modèles Prisma, 4 Langues supportées</p>
+            <p>123 API Routes, 239 Composants React, 34 Modèles Prisma, 30+ Modules lib/, 4 Langues</p>
           </div>
           <div class="card">
             <h4>Pipelines IA</h4>
-            <p>Génération CV adapté, Optimisation CV, Scoring matching, Extraction offres</p>
+            <p>Génération CV adapté, Optimisation CV, Scoring matching, Extraction offres, CV Modèle</p>
           </div>
           <div class="card">
             <h4>Modèles Économiques</h4>
             <p>Abonnement + Crédits ou Crédits uniquement, configurable en admin</p>
+          </div>
+          <div class="card">
+            <h4>Extension Navigateur</h4>
+            <p>Chrome &amp; Firefox Manifest V3 : détection offres sur 10+ job boards, extraction, génération CV</p>
           </div>
         </div>
 
@@ -69,40 +73,61 @@
           <div class="mermaid">
 flowchart TB
     subgraph Frontend["Frontend (React 19)"]
-        UI[Composants UI]
-        Providers[Context Providers]
-        Hooks[Custom Hooks]
+        UI["Composants d'interface"]
+        Providers["Fournisseurs de contexte"]
+        Hooks["Hooks personnalisés"]
     end
 
-    subgraph API["API Layer (Next.js)"]
-        Routes[113 API Routes]
-        Auth[NextAuth.js]
-        Middleware[Middlewares]
+    subgraph API["Couche API (Next.js)"]
+        Routes["123 routes API"]
+        Auth["Authentification"]
+        Middleware["Middlewares"]
     end
 
-    subgraph Business["Business Logic"]
-        CVCore[CV Core]
-        OpenAI[OpenAI Core]
-        Subscription[Subscription]
-        Jobs[Background Jobs]
+    subgraph Business["Logique metier"]
+        CVCore["Gestion des CV"]
+        OpenAI["Intelligence artificielle"]
+        Subscription["Abonnements"]
+        Jobs["Tâches en arrière-plan"]
     end
 
-    subgraph Data["Data Layer"]
-        Prisma[Prisma ORM]
-        DB[(PostgreSQL)]
+    subgraph Data["Couche donnees"]
+        Prisma["Accès aux données"]
+        DB[("PostgreSQL")]
     end
 
     subgraph External["Services Externes"]
-        OpenAIAPI[OpenAI API]
-        StripeAPI[Stripe API]
-        Email[SMTP/Resend]
+        OpenAIAPI["API OpenAI"]
+        StripeAPI["API Stripe"]
+        Email["Service d'email"]
+    end
+
+    subgraph Extension["Extension Navigateur"]
+        Ext["Extension Chrome/Firefox"]
     end
 
     Frontend --> API
+    Extension --> API
     API --> Business
     Business --> Data
     Business --> External
     Data --> DB
+    style UI fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Providers fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Hooks fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Routes fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Auth fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Middleware fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CVCore fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style OpenAI fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Subscription fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Jobs fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Prisma fill:#14b8a6,stroke:#0d9488,color:#fff
+    style DB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style OpenAIAPI fill:#f59e0b,stroke:#d97706,color:#fff
+    style StripeAPI fill:#f59e0b,stroke:#d97706,color:#fff
+    style Email fill:#f59e0b,stroke:#d97706,color:#fff
+    style Ext fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
@@ -129,6 +154,38 @@ flowchart TB
           <li><strong>Mode Abonnement</strong> - Plans Free/Pro/Premium avec limites mensuelles</li>
           <li><strong>Mode Crédits</strong> - Paiement à l'usage uniquement</li>
           <li><strong>Intégration Stripe</strong> - Paiements, webhooks, facturation</li>
+        </ul>
+
+        <h3>Extension Navigateur</h3>
+        <ul>
+          <li><strong>Détection automatique</strong> - Reconnaissance des offres sur 10+ job boards</li>
+          <li><strong>Extraction intelligente</strong> - HTML vers Markdown via Readability + Turndown</li>
+          <li><strong>Intégration SaaS</strong> - Auth JWT, sélection CV, génération directe</li>
+          <li><strong>Multi-navigateur</strong> - Chrome et Firefox (Manifest V3)</li>
+        </ul>
+
+        <h3>Système</h3>
+        <ul>
+          <li><strong>Background Jobs</strong> - Queue en mémoire avec concurrence (max 3 globaux)</li>
+          <li><strong>Export</strong> - PDF (Puppeteer) et DOCX avec templates personnalisables</li>
+          <li><strong>Traduction</strong> - CV multilingue (FR, EN, ES, DE) via OpenAI</li>
+          <li><strong>Email</strong> - Double transport SMTP/Resend avec templates dynamiques</li>
+          <li><strong>&Eacute;v&eacute;nements SSE</strong> - Temps réel via Server-Sent Events (dbEmitter)</li>
+        </ul>
+
+        <h3>Infrastructure</h3>
+        <ul>
+          <li><strong>Docker</strong> - Build multi-stage (4 stages), Chromium, Puppeteer</li>
+          <li><strong>CI/CD</strong> - GitHub Actions (pre-prod + production), versioning automatique</li>
+          <li><strong>Middleware</strong> - Rate limiting, CORS extension, security headers CSP/HSTS</li>
+          <li><strong>Scripts</strong> - Versioning, migrations de données, sync Stripe, emails</li>
+        </ul>
+
+        <h3>S&eacute;curit&eacute; &amp; Conformit&eacute;</h3>
+        <ul>
+          <li><strong>RGPD</strong> - Consentement cookies, rétention données, audit trail</li>
+          <li><strong>S&eacute;curit&eacute; Code</strong> - Validation uploads, sanitisation XSS, logger sécurisé</li>
+          <li><strong>Internationalisation</strong> - 4 langues (FR, EN, ES, DE), 40 fichiers locales</li>
         </ul>
 
         <h2>Structure de la Documentation</h2>
@@ -174,8 +231,52 @@ flowchart TB
               <td>Dashboard, monitoring, configuration</td>
             </tr>
             <tr>
+              <td><strong>Background Jobs &amp; Export</strong></td>
+              <td>Queue, concurrence, export PDF/DOCX, traduction</td>
+            </tr>
+            <tr>
+              <td><strong>Onboarding &amp; Email</strong></td>
+              <td>9 étapes onboarding, templates email, double transport</td>
+            </tr>
+            <tr>
+              <td><strong>Extension Navigateur</strong></td>
+              <td>Architecture Manifest V3, détection, extraction, auth JWT</td>
+            </tr>
+            <tr>
               <td><strong>API Reference</strong></td>
-              <td>114 endpoints documentés</td>
+              <td>123 endpoints documentés (public, auth, admin, extension)</td>
+            </tr>
+            <tr>
+              <td><strong>Composants React</strong></td>
+              <td>239 composants en 17 catégories, patterns, architecture</td>
+            </tr>
+            <tr>
+              <td><strong>D&eacute;ploiement &amp; Docker</strong></td>
+              <td>Dockerfile multi-stage, CI/CD GitHub Actions, variables d'environnement, health checks</td>
+            </tr>
+            <tr>
+              <td><strong>Middleware &amp; S&eacute;curit&eacute;</strong></td>
+              <td>proxy.js, CORS extension, rate limiting, security headers CSP/HSTS</td>
+            </tr>
+            <tr>
+              <td><strong>RGPD &amp; Consentement</strong></td>
+              <td>Cookies, consentement utilisateur, rétention données, audit trail CRON</td>
+            </tr>
+            <tr>
+              <td><strong>&Eacute;v&eacute;nements SSE</strong></td>
+              <td>Server-Sent Events, dbEmitter, prismaWithEvents, temps réel</td>
+            </tr>
+            <tr>
+              <td><strong>Internationalisation</strong></td>
+              <td>4 langues (FR/EN/ES/DE), locales, cvLanguageHelper, extension i18n</td>
+            </tr>
+            <tr>
+              <td><strong>S&eacute;curit&eacute; du Code</strong></td>
+              <td>Validation uploads, sanitisation XSS, logger sécurisé avec masquage PII</td>
+            </tr>
+            <tr>
+              <td><strong>Scripts &amp; Automatisation</strong></td>
+              <td>Versioning, migrations de données, sync Stripe, export/preview emails</td>
             </tr>
           </tbody>
         </table>
@@ -211,6 +312,6 @@ flowchart TB
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
 
   <script src="./assets/js/layout.js?v=1.0.4"></script>
-  <script src="./assets/js/main.js?v=1.0.4"></script>
+  <script src="./assets/js/main.js?v=1.0.5"></script>
 </body>
 </html>

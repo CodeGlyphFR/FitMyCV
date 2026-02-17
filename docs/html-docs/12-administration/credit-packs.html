@@ -3,24 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Packs Credits | FitMyCV.io</title>
+  <title>Packs Cr&eacute;dits | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
 
       <div class="content">
@@ -29,59 +26,542 @@
           <span>/</span>
           <a href="./overview.html">Administration</a>
           <span>/</span>
-          <span>Packs Credits</span>
+          <span>Packs Cr&eacute;dits</span>
         </div>
 
-
-        <h1>Packs de Credits</h1>
+        <h1>Packs Cr&eacute;dits</h1>
         <p class="lead">
-          Configuration des packs de credits a l'achat.
+          Gestion compl&egrave;te des packs de cr&eacute;dits achetables par les utilisateurs. Les packs sont synchronis&eacute;s automatiquement avec Stripe et permettent aux utilisateurs d'acheter des cr&eacute;dits en compl&eacute;ment de leur abonnement ou comme unique moyen de paiement en mode cr&eacute;dits-only.
         </p>
 
-        <h2>Packs Disponibles</h2>
+        <h2>Mod&egrave;le Prisma : CreditPack</h2>
+
+        <pre><code class="language-javascript">model CreditPack {
+  id              Int      @id @default(autoincrement())
+  name            String                  // Auto-g&eacute;n&eacute;r&eacute; : "{creditAmount} Cr&eacute;dits"
+  description     String?
+  creditAmount    Int      @unique        // Nombre de cr&eacute;dits du pack
+  price           Float                   // Prix en euros
+  priceCurrency   String   @default("EUR")
+  isActive        Boolean  @default(true) // Visible dans l'interface
+  stripeProductId String?  @unique        // ID produit Stripe
+  stripePriceId   String?  @unique        // ID prix Stripe (paiement unique)
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Nom auto-g&eacute;n&eacute;r&eacute;</div>
+          <p>Le champ <code>name</code> est automatiquement g&eacute;n&eacute;r&eacute; au format <code>"{creditAmount} Cr&eacute;dits"</code> lors de la cr&eacute;ation et de la modification. Il est recalcul&eacute; &agrave; chaque changement de <code>creditAmount</code>.</p>
+        </div>
+
+        <h2>Exemple de Packs</h2>
 
         <table>
           <thead>
             <tr>
-              <th>Pack</th>
-              <th>Credits</th>
+              <th>Nom</th>
+              <th>Cr&eacute;dits</th>
               <th>Prix</th>
-              <th>Prix/credit</th>
+              <th>Prix/Cr&eacute;dit</th>
+              <th>Actif</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Starter</td>
-              <td>10</td>
-              <td>4.99 EUR</td>
-              <td>0.50 EUR</td>
+              <td>15 Cr&eacute;dits</td>
+              <td>15</td>
+              <td>4,99 &euro;</td>
+              <td>0,33 &euro;</td>
+              <td>Oui</td>
             </tr>
             <tr>
-              <td>Standard</td>
+              <td>50 Cr&eacute;dits</td>
               <td>50</td>
-              <td>19.99 EUR</td>
-              <td>0.40 EUR</td>
+              <td>14,99 &euro;</td>
+              <td>0,30 &euro;</td>
+              <td>Oui</td>
             </tr>
             <tr>
-              <td>Premium</td>
-              <td>200</td>
-              <td>59.99 EUR</td>
-              <td>0.30 EUR</td>
+              <td>100 Cr&eacute;dits</td>
+              <td>100</td>
+              <td>26,99 &euro;</td>
+              <td>0,27 &euro;</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td>150 Cr&eacute;dits</td>
+              <td>150</td>
+              <td>35,99 &euro;</td>
+              <td>0,24 &euro;</td>
+              <td>Oui</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Modèle CreditPack</h2>
+        <div class="callout callout-success">
+          <div class="callout-title">Strat&eacute;gie tarifaire d&eacute;gressive</div>
+          <p>Les packs sont con&ccedil;us avec un prix par cr&eacute;dit <strong>d&eacute;gressif</strong> : plus le pack est gros, plus le co&ucirc;t unitaire est avantageux. Cela incite les utilisateurs &agrave; acheter des packs plus importants.</p>
+        </div>
 
-        <pre><code>model CreditPack {
-  id              String   @id @default(cuid())
-  name            String
-  credits         Int
-  price           Decimal
-  stripePriceId   String   @unique
-  isActive        Boolean  @default(true)
-  sortOrder       Int      @default(0)
+        <h2>Cycle de Vie d'un Pack</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Cycle de vie complet d'un pack de cr&eacute;dits</div>
+          <div class="mermaid">
+graph TB
+    subgraph CreationBlock["CREATION"]
+        AdminCreate["Admin crée le pack"]
+        ValidateAmount{"Nombre de crédits<br/>unique ?"}
+        GenName["Générer le nom :<br/>N Crédits"]
+        SaveDB["Sauvegarder en base"]
+    end
+
+    subgraph StripeSync["SYNCHRONISATION STRIPE"]
+        SyncStart["Synchroniser avec Stripe"]
+        CreateProduct["Créer le produit Stripe"]
+        CreatePrice["Créer le tarif Stripe<br/>paiement unique"]
+        SetDefault["Définir le tarif par défaut"]
+        SaveStripeIds["Sauvegarder les identifiants<br/>Stripe en base"]
+    end
+
+    subgraph ActiveBlock["UTILISATION"]
+        Visible["Pack visible dans<br/>interface utilisateur"]
+        UserCheckout["Utilisateur clique Acheter"]
+        StripeCheckout["Page de paiement Stripe<br/>paiement unique"]
+        WebhookEvent["Notification Stripe<br/>paiement reçu"]
+        GrantCredits["Attribuer les crédits<br/>à l'utilisateur"]
+    end
+
+    subgraph ModifBlock["MODIFICATION"]
+        AdminPatch["Admin modifie le pack"]
+        PriceChanged{"Prix changé ?"}
+        ArchivePrice["Archiver l'ancien tarif"]
+        NewPrice["Créer le nouveau tarif"]
+    end
+
+    subgraph DeleteBlock["SUPPRESSION"]
+        AdminDelete["Admin supprime le pack"]
+        DeleteDB["Supprimer de la base"]
+        ArchiveStripe["Archiver sur Stripe"]
+    end
+
+    AdminCreate --> ValidateAmount
+    ValidateAmount -->|"Non"| PackError["Erreur 409"]
+    ValidateAmount -->|"Oui"| GenName
+    GenName --> SaveDB
+    SaveDB --> SyncStart
+
+    SyncStart --> CreateProduct
+    CreateProduct --> CreatePrice
+    CreatePrice --> SetDefault
+    SetDefault --> SaveStripeIds
+
+    SaveStripeIds --> Visible
+    Visible --> UserCheckout
+    UserCheckout --> StripeCheckout
+    StripeCheckout --> WebhookEvent
+    WebhookEvent --> GrantCredits
+
+    AdminPatch --> PriceChanged
+    PriceChanged -->|"Oui"| ArchivePrice
+    ArchivePrice --> NewPrice
+    NewPrice --> SaveStripeIds
+    PriceChanged -->|"Non"| SaveStripeIds
+
+    AdminDelete --> DeleteDB
+    AdminDelete --> ArchiveStripe
+
+    style AdminCreate fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ValidateAmount fill:#f59e0b,stroke:#d97706,color:#fff
+    style GenName fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SaveDB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style SyncStart fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreateProduct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreatePrice fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SetDefault fill:#6366f1,stroke:#4f46e5,color:#fff
+    style SaveStripeIds fill:#22c55e,stroke:#16a34a,color:#fff
+    style Visible fill:#22c55e,stroke:#16a34a,color:#fff
+    style UserCheckout fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style StripeCheckout fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style WebhookEvent fill:#6366f1,stroke:#4f46e5,color:#fff
+    style GrantCredits fill:#22c55e,stroke:#16a34a,color:#fff
+    style AdminPatch fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PriceChanged fill:#f59e0b,stroke:#d97706,color:#fff
+    style ArchivePrice fill:#ef4444,stroke:#dc2626,color:#fff
+    style NewPrice fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style AdminDelete fill:#ef4444,stroke:#dc2626,color:#fff
+    style DeleteDB fill:#ef4444,stroke:#dc2626,color:#fff
+    style ArchiveStripe fill:#64748b,stroke:#475569,color:#fff
+    style PackError fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <h2>GET /api/admin/credit-packs</h2>
+
+        <p>R&eacute;cup&egrave;re tous les packs de cr&eacute;dits, ordonn&eacute;s par ID croissant.</p>
+
+        <h3>R&eacute;ponse</h3>
+
+        <pre><code class="language-json">{
+  "packs": [
+    {
+      "id": 1,
+      "name": "15 Cr&eacute;dits",
+      "description": null,
+      "creditAmount": 15,
+      "price": 4.99,
+      "priceCurrency": "EUR",
+      "isActive": true,
+      "stripeProductId": "prod_abc123",
+      "stripePriceId": "price_xyz789"
+    },
+    {
+      "id": 2,
+      "name": "50 Cr&eacute;dits",
+      "creditAmount": 50,
+      "price": 14.99,
+      "priceCurrency": "EUR",
+      "isActive": true,
+      "stripeProductId": "prod_def456",
+      "stripePriceId": "price_uvw012"
+    }
+  ]
 }</code></pre>
+
+        <h2>POST /api/admin/credit-packs</h2>
+
+        <p>Cr&eacute;e un nouveau pack de cr&eacute;dits. Le nom est auto-g&eacute;n&eacute;r&eacute;.</p>
+
+        <h3>Body (JSON)</h3>
+
+        <pre><code class="language-json">{
+  "creditAmount": 50,
+  "price": 19.99,
+  "priceCurrency": "EUR",
+  "isActive": true
+}</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Requis</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>creditAmount</code></td>
+              <td>Int</td>
+              <td>Oui</td>
+              <td>Nombre de cr&eacute;dits du pack. Doit &ecirc;tre unique</td>
+            </tr>
+            <tr>
+              <td><code>price</code></td>
+              <td>Float</td>
+              <td>Oui</td>
+              <td>Prix du pack en devise sp&eacute;cifi&eacute;e</td>
+            </tr>
+            <tr>
+              <td><code>priceCurrency</code></td>
+              <td>String</td>
+              <td>Non</td>
+              <td>Devise (d&eacute;faut : <code>"EUR"</code>)</td>
+            </tr>
+            <tr>
+              <td><code>isActive</code></td>
+              <td>Boolean</td>
+              <td>Non</td>
+              <td>Visibilit&eacute; du pack (d&eacute;faut : <code>true</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Validations</h3>
+
+        <ul>
+          <li><strong>Unicit&eacute; creditAmount</strong> : deux packs ne peuvent pas avoir le m&ecirc;me nombre de cr&eacute;dits. Retourne <code>409</code> en cas de doublon.</li>
+          <li><strong>Auto-g&eacute;n&eacute;ration du nom</strong> : le champ <code>name</code> est calcul&eacute; comme <code>"{creditAmount} Cr&eacute;dits"</code>.</li>
+          <li><strong>Synchronisation Stripe</strong> : apr&egrave;s insertion en base, <code>syncStripeProductsInternal()</code> est appel&eacute; de mani&egrave;re non-bloquante pour cr&eacute;er le Product et le Price sur Stripe.</li>
+        </ul>
+
+        <h2>PATCH /api/admin/credit-packs/[id]</h2>
+
+        <p>Modifie un pack existant. Tous les champs sont optionnels.</p>
+
+        <h3>Body (JSON) &mdash; Tous les champs optionnels</h3>
+
+        <pre><code class="language-json">{
+  "creditAmount": 75,
+  "price": 29.99,
+  "isActive": false
+}</code></pre>
+
+        <h3>Comportement</h3>
+
+        <ul>
+          <li>Si <code>creditAmount</code> change, le <strong>nom est r&eacute;g&eacute;n&eacute;r&eacute;</strong> automatiquement</li>
+          <li>L'<strong>unicit&eacute; de creditAmount</strong> est v&eacute;rifi&eacute;e (exclut le pack en cours de modification)</li>
+          <li>Si le <strong>prix change</strong>, l'ancien Price Stripe est archiv&eacute; et un nouveau est cr&eacute;&eacute;</li>
+          <li>Le nouveau Price est d&eacute;fini comme <code>default_price</code> du Product avant d'archiver l'ancien</li>
+          <li>Mettre <code>isActive = false</code> masque le pack dans l'interface utilisateur mais ne le supprime pas de Stripe</li>
+        </ul>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">D&eacute;sactivation vs Suppression</div>
+          <p>Pr&eacute;f&eacute;rez <strong>d&eacute;sactiver</strong> un pack (<code>isActive = false</code>) plut&ocirc;t que de le supprimer. Cela pr&eacute;serve l'historique des transactions et permet de le r&eacute;activer ult&eacute;rieurement.</p>
+        </div>
+
+        <h2>DELETE /api/admin/credit-packs/[id]</h2>
+
+        <p>Supprime d&eacute;finitivement un pack de cr&eacute;dits.</p>
+
+        <h3>Op&eacute;rations effectu&eacute;es</h3>
+
+        <ul>
+          <li>Suppression du pack en base de donn&eacute;es</li>
+          <li>Archivage du Product et du Price correspondants sur Stripe (d&eacute;sactivation, pas de suppression d&eacute;finitive c&ocirc;t&eacute; Stripe)</li>
+        </ul>
+
+        <h2>Synchronisation Stripe</h2>
+
+        <p>La synchronisation des packs avec Stripe est g&eacute;r&eacute;e par <code>syncStripeProductsInternal()</code> dans <code>lib/subscription/stripeSync.js</code>.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Synchronisation Pack &harr; Stripe</div>
+          <div class="mermaid">
+graph LR
+    subgraph DBBlock["BASE DE DONNEES"]
+        CreditPackDB["Pack de crédits<br/>nombre, prix,<br/>actif"]
+    end
+
+    subgraph SyncBlock["SYNCHRONISATION STRIPE"]
+        CheckActive{"Pack actif ?"}
+        FindProduct["Chercher le produit<br/>par identifiant"]
+        CreateProduct["Créer le produit<br/>nom, métadonnées"]
+        CheckPrice{"Tarif à jour ?<br/>montant identique"}
+        CreatePrice["Créer le tarif<br/>paiement unique"]
+        SetDefault["Définir le tarif par défaut"]
+        ArchiveOld["Archiver l'ancien tarif"]
+        SaveIds["Sauvegarder les identifiants<br/>en base"]
+    end
+
+    subgraph StripeBlock["STRIPE"]
+        StripeProduct["Produit"]
+        StripePrice["Tarif paiement unique"]
+    end
+
+    CreditPackDB --> CheckActive
+    CheckActive -->|"Non"| SkipPack["Ignoré"]
+    CheckActive -->|"Oui"| FindProduct
+    FindProduct -->|"Existe"| CheckPrice
+    FindProduct -->|"N existe pas"| CreateProduct
+    CreateProduct --> CheckPrice
+    CheckPrice -->|"Montant change"| CreatePrice
+    CreatePrice --> SetDefault
+    SetDefault --> ArchiveOld
+    ArchiveOld --> SaveIds
+    CheckPrice -->|"OK"| SaveIds
+    SaveIds --> StripeProduct
+    SaveIds --> StripePrice
+
+    style CreditPackDB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CheckActive fill:#f59e0b,stroke:#d97706,color:#fff
+    style FindProduct fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CreateProduct fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CheckPrice fill:#f59e0b,stroke:#d97706,color:#fff
+    style CreatePrice fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SetDefault fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ArchiveOld fill:#ef4444,stroke:#dc2626,color:#fff
+    style SaveIds fill:#22c55e,stroke:#16a34a,color:#fff
+    style SkipPack fill:#64748b,stroke:#475569,color:#fff
+    style StripeProduct fill:#14b8a6,stroke:#0d9488,color:#fff
+    style StripePrice fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Packs inactifs ignor&eacute;s</div>
+          <p>Les packs avec <code>isActive = false</code> sont <strong>ignor&eacute;s</strong> par la synchronisation Stripe. Ils ne sont ni cr&eacute;&eacute;s ni mis &agrave; jour c&ocirc;t&eacute; Stripe tant qu'ils restent inactifs.</p>
+        </div>
+
+        <h2>Flux d'Achat (C&ocirc;t&eacute; Utilisateur)</h2>
+
+        <p>Le processus d'achat d'un pack de cr&eacute;dits suit le flux suivant :</p>
+
+        <pre><code class="language-javascript">// 1. L'utilisateur s&eacute;lectionne un pack
+const response = await fetch('/api/checkout/credits', {
+  method: 'POST',
+  body: JSON.stringify({ packId: 2 })
+});
+const { url } = await response.json();
+// url = "https://checkout.stripe.com/c/pay/..."
+
+// 2. Redirection vers Stripe Checkout (mode: payment)
+window.location.href = url;
+
+// 3. Apr&egrave;s paiement, webhook Stripe d&eacute;clenche :
+//    checkout.session.completed &rarr; grantCredits(userId, creditAmount, 'purchase')
+
+// 4. Cr&eacute;dits ajout&eacute;s au CreditBalance de l'utilisateur
+// 5. CreditTransaction cr&eacute;&eacute;e (type: 'purchase', stripePaymentIntentId)</code></pre>
+
+        <h2>Code source des routes API</h2>
+
+        <h3>POST /api/admin/credit-packs (cr&eacute;ation)</h3>
+
+        <pre><code class="language-javascript">// app/api/admin/credit-packs/route.js
+
+export async function POST(request) {
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Admin required' }, { status: 403 });
+  }
+
+  const { creditAmount, price, priceCurrency, isActive } = await request.json();
+
+  // Validations
+  if (typeof creditAmount !== 'number' || creditAmount &lt;= 0)
+    return NextResponse.json({ error: 'Cr&eacute;dits &gt; 0 requis' }, { status: 400 });
+  if (typeof price !== 'number' || price &lt; 0)
+    return NextResponse.json({ error: 'Prix invalide' }, { status: 400 });
+
+  // V&eacute;rifier unicit&eacute; de creditAmount
+  const existing = await prisma.creditPack.findUnique({
+    where: { creditAmount },
+  });
+  if (existing) {
+    return NextResponse.json(
+      { error: `Un pack avec ${creditAmount} cr&eacute;dits existe d&eacute;j&agrave;` },
+      { status: 409 }
+    );
+  }
+
+  // Cr&eacute;er le pack (nom auto-g&eacute;n&eacute;r&eacute;)
+  const pack = await prisma.creditPack.create({
+    data: {
+      name: `${creditAmount} Cr&eacute;dits`,
+      creditAmount, price, priceCurrency,
+      isActive: isActive ?? true,
+    },
+  });
+
+  // Synchronisation Stripe non-bloquante
+  syncStripeProductsInternal()
+    .catch(err =&gt; console.warn('[Admin] Stripe sync failed:', err));
+
+  return NextResponse.json({ pack }, { status: 201 });
+}</code></pre>
+
+        <h3>PATCH /api/admin/credit-packs/[id] (modification)</h3>
+
+        <pre><code class="language-javascript">// app/api/admin/credit-packs/[id]/route.js
+
+export async function PATCH(request, { params }) {
+  const { id } = await params; // Next.js 16: params async
+  const packId = parseInt(id, 10);
+
+  const existingPack = await prisma.creditPack.findUnique({
+    where: { id: packId },
+  });
+  if (!existingPack) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const { creditAmount, price, priceCurrency, isActive } = await request.json();
+
+  // V&eacute;rifier unicit&eacute; creditAmount (exclut le pack en cours)
+  if (creditAmount !== undefined) {
+    const conflict = await prisma.creditPack.findFirst({
+      where: { creditAmount, NOT: { id: packId } },
+    });
+    if (conflict) return NextResponse.json(
+      { error: `Pack ${creditAmount} cr&eacute;dits existe d&eacute;j&agrave;` }, { status: 409 });
+  }
+
+  // Construire les donn&eacute;es de mise &agrave; jour
+  const updateData = {};
+  if (creditAmount !== undefined) {
+    updateData.creditAmount = creditAmount;
+    updateData.name = `${creditAmount} Cr&eacute;dits`; // R&eacute;g&eacute;n&eacute;rer le nom
+  }
+  if (price !== undefined) updateData.price = price;
+  if (priceCurrency !== undefined) updateData.priceCurrency = priceCurrency;
+  if (isActive !== undefined) updateData.isActive = isActive;
+
+  const updatedPack = await prisma.creditPack.update({
+    where: { id: packId }, data: updateData,
+  });
+
+  // Synchronisation Stripe (g&egrave;re archivage ancien Price si prix chang&eacute;)
+  syncStripeProductsInternal()
+    .catch(err =&gt; console.warn('[Admin] Stripe sync failed:', err));
+
+  return NextResponse.json({ pack: updatedPack });
+}</code></pre>
+
+        <h3>DELETE /api/admin/credit-packs/[id] (suppression)</h3>
+
+        <pre><code class="language-javascript">// app/api/admin/credit-packs/[id]/route.js
+
+export async function DELETE(request, { params }) {
+  const { id } = await params;
+  const packId = parseInt(id, 10);
+
+  const existingPack = await prisma.creditPack.findUnique({
+    where: { id: packId },
+  });
+  if (!existingPack) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Supprimer de la DB
+  await prisma.creditPack.delete({ where: { id: packId } });
+
+  // Archiver sur Stripe (non-bloquant)
+  syncStripeProductsInternal()
+    .catch(err =&gt; console.warn('[Admin] Stripe sync failed:', err));
+
+  return NextResponse.json({ success: true });
+}</code></pre>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Next.js 16 : params async</div>
+          <p>Depuis Next.js 16, le param&egrave;tre <code>params</code> des routes dynamiques est une <strong>Promise</strong>. Il faut utiliser <code>const { id } = await params;</code> au lieu de l'acc&egrave;s direct <code>params.id</code>.</p>
+        </div>
+
+        <h2>Fichiers Cl&eacute;s</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>app/api/admin/credit-packs/route.js</code></td>
+              <td>GET (liste) et POST (cr&eacute;ation) des packs</td>
+            </tr>
+            <tr>
+              <td><code>app/api/admin/credit-packs/[id]/route.js</code></td>
+              <td>PATCH (modification) et DELETE (suppression)</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/stripeSync.js</code></td>
+              <td>Synchronisation bidirectionnelle avec Stripe (products et prices)</td>
+            </tr>
+            <tr>
+              <td><code>lib/subscription/credits.js</code></td>
+              <td>grantCredits() &mdash; attribution des cr&eacute;dits apr&egrave;s achat</td>
+            </tr>
+            <tr>
+              <td><code>app/api/checkout/credits/route.js</code></td>
+              <td>Cr&eacute;ation session Stripe Checkout (mode payment)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/subscription/credit-packs/route.js</code></td>
+              <td>Liste des packs actifs c&ocirc;t&eacute; utilisateur (tri&eacute;s par creditAmount)</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   </div>

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Middleware &amp; Sécurité | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <span>Middleware &amp; Sécurité</span>
+        </div>
+
+        <h1>Middleware &amp; Sécurité</h1>
+        <p class="lead">
+          Le fichier <code>proxy.js</code> est le point central de sécurité de l'application. Il gère le CORS pour les extensions navigateur, le rate limiting in-memory, les security headers (CSP, HSTS, etc.), et la vérification d'email. Le fichier <code>instrumentation.js</code> assure le nettoyage des tâches orphelines au démarrage.
+        </p>
+
+        <!-- ==================== ARCHITECTURE ==================== -->
+        <h2>Architecture du middleware</h2>
+
+        <p>Le middleware <code>proxy.js</code> intercepte toutes les requêtes HTTP (sauf les assets statiques) et applique une chaîne de vérifications avant de transmettre la requête à Next.js :</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Chaîne de traitement du middleware proxy.js</div>
+          <div class="mermaid">
+flowchart TB
+    Req["Requête entrante"] --> HMR{"Connexion temps réel ?"}
+    HMR -->|"Oui"| Bypass["Laisser passer<br/>(temps reel)"]
+    HMR -->|"Non"| CORS{"Route extension ?"}
+    CORS -->|"Preflight"| Preflight{"Origine autorisée ?"}
+    Preflight -->|"Oui"| CorsOK["Accès autorisé"]
+    Preflight -->|"Non"| Cors403["Accès refusé"]
+    CORS -->|"Autre"| Email["Vérification email"]
+    Email --> EmailCheck{"Utilisateur connecté<br/>sans email vérifié ?"}
+    EmailCheck -->|"Oui"| Redirect["Rediriger vers<br/>vérification email"]
+    EmailCheck -->|"Non"| RateLimit{"Route API ?"}
+    RateLimit -->|"Oui"| RLCheck{"Limite de requêtes<br/>dépassée ?"}
+    RLCheck -->|"Oui"| RL429["Trop de requêtes"]
+    RLCheck -->|"Non"| Headers["Appliquer les en-têtes<br/>de sécurité"]
+    RateLimit -->|"Non"| Headers
+    Headers --> CorsAdd{"Route extension ?"}
+    CorsAdd -->|"Oui"| AddCors["Ajouter les en-têtes<br/>cross-origin"]
+    CorsAdd -->|"Non"| Done["Continuer vers<br/>la route"]
+    AddCors --> Done
+    style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style HMR fill:#f59e0b,stroke:#d97706,color:#fff
+    style Bypass fill:#64748b,stroke:#475569,color:#fff
+    style CORS fill:#f59e0b,stroke:#d97706,color:#fff
+    style Preflight fill:#f59e0b,stroke:#d97706,color:#fff
+    style CorsOK fill:#22c55e,stroke:#16a34a,color:#fff
+    style Cors403 fill:#ef4444,stroke:#dc2626,color:#fff
+    style Email fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style EmailCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style Redirect fill:#ef4444,stroke:#dc2626,color:#fff
+    style RateLimit fill:#f59e0b,stroke:#d97706,color:#fff
+    style RLCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style RL429 fill:#ef4444,stroke:#dc2626,color:#fff
+    style Headers fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CorsAdd fill:#f59e0b,stroke:#d97706,color:#fff
+    style AddCors fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Done fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== CORS EXTENSIONS ==================== -->
+        <h2>CORS pour extensions navigateur</h2>
+
+        <p>L'extension FitMyCV (Chrome/Firefox) communique avec l'API via des requêtes cross-origin. Le middleware gère le CORS spécifiquement pour les routes d'extension.</p>
+
+        <h3>Routes concernées</h3>
+        <ul>
+          <li><code>/api/ext/*</code> — Toutes les routes de l'API extension (CVs, crédits, tâches)</li>
+          <li><code>/api/auth/extension-token</code> — Authentification de l'extension</li>
+        </ul>
+
+        <h3>Origins autorisées</h3>
+
+        <pre><code class="language-javascript">const EXTENSION_ORIGIN_PATTERNS = [
+  /^chrome-extension:\/\//,   // Extensions Chrome/Edge
+  /^moz-extension:\/\//,      // Extensions Firefox
+];
+
+// Origins supplémentaires via variable d'environnement
+const EXTRA_ORIGINS = (process.env.EXTENSION_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Environnement</th>
+              <th>Origins acceptées</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Développement</td>
+              <td>Toute origin <code>chrome-extension://</code> ou <code>moz-extension://</code></td>
+            </tr>
+            <tr>
+              <td>Production</td>
+              <td>Patterns par défaut + origins listées dans <code>EXTENSION_ALLOWED_ORIGINS</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Headers CORS appliqués</h3>
+
+        <pre><code class="language-javascript">function setCorsHeaders(response, origin) {
+  response.headers.set('Access-Control-Allow-Origin', origin);
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  response.headers.set('Access-Control-Max-Age', '86400');  // Cache preflight 24h
+  return response;
+}</code></pre>
+
+        <div class="callout callout-info">
+          <strong>Preflight OPTIONS</strong> — Les requêtes <code>OPTIONS</code> sont interceptées en premier. Si l'origin est autorisée, le middleware retourne un <code>204 No Content</code> avec les headers CORS. Sinon, il retourne un <code>403 Forbidden</code>.
+        </div>
+
+        <!-- ==================== RATE LIMITING ==================== -->
+        <h2>Rate Limiting</h2>
+
+        <p>Le rate limiting utilise un <strong>store in-memory</strong> (<code>Map</code>) avec une fenêtre glissante de 60 secondes. Chaque combinaison IP + pathname constitue une clé unique.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Mécanisme de rate limiting</div>
+          <div class="mermaid">
+flowchart LR
+    Req["Requête API"] --> Key["Identifier la requête<br/>(IP + chemin)"]
+    Key --> Check{"Fenêtre expirée ?"}
+    Check -->|"Oui"| Reset["Réinitialiser le compteur"]
+    Check -->|"Non"| Inc["Incrémenter le compteur"]
+    Reset --> Inc
+    Inc --> Limit{"Limite dépassée ?"}
+    Limit -->|"Oui"| Block["Bloquer la requête"]
+    Limit -->|"Non"| Pass["Requête autorisée"]
+    style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Key fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Check fill:#f59e0b,stroke:#d97706,color:#fff
+    style Reset fill:#64748b,stroke:#475569,color:#fff
+    style Inc fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Limit fill:#f59e0b,stroke:#d97706,color:#fff
+    style Block fill:#ef4444,stroke:#dc2626,color:#fff
+    style Pass fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Limites par route</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Limite / min</th>
+              <th>Justification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/api/auth/register</code></td>
+              <td>5</td>
+              <td>Prévention de la création de comptes en masse</td>
+            </tr>
+            <tr>
+              <td><code>/api/auth/signin</code></td>
+              <td>10</td>
+              <td>Protection contre le brute-force de mots de passe</td>
+            </tr>
+            <tr>
+              <td><code>/api/auth/extension-token</code></td>
+              <td>10</td>
+              <td>Login extension navigateur</td>
+            </tr>
+            <tr>
+              <td><code>/api/feedback</code></td>
+              <td>10</td>
+              <td>Prévention du spam de feedback</td>
+            </tr>
+            <tr>
+              <td><code>/api/background-tasks</code></td>
+              <td>30</td>
+              <td>Création de tâches (génération CV, optimisation, etc.)</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin/users</code></td>
+              <td>60</td>
+              <td>Administration des utilisateurs (limite haute pour les opérations admin)</td>
+            </tr>
+            <tr>
+              <td><code>/api/admin</code></td>
+              <td>40</td>
+              <td>Autres routes d'administration</td>
+            </tr>
+            <tr>
+              <td><code>/api/cv</code></td>
+              <td>60</td>
+              <td>Opérations sur les CV (lecture, mise à jour)</td>
+            </tr>
+            <tr>
+              <td><code>/api/ext/</code></td>
+              <td>60</td>
+              <td>Routes de l'API extension</td>
+            </tr>
+            <tr>
+              <td><code>/api/ext/background-tasks/sync</code></td>
+              <td>120</td>
+              <td>Polling de l'extension (requêtes fréquentes)</td>
+            </tr>
+            <tr>
+              <td><code>/api/background-tasks/sync</code></td>
+              <td>120</td>
+              <td>Polling fréquent + événements temps réel (SSE)</td>
+            </tr>
+            <tr>
+              <td>Toute autre route <code>/api/*</code></td>
+              <td>100</td>
+              <td>Limite par défaut</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Résolution de l'IP client</h3>
+
+        <pre><code class="language-javascript">const ip =
+  request.headers.get('x-forwarded-for')?.split(',')[0] ||  // Derrière un proxy
+  request.headers.get('x-real-ip') ||                        // Nginx
+  request.ip ||                                               // Next.js natif
+  '127.0.0.1';                                               // Fallback localhost</code></pre>
+
+        <h3>Réponse 429 (Rate Limit)</h3>
+
+        <p>Lorsqu'une requête est bloquée, le middleware retourne une réponse JSON avec les headers standard de rate limiting :</p>
+
+        <pre><code class="language-javascript">return NextResponse.json(
+  {
+    error: 'Trop de requêtes. Veuillez réessayer plus tard.',
+    retryAfter: Math.ceil((resetTime - Date.now()) / 1000),
+  },
+  {
+    status: 429,
+    headers: {
+      'Retry-After': '...',          // Secondes avant la réouverture
+      'X-RateLimit-Limit': '...',     // Limite maximale
+      'X-RateLimit-Remaining': '0',   // Requêtes restantes
+      'X-RateLimit-Reset': '...',     // Timestamp de réinitialisation
+    },
+  }
+);</code></pre>
+
+        <h3>Protection contre les memory leaks</h3>
+
+        <p>Le store in-memory est nettoyé automatiquement lorsqu'il dépasse <strong>10 000 entrées</strong>. Toutes les entrées dont la fenêtre est expirée sont supprimées :</p>
+
+        <pre><code class="language-javascript">if (rateLimitStore.size > 10000) {
+  const cutoff = now - RATE_LIMIT_WINDOW;
+  for (const [k, v] of rateLimitStore.entries()) {
+    if (v.resetTime < cutoff) {
+      rateLimitStore.delete(k);
+    }
+  }
+}</code></pre>
+
+        <!-- ==================== SECURITY HEADERS ==================== -->
+        <h2>Security Headers</h2>
+
+        <p>Le middleware injecte un ensemble complet de headers de sécurité sur toutes les réponses :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Header</th>
+              <th>Valeur</th>
+              <th>Protection</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>X-Frame-Options</code></td>
+              <td><code>SAMEORIGIN</code></td>
+              <td>Clickjacking — empêche l'embarquement dans un iframe tiers</td>
+            </tr>
+            <tr>
+              <td><code>X-Content-Type-Options</code></td>
+              <td><code>nosniff</code></td>
+              <td>MIME sniffing — force le navigateur à respecter le Content-Type</td>
+            </tr>
+            <tr>
+              <td><code>X-XSS-Protection</code></td>
+              <td><code>1; mode=block</code></td>
+              <td>XSS — active le filtre XSS du navigateur (legacy)</td>
+            </tr>
+            <tr>
+              <td><code>Referrer-Policy</code></td>
+              <td><code>strict-origin-when-cross-origin</code></td>
+              <td>Fuite d'information — limite les données envoyées dans le header Referer</td>
+            </tr>
+            <tr>
+              <td><code>Cross-Origin-Opener-Policy</code></td>
+              <td><code>same-origin</code></td>
+              <td>Spectre / side-channel — isole le contexte de navigation</td>
+            </tr>
+            <tr>
+              <td><code>Permissions-Policy</code></td>
+              <td><code>camera=(), microphone=(), geolocation=(), interest-cohort=()</code></td>
+              <td>API sensibles — désactive caméra, micro, géolocalisation et FLoC</td>
+            </tr>
+            <tr>
+              <td><code>Strict-Transport-Security</code></td>
+              <td><code>max-age=63072000; includeSubDomains; preload</code></td>
+              <td>HTTPS only — force HTTPS pendant 2 ans (<strong>production uniquement</strong>)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <strong>HSTS Preload</strong> — Le header HSTS est configuré avec le flag <code>preload</code>, permettant l'ajout du domaine dans les listes de preload des navigateurs pour forcer HTTPS dès la première visite.
+        </div>
+
+        <!-- ==================== CSP ==================== -->
+        <h2>Content Security Policy (CSP)</h2>
+
+        <p>La CSP est construite dynamiquement en fonction de l'environnement :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Directive</th>
+              <th>Sources autorisées</th>
+              <th>Justification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>default-src</code></td>
+              <td><code>'self'</code></td>
+              <td>Politique par défaut restrictive</td>
+            </tr>
+            <tr>
+              <td><code>script-src</code></td>
+              <td><code>'self' 'unsafe-eval' 'unsafe-inline'</code> + Google reCAPTCHA + Unlayer + CDN (Mermaid, Prism)</td>
+              <td>Next.js nécessite <code>unsafe-eval</code> ; reCAPTCHA et l'éditeur email Unlayer sont des scripts externes</td>
+            </tr>
+            <tr>
+              <td><code>style-src</code></td>
+              <td><code>'self' 'unsafe-inline'</code> + Google Fonts + cdnjs (Prism)</td>
+              <td>Tailwind CSS inline + polices Google + thèmes Prism pour la documentation</td>
+            </tr>
+            <tr>
+              <td><code>img-src</code></td>
+              <td><code>'self' data: https:</code></td>
+              <td>Images locales, data URIs (base64), et toute source HTTPS</td>
+            </tr>
+            <tr>
+              <td><code>font-src</code></td>
+              <td><code>'self' data:</code> + Google Fonts</td>
+              <td>Polices locales et Google Fonts</td>
+            </tr>
+            <tr>
+              <td><code>connect-src</code></td>
+              <td><code>'self'</code> + OpenAI API + Google + Unlayer</td>
+              <td>Appels API externes (OpenAI pour la génération, Google pour reCAPTCHA)</td>
+            </tr>
+            <tr>
+              <td><code>frame-src</code></td>
+              <td><code>'self'</code> + Google + Unlayer</td>
+              <td>iframes reCAPTCHA et éditeur d'email Unlayer</td>
+            </tr>
+            <tr>
+              <td><code>frame-ancestors</code></td>
+              <td><code>'self'</code></td>
+              <td>Empêche l'embarquement du site dans des iframes tiers</td>
+            </tr>
+            <tr>
+              <td><code>base-uri</code></td>
+              <td><code>'self'</code></td>
+              <td>Empêche l'injection de base URI</td>
+            </tr>
+            <tr>
+              <td><code>form-action</code></td>
+              <td><code>'self'</code></td>
+              <td>Limite les cibles de soumission de formulaires</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Connect-src dynamique (développement)</h3>
+
+        <p>En mode développement, des sources WebSocket supplémentaires sont ajoutées pour le HMR (Hot Module Replacement) :</p>
+
+        <pre><code class="language-javascript">const connectSrcSources = ["'self'"];
+
+if (process.env.NODE_ENV === 'development') {
+  const customDevDomain = process.env.NEXT_PUBLIC_DEV_WS_DOMAIN;
+  if (customDevDomain) {
+    connectSrcSources.push(customDevDomain);
+  }
+  connectSrcSources.push('ws://localhost:3001', 'wss://localhost:3001');
+}
+
+// Sources communes (API externes)
+connectSrcSources.push(
+  'https://api.openai.com',
+  'https://www.google.com',
+  'https://www.gstatic.com'
+);</code></pre>
+
+        <!-- ==================== VÉRIFICATION EMAIL ==================== -->
+        <h2>Vérification d'email</h2>
+
+        <p>Le middleware vérifie que les utilisateurs connectés ont confirmé leur adresse email. Les utilisateurs non vérifiés sont redirigés vers <code>/auth/verify-email-required</code>.</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de vérification d'email</div>
+          <div class="mermaid">
+flowchart TB
+    Req["Requête entrante"] --> Public{"Route publique ?"}
+    Public -->|"Oui"| Pass["Pas de vérification"]
+    Public -->|"Non"| Token["Récupérer le jeton<br/>d'authentification"]
+    Token --> Connected{"Utilisateur connecté ?"}
+    Connected -->|"Non"| Pass
+    Connected -->|"Oui"| Verified{"Email vérifié ?"}
+    Verified -->|"Oui"| Pass
+    Verified -->|"Non"| Redirect["Rediriger vers<br/>vérification email"]
+    style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Public fill:#f59e0b,stroke:#d97706,color:#fff
+    style Pass fill:#22c55e,stroke:#16a34a,color:#fff
+    style Token fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Connected fill:#f59e0b,stroke:#d97706,color:#fff
+    style Verified fill:#f59e0b,stroke:#d97706,color:#fff
+    style Redirect fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <h3>Routes exemptées</h3>
+
+        <pre><code class="language-javascript">const publicPaths = [
+  '/auth',         // Pages d'authentification
+  '/api/auth',     // Routes API NextAuth
+  '/_next',        // Assets Next.js
+  '/favicon.ico',  // Favicon
+];</code></pre>
+
+        <div class="callout callout-warning">
+          <strong>Tolérance aux erreurs</strong> — Si la vérification du token échoue (erreur NextAuth, connexion DB impossible), la requête n'est pas bloquée. L'erreur est loguée mais la navigation continue normalement.
+        </div>
+
+        <!-- ==================== MATCHER ==================== -->
+        <h2>Matcher (routes exclues)</h2>
+
+        <p>Le middleware n'est pas exécuté sur les routes d'assets statiques. La configuration <code>matcher</code> exclut :</p>
+
+        <pre><code class="language-javascript">export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};</code></pre>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Pattern exclu</th>
+              <th>Type de fichier</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>_next/static</code></td>
+              <td>Fichiers JS/CSS compilés par Next.js</td>
+            </tr>
+            <tr>
+              <td><code>_next/image</code></td>
+              <td>Service d'optimisation d'images Next.js</td>
+            </tr>
+            <tr>
+              <td><code>_next/webpack-hmr</code></td>
+              <td>WebSocket HMR en développement</td>
+            </tr>
+            <tr>
+              <td><code>favicon.ico</code></td>
+              <td>Favicon du site</td>
+            </tr>
+            <tr>
+              <td><code>*.svg|png|jpg|jpeg|gif|webp</code></td>
+              <td>Images statiques du dossier <code>public/</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <strong>Double protection HMR</strong> — En plus du matcher, le middleware contient un early return explicite pour <code>/_next/webpack-hmr</code>. Les requêtes WebSocket ne peuvent pas gérer les redirections ni les headers supplémentaires, ce qui causait des problèmes en développement.
+        </div>
+
+        <!-- ==================== INSTRUMENTATION ==================== -->
+        <h2>Instrumentation Next.js</h2>
+
+        <p>Le fichier <code>instrumentation.js</code> exporte un hook <code>register()</code> appelé automatiquement par Next.js au démarrage du serveur. Il assure le nettoyage des tâches orphelines après un redémarrage.</p>
+
+        <pre><code class="language-javascript">export async function register() {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { cleanupOrphanedTasks } = await import(
+      '@/lib/background-jobs/cleanupOrphanedTasks'
+    );
+    await cleanupOrphanedTasks();
+  }
+}</code></pre>
+
+        <div class="callout callout-info">
+          <strong>NEXT_RUNTIME check</strong> — Le guard <code>process.env.NEXT_RUNTIME === 'nodejs'</code> s'assure que le code ne s'exécute que dans le runtime Node.js (pas dans Edge Runtime).
+        </div>
+
+        <h3>Nettoyage des tâches orphelines</h3>
+
+        <p>La fonction <code>cleanupOrphanedTasks()</code> dans <code>lib/background-jobs/cleanupOrphanedTasks.js</code> effectue 3 opérations au démarrage :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Opération</th>
+              <th>Table</th>
+              <th>Condition</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1. Tâches en cours</td>
+              <td><code>BackgroundTask</code></td>
+              <td><code>status IN ('running', 'queued')</code></td>
+              <td><code>status = 'failed'</code> + message d'erreur</td>
+            </tr>
+            <tr>
+              <td>2. Scores en calcul</td>
+              <td><code>CvFile</code></td>
+              <td><code>matchScoreStatus = 'inprogress'</code></td>
+              <td><code>matchScoreStatus = 'idle'</code></td>
+            </tr>
+            <tr>
+              <td>3. Optimisations en cours</td>
+              <td><code>CvFile</code></td>
+              <td><code>optimiseStatus = 'inprogress'</code></td>
+              <td><code>optimiseStatus = 'idle'</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// 1. Marquer les tâches running/queued comme failed
+await prisma.backgroundTask.updateMany({
+  where: { status: { in: ['running', 'queued'] } },
+  data: {
+    status: 'failed',
+    error: 'Tâche interrompue par le redémarrage du serveur'
+  }
+});
+
+// 2. Réinitialiser les calculs de score en cours
+await prisma.cvFile.updateMany({
+  where: { matchScoreStatus: 'inprogress' },
+  data: { matchScoreStatus: 'idle' }
+});
+
+// 3. Réinitialiser les optimisations en cours
+await prisma.cvFile.updateMany({
+  where: { optimiseStatus: 'inprogress' },
+  data: { optimiseStatus: 'idle' }
+});</code></pre>
+
+        <div class="callout callout-success">
+          <strong>Résilience</strong> — Le nettoyage est encapsulé dans un <code>try/catch</code> silencieux. Si la base de données n'est pas encore accessible au démarrage (migrations en cours), l'erreur est ignorée et l'application démarre normalement.
+        </div>
+
+        <!-- ==================== FICHIERS CLÉS ==================== -->
+        <h2>Fichiers clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>proxy.js</code></td>
+              <td>Middleware central : CORS extension, rate limiting, security headers, vérification email</td>
+            </tr>
+            <tr>
+              <td><code>instrumentation.js</code></td>
+              <td>Hook Next.js au démarrage : nettoyage des tâches orphelines</td>
+            </tr>
+            <tr>
+              <td><code>lib/background-jobs/cleanupOrphanedTasks.js</code></td>
+              <td>Logique de nettoyage des tâches <code>running</code>/<code>queued</code> et statuts <code>inprogress</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/api/withExtensionAuth.js</code></td>
+              <td>Middleware d'authentification JWT pour les routes extension</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

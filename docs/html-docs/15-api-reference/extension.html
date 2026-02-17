@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Endpoints Extension | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="../index.html">Docs</a>
+          <span>/</span>
+          <a href="./overview.html">API Reference</a>
+          <span>/</span>
+          <span>Extension</span>
+        </div>
+
+        <h1>Endpoints Extension Navigateur</h1>
+        <p class="lead">
+          Endpoints d&eacute;di&eacute;s &agrave; l'extension Chrome/Firefox. Authentification par JWT Bearer via <code>withExtensionAuth</code>.
+        </p>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Authentification JWT</div>
+          <p>Tous les endpoints <code>/api/ext/*</code> n&eacute;cessitent un header <code>Authorization: Bearer {jwt}</code>. Le JWT est obtenu via <code>/api/auth/extension-token</code> et v&eacute;rifi&eacute; par le middleware <code>withExtensionAuth</code> (<code>lib/api/withExtensionAuth.js</code>).</p>
+        </div>
+
+        <h2>Authentification Extension (1 endpoint)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/extension-token/refresh</code></td><td>Renouveler un JWT extension existant (Bearer JWT requis)</td></tr>
+          </tbody>
+        </table>
+
+        <h2>G&eacute;n&eacute;ration CV (1 endpoint)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/ext/background-tasks/generate-cv-from-content</code></td><td>G&eacute;n&eacute;rer un CV &agrave; partir du contenu Markdown d'une offre d'emploi extraite par l'extension</td></tr>
+          </tbody>
+        </table>
+
+        <h3>POST /api/ext/background-tasks/generate-cv-from-content</h3>
+        <p>L'extension envoie le contenu Markdown brut extrait de la page d'offre d'emploi. Le serveur ex&eacute;cute <code>extractJobOfferFromMarkdown()</code> pour structurer les donn&eacute;es, puis lance le pipeline de g&eacute;n&eacute;ration de CV.</p>
+        <h4>Request</h4>
+        <pre><code class="language-json">{
+  "cvFileId": "cv_xxx",
+  "markdown": "# Offre d'emploi\n## Chef de projet...",
+  "url": "https://linkedin.com/jobs/xxx",
+  "siteName": "LinkedIn",
+  "deviceId": "device_xxx"
+}</code></pre>
+        <h4>Response (202 Accepted)</h4>
+        <pre><code class="language-json">{
+  "success": true,
+  "queued": true,
+  "taskId": "task_ext_xxx"
+}</code></pre>
+
+        <h2>Synchronisation T&acirc;ches (2 endpoints)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/ext/background-tasks/sync</code></td><td>Polling des t&acirc;ches en cours (progression, compl&eacute;tion)</td></tr>
+            <tr><td><span class="badge badge-error">DELETE</span></td><td><code>/api/ext/background-tasks/sync</code></td><td>Annuler/nettoyer les t&acirc;ches termin&eacute;es</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Cr&eacute;dits (2 endpoints)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/ext/credits/balance</code></td><td>Solde de cr&eacute;dits de l'utilisateur</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/ext/credits/costs</code></td><td>Co&ucirc;ts en cr&eacute;dits par feature</td></tr>
+          </tbody>
+        </table>
+
+        <h2>CV (1 endpoint)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/ext/cvs</code></td><td>Liste des CV de l'utilisateur (pour s&eacute;lection dans la popup)</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Flux Extension &rarr; SaaS</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Flux de donn&eacute;es Extension &rarr; API</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant Ext as Extension
+    participant API as API Extension
+    participant Pipeline as Pipeline IA
+    participant DB as Base de donnees
+
+    Ext->>API: Soumet le contenu pour generation CV
+    Note right of Ext: Contenu brut + identifiant CV
+    API->>API: Structurer l offre depuis le contenu
+    API->>DB: Creer une tache en arriere-plan
+    API-->>Ext: 202 identifiant de tache
+
+    loop Surveillance periodique
+        Ext->>API: Verifier l etat des taches
+        API->>DB: Statut des taches
+        API-->>Ext: Liste des taches
+    end
+
+    API->>Pipeline: Generation CV (asynchrone)
+    Pipeline->>DB: CV genere
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">CORS</div>
+          <p>Les requ&ecirc;tes de l'extension sont g&eacute;r&eacute;es par <code>proxy.js</code> (pas <code>middleware.js</code>). L'extension utilise les APIs <code>browser.runtime</code> pour les requ&ecirc;tes cross-origin.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="../assets/js/layout.js?v=1.0.4"></script>
+  <script src="../assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

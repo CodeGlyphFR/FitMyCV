@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Background Jobs | FitMyCV.io</title>
+  <title>Background Jobs - Vue d'ensemble | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,402 +26,274 @@
 
         <h1>Background Jobs</h1>
         <p class="lead">
-          Le système de background jobs permet d'exécuter des tâches longues de manière asynchrone avec suivi de progression et gestion des erreurs.
+          Système de tâches asynchrones in-process basé sur une queue mémoire, un framework <code>createJobRunner</code>, un registre d'annulation via <code>AbortController</code>, et une synchronisation temps réel par SSE.
         </p>
 
+        <!-- Architecture globale -->
         <h2>Architecture</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Flux de traitement des jobs</div>
+          <div class="diagram-title">Flux de traitement des background jobs</div>
           <div class="mermaid">
-flowchart TB
+graph TB
     subgraph API["API LAYER"]
-        Request["Request utilisateur"]
-        Validate["Validation & Auth"]
-        Create["Créer tâche en DB"]
+        Request["Requête POST<br/>utilisateur"]
+        Auth["Authentification +<br/>vérifier limite tâches"]
+        Feature["Incrémenter le<br/>compteur de feature"]
+        CreateTask["Créer la tâche<br/>statut : en attente"]
+        Schedule["Planifier le job"]
     end
 
     subgraph Queue["JOB QUEUE"]
-        Enqueue["enqueueJob()"]
-        Concurrency["Contrôle concurrence<br/>(max 3)"]
-        Exécute["Exécution job"]
+        Enqueue["Ajouter à la queue"]
+        Check{"Jobs actifs < 3 ?"}
+        Execute["Exécuter le job"]
+        Release["Libérer le slot +<br/>traiter la queue"]
     end
 
-    subgraph Progress["PROGRESSION"]
-        DB[(BackgroundTask)]
-        SSE["SSE Events"]
-        Client["Client browser"]
+    subgraph Runner["JOB RUNNER"]
+        PreCheck["Vérifier si non annulé"]
+        Abort["Préparer l'annulation"]
+        BeforeRun["Hook pré-exécution"]
+        Service["Récupérer le service<br/>préparer et exécuter"]
+        HandleResult["Traiter le résultat"]
+        Track["Enregistrer le suivi"]
+        Cleanup["Nettoyage"]
     end
 
-    subgraph Handler["ERROR HANDLING"]
-        Retry["Retry logic"]
-        Backoff["Exponential backoff"]
-        Refund["Refund crédits"]
+    subgraph Events["TEMPS REEL"]
+        UpdateTask["Mettre à jour la tâche"]
+        Emitter["Émettre l'événement<br/>tâche mise à jour"]
+        SSE["Flux SSE temps réel"]
+        Client["Client React"]
     end
 
-    Request --> Validate --> Create
-    Create --> Enqueue
-    Enqueue --> Concurrency
-    Concurrency --> Exécute
+    Request --> Auth --> Feature --> CreateTask --> Schedule
+    Schedule --> Enqueue --> Check
+    Check -->|"Oui"| Execute
+    Check -->|"Non - en attente"| Queue
 
-    Exécute --> DB
-    DB --> SSE
-    SSE --> Client
+    Execute --> PreCheck --> Abort --> BeforeRun --> Service --> HandleResult --> Track --> Cleanup
+    Cleanup --> Release
 
-    Exécute -->|Échec| Handler
-    Handler --> Retry
-    Retry -->|Max retries| Refund
+    HandleResult --> UpdateTask
+    UpdateTask --> Emitter --> SSE --> Client
+
+    Service -->|"Erreur ou annulation"| Track
+
+    style Request fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Auth fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Feature fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CreateTask fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Schedule fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Enqueue fill:#64748b,stroke:#475569,color:#fff
+    style Check fill:#f59e0b,stroke:#d97706,color:#fff
+    style Execute fill:#22c55e,stroke:#16a34a,color:#fff
+    style Release fill:#64748b,stroke:#475569,color:#fff
+    style PreCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style Abort fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BeforeRun fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Service fill:#6366f1,stroke:#4f46e5,color:#fff
+    style HandleResult fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Track fill:#64748b,stroke:#475569,color:#fff
+    style Cleanup fill:#64748b,stroke:#475569,color:#fff
+    style UpdateTask fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Emitter fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SSE fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Client fill:#0ea5e9,stroke:#0284c7,color:#fff
           </div>
         </div>
 
-        <h2>Types de Tâches</h2>
+        <!-- Composants principaux -->
+        <h2>Composants principaux</h2>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Description</th>
-              <th>Durée moyenne</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>cv_generation</code></td>
-              <td>Pipeline génération CV</td>
-              <td>30-60 secondes</td>
-            </tr>
-            <tr>
-              <td><code>cv_optimization</code></td>
-              <td>Pipeline optimisation CV</td>
-              <td>20-40 secondes</td>
-            </tr>
-            <tr>
-              <td><code>pdf_import</code></td>
-              <td>Import et extraction PDF</td>
-              <td>10-20 secondes</td>
-            </tr>
-            <tr>
-              <td><code>pdf_export</code></td>
-              <td>Export CV vers PDF</td>
-              <td>5-10 secondes</td>
-            </tr>
-            <tr>
-              <td><code>translation</code></td>
-              <td>Traduction CV</td>
-              <td>15-30 secondes</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="card-grid">
+          <div class="card">
+            <h3>jobQueue.js</h3>
+            <p>Queue FIFO en mémoire avec limite de <strong>3 jobs concurrents</strong> (constante <code>MAX_CONCURRENT_JOBS</code>). Chaque job est une fonction async qui est dépilée par <code>processQueue()</code> via <code>setImmediate</code>.</p>
+          </div>
+          <div class="card">
+            <h3>jobRunner.js</h3>
+            <p>Framework générique <code>createJobRunner(config)</code> qui retourne <code>{ schedule, run }</code>. Gère le cycle complet : vérification pré-run, AbortController, hooks before/after, tracking télémétrie, cleanup, et remboursement crédits en cas d'erreur.</p>
+          </div>
+          <div class="card">
+            <h3>processRegistry.js</h3>
+            <p>Registre global (<code>Symbol.for</code>) de tous les AbortControllers actifs. Permet l'annulation à la demande via <code>killRegisteredProcess(taskId)</code> — supporte les tâches JS (AbortController) et les anciens processus externes (SIGTERM/SIGKILL).</p>
+          </div>
+          <div class="card">
+            <h3>taskTypes.js</h3>
+            <p>Constantes centralisées : <code>TASK_TYPES</code> (7 types), <code>AI_GENERATION_TYPES</code> (sous-ensemble), et helpers <code>isAiGenerationTask()</code>, <code>isMatchScoreTask()</code>, <code>isImprovementTask()</code>.</p>
+          </div>
+        </div>
 
-        <h2>Modèle de Données</h2>
-
-        <pre><code>// prisma/schema.prisma
-
-model BackgroundTask {
-  id          Int       @id @default(autoincrement())
-  userId      String
-  type        String    // cv_generation, pdf_import, etc.
-  status      String    @default("pending") // pending, running, completed, failed
-  payload     Json?     // Données d'entrée
-  result      Json?     // Résultat ou erreur
-  progress    Int       @default(0) // 0-100
-  message     String?   // Message de progression
-  retryCount  Int       @default(0)
-  startedAt   DateTime?
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  user        User      @relation(fields: [userId], references: [id])
-
-  @@index([userId, status])
-  @@index([type, status])
-}</code></pre>
-
-        <h2>Job Queue</h2>
-
-        <h3>Enqueue un Job</h3>
-
-        <pre><code>// lib/background-jobs/jobQueue.js
-
-const MAX_CONCURRENT = 3;
-let currentJobs = 0;
-const queue = [];
-
-export function enqueueJob(jobFn) {
-  return new Promise((resolve, reject) => {
-    queue.push({ jobFn, resolve, reject });
-    processQueue();
-  });
-}
-
-async function processQueue() {
-  if (currentJobs >= MAX_CONCURRENT || queue.length === 0) {
-    return;
-  }
-
-  currentJobs++;
-  const { jobFn, resolve, reject } = queue.shift();
-
-  try {
-    const result = await jobFn();
-    resolve(result);
-  } catch (error) {
-    reject(error);
-  } finally {
-    currentJobs--;
-    processQueue(); // Traiter le suivant
-  }
-}</code></pre>
-
-        <h3>Utilisation</h3>
-
-        <pre><code>// app/api/cv/generate/route.js
-import { enqueueJob } from '@/lib/background-jobs/jobQueue';
-import { startSingleOfferGeneration } from '@/lib/cv-generation';
-
-export async function POST(request) {
-  const session = await auth();
-  const { sourceCvId, jobOfferUrl } = await request.json();
-
-  // 1. Créer la tâche en DB
-  const task = await prisma.cvGenerationTask.create({
-    data: {
-      userId: session.user.id,
-      sourceCvFileId: sourceCvId,
-      mode: 'adapt',
-      status: 'pending',
-      totalOffers: 1
-    }
-  });
-
-  // 2. Enqueue le job (non-bloquant)
-  enqueueJob(async () => {
-    await startSingleOfferGeneration(task.id, jobOfferUrl);
-  });
-
-  // 3. Retourner immédiatement
-  return Response.json({
-    taskId: task.id,
-    status: 'pending',
-    message: 'Generation started'
-  });
-}</code></pre>
-
-        <h2>Progression SSE</h2>
+        <!-- Cycle de vie d'un job -->
+        <h2>Cycle de vie d'un job</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Flux Server-Sent Events</div>
+          <div class="diagram-title">États d'une BackgroundTask</div>
           <div class="mermaid">
-sequenceDiagram
-    participant C as Client
-    participant API as API /progress
-    participant Job as Background Job
-    participant DB as Database
+graph TD
+    START(("Début")) --> QUEUED["En attente<br/>Création"]
+    QUEUED -->|"Job depile de la queue"| RUNNING["En cours"]
+    RUNNING -->|"Resultat reussi"| COMPLETED["Terminée"]
+    RUNNING -->|"Erreur ou quota depasse"| FAILED["Échouée"]
+    RUNNING -->|"Annulation demandee"| CANCELLED["Annulée"]
+    QUEUED -->|"Annulation avant execution"| CANCELLED
 
-    C->>API: GET /api/task/[id]/progress
-    API-->>C: SSE Connection opened
-
-    loop Pendant l'exécution
-        Job->>DB: Update progress
-        DB-->>API: Change detected
-        API-->>C: event: progress
-    end
-
-    Job->>DB: status = completed
-    DB-->>API: Final status
-    API-->>C: event: complete
-    API-->>C: Connection closed
+    style START fill:#64748b,stroke:#475569,color:#fff
+    style QUEUED fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style RUNNING fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style COMPLETED fill:#22c55e,stroke:#16a34a,color:#fff
+    style FAILED fill:#ef4444,stroke:#dc2626,color:#fff
+    style CANCELLED fill:#f59e0b,stroke:#d97706,color:#fff
           </div>
         </div>
 
-        <h3>Endpoint SSE</h3>
+        <div class="callout callout-info">
+          <strong>Remboursement automatique</strong> — En cas d'erreur (<code>failed</code>) ou d'annulation (<code>cancelled</code>), la fonction <code>refundFeatureUsage(taskId)</code> rembourse automatiquement les crédits débités au lancement de la tâche.
+        </div>
 
-        <pre><code>// app/api/task/[id]/progress/route.js
+        <!-- Contrôle de concurrence -->
+        <h2>Contrôle de concurrence par utilisateur</h2>
 
-export async function GET(request, { params }) {
-  const taskId = params.id;
-
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      // Fonction pour envoyer un event
-      const sendEvent = (data) => {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-        );
-      };
-
-      // Poll la DB pour les mises à jour
-      const checkProgress = async () => {
-        const task = await prisma.backgroundTask.findUnique({
-          where: { id: parseInt(taskId) }
-        });
-
-        if (!task) {
-          sendEvent({ type: 'error', message: 'Task not found' });
-          controller.close();
-          return;
-        }
-
-        sendEvent({
-          type: task.status === 'completed' ? 'complete' : 'progress',
-          progress: task.progress,
-          message: task.message,
-          status: task.status,
-          result: task.result
-        });
-
-        if (task.status === 'completed' || task.status === 'failed') {
-          controller.close();
-        } else {
-          setTimeout(checkProgress, 1000); // Poll toutes les secondes
-        }
-      };
-
-      checkProgress();
-    }
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
-    }
-  });
-}</code></pre>
-
-        <h3>Client React</h3>
-
-        <pre><code>// hooks/useTaskProgress.js
-import { useState, useEffect } from 'react';
-
-export function useTaskProgress(taskId) {
-  const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState('');
-  const [status, setStatus] = useState('pending');
-  const [result, setResult] = useState(null);
-
-  useEffect(() => {
-    if (!taskId) return;
-
-    const eventSource = new EventSource(`/api/task/${taskId}/progress`);
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setProgress(data.progress);
-      setMessage(data.message);
-      setStatus(data.status);
-
-      if (data.type === 'complete' || data.type === 'error') {
-        setResult(data.result);
-        eventSource.close();
-      }
-    };
-
-    eventSource.onerror = () => {
-      eventSource.close();
-      setStatus('error');
-    };
-
-    return () => eventSource.close();
-  }, [taskId]);
-
-  return { progress, message, status, result };
-}</code></pre>
-
-        <h2>Retry & Error Handling</h2>
-
-        <pre><code>// lib/background-jobs/retryHandler.js
-
-const MAX_RETRIES = 3;
-const BASE_DELAY = 1000; // 1 seconde
-
-export async function withRetry(taskId, jobFn) {
-  let lastError;
-
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      // Mettre à jour le retry count
-      await prisma.backgroundTask.update({
-        where: { id: taskId },
-        data: { retryCount: attempt }
-      });
-
-      return await jobFn();
-
-    } catch (error) {
-      lastError = error;
-
-      if (attempt < MAX_RETRIES) {
-        // Exponential backoff: 1s, 2s, 4s
-        const delay = BASE_DELAY * Math.pow(2, attempt);
-
-        await prisma.backgroundTask.update({
-          where: { id: taskId },
-          data: {
-            message: `Retry ${attempt + 1}/${MAX_RETRIES} in ${delay/1000}s...`
-          }
-        });
-
-        await sleep(delay);
-      }
-    }
-  }
-
-  // Échec définitif
-  await prisma.backgroundTask.update({
-    where: { id: taskId },
-    data: {
-      status: 'failed',
-      result: { error: lastError.message },
-      completedAt: new Date()
-    }
-  });
-
-  throw lastError;
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}</code></pre>
-
-        <h2>Monitoring</h2>
+        <p>Le module <code>jobQueue.js</code> gère la concurrence à deux niveaux :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Métrique</th>
-              <th>Description</th>
-              <th>Alerte si</th>
+              <th>Constante</th>
+              <th>Valeur</th>
+              <th>Règle</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Jobs en attente</td>
-              <td>Tâches status=pending</td>
-              <td>> 10 depuis > 5 min</td>
+              <td><code>MAX_CONCURRENT_JOBS</code></td>
+              <td>3</td>
+              <td>Maximum de jobs exécutés simultanément dans le processus Node.js</td>
             </tr>
             <tr>
-              <td>Jobs échoués</td>
-              <td>Tâches status=failed (24h)</td>
-              <td>> 5% du total</td>
+              <td><code>MAX_CONCURRENT_TASK_TYPES</code></td>
+              <td>3</td>
+              <td>Maximum de types de tâches différents en parallèle par utilisateur</td>
             </tr>
             <tr>
-              <td>Durée moyenne</td>
-              <td>Temps d'exécution par type</td>
-              <td>> 2x la normale</td>
-            </tr>
-            <tr>
-              <td>Retries</td>
-              <td>Jobs avec retryCount > 0</td>
-              <td>> 20% des jobs</td>
+              <td><code>MAX_CV_GENERATION_PER_USER</code></td>
+              <td>3</td>
+              <td>Exception : <code>cv_generation</code> peut avoir jusqu'à 3 instances simultanées par utilisateur</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Fichiers Clés</h2>
+        <p>La fonction <code>canStartTaskType(userId, taskType)</code> vérifie ces règles et retourne <code>{ allowed, reason, message }</code>. Le tracking utilise une <code>Map&lt;userId, Map&lt;taskType, count&gt;&gt;</code> en mémoire.</p>
+
+        <!-- SSE temps réel -->
+        <h2>Synchronisation temps réel (SSE)</h2>
+
+        <p>Le endpoint <code>/api/events/stream</code> maintient une connexion SSE permanente par utilisateur connecté :</p>
+
+        <pre><code class="language-javascript">// Événements SSE émis pour les background tasks
+dbEmitter.on('task:updated', ({ taskId, userId, data }) => {
+  sendEvent('task:updated', { taskId, data, timestamp: Date.now() });
+});
+
+// Keep-alive toutes les 30 secondes
+setInterval(() => {
+  controller.enqueue(encoder.encode(': keep-alive\n\n'));
+}, 30000);</code></pre>
+
+        <p>15 types d'événements sont émis au total : <code>task:updated</code>, <code>cv:updated</code>, <code>db:change</code>, <code>cv_generation:*</code> (4 events), <code>cv_improvement:*</code> (3 events), <code>credits:updated</code>, <code>settings:updated</code>, <code>onboarding:updated</code>, <code>onboarding:reset</code>, <code>email:verified</code>.</p>
+
+        <!-- Nettoyage au démarrage -->
+        <h2>Nettoyage au démarrage</h2>
+
+        <p>Le module <code>cleanupOrphanedTasks.js</code> s'exécute au boot du serveur et :</p>
+        <ul>
+          <li>Passe toutes les <code>BackgroundTask</code> en status <code>running</code> ou <code>queued</code> à <code>failed</code> avec le message <em>"Tâche interrompue par le redémarrage du serveur"</em></li>
+          <li>Réinitialise les <code>CvFile.matchScoreStatus</code> en <code>inprogress</code> → <code>idle</code></li>
+          <li>Réinitialise les <code>CvFile.optimiseStatus</code> en <code>inprogress</code> → <code>idle</code></li>
+        </ul>
+
+        <!-- Rétention des données (RGPD) -->
+        <h2>Jobs de rétention des données (RGPD)</h2>
+
+        <p>Le module <code>dataRetention.js</code> exécute 4 tâches de conformité RGPD :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Action</th>
+              <th>Seuil</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>cleanupEmailLogs()</code></td>
+              <td>Suppression des logs d'emails</td>
+              <td>> 12 mois</td>
+            </tr>
+            <tr>
+              <td><code>cleanupConsentLogs()</code></td>
+              <td>Suppression des logs de consentement cookies</td>
+              <td>> 6 mois</td>
+            </tr>
+            <tr>
+              <td><code>notifyInactiveAccounts()</code></td>
+              <td>Email d'avertissement aux comptes inactifs</td>
+              <td>2 ans et 11 mois (fenêtre de 1 mois)</td>
+            </tr>
+            <tr>
+              <td><code>cleanupInactiveAccounts()</code></td>
+              <td>Suppression complète des comptes inactifs (via <code>deleteUserCompletely</code>)</td>
+              <td>> 3 ans</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Protection admin</strong> — Les comptes avec <code>role: 'ADMIN'</code> ne sont jamais supprimés par les jobs de rétention.
+        </div>
+
+        <!-- API Sync -->
+        <h2>API de synchronisation</h2>
+
+        <p>Le endpoint <code>/api/background-tasks/sync</code> gère la persistance et synchronisation des tâches :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Méthode</th>
+              <th>Action</th>
+              <th>Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GET</code></td>
+              <td>Récupérer les tâches</td>
+              <td>Sync incrémentale (param <code>since</code>) ou complète. Max 150 tâches retournées.</td>
+            </tr>
+            <tr>
+              <td><code>POST</code></td>
+              <td>Synchroniser les tâches</td>
+              <td>Upsert des tâches client. Limite de 100 tâches persistées par utilisateur (les plus anciennes sont supprimées).</td>
+            </tr>
+            <tr>
+              <td><code>DELETE ?action=cancel</code></td>
+              <td>Annuler une tâche</td>
+              <td>Met en <code>cancelled</code>, tue le processus via <code>killRegisteredProcess</code>, rembourse les crédits, réinitialise les statuts CV.</td>
+            </tr>
+            <tr>
+              <td><code>DELETE ?action=deleteCompleted</code></td>
+              <td>Supprimer des tâches terminées</td>
+              <td>Suppression par lot d'IDs.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Fichiers clés -->
+        <h2>Fichiers clés</h2>
 
         <table>
           <thead>
@@ -439,28 +305,51 @@ function sleep(ms) {
           <tbody>
             <tr>
               <td><code>lib/background-jobs/jobQueue.js</code></td>
-              <td>Queue avec contrôle concurrence</td>
+              <td>Queue FIFO + contrôle concurrence (3 max) + gestion types par utilisateur</td>
             </tr>
             <tr>
-              <td><code>lib/background-jobs/retryHandler.js</code></td>
-              <td>Retry avec exponential backoff</td>
+              <td><code>lib/background-jobs/jobRunner.js</code></td>
+              <td>Framework générique <code>createJobRunner(config)</code></td>
             </tr>
             <tr>
-              <td><code>lib/sse/sseHelpers.js</code></td>
-              <td>Helpers Server-Sent Events</td>
+              <td><code>lib/background-jobs/processRegistry.js</code></td>
+              <td>Registre global des AbortControllers actifs</td>
             </tr>
             <tr>
-              <td><code>app/api/task/[id]/progress/route.js</code></td>
-              <td>Endpoint SSE progression</td>
+              <td><code>lib/background-jobs/taskTypes.js</code></td>
+              <td>Constantes des 7 types de tâches + helpers</td>
+            </tr>
+            <tr>
+              <td><code>lib/background-jobs/taskFeatureMapping.js</code></td>
+              <td>Mapping types → featureNames télémétrie + durées estimées</td>
+            </tr>
+            <tr>
+              <td><code>lib/background-jobs/cleanupOrphanedTasks.js</code></td>
+              <td>Nettoyage des tâches orphelines au boot</td>
+            </tr>
+            <tr>
+              <td><code>lib/background-jobs/dataRetention.js</code></td>
+              <td>Jobs RGPD (cleanup logs, comptes inactifs)</td>
+            </tr>
+            <tr>
+              <td><code>lib/background-jobs/sortTasks.js</code></td>
+              <td>Tri des tâches pour affichage (running en premier, puis par date)</td>
+            </tr>
+            <tr>
+              <td><code>app/api/background-tasks/sync/route.js</code></td>
+              <td>API CRUD de synchronisation des tâches</td>
+            </tr>
+            <tr>
+              <td><code>app/api/events/stream/route.js</code></td>
+              <td>Endpoint SSE temps réel (15 types d'événements)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Prochaines Sections</h2>
-
+        <h2>Prochaines sections</h2>
         <ul>
-          <li><a href="./task-types.html">Types de Tâches</a> - Génération, import, export</li>
-          <li><a href="./concurrency.html">Concurrence</a> - Gestion des jobs parallèles</li>
+          <li><a href="./task-types.html">Types de tâches</a> — Les 7 types de background tasks et leur configuration</li>
+          <li><a href="./concurrency.html">Concurrence</a> — Règles de concurrence par utilisateur et gestion des limites</li>
         </ul>
       </div>
     </main>
@@ -476,7 +365,6 @@ function sleep(ms) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

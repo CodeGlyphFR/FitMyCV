@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CV Mod&egrave;le depuis Offre | FitMyCV.io</title>
+  <title>CV Mod&egrave;le depuis Offre - G&eacute;n&eacute;ration | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -34,302 +28,379 @@
 
         <h1>CV Mod&egrave;le depuis Offre d'Emploi</h1>
         <p class="lead">
-          G&eacute;n&eacute;ration d'un CV mod&egrave;le (fictif professionnel) &agrave; partir d'une URL ou d'un PDF d'offre d'emploi. L'IA extrait les exigences de l'offre puis g&eacute;n&egrave;re un CV de candidat id&eacute;al.
+          La fonction <code>createTemplateCv()</code> g&eacute;n&egrave;re un CV professionnel fictif complet &agrave; partir d'une ou plusieurs offres d'emploi (URL ou PDF). L'offre est d'abord extraite et structur&eacute;e, puis format&eacute;e en texte lisible, et enfin envoy&eacute;e &agrave; l'IA pour g&eacute;n&eacute;rer un CV mod&egrave;le adapt&eacute; au poste d&eacute;crit.
         </p>
 
         <div class="callout callout-info">
-          <div class="callout-title">Co&ucirc;t</div>
-          <p><strong>Feature</strong> : <code>gpt_cv_generation</code> - Utilise les limites mensuelles ou d&eacute;bite 1 cr&eacute;dit. Le cr&eacute;dit est d&eacute;bit&eacute; au lancement et rembours&eacute; en cas d'&eacute;chec.</p>
+          <div class="callout-title">Fichier source</div>
+          <p><code>lib/features/template-generation/service.js</code></p>
         </div>
 
-        <h2>Pipeline de G&eacute;n&eacute;ration</h2>
+        <!-- ==================== SIGNATURE ==================== -->
+        <h2>Signature de la Fonction</h2>
+
+        <pre><code class="language-javascript">export async function createTemplateCv({
+  links = [],       // Array de URLs d'offres d'emploi
+  files = [],       // Array de fichiers PDF { path, name }
+  signal = null,    // AbortSignal pour annulation
+  userId = null,    // ID utilisateur pour le tracking
+  onTitleExtracted = null,  // Callback quand le titre est extrait
+})</code></pre>
+
+        <p>La fonction retourne un tableau de r&eacute;sultats, un &eacute;l&eacute;ment par source (URL ou PDF) :</p>
+
+        <pre><code class="language-javascript">// Retour de createTemplateCv()
+[
+  {
+    cvContent,          // JSON string du CV g&eacute;n&eacute;r&eacute;
+    jobOfferId,         // ID de la JobOffer en base (pour lien CvFile &rarr; JobOffer)
+    jobOfferLanguage,   // Langue d&eacute;tect&eacute;e de l'offre
+    source,             // URL ou nom du fichier PDF
+  },
+  // ... un &eacute;l&eacute;ment par source
+]</code></pre>
+
+        <!-- ==================== PIPELINE FLOWCHART ==================== -->
+        <h2>Pipeline Complet</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Flux complet de g&eacute;n&eacute;ration depuis offre</div>
+          <div class="diagram-title">Pipeline de g&eacute;n&eacute;ration CV mod&egrave;le depuis offre d'emploi</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTR&Eacute;E"]
-        URL["URL offre"]
-        PDF["PDF offre"]
+    subgraph Input["ENTREE"]
+        URLs["URLs d'offres"]
+        PDFs["Fichiers PDF"]
     end
 
-    subgraph Extract["EXTRACTION"]
-        Scrape["Scraping URL<br/>(cheerio)"]
-        ParsePDF["Parsing PDF<br/>(pdf-parse)"]
-        GPTExtract["GPT Extraction<br/>structur&eacute;e"]
-        Cache["Cache JobOffer<br/>(7 jours)"]
+    subgraph Step1["ETAPE 1 - VERIFICATION"]
+        Credits["Vérifier les crédits<br/>OpenAI disponibles"]
+        Client["Initialiser le client<br/>et le modèle IA"]
+        Schema["Charger le schéma CV<br/>depuis le fichier modèle"]
     end
 
-    subgraph Generate["G&Eacute;N&Eacute;RATION"]
-        Format["Formatage offre"]
-        Schema["Chargement<br/>template.json"]
-        GPTGen["GPT G&eacute;n&eacute;ration CV"]
-        Validate["Validation JSON"]
+    subgraph Step2["ETAPE 2 - EXTRACTION"]
+        ExtractURL["Extraire l'offre<br/>depuis l'URL"]
+        ExtractPDF["Extraire l'offre<br/>depuis le PDF"]
+        Callback["Notifier le titre<br/>de l'offre extrait"]
+    end
+
+    subgraph Step3["ETAPE 3 - FORMATAGE"]
+        Format["Formater l'offre<br/>en texte structuré"]
+        Sections["Sections formatées :<br/>entreprise, contrat, expérience,<br/>compétences, missions,<br/>formation, langues, avantages"]
+    end
+
+    subgraph Step4["ETAPE 4 - GENERATION IA"]
+        CallGPT["Appeler l'IA (ChatGPT)<br/>pour générer le CV"]
+        Prompts["Charger les instructions<br/>système et utilisateur"]
+        Cache["Activer le cache<br/>24h (GPT-5)"]
+    end
+
+    subgraph Step5["ETAPE 5 - NORMALISATION"]
+        Normalize["Normaliser le JSON<br/>du CV généré"]
+        TrackUsage["Enregistrer la<br/>consommation OpenAI"]
     end
 
     subgraph Output["SORTIE"]
-        CvFile["CvFile cr&eacute;&eacute;"]
-        Link["Liaison JobOffer"]
+        Result["Liste des CV générés<br/>avec leurs offres associées"]
     end
 
-    URL --> Scrape
-    PDF --> ParsePDF
-    Scrape --> GPTExtract
-    ParsePDF --> GPTExtract
-    GPTExtract --> Cache
-    Cache --> Format
-    Format --> Schema
-    Schema --> GPTGen
-    GPTGen --> Validate
-    Validate --> CvFile
-    CvFile --> Link
+    URLs --> Credits
+    PDFs --> Credits
+    Credits --> Client --> Schema
+
+    URLs --> ExtractURL
+    PDFs --> ExtractPDF
+    ExtractURL --> Callback
+    ExtractPDF --> Callback
+
+    Callback --> Format --> Sections
+
+    Sections --> CallGPT
+    Schema --> CallGPT
+    Prompts --> CallGPT
+    Cache --> CallGPT
+
+    CallGPT --> Normalize --> TrackUsage --> Result
+    style URLs fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style PDFs fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Credits fill:#f59e0b,stroke:#d97706,color:#fff
+    style Client fill:#64748b,stroke:#475569,color:#fff
+    style Schema fill:#14b8a6,stroke:#0d9488,color:#fff
+    style ExtractURL fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ExtractPDF fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Callback fill:#64748b,stroke:#475569,color:#fff
+    style Format fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Sections fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CallGPT fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Prompts fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Cache fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Normalize fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style TrackUsage fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Result fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
-        <h2>Data Flow D&eacute;taill&eacute;</h2>
+        <!-- ==================== ETAPES DETAILLEES ==================== -->
+        <h2>&Eacute;tapes D&eacute;taill&eacute;es</h2>
 
-        <h3>&Eacute;tape 1 : R&eacute;ception de la Requ&ecirc;te</h3>
+        <!-- ===== Etape 1 ===== -->
+        <h3>&Eacute;tape 1 : V&eacute;rification</h3>
 
         <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge input">INPUT</span>
-            <span class="data-flow-title">Requ&ecirc;te FormData</span>
+          <div class="data-flow-header">VERIFICATION &mdash; Pr&eacute;requis avant g&eacute;n&eacute;ration</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Composants initialis&eacute;s</div>
+            <ol>
+              <li><code>checkOpenAICredits()</code> &mdash; V&eacute;rifie que le budget OpenAI n'est pas &eacute;puis&eacute;</li>
+              <li><code>getOpenAIClient()</code> &mdash; R&eacute;cup&egrave;re le client OpenAI configur&eacute;</li>
+              <li><code>getCvModel()</code> &mdash; R&eacute;cup&egrave;re le mod&egrave;le IA &agrave; utiliser</li>
+              <li><code>getCvSchema()</code> &mdash; Charge le sch&eacute;ma CV depuis <code>data/template.json</code> (ou fallback par d&eacute;faut)</li>
+            </ol>
           </div>
-          <div class="data-flow-content">
-            <h5>Endpoint</h5>
-            <p><code>POST /api/background-tasks/create-template-cv</code></p>
+        </div>
 
-            <h5>Param&egrave;tres</h5>
-            <pre><code class="language-javascript">// FormData
-{
-  links: JSON.stringify(["https://example.com/offre1"]),  // Array d'URLs
-  files: [File],                                          // PDFs d'offres
-  model: "gpt-4o",                                        // Optionnel
-  deviceId: "device_xxx",                                 // Identification appareil
-  recaptchaToken: "..."                                   // Optionnel
-}</code></pre>
+        <!-- ===== Etape 2 ===== -->
+        <h3>&Eacute;tape 2 : Extraction des Offres</h3>
 
-            <h5>Validation</h5>
+        <div class="data-flow">
+          <div class="data-flow-header">EXTRACTION &mdash; R&eacute;cup&eacute;ration et structuration des offres</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Sources support&eacute;es</div>
             <ul>
-              <li>Au moins 1 lien OU 1 fichier requis</li>
-              <li>V&eacute;rification reCAPTCHA si token fourni</li>
-              <li>Feature check via <code>incrementFeatureCounter</code></li>
+              <li><strong>URL :</strong> <code>getOrExtractJobOfferFromUrl(userId, url, signal)</code> &mdash; Extraction avec cache, retourne <code>{ extraction, jobOfferId, title, fromCache }</code></li>
+              <li><strong>PDF :</strong> <code>getOrExtractJobOfferFromPdf(userId, path, name, signal)</code> &mdash; M&ecirc;me signature de retour</li>
             </ul>
           </div>
-        </div>
 
-        <h3>&Eacute;tape 2 : Extraction de l'Offre</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge process">PROCESS</span>
-            <span class="data-flow-title">Extraction structur&eacute;e</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Cache intelligent</h5>
-            <p>Utilise <code>getOrExtractJobOfferFromUrl</code> / <code>getOrExtractJobOfferFromPdf</code> pour &eacute;viter les extractions redondantes :</p>
-            <pre><code class="language-javascript">// lib/job-offer/index.js
-const { extraction, jobOfferId, title, fromCache } =
-  await getOrExtractJobOfferFromUrl(userId, url, signal);
-
-if (fromCache) {
-  console.log('Skipped OpenAI extraction (cached)');
-}</code></pre>
-
-            <h5>Structure extraite</h5>
-            <pre><code class="language-json">{
-  "title": "D&eacute;veloppeur Full Stack",
-  "company": "TechCorp",
-  "contract": "CDI",
-  "experience": {
-    "min_years": 3,
-    "max_years": 5,
-    "level": "confirm&eacute;"
-  },
-  "location": {
-    "city": "Paris",
-    "country": "France",
-    "remote": "hybride"
-  },
-  "skills": {
-    "required": ["React", "Node.js", "TypeScript"],
-    "nice_to_have": ["AWS", "Docker"]
-  },
-  "responsibilities": [
-    "D&eacute;veloppement de nouvelles fonctionnalit&eacute;s",
-    "Code review"
-  ],
-  "education": {
-    "level": "Bac+5",
-    "field": "Informatique"
-  },
-  "languages": [
-    { "language": "Fran&ccedil;ais", "level": "natif" },
-    { "language": "Anglais", "level": "courant" }
-  ]
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Callback</div>
+            <pre><code class="language-javascript">// Appel&eacute; d&egrave;s que le titre de l'offre est extrait
+if (onTitleExtracted) {
+  onTitleExtracted(title);
 }</code></pre>
           </div>
         </div>
 
-        <h3>&Eacute;tape 3 : Formatage pour le Prompt</h3>
+        <div class="callout callout-info">
+          <div class="callout-title">Traitement s&eacute;quentiel</div>
+          <p>Chaque source (URL ou PDF) est trait&eacute;e s&eacute;quentiellement dans une boucle. Un CV est g&eacute;n&eacute;r&eacute; pour chaque source. Les r&eacute;sultats sont accumul&eacute;s dans un tableau.</p>
+        </div>
+
+        <!-- ===== Etape 3 ===== -->
+        <h3>&Eacute;tape 3 : Formatage &mdash; <code>formatJobOfferForTemplate()</code></h3>
 
         <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge process">PROCESS</span>
-            <span class="data-flow-title">Formatage offre</span>
+          <div class="data-flow-header">FORMATAGE &mdash; Conversion de l'extraction en texte structur&eacute;</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;e</div>
+            <pre><code class="language-javascript">formatJobOfferForTemplate(extraction, source, title)
+// extraction : objet JSON structur&eacute; (issu de l'extraction IA)
+// source     : URL ou nom du fichier PDF
+// title      : titre de l'offre extrait</code></pre>
           </div>
-          <div class="data-flow-content">
-            <h5>Fonction</h5>
-            <pre><code class="language-javascript">// lib/features/template-generation/service.js
-function formatJobOfferForTemplate(extraction, source, title) {
-  const sections = [];
 
-  sections.push(`Offre d'emploi extraite depuis: ${source}`);
-  if (title) sections.push(`Titre: ${title}`);
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Sections g&eacute;n&eacute;r&eacute;es</div>
+            <table>
+              <tr>
+                <td><span class="badge badge-primary">ENTREPRISE</span></td>
+                <td>Nom de l'entreprise, secteur d'activit&eacute;</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-primary">TYPE DE CONTRAT</span></td>
+                <td>CDI, CDD, freelance, etc.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-primary">EXPERIENCE REQUISE</span></td>
+                <td>Niveau d'exp&eacute;rience demand&eacute;</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-primary">LOCALISATION</span></td>
+                <td>Ville, r&eacute;gion, t&eacute;l&eacute;travail</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-warning">COMPETENCES REQUISES</span></td>
+                <td>Hard skills, outils, m&eacute;thodologies obligatoires</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-warning">COMPETENCES SOUHAITEES</span></td>
+                <td>Nice-to-have, comp&eacute;tences bonus</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-success">MISSIONS</span></td>
+                <td>Responsabilit&eacute;s et missions du poste</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-success">FORMATION</span></td>
+                <td>Niveau d'&eacute;tudes requis</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-success">LANGUES</span></td>
+                <td>Langues requises ou souhait&eacute;es</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-success">AVANTAGES</span></td>
+                <td>Avantages propos&eacute;s par l'employeur</td>
+              </tr>
+            </table>
+          </div>
 
-  if (extraction.company) {
-    sections.push(`ENTREPRISE: ${extraction.company}`);
-  }
-
-  if (extraction.skills?.required?.length > 0) {
-    sections.push(`COMP&Eacute;TENCES REQUISES:\n${
-      extraction.skills.required.map(s => `- ${s}`).join('\n')
-    }`);
-  }
-
-  // ... autres sections
-
-  return sections.join('\n\n');
-}</code></pre>
-
-            <h5>Output</h5>
-            <pre><code>Offre d'emploi extraite depuis: https://example.com/offre
-Titre: D&eacute;veloppeur Full Stack
-
-ENTREPRISE: TechCorp
-TYPE DE CONTRAT: CDI
-EXPERIENCE REQUISE: 3-5 ans (confirm&eacute;)
-LOCALISATION: Paris, France (hybride)
-
-COMP&Eacute;TENCES TECHNIQUES REQUISES:
-- React
-- Node.js
-- TypeScript
-
-MISSIONS ET RESPONSABILIT&Eacute;S:
-- D&eacute;veloppement de nouvelles fonctionnalit&eacute;s
-- Code review</code></pre>
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <p>Cha&icirc;ne de texte format&eacute;e avec les sections pr&eacute;c&eacute;dentes, pr&ecirc;te &agrave; &ecirc;tre inject&eacute;e dans le prompt utilisateur.</p>
           </div>
         </div>
 
-        <h3>&Eacute;tape 4 : G&eacute;n&eacute;ration IA</h3>
+        <!-- ===== Etape 4 ===== -->
+        <h3>&Eacute;tape 4 : G&eacute;n&eacute;ration IA &mdash; <code>callChatGPT()</code></h3>
 
         <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge ai">IA</span>
-            <span class="data-flow-title">GPT - G&eacute;n&eacute;ration CV</span>
+          <div class="data-flow-header">GENERATION IA &mdash; Appel OpenAI pour cr&eacute;er le CV</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Param&egrave;tres</div>
+            <pre><code class="language-javascript">callChatGPT(client, model, cvSchema, jobOfferContent, signal)
+// client          : OpenAI client
+// model           : mod&egrave;le IA (via getCvModel())
+// cvSchema        : sch&eacute;ma JSON du CV attendu
+// jobOfferContent : texte format&eacute; de l'offre
+// signal          : AbortSignal (optionnel)</code></pre>
           </div>
-          <div class="data-flow-content">
-            <h5>Prompts</h5>
-            <pre><code class="language-markdown"># lib/features/template-generation/prompts/system.md
 
-Tu es un expert en r&eacute;daction de CV professionnels.
-Ta mission est de cr&eacute;er un CV FICTIF mais REALISTE
-pour un candidat id&eacute;al correspondant &agrave; l'offre d'emploi.
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Prompts</div>
+            <table>
+              <tr>
+                <td><strong>System prompt</strong></td>
+                <td><code>lib/features/template-generation/prompts/system.md</code></td>
+              </tr>
+              <tr>
+                <td><strong>User prompt</strong></td>
+                <td><code>lib/features/template-generation/prompts/user.md</code></td>
+              </tr>
+            </table>
+            <p>Le user prompt re&ccedil;oit le sch&eacute;ma CV et le contenu format&eacute; de l'offre comme variables de template.</p>
+          </div>
 
-# R&Egrave;GLES
-1. G&eacute;n&egrave;re un candidat FICTIF (nom, pr&eacute;nom, email, etc.)
-2. Le parcours doit &ecirc;tre COHERENT et REALISTE
-3. Les comp&eacute;tences doivent correspondre &agrave; l'offre
-4. Respecte STRICTEMENT le sch&eacute;ma JSON fourni
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Configuration OpenAI</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Param&egrave;tre</th>
+                  <th>Valeur</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>response_format</code></td>
+                  <td><code>{ type: 'json_object' }</code></td>
+                </tr>
+                <tr>
+                  <td>Cache retention</td>
+                  <td><code>addCacheRetentionIfSupported()</code> &mdash; 24h pour les mod&egrave;les GPT-5</td>
+                </tr>
+                <tr>
+                  <td><code>AbortSignal</code></td>
+                  <td>Optionnel &mdash; permet l'annulation de la g&eacute;n&eacute;ration</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-# SCH&Eacute;MA CV
-{{cvSchema}}</code></pre>
+        <div class="callout callout-info">
+          <div class="callout-title">Cache GPT-5</div>
+          <p>La fonction <code>addCacheRetentionIfSupported()</code> ajoute un param&egrave;tre de r&eacute;tention de cache de 24 heures pour les mod&egrave;les GPT-5. Cela permet de r&eacute;utiliser le contexte des prompts syst&egrave;me entre les appels, r&eacute;duisant les co&ucirc;ts en tokens.</p>
+        </div>
 
-            <h5>Appel OpenAI</h5>
-            <pre><code class="language-javascript">const response = await client.chat.completions.create({
+        <!-- ===== Etape 5 ===== -->
+        <h3>&Eacute;tape 5 : Normalisation et Tracking</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">NORMALISATION &mdash; Post-traitement du r&eacute;sultat</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Traitement</div>
+            <ol>
+              <li><code>normalizeJsonPayload(result.content)</code> &mdash; Parse le JSON g&eacute;n&eacute;r&eacute; par l'IA et le re-stringify pour garantir un format propre</li>
+              <li>V&eacute;rification que le contenu est un JSON valide</li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Tracking</div>
+            <pre><code class="language-javascript">await trackOpenAIUsage({
+  userId,
+  featureName: 'create_template_cv_url',  // ou 'create_template_cv_pdf'
   model,
-  messages: [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt }
-  ],
-  response_format: { type: 'json_object' }
+  promptTokens: response.usage.prompt_tokens,
+  completionTokens: response.usage.completion_tokens,
+  duration,
 });</code></pre>
+          </div>
+        </div>
 
-            <h5>Output (CV g&eacute;n&eacute;r&eacute;)</h5>
-            <pre><code class="language-json">{
-  "header": {
-    "full_name": "Marie Dubois",
-    "current_title": "D&eacute;veloppeur Full Stack",
-    "contact": {
-      "email": "marie.dubois@email.com",
-      "phone": "+33 6 12 34 56 78",
-      "location": {
-        "city": "Paris",
-        "country_code": "FR"
-      }
-    }
-  },
-  "summary": {
-    "description": "D&eacute;veloppeuse Full Stack avec 4 ans d'exp&eacute;rience..."
-  },
-  "skills": {
-    "hard_skills": [
-      { "name": "React", "proficiency": 4 },
-      { "name": "Node.js", "proficiency": 4 },
-      { "name": "TypeScript", "proficiency": 3 }
-    ]
-  },
-  "experience": [
+        <!-- ==================== API ENDPOINT ==================== -->
+        <h2>API Endpoint</h2>
+
+        <div class="data-flow">
+          <div class="data-flow-header">POST /api/background-tasks/create-template-cv</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Requ&ecirc;te (FormData)</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Champ</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>links</code></td>
+                  <td><code>string[]</code></td>
+                  <td>URLs des offres d'emploi</td>
+                </tr>
+                <tr>
+                  <td><code>files</code></td>
+                  <td><code>File[]</code></td>
+                  <td>Fichiers PDF d'offres d'emploi</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Traitement</div>
+            <ul>
+              <li>Cr&eacute;e une <code>BackgroundTask</code> par source (URL ou PDF)</li>
+              <li>Feature utilis&eacute;e pour les cr&eacute;dits : <code>gpt_cv_generation</code></li>
+              <li>Le r&eacute;sultat de chaque t&acirc;che contient le CV g&eacute;n&eacute;r&eacute; en JSON</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">R&eacute;ponse</div>
+            <pre><code class="language-javascript">// R&eacute;ponse API
+{
+  success: true,
+  tasks: [
     {
-      "title": "D&eacute;veloppeur Full Stack",
-      "company": "StartupXYZ",
-      "start_date": "2021-01",
-      "end_date": null,
-      "responsibilities": [
-        "D&eacute;veloppement d'applications React",
-        "Conception d'APIs Node.js"
-      ]
+      id: "task-id",
+      status: "pending",
+      source: "https://example.com/offre",
     }
   ]
 }</code></pre>
           </div>
         </div>
 
-        <h3>&Eacute;tape 5 : Sauvegarde</h3>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge output">OUTPUT</span>
-            <span class="data-flow-title">CvFile cr&eacute;&eacute;</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Stockage</h5>
-            <pre><code class="language-javascript">// lib/features/template-generation/job.js
-const cvFile = await prisma.cvFile.create({
-  data: {
-    userId,
-    filename: `cv-${Date.now()}.json`,
-    content: cvContent,        // JSON du CV g&eacute;n&eacute;r&eacute;
-    language: jobOfferLanguage || 'fr',
-    metadata: {
-      origin: 'template_from_offer',
-      jobOfferId: jobOfferId,
-      generatedAt: new Date().toISOString()
-    }
-  }
-});
-
-// Lier le CV &agrave; l'offre d'emploi
-if (jobOfferId) {
-  await prisma.cvFile.update({
-    where: { id: cvFile.id },
-    data: { jobOfferId }
-  });
-}</code></pre>
-          </div>
-        </div>
-
+        <!-- ==================== GESTION DES ERREURS ==================== -->
         <h2>Gestion des Erreurs</h2>
 
         <table>
@@ -337,57 +408,81 @@ if (jobOfferId) {
             <tr>
               <th>Erreur</th>
               <th>Cause</th>
-              <th>Action</th>
+              <th>&Eacute;tape</th>
+              <th>Comportement</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>NO_SOURCE_PROVIDED</code></td>
-              <td>Ni URL ni PDF fourni</td>
-              <td>Rejet imm&eacute;diat, pas de d&eacute;bit</td>
+              <td><span class="badge badge-error">Budget &eacute;puis&eacute;</span></td>
+              <td><code>checkOpenAICredits()</code> &eacute;choue</td>
+              <td>1</td>
+              <td>Pipeline interrompu imm&eacute;diatement</td>
             </tr>
             <tr>
-              <td><code>INVALID_LINKS_FORMAT</code></td>
-              <td>JSON des liens invalide</td>
-              <td>Rejet imm&eacute;diat, pas de d&eacute;bit</td>
+              <td><span class="badge badge-error">Offre non d&eacute;tect&eacute;e</span></td>
+              <td>URL invalide, page vide ou expir&eacute;e</td>
+              <td>2</td>
+              <td>Source ignor&eacute;e, autres sources continu&eacute;es</td>
             </tr>
             <tr>
-              <td><code>FEATURE_LIMIT_REACHED</code></td>
-              <td>Limite mensuelle atteinte</td>
-              <td>Rejet, proposition achat cr&eacute;dits</td>
+              <td><span class="badge badge-error">Offre expir&eacute;e</span></td>
+              <td><code>detectExpiredOrDeletedPage()</code> d&eacute;tecte une page supprim&eacute;e</td>
+              <td>2</td>
+              <td>Source ignor&eacute;e avec erreur sp&eacute;cifique</td>
             </tr>
             <tr>
-              <td><code>EXTRACTION_FAILED</code></td>
-              <td>&Eacute;chec extraction offre</td>
-              <td>Remboursement cr&eacute;dits</td>
+              <td><span class="badge badge-warning">R&eacute;ponse IA vide</span></td>
+              <td>OpenAI retourne un contenu vide ou invalide</td>
+              <td>4</td>
+              <td>Erreur lev&eacute;e, t&acirc;che marqu&eacute;e en &eacute;chec</td>
             </tr>
             <tr>
-              <td><code>GENERATION_FAILED</code></td>
-              <td>&Eacute;chec GPT</td>
-              <td>Remboursement cr&eacute;dits</td>
+              <td><span class="badge badge-warning">JSON invalide</span></td>
+              <td><code>normalizeJsonPayload()</code> ne peut pas parser le r&eacute;sultat</td>
+              <td>5</td>
+              <td>Erreur lev&eacute;e, t&acirc;che marqu&eacute;e en &eacute;chec</td>
             </tr>
             <tr>
-              <td><code>Task cancelled</code></td>
-              <td>Annulation utilisateur</td>
-              <td>Remboursement cr&eacute;dits</td>
+              <td><span class="badge badge-warning">T&acirc;che annul&eacute;e</span></td>
+              <td><code>AbortSignal</code> d&eacute;clench&eacute;</td>
+              <td>Toute</td>
+              <td>Pipeline interrompu proprement</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Monitoring</h2>
+        <!-- ==================== MONITORING ==================== -->
+        <h2>Monitoring et Tracking</h2>
 
-        <p>Chaque g&eacute;n&eacute;ration est trac&eacute;e dans <code>OpenAIUsageLog</code> :</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Feature Name</th>
+              <th>Source</th>
+              <th>Donn&eacute;es Track&eacute;es</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>create_template_cv_url</code></td>
+              <td>URL</td>
+              <td>Mod&egrave;le, tokens prompt/completion, dur&eacute;e, co&ucirc;t estim&eacute;</td>
+            </tr>
+            <tr>
+              <td><code>create_template_cv_pdf</code></td>
+              <td>PDF</td>
+              <td>Mod&egrave;le, tokens prompt/completion, dur&eacute;e, co&ucirc;t estim&eacute;</td>
+            </tr>
+          </tbody>
+        </table>
 
-        <pre><code class="language-json">{
-  "userId": "user_123",
-  "featureName": "create_template_cv_url",
-  "model": "gpt-4o",
-  "promptTokens": 2500,
-  "completionTokens": 1800,
-  "cachedTokens": 1200,
-  "duration": 8500
-}</code></pre>
+        <div class="callout callout-success">
+          <div class="callout-title">Feature Name distinct par source</div>
+          <p>Le <code>featureName</code> est diff&eacute;rent selon que la source est une URL ou un PDF. Cela permet de suivre s&eacute;par&eacute;ment les co&ucirc;ts et volumes de chaque canal d'entr&eacute;e dans le dashboard d'administration.</p>
+        </div>
 
+        <!-- ==================== FICHIERS CLES ==================== -->
         <h2>Fichiers Cl&eacute;s</h2>
 
         <table>
@@ -399,52 +494,44 @@ if (jobOfferId) {
           </thead>
           <tbody>
             <tr>
-              <td><code>app/api/background-tasks/create-template-cv/route.js</code></td>
-              <td>Endpoint API</td>
-            </tr>
-            <tr>
               <td><code>lib/features/template-generation/service.js</code></td>
-              <td>Service de g&eacute;n&eacute;ration</td>
-            </tr>
-            <tr>
-              <td><code>lib/features/template-generation/job.js</code></td>
-              <td>Background job</td>
+              <td><code>createTemplateCv()</code>, <code>formatJobOfferForTemplate()</code>, <code>callChatGPT()</code>, <code>getCvSchema()</code></td>
             </tr>
             <tr>
               <td><code>lib/features/template-generation/prompts/system.md</code></td>
-              <td>Prompt syst&egrave;me</td>
+              <td>System prompt &mdash; instructions IA pour la g&eacute;n&eacute;ration</td>
             </tr>
             <tr>
               <td><code>lib/features/template-generation/prompts/user.md</code></td>
-              <td>Prompt utilisateur</td>
+              <td>User prompt &mdash; sch&eacute;ma CV + contenu de l'offre format&eacute;</td>
             </tr>
             <tr>
-              <td><code>lib/job-offer/index.js</code></td>
-              <td>Extraction offres (avec cache)</td>
+              <td><code>data/template.json</code></td>
+              <td>Sch&eacute;ma de r&eacute;f&eacute;rence pour la structure du CV g&eacute;n&eacute;r&eacute;</td>
             </tr>
             <tr>
-              <td><code>components/TopBar/modals/CvGeneratorModal.jsx</code></td>
-              <td>Interface utilisateur</td>
+              <td><code>lib/job-offer/extraction/url.js</code></td>
+              <td><code>getOrExtractJobOfferFromUrl()</code> &mdash; extraction et cache des offres URL</td>
+            </tr>
+            <tr>
+              <td><code>lib/job-offer/extraction/pdf.js</code></td>
+              <td><code>getOrExtractJobOfferFromPdf()</code> &mdash; extraction des offres PDF</td>
+            </tr>
+            <tr>
+              <td><code>lib/telemetry/openai.js</code></td>
+              <td><code>trackOpenAIUsage()</code> &mdash; enregistrement des tokens et co&ucirc;ts</td>
+            </tr>
+            <tr>
+              <td><code>lib/openai-core/client.js</code></td>
+              <td><code>getOpenAIClient()</code>, <code>getCvModel()</code>, <code>checkOpenAICredits()</code>, <code>addCacheRetentionIfSupported()</code></td>
+            </tr>
+            <tr>
+              <td><code>app/api/background-tasks/create-template-cv/route.js</code></td>
+              <td>API endpoint &mdash; d&eacute;clenchement des t&acirc;ches en arri&egrave;re-plan</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>R&eacute;ponse API</h2>
-
-        <h3>Succ&egrave;s (202 Accepted)</h3>
-        <pre><code class="language-json">{
-  "success": true,
-  "queued": true,
-  "taskIds": ["task_template_link_xxx", "task_template_file_xxx"],
-  "tasksCount": 2
-}</code></pre>
-
-        <h3>Erreur Limite (403 Forbidden)</h3>
-        <pre><code class="language-json">{
-  "error": "Limite mensuelle atteinte",
-  "actionRequired": "purchase_credits",
-  "redirectUrl": "/credits"
-}</code></pre>
       </div>
     </main>
   </div>
@@ -459,8 +546,6 @@ if (jobOfferId) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

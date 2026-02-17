@@ -3,109 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pipeline Génération CV - Vue d'ensemble | FitMyCV.io</title>
+  <title>Pipeline G&eacute;n&eacute;ration CV - Vue d'ensemble | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
           <span>/</span>
-          <a href="./overview.html">Pipeline Génération</a>
+          <a href="./overview.html">Pipeline G&eacute;n&eacute;ration</a>
           <span>/</span>
           <span>Vue d'ensemble</span>
         </div>
 
-        <h1>Pipeline de Génération CV</h1>
+        <h1>Pipeline de G&eacute;n&eacute;ration CV</h1>
         <p class="lead">
-          Le pipeline de génération CV (cv-adaptation) transforme automatiquement un CV source pour l'adapter à une offre d'emploi spécifique. Il utilise une architecture par phases avec parallélisation et cache intelligent.
+          Le pipeline <strong>cv-adaptation</strong> transforme automatiquement un CV source pour l'adapter &agrave; une offre d'emploi sp&eacute;cifique. Il utilise une architecture par phases avec parall&eacute;lisation massive (6 batches simultan&eacute;s + 1 s&eacute;quentiel), un syst&egrave;me de cache &agrave; deux niveaux (Cache A / Cache B) et des Structured Outputs OpenAI pour garantir la conformit&eacute; des r&eacute;ponses.
         </p>
 
         <div class="callout callout-info">
-          <div class="callout-title">Coût</div>
-          <p>Le nombre de crédits par génération est configurable dans <strong>Administration → Settings</strong>. Le crédit est débité au lancement et remboursé en cas d'échec.</p>
+          <div class="callout-title">Co&ucirc;t en cr&eacute;dits</div>
+          <p>Le nombre de cr&eacute;dits par g&eacute;n&eacute;ration est configurable dans <strong>Administration &rarr; Settings</strong> via <code>getCreditCostForFeature('gpt_cv_generation')</code>. Le cr&eacute;dit est d&eacute;bit&eacute; au lancement de la t&acirc;che et <strong>rembours&eacute; automatiquement</strong> en cas d'&eacute;chec via <code>refundCreditForOffer()</code> avec <code>grantCredits(userId, cost, 'refund')</code>.</p>
         </div>
 
+        <!-- ==================== FLOWCHART COMPLET ==================== -->
         <h2>Workflow Global</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Pipeline complet de génération CV</div>
+          <div class="diagram-title">Pipeline complet de g&eacute;n&eacute;ration CV - Toutes les phases</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTRÉE UTILISATEUR"]
-        CV["CV Source (JSON)"]
-        URL["URL Offre d'emploi"]
+    subgraph Input["ENTREE UTILISATEUR"]
+        CV["CV source JSON<br/>Contenu du fichier CV"]
+        URL["URL / PDF / Markdown"]
     end
 
-    subgraph Extract["ÉTAPE 0 - EXTRACTION"]
-        ExtractJob["Extraction URL/PDF"]
-        JobOffer["JobOffer JSON"]
+    subgraph Phase0["PHASE 0 - EXTRACTION"]
+        Extract["Extraire l'offre d'emploi"]
+        JobOffer["Offre d'emploi JSON"]
     end
 
-    subgraph Classification["ÉTAPE 0.5 - CLASSIFICATION"]
-        Classify["Classification IA"]
-        Decision{"KEEP / REMOVE / MOVE"}
+    subgraph Phase05["PHASE 0.5 - CLASSIFICATION"]
+        Classify["Classifier les expériences<br/>et projets"]
+        ApplyClass["Appliquer la classification"]
+        Decision{"Conserver / Supprimer /<br/>Déplacer en Projets"}
     end
 
-    subgraph Batches["ÉTAPE 1 - BATCHES (Parallèle)"]
-        BatchExp["1a: Experiences"]
-        BatchProj["1b: Projects"]
-        BatchExtras["1c: Extras"]
-        BatchSkills["1d: Skills"]
-        BatchSummary["1e: Summary"]
+    subgraph Phase1["PHASE 1 - BATCHES"]
+        direction TB
+        subgraph Parallel["6 BATCHES EN PARALLELE"]
+            BatchExp["1a: Adapter<br/>les expériences"]
+            BatchProj["1b: Adapter<br/>les projets"]
+            BatchExtras["1c: Adapter<br/>les extras"]
+            BatchEdu["1d: Adapter<br/>la formation"]
+            BatchLang["1e: Adapter<br/>les langues"]
+            BatchSkills["1f: Adapter<br/>les compétences"]
+        end
+        BatchSummary["1g: Générer le résumé<br/>séquentiel après<br/>les batches parallèles"]
     end
 
-    subgraph Recompose["ÉTAPE 2 - RECOMPOSITION"]
-        Assembly["Assemblage Final"]
-        FinalCV["CV Généré"]
+    subgraph Phase2["PHASE 2 - RECOMPOSITION"]
+        Recompose["Assembler le CV final"]
+        ReviewInit["Initialiser le suivi<br/>des modifications"]
+        FinalCV["CV adapté JSON"]
     end
 
-    subgraph Storage["STOCKAGE"]
-        DB[(PostgreSQL)]
-        Version["CvVersion"]
+    subgraph StorageLayer["STOCKAGE"]
+        CvFile[("Fichier CV")]
+        CvVersion[("Version CV v0")]
+        OfferRecord[("Offre de génération")]
     end
 
-    Input --> Extract
-    URL --> ExtractJob --> JobOffer
-    CV --> Classification
-    JobOffer --> Classification
-    Classify --> Decision
+    URL --> Extract --> JobOffer
+    CV --> Phase05
+    JobOffer --> Classify
+    Classify --> ApplyClass --> Decision
 
-    Decision -->|KEEP| BatchExp
-    Decision -->|MOVE_TO_PROJECTS| BatchProj
+    Decision -->|"Experiences conservees"| BatchExp
+    Decision -->|"Conservees + deplacees"| BatchProj
     Decision --> BatchExtras
+    Decision --> BatchEdu
+    Decision --> BatchLang
     Decision --> BatchSkills
-    Decision --> BatchSummary
 
-    BatchExp --> Assembly
-    BatchProj --> Assembly
-    BatchExtras --> Assembly
-    BatchSkills --> Assembly
-    BatchSummary --> Assembly
+    Parallel --> BatchSummary
 
-    Assembly --> FinalCV
-    FinalCV --> DB
-    FinalCV --> Version
+    BatchExp --> Recompose
+    BatchProj --> Recompose
+    BatchExtras --> Recompose
+    BatchEdu --> Recompose
+    BatchLang --> Recompose
+    BatchSkills --> Recompose
+    BatchSummary --> Recompose
+
+    Recompose --> ReviewInit --> FinalCV
+    FinalCV --> CvFile
+    FinalCV --> CvVersion
+    FinalCV --> OfferRecord
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Extract fill:#6366f1,stroke:#4f46e5,color:#fff
+    style JobOffer fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Classify fill:#6366f1,stroke:#4f46e5,color:#fff
+    style ApplyClass fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Decision fill:#f59e0b,stroke:#d97706,color:#fff
+    style BatchExp fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchProj fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchExtras fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchEdu fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchLang fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchSkills fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style BatchSummary fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Recompose fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ReviewInit fill:#f59e0b,stroke:#d97706,color:#fff
+    style FinalCV fill:#22c55e,stroke:#16a34a,color:#fff
+    style CvFile fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CvVersion fill:#14b8a6,stroke:#0d9488,color:#fff
+    style OfferRecord fill:#14b8a6,stroke:#0d9488,color:#fff
           </div>
         </div>
 
-        <h2>Les 6 Phases du Pipeline</h2>
+        <!-- ==================== TABLE DES PHASES ==================== -->
+        <h2>Les 10 &Eacute;tapes du Pipeline</h2>
 
         <table>
           <thead>
@@ -113,7 +143,8 @@ flowchart TB
               <th>Phase</th>
               <th>Nom</th>
               <th>Fichier</th>
-              <th>Exécution</th>
+              <th>Ex&eacute;cution</th>
+              <th>Mod&egrave;le IA</th>
             </tr>
           </thead>
           <tbody>
@@ -121,355 +152,295 @@ flowchart TB
               <td><span class="badge badge-primary">0</span></td>
               <td>Extraction</td>
               <td><code>phases/extract.js</code></td>
-              <td>Séquentiel</td>
+              <td>S&eacute;quentiel</td>
+              <td>Variable (selon source)</td>
             </tr>
             <tr>
               <td><span class="badge badge-primary">0.5</span></td>
               <td>Classification</td>
               <td><code>phases/classify.js</code></td>
-              <td>Séquentiel</td>
+              <td>S&eacute;quentiel</td>
+              <td><code>model_cv_classify</code></td>
             </tr>
             <tr>
-              <td><span class="badge badge-warning">1a-e</span></td>
-              <td>Batches</td>
-              <td><code>phases/batch-*.js</code></td>
-              <td>Parallèle</td>
+              <td><span class="badge badge-warning">1a</span></td>
+              <td>Batch Experiences</td>
+              <td><code>phases/batch-experiences.js</code></td>
+              <td>Parall&egrave;le</td>
+              <td><code>model_cv_batch_experience</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1b</span></td>
+              <td>Batch Projects</td>
+              <td><code>phases/batch-projects.js</code></td>
+              <td>Parall&egrave;le</td>
+              <td><code>model_cv_batch_projects</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1c</span></td>
+              <td>Batch Extras</td>
+              <td><code>phases/batch-extras.js</code></td>
+              <td>Parall&egrave;le</td>
+              <td><code>model_cv_batch_extras</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1d</span></td>
+              <td>Batch Education</td>
+              <td><code>phases/batch-education.js</code></td>
+              <td>Parall&egrave;le</td>
+              <td><code>model_cv_batch_education</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1e</span></td>
+              <td>Batch Languages</td>
+              <td><code>phases/batch-languages.js</code></td>
+              <td>Parall&egrave;le</td>
+              <td><code>model_cv_batch_languages</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1f</span></td>
+              <td>Batch Skills</td>
+              <td><code>phases/batch-skills.js</code></td>
+              <td>Parall&egrave;le (staggered)</td>
+              <td><code>model_cv_batch_skills</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">1g</span></td>
+              <td>Batch Summary</td>
+              <td><code>phases/batch-summary.js</code></td>
+              <td>S&eacute;quentiel (apr&egrave;s 1a-1f)</td>
+              <td><code>model_cv_batch_summary</code></td>
             </tr>
             <tr>
               <td><span class="badge badge-success">2</span></td>
               <td>Recomposition</td>
               <td><code>phases/recompose.js</code></td>
-              <td>Séquentiel</td>
+              <td>S&eacute;quentiel</td>
+              <td>Aucun (algorithmique)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Étape 0 : Extraction</h2>
+        <!-- ==================== PHASE 0 : EXTRACTION ==================== -->
+        <h2>&Eacute;tape 0 : Extraction</h2>
 
         <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/extract.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeExtraction(offerId, sourceUrl, userId, signal, markdownContent, markdownTitle)</code></p>
 
         <div class="data-flow">
-          <div class="data-flow-header">EXTRACTION - Récupération de l'offre d'emploi</div>
+          <div class="data-flow-header">EXTRACTION - R&eacute;cup&eacute;ration de l'offre d'emploi</div>
 
           <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <p><strong>Sources possibles :</strong></p>
+            <div class="data-flow-label">Sources support&eacute;es (3 types)</div>
             <ul>
-              <li><strong>URL :</strong> Page web d'annonce d'emploi</li>
-              <li><strong>PDF :</strong> Document uploadé par l'utilisateur</li>
-              <li><strong>Cache :</strong> JobOffer déjà extraite (réutilisation)</li>
+              <li><strong>URL :</strong> <code>getOrExtractJobOfferFromUrl(sourceUrl)</code> - Page web d'annonce</li>
+              <li><strong>PDF :</strong> <code>getOrExtractJobOfferFromPdf(filePath)</code> - Fichier upload&eacute; (pr&eacute;fixe <code>file://</code>)</li>
+              <li><strong>Markdown :</strong> <code>extractJobOfferFromMarkdown(content, title)</code> - Flux extension navigateur</li>
             </ul>
           </div>
 
-          <div class="data-flow-section data-flow-prompt">
-            <div class="data-flow-label">Résumé du prompt</div>
-            <blockquote>
-              "Expert en extraction d'offres d'emploi. Analyser le contenu de la page/document et extraire les informations structurées : titre, entreprise, compétences requises et souhaitées, responsabilités, avantages."
-            </blockquote>
-          </div>
-
           <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie (JobOffer)</div>
-            <pre><code>{
-  "title": "Senior Full-Stack Developer",
-  "company": "TechCorp",
-  "location": "Paris, France",
-  "contract_type": "CDI",
-  "skills": {
-    "required": ["React", "Node.js", "TypeScript", "PostgreSQL"],
-    "nice_to_have": ["GraphQL", "Docker", "AWS"]
-  },
-  "soft_skills": ["Leadership", "Communication", "Problem-solving"],
-  "methodologies": ["Agile", "Scrum", "CI/CD"],
-  "responsibilities": [
-    "Développer des features full-stack",
-    "Mentorer les développeurs juniors",
-    "Participer aux code reviews"
-  ],
-  "benefits": ["Remote friendly", "RTT", "Mutuelle"]
+            <div class="data-flow-label">R&eacute;sultat</div>
+            <pre><code class="language-javascript">// Retour de executeExtraction()
+{
+  success: true,
+  jobOfferId: "clx...",    // ID JobOffer en DB (cache)
+  jobOffer: { ... },       // Contenu JSON structur&eacute;
+  title: "Senior Developer" // Titre extrait
 }</code></pre>
           </div>
         </div>
 
-        <h2>Étape 0.5 : Classification</h2>
+        <div class="callout callout-info">
+          <div class="callout-title">Cr&eacute;ation subtask</div>
+          <p>Chaque extraction cr&eacute;e un enregistrement <code>CvGenerationSubtask</code> de type <code>'extraction'</code> pour la tra&ccedil;abilit&eacute; (tokens, co&ucirc;t, dur&eacute;e).</p>
+        </div>
+
+        <!-- ==================== PHASE 0.5 : CLASSIFICATION ==================== -->
+        <h2>&Eacute;tape 0.5 : Classification</h2>
 
         <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/classify.js</code></p>
+        <p><strong>Fonctions :</strong> <code>executeClassification()</code> (avec tracking DB) et <code>classifyCore()</code> (logique pure)</p>
 
         <div class="data-flow">
-          <div class="data-flow-header">CLASSIFICATION - Tri des expériences et projets</div>
+          <div class="data-flow-header">CLASSIFICATION - Tri des exp&eacute;riences et projets</div>
 
           <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <p><strong>Provenance :</strong> <code>CvFile.content</code> + <code>JobOffer</code></p>
-            <pre><code>{
-  "cvExperiences": [
-    { "title": "Lead Developer", "company": "StartupX", ... },
-    { "title": "Serveur Restaurant", "company": "ChezPaul", ... }
-  ],
-  "cvProjects": [
-    { "name": "E-commerce Platform", ... }
-  ],
-  "jobOffer": { "title": "Senior Full-Stack Developer", ... }
-}</code></pre>
+            <div class="data-flow-label">Donn&eacute;es d'entr&eacute;e</div>
+            <p><strong>Provenance :</strong> <code>CvFile.content</code> + <code>JobOffer.content</code></p>
           </div>
 
           <div class="data-flow-section data-flow-prompt">
-            <div class="data-flow-label">Résumé du prompt</div>
-            <blockquote>
-              "Expert en recrutement. Classifier chaque expérience et projet du CV selon leur pertinence pour l'offre d'emploi. Décisions possibles : KEEP (pertinent), REMOVE (non pertinent), MOVE_TO_PROJECTS (expérience à convertir en projet)."
-            </blockquote>
-            <p><strong>Critères de décision :</strong></p>
-            <ul>
-              <li><strong>KEEP :</strong> Expérience/projet aligné avec le poste</li>
-              <li><strong>REMOVE :</strong> Sans rapport (ex: job étudiant non tech pour poste dev)</li>
-              <li><strong>MOVE_TO_PROJECTS :</strong> Mission courte ou freelance pertinente</li>
-            </ul>
+            <div class="data-flow-label">D&eacute;cisions strictes</div>
+            <table>
+              <tr>
+                <td><code>KEEP</code></td>
+                <td>Exp&eacute;rience/projet pertinent pour le poste &rarr; sera adapt&eacute; dans les batches</td>
+              </tr>
+              <tr>
+                <td><code>REMOVE</code></td>
+                <td>Non pertinent (ex: job &eacute;tudiant pour poste tech) &rarr; exclu du CV final</td>
+              </tr>
+              <tr>
+                <td><code>MOVE_TO_PROJECTS</code></td>
+                <td>Exp&eacute;rience courte/freelance &rarr; convertie en projet (inline dans <code>applyClassification()</code>)</td>
+              </tr>
+            </table>
           </div>
 
           <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie</div>
-            <pre><code>{
-  "experiences": [
-    {
-      "index": 0,
-      "title": "Lead Developer @ StartupX",
-      "decision": "KEEP",
-      "reason": "Expérience full-stack pertinente avec leadership"
-    },
-    {
-      "index": 1,
-      "title": "Serveur @ ChezPaul",
-      "decision": "REMOVE",
-      "reason": "Non pertinent pour poste technique"
-    }
-  ],
-  "projects": [
-    {
-      "index": 0,
-      "name": "E-commerce Platform",
-      "decision": "KEEP",
-      "reason": "Stack technique aligné"
-    }
-  ]
+            <div class="data-flow-label">Application : applyClassification()</div>
+            <pre><code class="language-javascript">// Retour de applyClassification(sourceCv, classification)
+{
+  experiences: [...],      // Exp&eacute;riences KEEP uniquement
+  projects: [...],         // Projets KEEP + exp&eacute;riences converties
+  movedToProjects: [...],  // Exp&eacute;riences MOVE_TO_PROJECTS
+  stats: { originalExperiences, keptExperiences, removedExperiences, ... }
 }</code></pre>
           </div>
         </div>
 
-        <h2>Étape 1 : Batches (Parallèle)</h2>
+        <div class="callout callout-warning">
+          <div class="callout-title">Pas de d&eacute;cision "ADAPT"</div>
+          <p>Contrairement aux versions pr&eacute;c&eacute;dentes, la classification n'a <strong>que 3 d&eacute;cisions possibles</strong> : KEEP, REMOVE, MOVE_TO_PROJECTS. L'adaptation proprement dite est d&eacute;l&eacute;gu&eacute;e aux batches (phase 1).</p>
+        </div>
 
-        <p>Tous les batches s'exécutent en parallèle grâce au système de cache CAG.</p>
+        <!-- ==================== PHASE 1 : BATCHES ==================== -->
+        <h2>&Eacute;tape 1 : Batches (Parall&egrave;le)</h2>
+
+        <p><strong>Orchestration :</strong> <code>runBatchesPhase()</code> dans <code>offerProcessor.js</code></p>
 
         <div class="card-grid">
           <div class="card">
             <h4>1a: Batch Experiences</h4>
-            <p>Adapter chaque expérience classée KEEP :</p>
-            <ul>
-              <li>Reformuler responsibilities</li>
-              <li>Mettre en avant les deliverables</li>
-              <li>Ajouter mots-clés de l'offre</li>
-              <li>Respecter la langue cible</li>
-            </ul>
-            <p><strong>Modèle :</strong> <code>gpt-4o</code></p>
+            <p><code>batch-experiences.js</code></p>
+            <p>Strat&eacute;gie cache-first : 1&egrave;re exp&eacute;rience d'abord (cache OpenAI), puis les suivantes en parall&egrave;le.</p>
+            <p><strong>Cache :</strong> <span class="badge badge-primary">Cache A</span></p>
           </div>
           <div class="card">
             <h4>1b: Batch Projects</h4>
-            <p>Adapter projets existants + convertir MOVE_TO_PROJECTS :</p>
-            <ul>
-              <li>Convertir expériences en projets</li>
-              <li>Mettre en avant les technologies</li>
-              <li>Ajouter résultats quantifiés</li>
-            </ul>
-            <p><strong>Modèle :</strong> <code>gpt-4o</code></p>
+            <p><code>batch-projects.js</code></p>
+            <p>Projets KEEP + exp&eacute;riences converties depuis MOVE_TO_PROJECTS.</p>
+            <p><strong>Cache :</strong> <span class="badge badge-primary">Cache A</span></p>
           </div>
         </div>
 
         <div class="card-grid">
           <div class="card">
             <h4>1c: Batch Extras</h4>
-            <p>Adapter les sections complémentaires :</p>
-            <ul>
-              <li>Certifications</li>
-              <li>Bénévolat</li>
-              <li>Publications</li>
-              <li>Centres d'intérêt pertinents</li>
-            </ul>
-            <p><strong>Modèle :</strong> <code>gpt-4o-mini</code></p>
+            <p><code>batch-extras.js</code></p>
+            <p>Certifications, b&eacute;n&eacute;volat, hobbies, publications.</p>
+            <p><strong>Cache :</strong> <span class="badge badge-primary">Cache A</span></p>
           </div>
           <div class="card">
-            <h4>1d: Batch Skills</h4>
-            <p>7 missions d'adaptation des compétences :</p>
-            <ul>
-              <li>hard_skills, soft_skills</li>
-              <li>tools, methodologies</li>
-              <li>certifications, interests</li>
-              <li>languages</li>
-            </ul>
-            <p><strong>Modèle :</strong> <code>gpt-4o-mini</code></p>
+            <h4>1d: Batch Education</h4>
+            <p><code>batch-education.js</code></p>
+            <p>Traduction degree/field_of_study dans la langue cible.</p>
+            <p><strong>Cache :</strong> <span class="badge badge-primary">Cache A</span></p>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>1e: Batch Languages</h4>
+            <p><code>batch-languages.js</code></p>
+            <p><code>extractLanguageRequirements()</code> parse les exigences. Traduit noms et niveaux.</p>
+            <p><strong>Cache :</strong> <span class="badge badge-primary">Cache A</span></p>
+          </div>
+          <div class="card">
+            <h4>1f: Batch Skills</h4>
+            <p><code>batch-skills.js</code></p>
+            <p>Strat&eacute;gie staggered : methodologies d'abord, puis hard_skills/soft_skills/tools avec 500ms delay.</p>
+            <p><strong>Cache :</strong> <span class="badge badge-primary">Cache A</span></p>
           </div>
         </div>
 
         <div class="card-grid">
           <div class="card" style="max-width: 50%;">
-            <h4>1e: Batch Summary</h4>
-            <p>Générer ou adapter le résumé professionnel :</p>
-            <ul>
-              <li>Synthétiser le parcours</li>
-              <li>Mettre en avant l'adéquation avec le poste</li>
-              <li>Intégrer les mots-clés stratégiques</li>
-              <li>3-4 phrases percutantes</li>
-            </ul>
-            <p><strong>Modèle :</strong> <code>gpt-4o</code></p>
+            <h4>1g: Batch Summary (S&eacute;quentiel)</h4>
+            <p><code>batch-summary.js</code></p>
+            <p>Ex&eacute;cut&eacute; <strong>APR&Egrave;S</strong> tous les batches pr&eacute;c&eacute;dents. Agr&egrave;ge <code>experiencesByDomain</code>, top deliverables, matching skills.</p>
+            <p><strong>Cache :</strong> <span class="badge badge-success">Cache B</span> (Cache A + r&eacute;sultats adapt&eacute;s)</p>
           </div>
         </div>
 
-        <div class="data-flow">
-          <div class="data-flow-header">BATCH EXPERIENCES - Exemple d'adaptation</div>
-
-          <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <pre><code>{
-  "experience": {
-    "title": "Lead Developer",
-    "company": "StartupX",
-    "responsibilities": ["Développer des applications"],
-    "deliverables": [],
-    "skills_used": ["JavaScript"]
-  },
-  "jobOffer": {
-    "skills": { "required": ["React", "Node.js", "TypeScript"] }
-  },
-  "cacheA": { /* contexte offre */ }
-}</code></pre>
-          </div>
-
-          <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">Format de sortie</div>
-            <pre><code>{
-  "adapted_experience": {
-    "title": "Lead Developer",
-    "company": "StartupX",
-    "responsibilities": [
-      "Concevoir et développer des applications web React/Node.js",
-      "Définir l'architecture technique et les bonnes pratiques"
-    ],
-    "deliverables": [
-      "Application SaaS servant 10K+ utilisateurs",
-      "Réduction de 40% du temps de chargement"
-    ],
-    "skills_used": ["React", "Node.js", "TypeScript", "PostgreSQL"]
-  },
-  "modifications": [
-    {
-      "field": "responsibilities",
-      "action": "modified",
-      "before": "Développer des applications",
-      "after": "Concevoir et développer des applications web React/Node.js",
-      "reason": "Alignement avec stack technique de l'offre"
-    }
-  ]
-}</code></pre>
-          </div>
-        </div>
-
-        <h2>Étape 2 : Recomposition</h2>
+        <!-- ==================== PHASE 2 : RECOMPOSITION ==================== -->
+        <h2>&Eacute;tape 2 : Recomposition</h2>
 
         <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/phases/recompose.js</code></p>
+        <p><strong>Fonction :</strong> <code>executeRecomposition()</code></p>
 
         <div class="data-flow">
           <div class="data-flow-header">RECOMPOSITION - Assemblage du CV final</div>
 
-          <div class="data-flow-section data-flow-input">
-            <div class="data-flow-label">Données d'entrée</div>
-            <p><strong>Provenance :</strong> Résultats de tous les batches</p>
-            <pre><code>{
-  "classification": { /* décisions KEEP/REMOVE/MOVE */ },
-  "adaptedExperiences": [ /* expériences adaptées */ ],
-  "adaptedProjects": [ /* projets adaptés */ ],
-  "adaptedExtras": { /* sections extras */ },
-  "adaptedSkills": { /* toutes les compétences */ },
-  "adaptedSummary": "Résumé professionnel...",
-  "originalCv": { /* CV source pour header, education, languages */ }
-}</code></pre>
-          </div>
-
           <div class="data-flow-section data-flow-prompt">
-            <div class="data-flow-label">Processus</div>
-            <blockquote>
-              Cette phase est purement algorithmique (pas d'appel IA). Elle assemble les résultats des batches en respectant l'ordre et la structure du CV.
-            </blockquote>
-            <p><strong>Étapes d'assemblage :</strong></p>
+            <div class="data-flow-label">Processus purement algorithmique (aucun appel IA)</div>
             <ol>
-              <li>Copier header et education du CV source</li>
-              <li>Insérer le summary adapté</li>
-              <li>Filtrer experiences (exclure REMOVE, réordonner)</li>
-              <li>Fusionner projects (existants + convertis)</li>
-              <li>Assembler skills par catégorie</li>
-              <li>Copier languages du CV source</li>
-              <li>Intégrer extras adaptés</li>
+              <li>Assembler <code>header</code> (source) avec <code>current_title</code> = titre de l'offre</li>
+              <li>Ins&eacute;rer le <code>summary</code> adapt&eacute;</li>
+              <li>Int&eacute;grer <code>experience</code> adapt&eacute;es (KEEP uniquement)</li>
+              <li>Fusionner <code>projects</code> (KEEP + convertis depuis MOVE_TO_PROJECTS)</li>
+              <li>Nettoyer <code>skills</code> (sans donn&eacute;es de review <code>_raw</code>)</li>
+              <li>Int&eacute;grer <code>education</code> adapt&eacute;e</li>
+              <li>Int&eacute;grer <code>languages</code> adapt&eacute;es</li>
+              <li>Int&eacute;grer <code>extras</code> adapt&eacute;s</li>
+              <li>Cr&eacute;er <code>CvFile</code> + <code>CvVersion v0</code> (source de r&eacute;f&eacute;rence)</li>
+              <li><code>initializeReviewState()</code> avec le change tracking</li>
             </ol>
-          </div>
-
-          <div class="data-flow-section data-flow-output">
-            <div class="data-flow-label">CV Final</div>
-            <pre><code>{
-  "header": { /* inchangé */ },
-  "summary": "Développeur Full-Stack avec 8 ans d'expérience...",
-  "experience": [ /* expériences adaptées, ordonnées */ ],
-  "projects": [ /* projets fusionnés */ ],
-  "skills": {
-    "hard_skills": [...],
-    "soft_skills": [...],
-    "tools": [...],
-    "methodologies": [...]
-  },
-  "education": { /* inchangé */ },
-  "languages": { /* inchangé */ },
-  "extras": { /* adaptés */ }
-}</code></pre>
           </div>
         </div>
 
-        <h2>Système de Cache (CAG)</h2>
+        <!-- ==================== SYSTEME DE CACHE ==================== -->
+        <h2>Syst&egrave;me de Cache</h2>
 
-        <p>Le pipeline utilise un système de cache à deux niveaux pour optimiser les coûts OpenAI et garantir la cohérence :</p>
+        <p><strong>Fichier :</strong> <code>lib/features/cv-adaptation/utils/cacheContext.js</code> &mdash; <code>generateCacheA()</code> et <code>generateCacheB()</code></p>
 
         <div class="card-grid">
           <div class="card">
-            <h4>Cache A</h4>
-            <p>Utilisé par : Experiences, Projects, Extras</p>
+            <h4>Cache A &mdash; Contexte Offre</h4>
+            <p><strong>Utilis&eacute; par :</strong> Experiences, Projects, Extras, Education, Languages</p>
             <ul>
-              <li>Job offer title</li>
-              <li>Required skills</li>
-              <li>Nice-to-have skills</li>
+              <li>Titre de l'offre</li>
+              <li>Skills requis + souhait&eacute;s</li>
               <li>Soft skills</li>
-              <li>Methodologies</li>
-              <li>Responsibilities (top 5)</li>
+              <li>M&eacute;thodologies</li>
+              <li>Responsabilit&eacute;s (top 5)</li>
             </ul>
           </div>
           <div class="card">
-            <h4>Cache B</h4>
-            <p>Utilisé par : Skills, Summary</p>
+            <h4>Cache B &mdash; Contexte Enrichi</h4>
+            <p><strong>Utilis&eacute; par :</strong> Summary</p>
             <ul>
               <li>Tout le Cache A</li>
-              <li>+ Expériences adaptées (résumé)</li>
-              <li>+ Projets adaptés (résumé)</li>
+              <li>+ R&eacute;sum&eacute; des exp&eacute;riences adapt&eacute;es</li>
+              <li>+ R&eacute;sum&eacute; des projets adapt&eacute;s</li>
+              <li>+ Skills adapt&eacute;s</li>
+              <li>+ Extras adapt&eacute;s</li>
             </ul>
           </div>
         </div>
 
-        <div class="callout callout-success">
-          <div class="callout-title">Optimisation des coûts</div>
-          <p>Les tokens du cache (cache_read_input_tokens) coûtent <strong>90% moins cher</strong> que les tokens standards. Le cache est maintenu pendant 5 minutes (dev) ou 24h (GPT-5).</p>
+        <div class="card-grid">
+          <div class="card">
+            <h4>Strat&eacute;gie Staggered (Skills)</h4>
+            <p><strong>Utilis&eacute; par :</strong> Batch Skills uniquement</p>
+            <ul>
+              <li>Methodologies trait&eacute;es en premier (&eacute;tablit le cache OpenAI)</li>
+              <li>Puis hard_skills, soft_skills, tools en parall&egrave;le avec 500ms delay</li>
+              <li>Diff&eacute;rent du Cache A/B : c'est une strat&eacute;gie d'ordonnancement interne au batch</li>
+            </ul>
+          </div>
         </div>
 
-        <h2>Hiérarchie des Priorités</h2>
+        <!-- ==================== HIERARCHIE PRIORITES ==================== -->
+        <h2>Hi&eacute;rarchie des Priorit&eacute;s</h2>
 
-        <p>Tous les prompts respectent cette hiérarchie stricte :</p>
+        <p>Tous les prompts respectent cette hi&eacute;rarchie stricte :</p>
 
         <table>
           <thead>
             <tr>
-              <th>Priorité</th>
+              <th>Priorit&eacute;</th>
               <th>Nom</th>
               <th>Description</th>
             </tr>
@@ -477,164 +448,209 @@ flowchart TB
           <tbody>
             <tr>
               <td><span class="badge badge-error">P1</span></td>
-              <td>VÉRITÉ</td>
-              <td>Jamais d'information inventée - traçabilité obligatoire</td>
+              <td>V&Eacute;RIT&Eacute;</td>
+              <td>Jamais d'information invent&eacute;e. Chaque mot doit pointer vers la source. Tra&ccedil;abilit&eacute; obligatoire.</td>
             </tr>
             <tr>
               <td><span class="badge badge-warning">P2</span></td>
               <td>LANGUE</td>
-              <td>Contenu dans la langue cible du CV (FR, EN, ES, DE support&eacute;s)</td>
+              <td>Contenu dans la langue cible du CV (FR, EN, ES, DE). Exception : technologies, certifications, noms propres.</td>
             </tr>
             <tr>
               <td><span class="badge badge-primary">P3</span></td>
               <td>ATS</td>
-              <td>Mots-clés exacts de l'offre d'emploi</td>
+              <td>Int&eacute;grer les mots-cl&eacute;s exacts de l'offre d'emploi pour maximiser le score ATS.</td>
             </tr>
             <tr>
               <td><span class="badge badge-success">P4</span></td>
               <td>STYLE</td>
-              <td>Ton professionnel et format adapté</td>
+              <td>Ton professionnel, verbes d'action, format adapt&eacute; au secteur.</td>
             </tr>
           </tbody>
         </table>
 
-        <div class="callout callout-warning">
+        <div class="callout callout-error">
           <div class="callout-title">Anti-Hallucination</div>
-          <p>Règle fondamentale : "Chaque mot doit pointer vers la source". Les modifications sont des reformulations, jamais des inventions. Exemple interdit : "Développeur Python" → "Développeur Python/IA" (IA n'existe pas dans la source).</p>
+          <p>R&egrave;gle fondamentale : <strong>"Chaque mot doit pointer vers la source"</strong>. Les modifications sont des reformulations, jamais des inventions.</p>
+          <table>
+            <thead>
+              <tr><th>Type</th><th>Exemple INTERDIT</th><th>Raison</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Ajout comp&eacute;tence</td><td>"Python" &rarr; "Python/IA"</td><td>IA non mentionn&eacute; dans la source</td></tr>
+              <tr><td>Modification dur&eacute;e</td><td>"2 ans" &rarr; "3 ans"</td><td>Falsification</td></tr>
+              <tr><td>Ajout m&eacute;trique</td><td>"Am&eacute;lioration" &rarr; "Am&eacute;lioration de 30%"</td><td>Chiffre invent&eacute;</td></tr>
+              <tr><td>Invention responsabilit&eacute;</td><td>Ajouter "Management d'&eacute;quipe"</td><td>Non pr&eacute;sent dans la source</td></tr>
+            </tbody>
+          </table>
         </div>
 
-        <h2>Traçabilité et Modifications</h2>
-
-        <p>Chaque batch retourne un tableau <code>modifications</code> documentant chaque changement :</p>
-
-        <pre><code>{
-  "modifications": [
-    {
-      "field": "responsibilities",
-      "action": "modified",
-      "before": "Développer des applications",
-      "after": "Concevoir et développer des APIs REST",
-      "reason": "Alignement avec requirement 'API REST' de l'offre"
-    }
-  ]
-}</code></pre>
-
-        <h2>Modèles de Données</h2>
+        <!-- ==================== MODELES PRISMA ==================== -->
+        <h2>Mod&egrave;les de Donn&eacute;es Prisma</h2>
 
         <table>
           <thead>
             <tr>
               <th>Table</th>
-              <th>Rôle</th>
+              <th>R&ocirc;le</th>
+              <th>Champs cl&eacute;s</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><code>CvGenerationTask</code></td>
-              <td>Tâche master (userId, status, totalOffers, creditsRefunded)</td>
+              <td>T&acirc;che master</td>
+              <td><code>userId, status, totalOffers, creditsRefunded, sourceCvFileId</code></td>
             </tr>
             <tr>
               <td><code>CvGenerationOffer</code></td>
-              <td>Offre à traiter (taskId, jobOfferId, status, classificationResult)</td>
+              <td>Offre &agrave; traiter</td>
+              <td><code>taskId, jobOfferId, status, classificationResult, batchResults, generatedCvFileId</code></td>
             </tr>
             <tr>
               <td><code>CvGenerationSubtask</code></td>
-              <td>Traçabilité IA (type, input, output, tokens, cost)</td>
+              <td>Tra&ccedil;abilit&eacute; IA</td>
+              <td><code>offerId, type, status, input, output, modelUsed, promptTokens, cachedTokens, completionTokens, estimatedCost, durationMs</code></td>
             </tr>
             <tr>
               <td><code>JobOffer</code></td>
-              <td>Cache offre extraite (content JSON)</td>
+              <td>Cache offre extraite</td>
+              <td><code>content (JSON), sourceType, sourceValue, extractedAt</code></td>
             </tr>
             <tr>
               <td><code>CvFile</code></td>
-              <td>CV généré (content JSON, matchScore)</td>
+              <td>CV g&eacute;n&eacute;r&eacute;</td>
+              <td><code>content (JSON), filename, sourceType, jobOfferId, createdBy='generate-cv'</code></td>
             </tr>
             <tr>
               <td><code>CvVersion</code></td>
-              <td>Historique (origin: gpt_cv_generation)</td>
+              <td>Historique</td>
+              <td><code>cvFileId, version (0=source), content, changeType='import'</code></td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Fichiers et Structure</h2>
+        <!-- ==================== FILE STRUCTURE ==================== -->
+        <h2>Structure Compl&egrave;te des Fichiers</h2>
 
-        <pre><code>lib/features/cv-adaptation/
+        <pre><code class="language-bash">lib/features/cv-adaptation/
+├── index.js
 ├── orchestrator/
 │   ├── index.js                 # Exports publics
-│   ├── taskRunner.js            # Lifecycle: start*Generation
-│   ├── offerProcessor.js        # Coordinateur phases
-│   ├── creditManager.js         # Gestion crédits
-│   ├── progressEmitter.js       # SSE events
-│   └── retryHandler.js          # Retry + backoff
+│   ├── taskRunner.js            # startSingleOfferGeneration, startMultiOfferGeneration
+│   ├── offerProcessor.js        # processOffer, runBatchesPhase, runExtractionPhase...
+│   ├── creditManager.js         # refundCreditForOffer
+│   ├── progressEmitter.js       # emitProgress → dbEmitter.emitCvGenerationProgress
+│   └── retryHandler.js          # withRetry, MAX_RETRIES=3, BACKOFF_BASE_MS=1000
 ├── phases/
-│   ├── extract.js               # Phase 0
-│   ├── classify.js              # Phase 0.5
-│   ├── batch-experiences.js     # Phase 1a
-│   ├── batch-projects.js        # Phase 1b
-│   ├── batch-extras.js          # Phase 1c
-│   ├── batch-skills.js          # Phase 1d
-│   ├── batch-summary.js         # Phase 1e
-│   └── recompose.js             # Phase 2
-├── prompts/                     # 21 fichiers .md
-├── schemas/                     # 7 fichiers JSON
+│   ├── extract.js               # Phase 0 : executeExtraction
+│   ├── classify.js              # Phase 0.5 : executeClassification, classifyCore, applyClassification
+│   ├── batch-experiences.js     # Phase 1a : executeBatchExperiences
+│   ├── batch-projects.js        # Phase 1b : executeBatchProjects
+│   ├── batch-extras.js          # Phase 1c : executeBatchExtras
+│   ├── batch-education.js       # Phase 1d : executeBatchEducation
+│   ├── batch-languages.js       # Phase 1e : executeBatchLanguages
+│   ├── batch-skills.js          # Phase 1f : executeBatchSkills
+│   ├── batch-summary.js         # Phase 1g : executeBatchSummary (sequentiel)
+│   ├── parseSkillsResponse.js   # processSkillsResponse (post-traitement)
+│   ├── recompose.js             # Phase 2 : executeRecomposition
+│   └── skills/
+│       ├── prepareSkillItems.js
+│       ├── processCategoryBatch.js
+│       └── buildSkillsResult.js
+├── prompts/                     # 20 fichiers .md (10 phases x 2 system/user)
+│   ├── classify-system.md / classify-user.md
+│   ├── batch-experience-system.md / batch-experience-user.md
+│   ├── batch-project-system.md / batch-project-user.md
+│   ├── batch-extras-system.md / batch-extras-user.md
+│   ├── batch-education-system.md / batch-education-user.md
+│   ├── batch-languages-system.md / batch-languages-user.md
+│   ├── batch-skills-system.md / batch-skills-user.md
+│   ├── batch-summary-system.md / batch-summary-user.md
+│   ├── skills-category-system.md / skills-category-user.md
+│   └── recompose-languages-system.md / recompose-languages-user.md
+├── schemas/                     # 10 fichiers JSON (Structured Outputs)
+│   ├── classificationSchema.json
+│   ├── batchExperienceSchema.json
+│   ├── batchProjectSchema.json
+│   ├── batchExtrasSchema.json
+│   ├── batchEducationSchema.json
+│   ├── batchLanguagesSchema.json
+│   ├── batchSkillsSchema.json
+│   ├── batchSummarySchema.json
+│   ├── skillsMatchSchema.json
+│   └── recomposeLanguagesSchema.json
 └── utils/
-    ├── cacheContext.js          # Cache A/B
-    ├── language.js              # Détection langue
-    └── sanitize.js              # Sanitization</code></pre>
+    ├── cacheContext.js           # generateCacheA, generateCacheB, buildCachedSystemPrompt
+    ├── language.js               # detectJobOfferLanguage, getTargetLanguageName
+    ├── sanitize.js               # sanitizeForPostgres
+    └── debugLog.js               # generateTimestamp</code></pre>
 
-        <h2>Différences avec Pipeline Optimisation</h2>
+        <!-- ==================== COMPARAISON ==================== -->
+        <h2>Diff&eacute;rences avec Pipeline Optimisation</h2>
 
         <table>
           <thead>
             <tr>
               <th>Aspect</th>
-              <th>Pipeline Génération</th>
+              <th>Pipeline G&eacute;n&eacute;ration</th>
               <th>Pipeline Optimisation</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Objectif</strong></td>
-              <td>Transformation complète</td>
-              <td>Amélioration ciblée</td>
+              <td>Transformation compl&egrave;te du CV</td>
+              <td>Am&eacute;lioration cibl&eacute;e (suggestions)</td>
             </tr>
             <tr>
               <td><strong>Offre d'emploi</strong></td>
-              <td>Obligatoire</td>
+              <td>Obligatoire (extraction phase 0)</td>
               <td>Optionnelle</td>
             </tr>
             <tr>
               <td><strong>Classification</strong></td>
-              <td>IA classe automatiquement</td>
-              <td>Utilisateur choisit</td>
+              <td>IA classe automatiquement (KEEP/REMOVE/MOVE)</td>
+              <td>L'utilisateur choisit les sections</td>
             </tr>
             <tr>
-              <td><strong>Review</strong></td>
-              <td>Optionnel (post-génération)</td>
-              <td>Intégré au workflow</td>
-            </tr>
-            <tr>
-              <td><strong>Coût</strong></td>
-              <td>1 crédit (configurable)</td>
-              <td>2 crédits (+ 1 scoring)</td>
+              <td><strong>Parall&eacute;lisation</strong></td>
+              <td>6 batches en Promise.all + 1 s&eacute;quentiel</td>
+              <td>Ex&eacute;cution lin&eacute;aire</td>
             </tr>
             <tr>
               <td><strong>Cache</strong></td>
-              <td>Cache A/B structuré</td>
-              <td>Pas de cache spécifique</td>
+              <td>Cache A/B structur&eacute; + staggered skills</td>
+              <td>Pas de cache sp&eacute;cifique</td>
+            </tr>
+            <tr>
+              <td><strong>Review</strong></td>
+              <td>Post-g&eacute;n&eacute;ration (<code>initializeReviewState</code>)</td>
+              <td>Int&eacute;gr&eacute; au workflow (suggestions)</td>
+            </tr>
+            <tr>
+              <td><strong>Co&ucirc;t</strong></td>
+              <td>Configurable via <code>gpt_cv_generation</code></td>
+              <td>Configurable via <code>gpt_cv_optimization</code></td>
+            </tr>
+            <tr>
+              <td><strong>Sections trait&eacute;es</strong></td>
+              <td>8 sections (experiences, projects, extras, education, languages, skills, summary)</td>
+              <td>Variable selon suggestions</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Prochaines Sections</h2>
+        <!-- ==================== LIENS ==================== -->
+        <h2>Sections D&eacute;taill&eacute;es</h2>
 
         <ul>
-          <li><a href="./orchestrator.html">Orchestrateur</a> - Lifecycle et coordination</li>
-          <li><a href="./phase-classification.html">Phase Classification</a> - Détail avec I/O</li>
-          <li><a href="./phase-batches.html">Phase Batches</a> - Tous les batches détaillés</li>
-          <li><a href="./phase-recompose.html">Phase Recomposition</a> - Assemblage final</li>
-          <li><a href="./prompts.html">Prompts IA</a> - Structure et organisation</li>
-          <li><a href="./schemas-io.html">Schemas I/O</a> - JSON Schemas détaillés</li>
+          <li><a href="./orchestrator.html">Orchestrateur</a> &mdash; Lifecycle, coordination, cr&eacute;dits, retry, SSE</li>
+          <li><a href="./phase-classification.html">Phase Classification</a> &mdash; classifyCore(), applyClassification(), schema</li>
+          <li><a href="./phase-batches.html">Phase Batches</a> &mdash; 7 batches d&eacute;taill&eacute;s avec data-flow</li>
+          <li><a href="./phase-recompose.html">Phase Recomposition</a> &mdash; Assemblage, CvFile, CvVersion, change tracking</li>
+          <li><a href="./prompts.html">Prompts IA</a> &mdash; 20 fichiers prompts, structure, hi&eacute;rarchie</li>
+          <li><a href="./schemas-io.html">Schemas I/O</a> &mdash; 10 JSON Schemas, Structured Outputs, actions</li>
         </ul>
       </div>
     </main>
@@ -650,7 +666,6 @@ flowchart TB
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

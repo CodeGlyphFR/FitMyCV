@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suggestions IA | FitMyCV.io</title>
+  <title>Suggestions - Pipeline Optimisation | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,65 +26,698 @@
           <span>Suggestions</span>
         </div>
 
-
-        <h1>Suggestions IA</h1>
+        <h1>Syst&egrave;me de Suggestions</h1>
         <p class="lead">
-          Système de generation de suggestions d'amelioration pour optimiser le CV en fonction de l'offre d'emploi.
+          Les suggestions d'am&eacute;lioration sont g&eacute;n&eacute;r&eacute;es lors du <strong>scoring</strong> (calcul du match score) et stock&eacute;es dans le <code>CvFile</code>. L'utilisateur s&eacute;lectionne les suggestions qu'il souhaite appliquer, ajoute optionnellement du contexte personnel, et lance le pipeline d'optimisation. Le syst&egrave;me supporte &eacute;galement l'ajout de <strong>comp&eacute;tences manquantes</strong> (<code>missingSkills</code>).
         </p>
 
-        <h2>Types de Suggestions</h2>
+        <!-- ==================== CYCLE DE VIE ==================== -->
+        <h2>Cycle de Vie des Suggestions</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">De la g&eacute;n&eacute;ration &agrave; l'application</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Scoring["SCORING"]
+        Calc["Calculer le score<br/>et les suggestions"]
+        Store["Stockage en base<br/>Suggestions d'amélioration"]
+    end
+
+    subgraph UI["INTERFACE UTILISATEUR"]
+        Display["Affichage des suggestions"]
+        SelectN["Sélection par utilisateur"]
+        Context["Ajout de contexte"]
+        Skills["Sélection des compétences<br/>manquantes"]
+    end
+
+    subgraph API["API OPTIMISATION"]
+        Parse["Lire les suggestions<br/>Format actuel ou ancien"]
+        Improve["Lancer l'optimisation"]
+    end
+
+    subgraph Pipeline["PIPELINE"]
+        Run["Exécuter le pipeline<br/>d'amélioration"]
+    end
+
+    Calc --> Store --> Display
+    Display --> SelectN --> Context --> Improve
+    Display --> Skills --> Improve
+    Improve --> Parse --> Run
+
+    style Calc fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Store fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Display fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SelectN fill:#f59e0b,stroke:#d97706,color:#fff
+    style Context fill:#64748b,stroke:#475569,color:#fff
+    style Skills fill:#f59e0b,stroke:#d97706,color:#fff
+    style Parse fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Improve fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Run fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== GENERATION ==================== -->
+        <h2>G&eacute;n&eacute;ration des Suggestions</h2>
+
+        <p>Les suggestions sont produites par l'appel <code>calculateMatchScoreWithAnalysis()</code> dans <code>lib/scoring/service.js</code>. L'IA retourne en m&ecirc;me temps que le score :</p>
+
+        <ul>
+          <li><strong><code>suggestions</code></strong> &mdash; Tableau de suggestions d'am&eacute;lioration prioris&eacute;es</li>
+          <li><strong><code>missingSkills</code></strong> &mdash; Comp&eacute;tences requises par l'offre absentes du CV</li>
+          <li><strong><code>matchingSkills</code></strong> &mdash; Comp&eacute;tences d&eacute;j&agrave; pr&eacute;sentes et correspondantes</li>
+        </ul>
+
+        <h3>Structure d'une Suggestion</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">Format d'une suggestion (sortie scoring)</div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Exemple JSON</div>
+            <pre><code class="language-json">{
+  "title": "Ajouter experience Kubernetes",
+  "suggestion": "Mentionner votre utilisation de Kubernetes pour l'orchestration des conteneurs dans le projet de migration cloud chez Acme Corp",
+  "priority": "high",
+  "impact": 8
+}</code></pre>
+          </div>
+        </div>
 
         <table>
           <thead>
             <tr>
+              <th>Champ</th>
               <th>Type</th>
               <th>Description</th>
-              <th>Impact</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>add_keyword</code></td>
-              <td>Ajouter un mot-clé manquant</td>
-              <td>+2-5% score</td>
+              <td><code>title</code></td>
+              <td><code>string</code></td>
+              <td>Titre court de la suggestion</td>
             </tr>
             <tr>
-              <td><code>rephrase</code></td>
-              <td>Reformuler pour mieux matcher</td>
-              <td>+1-3% score</td>
+              <td><code>suggestion</code></td>
+              <td><code>string</code></td>
+              <td>Description d&eacute;taill&eacute;e de l'am&eacute;lioration propos&eacute;e</td>
             </tr>
             <tr>
-              <td><code>add_metric</code></td>
-              <td>Ajouter des chiffres/metriques</td>
-              <td>+3-5% score</td>
+              <td><code>priority</code></td>
+              <td><code>string</code></td>
+              <td>Niveau de priorit&eacute; (<code>high</code>, <code>medium</code>, <code>low</code>)</td>
             </tr>
             <tr>
-              <td><code>reorder</code></td>
-              <td>Reorganiser les elements</td>
-              <td>+1-2% score</td>
+              <td><code>impact</code></td>
+              <td><code>number</code></td>
+              <td>Estimation d'impact sur le score (1-10)</td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Implementation</h2>
+        <!-- ==================== MISSING SKILLS ==================== -->
+        <h2>Comp&eacute;tences Manquantes (missingSkills)</h2>
 
-        <pre><code>// lib/cv-optimisation/suggestions.js
-export async function generateSuggestions(cv, jobOffer, currentScore) {
-  const suggestions = await callOpenAI({
-    featureName: 'suggestions',
-    messages: [
-      { role: 'system', content: SUGGESTIONS_PROMPT },
-      { role: 'user', content: JSON.stringify({ cv, jobOffer, currentScore }) }
-    ],
-    responseFormat: { type: 'json_schema', json_schema: suggestionsSchema }
-  });
+        <p>En plus des suggestions textuelles, le scoring identifie les <strong>comp&eacute;tences requises par l'offre mais absentes du CV</strong>. L'utilisateur peut s&eacute;lectionner lesquelles ajouter et indiquer un niveau de ma&icirc;trise.</p>
 
-  return suggestions.map(s => ({
-    ...s,
-    id: generateId(),
-    status: 'pending'
-  }));
+        <div class="data-flow">
+          <div class="data-flow-header">Format des comp&eacute;tences manquantes</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Sortie du scoring (stockage DB)</div>
+            <pre><code class="language-json">{
+  "missingSkills": ["Kubernetes", "CI/CD", "Terraform", "Prometheus"]
 }</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Entr&eacute;e du pipeline (s&eacute;lection utilisateur)</div>
+            <pre><code class="language-json">{
+  "missingSkillsToAdd": [
+    { "skill": "Kubernetes", "level": "intermediate" },
+    { "skill": "CI/CD", "level": "advanced" },
+    { "skill": "Terraform", "level": "beginner" }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Classification des skills ajout&eacute;s</div>
+          <p>Les <code>missingSkillsToAdd</code> sont trait&eacute;s par le <strong>Stage 1</strong> du pipeline : <code>classifySkills()</code> utilise <code>gpt-4o-mini</code> pour classer chaque comp&eacute;tence dans la bonne cat&eacute;gorie (<code>hard_skills</code>, <code>soft_skills</code>, <code>tools</code>, <code>methodologies</code>). Le niveau est normalis&eacute; vers un entier (1-5) via <code>normalizeToNumber()</code>.</p>
+        </div>
+
+        <!-- ==================== FORMATS SELECTION ==================== -->
+        <h2>Formats de S&eacute;lection des Suggestions</h2>
+
+        <p>L'API <code>POST /api/cv/improve</code> accepte <strong>deux formats</strong> pour la s&eacute;lection des suggestions :</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Format Legacy</h4>
+            <p><code>selectedSuggestionIndices</code></p>
+            <p>Tableau simple d'indices (sans contexte utilisateur) :</p>
+            <pre><code class="language-json">{
+  "selectedSuggestionIndices": [0, 2, 5]
+}</code></pre>
+            <p>Les suggestions sont filtr&eacute;es par indice depuis <code>CvFile.improvementSuggestions</code> :</p>
+            <pre><code class="language-javascript">suggestions = selectedSuggestionIndices
+  .filter(i => i >= 0 && i < allSuggestions.length)
+  .map(i => allSuggestions[i]);</code></pre>
+          </div>
+          <div class="card">
+            <h4>Format Nouveau</h4>
+            <p><code>suggestionsWithContext</code></p>
+            <p>Tableau enrichi avec contexte libre par suggestion :</p>
+            <pre><code class="language-json">{
+  "suggestionsWithContext": [
+    { "index": 0, "context": "J'ai 3 ans d'exp en React" },
+    { "index": 2, "context": "" },
+    { "index": 5, "context": "Certifie AWS depuis 2024" }
+  ]
+}</code></pre>
+            <p>Le contexte est inject&eacute; dans la suggestion :</p>
+            <pre><code class="language-javascript">suggestions = suggestionsWithContext
+  .filter(s => s.index >= 0 && s.index < allSuggestions.length)
+  .map(s => ({
+    ...allSuggestions[s.index],
+    userContext: s.context || ''
+  }));</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Priorit&eacute; des formats</div>
+          <p>Si <code>suggestionsWithContext</code> est fourni (non <code>null</code>), il a priorit&eacute; sur <code>selectedSuggestionIndices</code>. Si aucun des deux n'est fourni (<code>null</code>), <strong>toutes</strong> les suggestions sont utilis&eacute;es.</p>
+        </div>
+
+        <!-- ==================== STOCKAGE ==================== -->
+        <h2>Stockage en Base de Donn&eacute;es</h2>
+
+        <p>Les donn&eacute;es du scoring sont stock&eacute;es dans les champs du mod&egrave;le <code>CvFile</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Contenu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>improvementSuggestions</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Tableau de suggestions (title, suggestion, priority, impact)</td>
+            </tr>
+            <tr>
+              <td><code>missingSkills</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Tableau de noms de comp&eacute;tences manquantes</td>
+            </tr>
+            <tr>
+              <td><code>matchingSkills</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Tableau de noms de comp&eacute;tences correspondantes</td>
+            </tr>
+            <tr>
+              <td><code>scoreBreakdown</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>4 sous-scores pond&eacute;r&eacute;s</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Pr&eacute;requis pour l'optimisation</div>
+          <p>Un CV ne peut &ecirc;tre optimis&eacute; que s'il poss&egrave;de &agrave; la fois un <code>scoreBreakdown</code> et des <code>improvementSuggestions</code>. Sans ces donn&eacute;es, l'API retourne une erreur 400 : <em>"Seuls les CV avec un score calcul&eacute; peuvent &ecirc;tre optimis&eacute;s"</em>.</p>
+        </div>
+
+        <!-- ==================== ENRICHISSEMENT PREPROCESSING ==================== -->
+        <h2>Enrichissement par le Pr&eacute;traitement (Stage 2)</h2>
+
+        <p>Apr&egrave;s la s&eacute;lection utilisateur, les suggestions passent par le <strong>Stage 2 : <code>preprocessSuggestions()</code></strong> qui utilise l'IA (Chain-of-Thought) pour les analyser et les router vers les bonnes cibles.</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">PR&Eacute;TRAITEMENT - Enrichissement des suggestions</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;e : suggestion brute</div>
+            <pre><code class="language-json">{
+  "title": "Ajouter experience Kubernetes",
+  "suggestion": "Mentionner Kubernetes dans le projet de migration",
+  "priority": "high",
+  "impact": 8,
+  "userContext": "J'ai utilise K8s chez Acme Corp pour migrer 50 microservices"
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Analyse Chain-of-Thought de l'IA</div>
+            <pre><code class="language-json">{
+  "classifications": [
+    {
+      "suggestionIndex": 0,
+      "analysis": "La suggestion mentionne Kubernetes et le contexte precise une migration de 50 microservices chez Acme Corp. Cible: experience[2] (poste chez Acme Corp).",
+      "actions": [
+        {
+          "targetType": "experience",
+          "targetIndex": 2,
+          "actionDescription": "Ajouter Kubernetes aux skills_used et mentionner la migration de 50 microservices dans les responsibilities",
+          "confidence": 0.95,
+          "extractedInfo": {
+            "numbers": ["50"],
+            "skills": ["Kubernetes"],
+            "context": "migration microservices"
+          }
+        }
+      ]
+    }
+  ]
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie : suggestions enrichies et rout&eacute;es</div>
+            <pre><code class="language-json">{
+  "experienceImprovements": [
+    { "index": 2, "improvements": [{ "...suggestion enrichie..." }] }
+  ],
+  "projectImprovements": [],
+  "newProjects": [],
+  "languageImprovements": [],
+  "extrasImprovements": [],
+  "unmatchedSuggestions": []
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== TYPES DE CIBLES ==================== -->
+        <h2>Types de Cibles</h2>
+
+        <p>Le pr&eacute;traitement route chaque suggestion vers l'une des cibles suivantes :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>targetType</th>
+              <th>Description</th>
+              <th>Traitement Stage 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>experience</code></td>
+              <td>Modifier une exp&eacute;rience existante (par index)</td>
+              <td><code>improveExperience()</code></td>
+            </tr>
+            <tr>
+              <td><code>project</code></td>
+              <td>Modifier un projet existant (par index)</td>
+              <td><code>improveProject()</code></td>
+            </tr>
+            <tr>
+              <td><code>new_project</code></td>
+              <td>Cr&eacute;er un nouveau projet</td>
+              <td><code>improveProject()</code> avec <code>project: null</code></td>
+            </tr>
+            <tr>
+              <td><code>language</code></td>
+              <td>Modifier une langue ou en ajouter une nouvelle</td>
+              <td><code>improveLanguages()</code></td>
+            </tr>
+            <tr>
+              <td><code>extras</code></td>
+              <td>Modifier un extra ou en ajouter un nouveau</td>
+              <td><code>improveExtras()</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Fallback en cas d'erreur IA</div>
+          <p>Si l'appel de pr&eacute;traitement IA &eacute;choue, un <strong>fallback</strong> est appliqu&eacute; : toutes les suggestions sont rout&eacute;es vers la premi&egrave;re exp&eacute;rience (<code>experience[0]</code>). Le champ <code>success</code> dans le r&eacute;sultat est mis &agrave; <code>false</code> pour indiquer l'utilisation du fallback.</p>
+        </div>
+
+        <!-- ==================== PIPELINE 4 STAGES ==================== -->
+        <h2>Pipeline d'Am&eacute;lioration &mdash; 4 Stages</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-improvement/orchestrator.js</code></p>
+
+        <p>Le pipeline d'am&eacute;lioration est orchestr&eacute; par <code>runImprovementPipeline()</code> qui ex&eacute;cute 4 stages avec <strong>parall&eacute;lisation maximale</strong> et rate limiting (<code>pLimit(5)</code> pour max 5 appels OpenAI concurrents au Stage 3).</p>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture du pipeline 4 stages</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Input["ENTREES"]
+        Sug["Suggestions<br/>sélectionnées par utilisateur"]
+        Skills["Compétences manquantes<br/>à ajouter + niveau"]
+        CV["CV de travail<br/>JSON complet"]
+        Job["Offre d'emploi"]
+    end
+
+    subgraph S12["STAGE 1 &amp; 2 - PARALLELE"]
+        S1["Stage 1 : Classifier<br/>les compétences<br/>par catégorie"]
+        S2["Stage 2 : Prétraitement<br/>Analyse raisonnée<br/>Routage par cible"]
+    end
+
+    subgraph S3["STAGE 3 - PARALLELE"]
+        S3E["Améliorer expériences<br/>xN expériences ciblées"]
+        S3P["Améliorer projets<br/>xN projets ciblés"]
+        S3NP["Créer des projets<br/>xN nouveaux projets"]
+        S3L["Améliorer langues<br/>Si langues à modifier"]
+        S3X["Améliorer extras<br/>Si extras à modifier"]
+    end
+
+    subgraph S4["STAGE 4 - SEQUENTIEL"]
+        S4S["Améliorer le résumé<br/>Mise à jour basée<br/>sur modifications Stage 3"]
+    end
+
+    subgraph Output["SORTIE"]
+        Result["CV modifié<br/>+ Liste des modifications<br/>+ Métriques"]
+    end
+
+    Skills --> S1
+    Sug --> S2
+    S1 & S2 --> S3
+    CV & Job --> S3
+    S3E & S3P & S3NP & S3L & S3X --> S4
+    S4 --> Output
+
+    style Sug fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Skills fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Job fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style S1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S2 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3P fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3NP fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3L fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S3X fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S4S fill:#22c55e,stroke:#16a34a,color:#fff
+    style Result fill:#0ea5e9,stroke:#0284c7,color:#fff
+          </div>
+        </div>
+
+        <!-- ==================== STAGE 1 ==================== -->
+        <h3>Stage 1 : Classification des Skills (<code>classifySkills()</code>)</h3>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-improvement/stages/stage1-classify-skills.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">STAGE 1 &mdash; Classification des comp&eacute;tences manquantes</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Entr&eacute;e</div>
+            <pre><code class="language-json">{
+  "skills": [
+    { "skill": "Kubernetes", "level": "intermediate" },
+    { "skill": "Terraform", "level": "beginner" }
+  ]
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Mod&egrave;le &amp; Logique</div>
+            <ul>
+              <li><strong>Mod&egrave;le :</strong> <code>gpt-4o-mini</code> (rapide, &eacute;conomique)</li>
+              <li><strong>Temperature :</strong> 0.1 (d&eacute;terministe)</li>
+              <li><strong>Format :</strong> <code>json_object</code></li>
+              <li><strong>Fallback :</strong> Si erreur de parsing &rarr; tout dans <code>hard_skills</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie</div>
+            <pre><code class="language-json">{
+  "hard_skills": ["Kubernetes"],
+  "soft_skills": [],
+  "tools": ["Terraform"],
+  "methodologies": []
+}</code></pre>
+          </div>
+        </div>
+
+        <p>Apr&egrave;s classification, les skills sont <strong>inject&eacute;s dans le workingCv</strong> avec normalisation du niveau via <code>normalizeToNumber()</code> :</p>
+
+        <pre><code class="language-javascript">// orchestrator.js — Application des skills classifiés
+for (const [category, skillNames] of Object.entries(classification)) {
+  for (const skillName of skillNames) {
+    const rawLevel = levelMap.get(skillName.toLowerCase()) || 'intermediate';
+    const level = normalizeToNumber(rawLevel) ?? 2; // 2 = intermediate par défaut
+
+    if (category === 'hard_skills' || category === 'tools') {
+      workingCv.skills[category].push({ name: skillName, proficiency: level });
+    } else {
+      workingCv.skills[category].push(skillName);
+    }
+  }
+}</code></pre>
+
+        <!-- ==================== STAGE 2 ==================== -->
+        <h3>Stage 2 : Pr&eacute;traitement (<code>preprocessSuggestions()</code>)</h3>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-improvement/stages/stage2-preprocess.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">STAGE 2 &mdash; Routage intelligent des suggestions via IA</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Donn&eacute;es format&eacute;es pour le prompt</div>
+            <p>Le Stage 2 pr&eacute;pare les donn&eacute;es avec des fonctions de formatage :</p>
+            <ul>
+              <li><code>formatExperiences()</code> &mdash; <code>[0] Dev Full Stack @ Acme (2020-01 - present) - 4 bullet points</code></li>
+              <li><code>formatProjects()</code> &mdash; <code>[0] E-commerce Platform - Plateforme de vente...</code></li>
+              <li><code>formatLanguages()</code> &mdash; <code>[0] Anglais - C1</code></li>
+              <li><code>formatExtras()</code> &mdash; <code>[0] Permis - Permis B</code></li>
+              <li><code>formatSuggestions()</code> &mdash; <code>[0] "Mentionner Kubernetes..." + Contexte utilisateur</code></li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Prompts charg&eacute;s</div>
+            <pre><code class="language-javascript">const systemPrompt = await loadPromptWithVars(
+  'lib/features/cv-improvement/prompts/preprocess-system.md', {}
+);
+const userPrompt = await loadPromptWithVars(
+  'lib/features/cv-improvement/prompts/preprocess-user.md', {
+    experienceCount, experiencesList,
+    projectCount, projectsList,
+    languageCount, languagesList,
+    extrasCount, extrasList,
+    suggestionCount, suggestionsList,
+  }
+);</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Sortie : classifications structur&eacute;es</div>
+            <pre><code class="language-json">{
+  "classifications": [
+    {
+      "suggestionIndex": 0,
+      "analysis": "Chain-of-Thought reasoning...",
+      "actions": [
+        {
+          "targetType": "experience",
+          "targetIndex": 2,
+          "actionDescription": "Ajouter K8s aux skills + migration dans responsibilities",
+          "confidence": 0.95,
+          "extractedInfo": {
+            "numbers": ["50"],
+            "skills": ["Kubernetes"],
+            "context": "migration microservices"
+          }
+        }
+      ]
+    }
+  ]
+}</code></pre>
+          </div>
+        </div>
+
+        <p>Le r&eacute;sultat est ensuite group&eacute; par cible via des <code>Map</code> :</p>
+
+        <pre><code class="language-javascript">// stage2-preprocess.js — Groupement par cible
+const expMap = new Map();    // Map&lt;index, enrichedSuggestion[]&gt;
+const projMap = new Map();   // Map&lt;index, enrichedSuggestion[]&gt;
+const langMap = new Map();   // Map&lt;index|'new', enrichedSuggestion[]&gt;
+const extrasMap = new Map(); // Map&lt;index|'new', enrichedSuggestion[]&gt;
+const newProjects = [];      // { suggestion, actionDescription }
+
+// Chaque suggestion est enrichie avec actionDescription + extractedInfo
+const enrichedSuggestion = {
+  ...suggestion,
+  actionDescription,  // Ce que l'IA doit faire concrètement
+  extractedInfo,       // Infos structurées (chiffres, skills, contexte)
+};</code></pre>
+
+        <!-- ==================== STAGE 3 ==================== -->
+        <h3>Stage 3 : Am&eacute;lioration Parall&egrave;le</h3>
+
+        <p><strong>Fichiers :</strong> <code>lib/features/cv-improvement/stages/stage3-improve/</code></p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Parall&eacute;lisation avec rate limiting</div>
+          <p>Toutes les t&acirc;ches du Stage 3 sont lanc&eacute;es en parall&egrave;le via <code>Promise.all()</code> avec un rate limiter <code>pLimit(5)</code> pour &eacute;viter de saturer l'API OpenAI. Chaque t&acirc;che &eacute;met des &eacute;v&eacute;nements SSE de progression (<code>emitCvImprovementProgress</code>).</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonction</th>
+              <th>Fichier</th>
+              <th>Entr&eacute;e</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>improveExperience()</code></td>
+              <td><code>improveExperience.js</code></td>
+              <td>1 exp&eacute;rience + suggestion enrichie</td>
+              <td>Modifier responsibilities, deliverables, skills_used</td>
+            </tr>
+            <tr>
+              <td><code>improveProject()</code></td>
+              <td><code>improveProject.js</code></td>
+              <td>1 projet + suggestion enrichie</td>
+              <td>Modifier summary, tech_stack</td>
+            </tr>
+            <tr>
+              <td><code>improveProject(null)</code></td>
+              <td><code>improveProject.js</code></td>
+              <td>suggestion (pas de projet existant)</td>
+              <td>Cr&eacute;er un nouveau projet</td>
+            </tr>
+            <tr>
+              <td><code>improveLanguages()</code></td>
+              <td><code>improveLanguages.js</code></td>
+              <td>Langues CV + suggestions langues</td>
+              <td>Modifier niveaux, ajouter certifications, r&eacute;ordonner</td>
+            </tr>
+            <tr>
+              <td><code>improveExtras()</code></td>
+              <td><code>improveExtras.js</code></td>
+              <td>Extras CV + suggestion</td>
+              <td>Ajouter ou modifier un extra</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Application des modifications</h4>
+
+        <pre><code class="language-javascript">// orchestrator.js — Application des résultats Stage 3
+for (const result of stage3Results) {
+  if (!result.success) continue;
+
+  if (result.type === 'experience') {
+    workingCv.experience[result.index] = applyExperienceModifications(
+      workingCv.experience[result.index],
+      result.data.modifications
+    );
+  } else if (result.type === 'newProject' &amp;&amp; result.data.isNew) {
+    const newProject = applyProjectModifications(null, result.data.modifications, true);
+    workingCv.projects.push(newProject);
+  } else if (result.type === 'languages') {
+    workingCv.languages = applyLanguageModifications(
+      workingCv.languages, result.data.modifications
+    );
+  } else if (result.type === 'extras') {
+    workingCv.extras = applyExtrasModifications(workingCv.extras, result.data);
+  }
+}</code></pre>
+
+        <!-- ==================== STAGE 4 ==================== -->
+        <h3>Stage 4 : Summary + Finalisation</h3>
+
+        <p><strong>Fichier :</strong> <code>lib/features/cv-improvement/stages/stage4-summary/improveSummary.js</code></p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">STAGE 4 &mdash; Mise &agrave; jour du r&eacute;sum&eacute; professionnel</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Condition d'ex&eacute;cution</div>
+            <p>Le Stage 4 ne s'ex&eacute;cute que si des modifications ont &eacute;t&eacute; apport&eacute;es au Stage 3 (<code>improvedExperiences.length > 0 || improvedProjects.length > 0</code>).</p>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Donn&eacute;es d'entr&eacute;e</div>
+            <ul>
+              <li><code>summary</code> &mdash; R&eacute;sum&eacute; actuel du CV</li>
+              <li><code>improvedExperiences[]</code> &mdash; Exp&eacute;riences modifi&eacute;es (index + modifications + reasoning)</li>
+              <li><code>improvedProjects[]</code> &mdash; Projets modifi&eacute;s ou cr&eacute;&eacute;s</li>
+              <li><code>jobOffer</code> &mdash; Offre d'emploi cible</li>
+              <li><code>cvLanguage</code> &mdash; Langue du CV</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Application</div>
+            <pre><code class="language-javascript">if (summaryResult.modifications) {
+  workingCv.summary = applySummaryDiff(
+    workingCv.summary, summaryResult.modifications
+  );
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Non bloquant</div>
+          <p>Si le Stage 4 &eacute;choue (<code>summaryError</code>), l'erreur est logg&eacute;e mais le pipeline <strong>n'est pas bloqu&eacute;</strong>. Les modifications du Stage 3 sont conserv&eacute;es.</p>
+        </div>
+
+        <!-- ==================== TRACKING ==================== -->
+        <h2>Tracking des Modifications (<code>allChangesMade[]</code>)</h2>
+
+        <p>L'orchestrateur maintient un tableau <code>allChangesMade[]</code> qui trace <strong>chaque modification</strong> effectu&eacute;e par le pipeline. Chaque entr&eacute;e contient :</p>
+
+        <table>
+          <thead>
+            <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>section</code></td><td><code>string</code></td><td><code>skills</code>, <code>experience</code>, <code>projects</code>, <code>languages</code>, <code>extras</code>, <code>summary</code></td></tr>
+            <tr><td><code>field</code></td><td><code>string</code></td><td>Sous-champ modifi&eacute; (<code>hard_skills</code>, <code>responsibilities</code>, <code>level</code>...)</td></tr>
+            <tr><td><code>changeType</code></td><td><code>string</code></td><td><code>added</code>, <code>modified</code>, <code>reordered</code></td></tr>
+            <tr><td><code>itemName</code></td><td><code>string</code></td><td>Nom de l'&eacute;l&eacute;ment modifi&eacute; (skill, langue...)</td></tr>
+            <tr><td><code>beforeValue</code></td><td><code>any</code></td><td>Valeur avant modification (ou <code>null</code>)</td></tr>
+            <tr><td><code>afterValue</code></td><td><code>any</code></td><td>Valeur apr&egrave;s modification</td></tr>
+            <tr><td><code>change</code></td><td><code>string</code></td><td>Description lisible du changement</td></tr>
+            <tr><td><code>reason</code></td><td><code>string</code></td><td>Raison de la modification</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== PROGRESSION SSE ==================== -->
+        <h2>Progression SSE</h2>
+
+        <p>Chaque stage &eacute;met des &eacute;v&eacute;nements SSE via <code>dbEmitter.emitCvImprovementProgress()</code> pour afficher la progression en temps r&eacute;el dans l'UI :</p>
+
+        <table>
+          <thead>
+            <tr><th>Stage</th><th>Step</th><th>Statuts</th><th>D&eacute;tail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>preprocess</code></td><td><code>preprocess</code></td><td>running &rarr; completed</td><td>Stage 2 termin&eacute;</td></tr>
+            <tr><td><code>classify</code></td><td><code>classify_skills</code></td><td>completed</td><td>Stage 1 termin&eacute;</td></tr>
+            <tr><td><code>experiences</code></td><td><code>experiences</code></td><td>running &rarr; completed</td><td>current/total par exp&eacute;rience</td></tr>
+            <tr><td><code>projects</code></td><td><code>projects</code></td><td>running &rarr; completed</td><td>current/total par projet</td></tr>
+            <tr><td><code>summary</code></td><td><code>summary</code></td><td>running &rarr; completed</td><td>Stage 4 termin&eacute;</td></tr>
+            <tr><td><code>finalize</code></td><td><code>finalize</code></td><td>completed</td><td>Pipeline termin&eacute;</td></tr>
+          </tbody>
+        </table>
+
+        <!-- ==================== VOIR AUSSI ==================== -->
+        <h2>Voir aussi</h2>
+
+        <ul>
+          <li><a href="./overview.html">Vue d'ensemble du pipeline d'optimisation</a></li>
+          <li><a href="../05-pipeline-generation/prompts.html">Prompts IA</a> &mdash; Prompts du pipeline de g&eacute;n&eacute;ration</li>
+          <li><a href="../05-pipeline-generation/schemas-io.html">Schemas I/O</a> &mdash; JSON Schemas Structured Outputs</li>
+        </ul>
+
       </div>
     </main>
   </div>
@@ -105,7 +732,6 @@ export async function generateSuggestions(cv, jobOffer, currentScore) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

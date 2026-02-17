@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,72 +26,97 @@
           <span>Publics</span>
         </div>
 
-
         <h1>Endpoints Publics</h1>
         <p class="lead">
-          Endpoints accessibles sans authentification.
+          Endpoints accessibles sans authentification. Inclut l'authentification, la v&eacute;rification d'email, le health check et les webhooks.
         </p>
 
-        <h2>Authentification</h2>
-
+        <h2>Health Check (1 endpoint)</h2>
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/auth/signin</code></td>
-              <td>POST</td>
-              <td>Connexion utilisateur</td>
-            </tr>
-            <tr>
-              <td><code>/api/auth/signup</code></td>
-              <td>POST</td>
-              <td>Inscription</td>
-            </tr>
-            <tr>
-              <td><code>/api/auth/forgot-password</code></td>
-              <td>POST</td>
-              <td>Demande reset password</td>
-            </tr>
-            <tr>
-              <td><code>/api/auth/reset-password</code></td>
-              <td>POST</td>
-              <td>Reset password avec token</td>
-            </tr>
-            <tr>
-              <td><code>/api/auth/verify-email</code></td>
-              <td>GET</td>
-              <td>Verification email</td>
-            </tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/health</code></td><td>V&eacute;rifie que l'application est en ligne</td></tr>
           </tbody>
         </table>
 
-        <h2>Autres</h2>
-
+        <h2>Authentification NextAuth.js</h2>
+        <p>Endpoints g&eacute;r&eacute;s automatiquement par NextAuth.js (<code>app/api/auth/[...nextauth]/route.js</code>) :</p>
         <table>
-          <thead>
-            <tr>
-              <th>Endpoint</th>
-              <th>Méthode</th>
-              <th>Description</th>
-            </tr>
-          </thead>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
           <tbody>
-            <tr>
-              <td><code>/api/health</code></td>
-              <td>GET</td>
-              <td>Health check</td>
-            </tr>
-            <tr>
-              <td><code>/api/plans</code></td>
-              <td>GET</td>
-              <td>Liste des plans publics</td>
-            </tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/session</code></td><td>R&eacute;cup&eacute;rer la session courante</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/signin/credentials</code></td><td>Connexion par email/mot de passe</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/signin/google</code></td><td>Connexion OAuth Google</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/signin/github</code></td><td>Connexion OAuth GitHub</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/signout</code></td><td>D&eacute;connexion</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/csrf</code></td><td>Token CSRF pour les formulaires</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/providers</code></td><td>Liste des providers configur&eacute;s</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Inscription &amp; Mot de Passe (4 endpoints)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/register</code></td><td>Inscription par email/mot de passe</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/request-reset</code></td><td>Demander un lien de r&eacute;initialisation</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/verify-reset-token</code></td><td>V&eacute;rifier la validit&eacute; du token de reset</td></tr>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/reset-password</code></td><td>R&eacute;initialiser le mot de passe avec token</td></tr>
+          </tbody>
+        </table>
+
+        <h2>V&eacute;rification Email (2 endpoints)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/verify-email</code></td><td>V&eacute;rifier l'email via lien (query param <code>token</code>)</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/auth/verify-email-change</code></td><td>V&eacute;rifier un changement d'email (query param <code>token</code>)</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Token Extension (1 endpoint)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/auth/extension-token</code></td><td>G&eacute;n&eacute;rer un JWT pour l'extension navigateur</td></tr>
+          </tbody>
+        </table>
+
+        <h2>ReCAPTCHA (1 endpoint)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/recaptcha/verify</code></td><td>V&eacute;rifier un token reCAPTCHA v3</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Webhooks (1 endpoint)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Source</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/webhooks/stripe</code></td><td>Stripe</td><td>Traite les &eacute;v&eacute;nements Stripe (checkout, subscription, invoice)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">S&eacute;curit&eacute; Webhook</div>
+          <p>Le webhook Stripe v&eacute;rifie la signature via <code>stripe.webhooks.constructEvent()</code> avec le secret <code>STRIPE_WEBHOOK_SECRET</code>. Les requ&ecirc;tes non sign&eacute;es sont rejet&eacute;es avec 400.</p>
+        </div>
+
+        <h2>T&eacute;l&eacute;m&eacute;trie (2 endpoints)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/telemetry/average-task-duration</code></td><td>Dur&eacute;e moyenne des t&acirc;ches par type</td></tr>
+            <tr><td><span class="badge badge-success">GET</span></td><td><code>/api/telemetry/first-import-duration</code></td><td>Dur&eacute;e du premier import PDF</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Cron Jobs (1 endpoint)</h2>
+        <table>
+          <thead><tr><th>M&eacute;thode</th><th>Endpoint</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-warning">POST</span></td><td><code>/api/cron/data-retention</code></td><td>Nettoyage des donn&eacute;es selon politique de r&eacute;tention (appel&eacute; par cron interne)</td></tr>
           </tbody>
         </table>
       </div>
@@ -114,7 +133,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

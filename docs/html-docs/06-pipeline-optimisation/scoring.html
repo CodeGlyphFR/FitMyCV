@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,290 +26,464 @@
           <span>Scoring</span>
         </div>
 
-        <h1>Système de Scoring</h1>
+        <h1>Scoring CV / Offre d'Emploi</h1>
         <p class="lead">
-          Le système de scoring évalue chaque section du CV et génère un score global basé sur des critères pondérés. Utilisé à la fois pour le matching et l'optimisation.
+          Le scoring calcule la correspondance entre un CV et une offre d'emploi via un <strong>unique appel OpenAI</strong> en format <code>json_object</code>. Le score retourn&eacute; est <strong>recalcul&eacute;</strong> &agrave; partir des sous-scores pond&eacute;r&eacute;s, et non le score brut de GPT. Le scoring g&egrave;re automatiquement la <strong>traduction cross-language</strong> lorsque le CV et l'offre sont dans des langues diff&eacute;rentes.
         </p>
 
-        <h2>Critères d'Évaluation</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Critère</th>
-              <th>Poids</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Technical Skills Match</strong></td>
-              <td>30%</td>
-              <td>Correspondance compétences techniques</td>
-            </tr>
-            <tr>
-              <td><strong>Experience Relevance</strong></td>
-              <td>25%</td>
-              <td>Pertinence des expériences</td>
-            </tr>
-            <tr>
-              <td><strong>Keywords Coverage</strong></td>
-              <td>20%</td>
-              <td>Couverture des mots-clés de l'offre</td>
-            </tr>
-            <tr>
-              <td><strong>Soft Skills Alignment</strong></td>
-              <td>10%</td>
-              <td>Alignement soft skills</td>
-            </tr>
-            <tr>
-              <td><strong>Education Fit</strong></td>
-              <td>10%</td>
-              <td>Adéquation formation</td>
-            </tr>
-            <tr>
-              <td><strong>ATS Optimization</strong></td>
-              <td>5%</td>
-              <td>Optimisation pour systèmes ATS</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h2>Calcul du Score</h2>
-
-        <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge ai">IA</span>
-            <span class="data-flow-title">GPT-4o-mini - Scoring</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Formule</h5>
-            <pre><code>Score = Σ (critère_i × poids_i)
-
-Exemple:
-- Technical Skills: 85 × 0.30 = 25.5
-- Experience: 80 × 0.25 = 20.0
-- Keywords: 70 × 0.20 = 14.0
-- Soft Skills: 75 × 0.10 = 7.5
-- Education: 90 × 0.10 = 9.0
-- ATS: 80 × 0.05 = 4.0
-
-Score Total = 80/100</code></pre>
-
-            <h5>Output Structure</h5>
-            <pre><code>{
-  "globalScore": 80,
-  "breakdown": {
-    "technicalSkills": {
-      "score": 85,
-      "matched": ["React", "Node.js", "PostgreSQL"],
-      "missing": ["TypeScript"],
-      "partial": ["Docker"]
-    },
-    "experienceRelevance": {
-      "score": 80,
-      "relevantYears": 5,
-      "requiredYears": 5,
-      "matchedResponsibilities": 8,
-      "totalResponsibilities": 12
-    },
-    "keywordsCoverage": {
-      "score": 70,
-      "found": 14,
-      "total": 20,
-      "missingKeywords": ["CI/CD", "Agile", "TDD"]
-    },
-    "softSkills": {
-      "score": 75,
-      "matched": ["Leadership", "Communication"],
-      "suggested": ["Problem-solving"]
-    },
-    "education": {
-      "score": 90,
-      "meetsRequirements": true
-    },
-    "atsOptimization": {
-      "score": 80,
-      "issues": ["Some bullet points too long"]
-    }
-  },
-  "recommendations": [
-    "Add TypeScript to technical skills",
-    "Mention CI/CD experience from Project X",
-    "Shorten bullet points for ATS compatibility"
-  ]
-}</code></pre>
-          </div>
-        </div>
-
-        <h2>Niveaux de Score</h2>
-
-        <div class="card-grid">
-          <div class="card">
-            <h4 style="color: var(--color-success);">Excellent (85-100)</h4>
-            <p>Très bonne correspondance. Peu d'améliorations nécessaires.</p>
-          </div>
-          <div class="card">
-            <h4 style="color: var(--color-primary);">Bon (70-84)</h4>
-            <p>Bonne base. Quelques optimisations recommandées.</p>
-          </div>
-          <div class="card">
-            <h4 style="color: var(--color-warning);">Moyen (50-69)</h4>
-            <p>Améliorations significatives possibles.</p>
-          </div>
-          <div class="card">
-            <h4 style="color: var(--color-error);">Faible (&lt;50)</h4>
-            <p>Écart important. Révision majeure conseillée.</p>
-          </div>
-        </div>
-
-        <h2>Scoring par Section</h2>
-
-        <h3>Technical Skills Scoring</h3>
-
-        <pre><code>function scoreTechnicalSkills(cvSkills, jobRequirements) {
-  const required = jobRequirements.skills.technical;
-  const niceToHave = jobRequirements.skills.niceToHave || [];
-
-  let matchedRequired = 0;
-  let matchedNice = 0;
-
-  required.forEach(skill => {
-    if (cvSkills.includes(skill) || hasEquivalent(cvSkills, skill)) {
-      matchedRequired++;
-    }
-  });
-
-  niceToHave.forEach(skill => {
-    if (cvSkills.includes(skill)) {
-      matchedNice++;
-    }
-  });
-
-  // Required = 80% du score, Nice-to-have = 20%
-  const requiredScore = (matchedRequired / required.length) * 80;
-  const niceScore = niceToHave.length > 0
-    ? (matchedNice / niceToHave.length) * 20
-    : 20;
-
-  return Math.round(requiredScore + niceScore);
-}</code></pre>
-
-        <h3>Experience Relevance Scoring</h3>
-
-        <pre><code>function scoreExperienceRelevance(experiences, jobOffer) {
-  let totalScore = 0;
-  let maxScore = 0;
-
-  experiences.forEach(exp => {
-    maxScore += 100;
-
-    // Pertinence du titre
-    const titleMatch = compareTitles(exp.title, jobOffer.title);
-    totalScore += titleMatch * 30;
-
-    // Pertinence des responsabilités
-    const respMatch = compareResponsibilities(
-      exp.responsibilities,
-      jobOffer.responsibilities
-    );
-    totalScore += respMatch * 50;
-
-    // Pertinence du secteur
-    const sectorMatch = compareSectors(exp.company, jobOffer.company);
-    totalScore += sectorMatch * 20;
-  });
-
-  return Math.round((totalScore / maxScore) * 100);
-}</code></pre>
-
-        <h2>Intégration Pipeline</h2>
+        <!-- ==================== DIAGRAMME ==================== -->
+        <h2>Flux de Scoring</h2>
 
         <div class="diagram">
-          <div class="diagram-title">Utilisation du scoring dans le pipeline</div>
+          <div class="diagram-title">Processus complet de calcul du score</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Input["ENTRÉE"]
-        CV["CV actuel"]
-        Job["Job Offer"]
+    subgraph Input["ENTREES"]
+        CV["CV JSON<br/>Contenu du CV"]
+        JO["Offre d emploi<br/>Contenu de l offre"]
     end
 
-    subgraph Scoring["SCORING"]
-        Initial["Score initial"]
-        Analysis["Analyse détaillée"]
+    subgraph Prepare["PREPARATION"]
+        Parse["Lire le CV JSON"]
+        Format["Formater l offre<br/>Sections avec emojis"]
+        LangN["Détecter la langue<br/>du CV"]
+        Trans{"Langues<br/>differentes ?"}
+        Instruction["Ajouter instruction<br/>de traduction"]
     end
 
-    subgraph Optimization["OPTIMISATION"]
-        Suggestions["Génération suggestions"]
-        Apply["Application améliorations"]
-        Rescore["Re-scoring"]
+    subgraph Prompts["PROMPTS"]
+        SystemP["Prompt système<br/>+ langue CV + traduction"]
+        UserP["Prompt utilisateur<br/>+ contenu CV + offre"]
+    end
+
+    subgraph OpenAI["APPEL IA"]
+        Call["Appel au modèle IA<br/>Format JSON<br/>Température 0.1"]
+    end
+
+    subgraph Calculate["RECALCUL"]
+        Breakdown["Extraire les sous-scores"]
+        Formula["Appliquer formule<br/>de ponderation"]
+        Clamp["Limiter entre 0 et 100<br/>chaque sous-score"]
     end
 
     subgraph Output["SORTIE"]
-        NewCV["CV optimisé"]
-        Delta["Score delta"]
+        Score["Score recalculé"]
+        SB["Sous-scores"]
+        Sugg["Suggestions"]
+        Missing["Compétences manquantes"]
+        Matching["Compétences correspondantes"]
     end
 
-    CV & Job --> Initial
-    Initial --> Analysis
-    Analysis --> Suggestions
-    Suggestions --> Apply
-    Apply --> Rescore
-    Rescore --> NewCV
-    Initial & Rescore --> Delta
+    CV --> Parse
+    JO --> Format
+    Parse --> LangN
+    Format --> Trans
+    LangN --> Trans
+    Trans -->|"Oui"| Instruction
+    Trans -->|"Non"| Prompts
+    Instruction --> Prompts
+    SystemP --> Call
+    UserP --> Call
+    Call --> Breakdown
+    Breakdown --> Clamp --> Formula
+    Formula --> Score
+    Breakdown --> SB
+    Call --> Sugg
+    Call --> Missing
+    Call --> Matching
+
+    style CV fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style JO fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Parse fill:#64748b,stroke:#475569,color:#fff
+    style Format fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style LangN fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Trans fill:#f59e0b,stroke:#d97706,color:#fff
+    style Instruction fill:#64748b,stroke:#475569,color:#fff
+    style SystemP fill:#14b8a6,stroke:#0d9488,color:#fff
+    style UserP fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Call fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Breakdown fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Formula fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Clamp fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Score fill:#22c55e,stroke:#16a34a,color:#fff
+    style SB fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Sugg fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Missing fill:#ef4444,stroke:#dc2626,color:#fff
+    style Matching fill:#22c55e,stroke:#16a34a,color:#fff
           </div>
         </div>
 
-        <h2>API Endpoint</h2>
+        <!-- ==================== FONCTION PRINCIPALE ==================== -->
+        <h2>Fonction Principale</h2>
+
+        <p><strong>Fichier :</strong> <code>lib/scoring/service.js</code></p>
+        <p><strong>Fonction :</strong> <code>calculateMatchScoreWithAnalysis({ cvContent, jobOfferUrl, cvFile, signal, userId })</code></p>
 
         <div class="data-flow">
-          <div class="data-flow-header">
-            <span class="data-flow-badge input">POST</span>
-            <span class="data-flow-title">/api/cv/match-score</span>
-          </div>
-          <div class="data-flow-content">
-            <h5>Request</h5>
-            <pre><code>{
-  "cvId": 123,
-  "jobOfferId": 456
-  // OU
-  "jobOfferUrl": "https://..."
-}</code></pre>
+          <div class="data-flow-header">SCORING - calculateMatchScoreWithAnalysis()</div>
 
-            <h5>Response</h5>
-            <pre><code>{
-  "score": 80,
-  "breakdown": { ... },
-  "recommendations": [ ... ],
-  "creditsUsed": 1
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Param&egrave;tres d'entr&eacute;e</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Param&egrave;tre</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>cvContent</code></td>
+                  <td><code>string</code></td>
+                  <td>Contenu JSON du CV (d&eacute;crypt&eacute;)</td>
+                </tr>
+                <tr>
+                  <td><code>jobOfferUrl</code></td>
+                  <td><code>string</code></td>
+                  <td>URL ou identifiant de l'offre (m&eacute;tadonn&eacute;es uniquement)</td>
+                </tr>
+                <tr>
+                  <td><code>cvFile</code></td>
+                  <td><code>object</code></td>
+                  <td>Record DB CvFile avec relations <code>jobOffer</code> et <code>jobOfferSnapshot</code></td>
+                </tr>
+                <tr>
+                  <td><code>signal</code></td>
+                  <td><code>AbortSignal</code></td>
+                  <td>Signal d'annulation (optionnel)</td>
+                </tr>
+                <tr>
+                  <td><code>userId</code></td>
+                  <td><code>string</code></td>
+                  <td>ID utilisateur pour le tracking t&eacute;l&eacute;m&eacute;trie OpenAI</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">&Eacute;tapes internes</div>
+            <ol>
+              <li><strong>V&eacute;rification cr&eacute;dits OpenAI</strong> &mdash; <code>checkOpenAICredits()</code> avant tout appel</li>
+              <li><strong>Parser le CV</strong> &mdash; <code>JSON.parse(cvContent)</code></li>
+              <li><strong>R&eacute;cup&eacute;rer l'offre</strong> &mdash; Priorit&eacute; : <code>cvFile.jobOffer.content</code> puis <code>cvFile.jobOfferSnapshot.content</code></li>
+              <li><strong>Formater l'offre</strong> &mdash; <code>formatJobOfferForAnalysis()</code> avec emojis par section</li>
+              <li><strong>D&eacute;tecter la langue</strong> &mdash; <code>cvData.language</code> (stock&eacute;) ou <code>detectCvLanguage()</code> (fallback)</li>
+              <li><strong>Cross-language</strong> &mdash; Si CV et offre dans des langues diff&eacute;rentes, ajouter instruction de traduction</li>
+              <li><strong>Charger les prompts</strong> &mdash; <code>loadPromptWithVars()</code> pour <code>system.md</code> et <code>user.md</code></li>
+              <li><strong>Appel OpenAI</strong> &mdash; <code>response_format: json_object</code>, temp&eacute;rature 0.1</li>
+              <li><strong>Parser &amp; valider</strong> &mdash; Clamp chaque sous-score entre 0 et 100</li>
+              <li><strong>Recalculer le score</strong> &mdash; Formule pond&eacute;r&eacute;e (pas le <code>match_score</code> brut de GPT)</li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">Structure de sortie</div>
+            <pre><code class="language-json">{
+  "matchScore": 75,
+  "scoreBreakdown": {
+    "technical_skills": 80,
+    "experience": 73,
+    "education": 75,
+    "soft_skills_languages": 67
+  },
+  "suggestions": [
+    {
+      "title": "Ajouter experience Kubernetes",
+      "suggestion": "Mentionner votre utilisation de Kubernetes dans le projet X",
+      "priority": "high",
+      "impact": 8
+    }
+  ],
+  "missingSkills": ["Kubernetes", "CI/CD", "Terraform"],
+  "matchingSkills": ["Python", "React", "Docker"]
 }</code></pre>
           </div>
         </div>
 
-        <h2>Fichiers Clés</h2>
+        <!-- ==================== PONDERATION ==================== -->
+        <h2>Formule de Pond&eacute;ration</h2>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Score recalcul&eacute; vs score GPT</div>
+          <p>Le score final (<code>matchScore</code>) est <strong>recalcul&eacute; &agrave; partir du breakdown</strong> et non le <code>match_score</code> brut retourn&eacute; par GPT. Cela garantit la coh&eacute;rence math&eacute;matique entre le score global et les sous-scores affich&eacute;s &agrave; l'utilisateur.</p>
+        </div>
+
+        <pre><code class="language-javascript">// lib/scoring/service.js - ligne 220-225
+const calculatedScore = Math.round(
+  (gptScoreBreakdown.technical_skills * 0.35) +
+  (gptScoreBreakdown.experience * 0.30) +
+  (gptScoreBreakdown.education * 0.20) +
+  (gptScoreBreakdown.soft_skills_languages * 0.15)
+);</code></pre>
 
         <table>
           <thead>
             <tr>
-              <th>Fichier</th>
-              <th>Rôle</th>
+              <th>Dimension</th>
+              <th>Poids</th>
+              <th>Ce que GPT &eacute;value</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><code>lib/features/cv-improvement/scoring.js</code></td>
-              <td>Logique de scoring</td>
+              <td><span class="badge badge-primary">technical_skills</span></td>
+              <td><strong>35%</strong></td>
+              <td>Comp&eacute;tences techniques, langages, frameworks, outils</td>
             </tr>
             <tr>
-              <td><code>lib/features/cv-improvement/prompts/score-cv.md</code></td>
-              <td>Prompt IA scoring</td>
+              <td><span class="badge badge-warning">experience</span></td>
+              <td><strong>30%</strong></td>
+              <td>Pertinence des exp&eacute;riences, dur&eacute;e, responsabilit&eacute;s</td>
             </tr>
             <tr>
-              <td><code>lib/features/job-offers/matchScore.js</code></td>
-              <td>Calcul match score</td>
+              <td><span class="badge badge-success">education</span></td>
+              <td><strong>20%</strong></td>
+              <td>Niveau de formation, domaine d'&eacute;tude, certifications</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-error">soft_skills_languages</span></td>
+              <td><strong>15%</strong></td>
+              <td>Comp&eacute;tences comportementales, langues</td>
             </tr>
           </tbody>
         </table>
+
+        <!-- ==================== FORMATAGE OFFRE ==================== -->
+        <h2>Formatage de l'Offre d'Emploi</h2>
+
+        <p><strong>Fonction :</strong> <code>formatJobOfferForAnalysis(jobOffer)</code></p>
+
+        <p>Formate le contenu JSON structur&eacute; de l'offre en texte lisible avec des emojis pour chaque section :</p>
+
+        <pre><code class="language-javascript">// Sections formatees avec emojis
+sections.push(`📋 TITRE DU POSTE: ${jobOffer.title}`);
+sections.push(`🏢 ENTREPRISE: ${jobOffer.company}`);
+sections.push(`📄 TYPE DE CONTRAT: ${jobOffer.contract}`);
+sections.push(`💼 EXPERIENCE: ${expText}`);
+sections.push(`📍 LOCALISATION: ${locParts.join(', ')}`);
+sections.push(`🎯 COMPETENCES REQUISES:\n${required.map(s => `- ${s}`).join('\n')}`);
+sections.push(`✨ COMPETENCES SOUHAITEES:\n${niceToHave.map(s => `- ${s}`).join('\n')}`);
+sections.push(`📝 RESPONSABILITES:\n${responsibilities.map(r => `- ${r}`).join('\n')}`);
+sections.push(`🎓 FORMATION: ${level} - ${field}`);
+sections.push(`🗣️ LANGUES: ${langList}`);
+sections.push(`🎁 AVANTAGES:\n${benefits.map(b => `- ${b}`).join('\n')}`);</code></pre>
+
+        <!-- ==================== CROSS-LANGUAGE ==================== -->
+        <h2>Gestion Cross-Language</h2>
+
+        <p>Si le CV et l'offre d'emploi sont r&eacute;dig&eacute;s dans des langues diff&eacute;rentes, une instruction de traduction est inject&eacute;e dans le prompt syst&egrave;me :</p>
+
+        <div class="data-flow">
+          <div class="data-flow-header">CROSS-LANGUAGE - D&eacute;tection et instruction de traduction</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">D&eacute;tection des langues</div>
+            <ul>
+              <li><strong>Langue du CV :</strong> <code>cvData.language</code> (stock&eacute;) ou <code>detectCvLanguage(cvData)</code> (mots-cl&eacute;s)</li>
+              <li><strong>Langue de l'offre :</strong> <code>jobOfferData.language</code> (stock&eacute; lors de l'extraction, d&eacute;faut : <code>'fr'</code>)</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Instruction inject&eacute;e si langues diff&eacute;rentes</div>
+            <pre><code class="language-javascript">// Exemple: offre en anglais, CV en francais
+translationInstruction = `**ATTENTION TRADUCTION REQUISE** :
+L'offre d'emploi est en Anglais mais le CV est en Francais.
+Tu DOIS d'abord traduire mentalement l'offre en Francais
+avant de faire l'analyse et le calcul du score.
+Toutes tes suggestions et ton analyse doivent etre en Francais.`;</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== PROMPTS ==================== -->
+        <h2>Prompts de Scoring</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>system.md</h4>
+            <p><code>lib/scoring/prompts/system.md</code></p>
+            <p>Variables inject&eacute;es :</p>
+            <ul>
+              <li><code>{{cvLanguage}}</code> &mdash; Nom de la langue du CV</li>
+              <li><code>{{translationInstruction}}</code> &mdash; Instruction cross-language (vide si m&ecirc;me langue)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>user.md</h4>
+            <p><code>lib/scoring/prompts/user.md</code></p>
+            <p>Variables inject&eacute;es :</p>
+            <ul>
+              <li><code>{{cvContent}}</code> &mdash; CV JSON format&eacute; (stringify indent&eacute;)</li>
+              <li><code>{{jobOfferContent}}</code> &mdash; Offre format&eacute;e avec emojis</li>
+              <li><code>{{cvLanguage}}</code> &mdash; Nom de la langue du CV</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ==================== API ENDPOINTS ==================== -->
+        <h2>Endpoints API</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>M&eacute;thode</th>
+              <th>Route</th>
+              <th>Description</th>
+              <th>Fichier</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">POST</span></td>
+              <td><code>/api/cv/match-score</code></td>
+              <td>Calculer le score (synchrone). Lit le CV, appelle <code>calculateMatchScoreWithAnalysis()</code>, sauvegarde le r&eacute;sultat.</td>
+              <td><code>app/api/cv/match-score/route.js</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">GET</span></td>
+              <td><code>/api/cv/match-score?file=xxx</code></td>
+              <td>R&eacute;cup&eacute;rer le score existant. Supporte <code>&amp;version=N</code> pour l'historique (lecture seule).</td>
+              <td><code>app/api/cv/match-score/route.js</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">POST</span></td>
+              <td><code>/api/background-tasks/calculate-match-score</code></td>
+              <td>Calcul en arri&egrave;re-plan (background task)</td>
+              <td><code>app/api/background-tasks/</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>POST /api/cv/match-score</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">POST - Calcul synchrone du score</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Body</div>
+            <pre><code class="language-json">{
+  "cvFile": "mon-cv.json",
+  "isAutomatic": false
+}</code></pre>
+          </div>
+
+          <div class="data-flow-section data-flow-prompt">
+            <div class="data-flow-label">Traitement</div>
+            <ol>
+              <li>V&eacute;rifier authentification</li>
+              <li>R&eacute;cup&eacute;rer le CvFile avec relations <code>jobOffer</code> et <code>jobOfferSnapshot</code></li>
+              <li>V&eacute;rifier qu'une offre d'emploi est associ&eacute;e</li>
+              <li>Lire et d&eacute;crypter le contenu du CV via <code>readUserCvFile()</code></li>
+              <li>Appeler <code>calculateMatchScoreWithAnalysis()</code></li>
+              <li>Sauvegarder le score et l'analyse dans le <code>CvFile</code></li>
+            </ol>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">R&eacute;ponse</div>
+            <pre><code class="language-json">{
+  "success": true,
+  "score": 75,
+  "scoreBreakdown": {
+    "technical_skills": 80,
+    "experience": 73,
+    "education": 75,
+    "soft_skills_languages": 67
+  },
+  "suggestions": [ ... ],
+  "missingSkills": [ ... ],
+  "matchingSkills": [ ... ]
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>GET /api/cv/match-score</h3>
+
+        <div class="data-flow">
+          <div class="data-flow-header">GET - R&eacute;cup&eacute;ration du score existant</div>
+
+          <div class="data-flow-section data-flow-input">
+            <div class="data-flow-label">Query params</div>
+            <ul>
+              <li><code>file</code> &mdash; Nom du fichier CV (obligatoire)</li>
+              <li><code>version</code> &mdash; Num&eacute;ro de version (optionnel, pour historique)</li>
+            </ul>
+          </div>
+
+          <div class="data-flow-section data-flow-output">
+            <div class="data-flow-label">R&eacute;ponse</div>
+            <pre><code class="language-json">{
+  "score": 75,
+  "scoreBefore": 62,
+  "updatedAt": "2026-02-15T10:30:00.000Z",
+  "status": "idle",
+  "scoreBreakdown": { ... },
+  "improvementSuggestions": [ ... ],
+  "missingSkills": [ ... ],
+  "matchingSkills": [ ... ],
+  "optimiseStatus": "idle",
+  "hasJobOffer": true,
+  "hasScoreBreakdown": true,
+  "sourceValue": "https://example.com/offre",
+  "isHistoricalVersion": false
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- ==================== SAUVEGARDE ==================== -->
+        <h2>Sauvegarde en Base de Donn&eacute;es</h2>
+
+        <p>Apr&egrave;s un calcul r&eacute;ussi, le score et l'analyse sont sauv&eacute;s dans le <code>CvFile</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ CvFile</th>
+              <th>Type</th>
+              <th>Contenu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>matchScore</code></td>
+              <td><code>Int</code></td>
+              <td>Score recalcul&eacute; (0-100)</td>
+            </tr>
+            <tr>
+              <td><code>matchScoreUpdatedAt</code></td>
+              <td><code>DateTime</code></td>
+              <td>Date du dernier calcul</td>
+            </tr>
+            <tr>
+              <td><code>scoreBreakdown</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>4 sous-scores pond&eacute;r&eacute;s</td>
+            </tr>
+            <tr>
+              <td><code>improvementSuggestions</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Tableau de suggestions d'am&eacute;lioration</td>
+            </tr>
+            <tr>
+              <td><code>missingSkills</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Comp&eacute;tences manquantes identifi&eacute;es</td>
+            </tr>
+            <tr>
+              <td><code>matchingSkills</code></td>
+              <td><code>String (JSON)</code></td>
+              <td>Comp&eacute;tences correspondantes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">R&eacute;initialisation apr&egrave;s review</div>
+          <p>Lorsqu'un utilisateur applique une review (<code>POST /api/cv/apply-review</code>), le contenu du CV change. Les champs de score (<code>matchScore</code>, <code>scoreBreakdown</code>, <code>improvementSuggestions</code>, <code>missingSkills</code>, <code>matchingSkills</code>) sont tous <strong>r&eacute;initialis&eacute;s &agrave; <code>null</code></strong> car ils ne sont plus valides pour le nouveau contenu.</p>
+        </div>
+
       </div>
     </main>
   </div>
@@ -330,7 +498,6 @@ flowchart TB
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>

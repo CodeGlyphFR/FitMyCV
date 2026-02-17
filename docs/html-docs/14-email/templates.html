@@ -9,20 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/style.css?v=1.0.4">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: false });</script>
 </head>
 <body>
   <div class="layout">
-    <!-- Sidebar injectée par layout.js -->
     <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <main class="main">
-      <!-- Header injecté par layout.js -->
       <div id="header-container"></div>
-
       <div class="content">
         <div class="breadcrumb">
           <a href="../index.html">Docs</a>
@@ -32,48 +26,284 @@
           <span>Templates</span>
         </div>
 
-
         <h1>Templates Email</h1>
         <p class="lead">
-          Système de templates pour les emails transactionnels.
+          5 triggers d'email organisés en 3 catégories, templates Maily éditables via l'admin, avec fallback automatique vers des templates HTML hardcodés si aucun template n'est configuré en DB.
         </p>
 
-        <h2>Structure d'un Template</h2>
+        <h2>Triggers</h2>
 
-        <pre><code>// emails/welcome.tsx
-import { Html, Head, Body, Container, Text } from '@react-email/components';
+        <p>Le module <code>triggers.js</code> définit les 5 triggers et leurs catégories :</p>
 
-export function WelcomeEmail({ userName }) {
-  return (
-    &lt;Html&gt;
-      &lt;Head /&gt;
-      &lt;Body&gt;
-        &lt;Container&gt;
-          &lt;Text&gt;Bienvenue {userName} !&lt;/Text&gt;
-          &lt;Text&gt;Merci de vous etre inscrit sur FitMyCV.io&lt;/Text&gt;
-        &lt;/Container&gt;
-      &lt;/Body&gt;
-    &lt;/Html&gt;
-  );
+        <table>
+          <thead>
+            <tr>
+              <th>Trigger</th>
+              <th>Catégorie</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>email_verification</code></td>
+              <td>authentication</td>
+              <td>Vérification d'adresse email à l'inscription</td>
+            </tr>
+            <tr>
+              <td><code>password_reset</code></td>
+              <td>authentication</td>
+              <td>Lien de réinitialisation de mot de passe</td>
+            </tr>
+            <tr>
+              <td><code>email_change</code></td>
+              <td>account</td>
+              <td>Confirmation de changement d'adresse email</td>
+            </tr>
+            <tr>
+              <td><code>welcome</code></td>
+              <td>account</td>
+              <td>Email de bienvenue après première inscription</td>
+            </tr>
+            <tr>
+              <td><code>purchase_credits</code></td>
+              <td>payments</td>
+              <td>Confirmation d'achat de crédits supplémentaires</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <pre><code class="language-javascript">// lib/email/triggers.js
+export const EMAIL_TRIGGERS = {
+  EMAIL_VERIFICATION: 'email_verification',
+  PASSWORD_RESET: 'password_reset',
+  EMAIL_CHANGE: 'email_change',
+  WELCOME: 'welcome',
+  PURCHASE_CREDITS: 'purchase_credits',
+};
+
+export const TRIGGER_CATEGORIES = {
+  email_verification: 'authentication',
+  password_reset: 'authentication',
+  email_change: 'account',
+  welcome: 'account',
+  purchase_credits: 'payments',
+};
+
+export const CATEGORY_LABELS = {
+  authentication: 'Authentification',
+  account: 'Compte',
+  payments: 'Paiements',
+};</code></pre>
+
+        <h2>Pipeline de résolution de template</h2>
+
+        <div class="diagram">
+          <div class="diagram-title">Résolution du template email</div>
+          <div class="mermaid">
+graph TD
+    StartSender["Création de l'envoyeur"]
+    LoadDB["Charger le modèle email<br/>par déclencheur"]
+    HasTemplate{"Modèle trouvé<br/>en base ?"}
+    HasDesign{"Design visuel<br/>existe ?"}
+    RenderMaily["Rendre via moteur Maily"]
+    UseHtml["Utiliser le HTML brut"]
+    SubstituteVars["Substituer variables"]
+    UseFallback["Utiliser les modèles<br/>de secours"]
+    SendEmail["Envoyer email"]
+
+    StartSender --> LoadDB --> HasTemplate
+    HasTemplate -->|"Oui"| HasDesign
+    HasTemplate -->|"Non"| UseFallback --> SendEmail
+    HasDesign -->|"Oui"| RenderMaily --> SubstituteVars --> SendEmail
+    HasDesign -->|"Non"| UseHtml --> SubstituteVars
+
+    style StartSender fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style LoadDB fill:#6366f1,stroke:#4f46e5,color:#fff
+    style HasTemplate fill:#f59e0b,stroke:#d97706,color:#fff
+    style HasDesign fill:#f59e0b,stroke:#d97706,color:#fff
+    style RenderMaily fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style UseHtml fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style SubstituteVars fill:#6366f1,stroke:#4f46e5,color:#fff
+    style UseFallback fill:#64748b,stroke:#475569,color:#fff
+    style SendEmail fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Priorité de rendu</h3>
+
+        <ol>
+          <li><strong>Maily designJson</strong> — Si le template en DB contient un <code>designJson</code>, il est rendu par le moteur Maily (éditeur visuel admin)</li>
+          <li><strong>HTML brut</strong> — Si pas de <code>designJson</code> mais un <code>htmlContent</code>, le HTML est utilisé directement</li>
+          <li><strong>Fallback hardcodé</strong> — Si aucun template en DB, les templates de <code>fallbackTemplates.js</code> sont utilisés</li>
+        </ol>
+
+        <h2>Templates de fallback</h2>
+
+        <p>Le fichier <code>fallbackTemplates.js</code> contient 6 templates HTML hardcodés :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Template</th>
+              <th>Usage</th>
+              <th>Variables</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Vérification email</td>
+              <td>Lien de vérification à l'inscription</td>
+              <td><code>{{name}}</code>, <code>{{url}}</code></td>
+            </tr>
+            <tr>
+              <td>Réinitialisation MDP</td>
+              <td>Lien de reset du mot de passe</td>
+              <td><code>{{name}}</code>, <code>{{url}}</code></td>
+            </tr>
+            <tr>
+              <td>Changement email</td>
+              <td>Confirmation du nouvel email</td>
+              <td><code>{{name}}</code>, <code>{{url}}</code>, <code>{{newEmail}}</code></td>
+            </tr>
+            <tr>
+              <td>Bienvenue</td>
+              <td>Accueil après inscription</td>
+              <td><code>{{name}}</code></td>
+            </tr>
+            <tr>
+              <td>Avertissement inactivité</td>
+              <td>Rappel avant suppression RGPD</td>
+              <td><code>{{name}}</code>, <code>{{deletionDate}}</code></td>
+            </tr>
+            <tr>
+              <td>Achat crédits</td>
+              <td>Confirmation de paiement</td>
+              <td><code>{{name}}</code>, <code>{{credits}}</code>, <code>{{amount}}</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Structure des templates de fallback</h3>
+
+        <p>Tous les templates de fallback utilisent un wrapper commun <code>getBaseTemplate(content)</code> :</p>
+
+        <pre><code class="language-javascript">function getBaseTemplate(content) {
+  return `
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+      &lt;style&gt;
+        /* Styles inline pour compatibilité email */
+        body { font-family: Arial, sans-serif; }
+        .header { background: linear-gradient(...); }
+        .content { padding: 32px; }
+        .button { background: #6366f1; color: white; }
+      &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+      &lt;div class="header"&gt;FitMyCV.io&lt;/div&gt;
+      &lt;div class="content"&gt;${content}&lt;/div&gt;
+      &lt;div class="footer"&gt;...&lt;/div&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+  `;
 }</code></pre>
 
-        <h2>Envoi d'Email</h2>
+        <div class="callout callout-info">
+          <strong>Gradient header</strong> — Tous les templates de fallback incluent un header avec un dégradé violet caractéristique de la marque FitMyCV.io.
+        </div>
 
-        <pre><code>// lib/email/send.js
-import { Resend } from 'resend';
+        <h2>Substitution de variables</h2>
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+        <p>Les variables sont substituées par remplacement de chaînes <code>{{variable}}</code> dans le HTML final :</p>
 
-export async function sendEmail(to, subject, template, data) {
-  const html = await renderTemplate(template, data);
-
-  return resend.emails.send({
-    from: 'FitMyCV <noreply@fitmycv.io>',
-    to,
-    subject,
-    html
-  });
+        <pre><code class="language-javascript">// Dans emailSenderFactory.js
+function substituteVariables(html, variables) {
+  let result = html;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replaceAll(`{{${key}}}`, value || '');
+  }
+  return result;
 }</code></pre>
+
+        <h2>Modèle EmailTemplate en DB</h2>
+
+        <p>Les templates éditables sont stockés dans le modèle Prisma <code>EmailTemplate</code> :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Champ</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>trigger</code></td>
+              <td>String (unique)</td>
+              <td>Identifiant du trigger (ex : <code>email_verification</code>)</td>
+            </tr>
+            <tr>
+              <td><code>subject</code></td>
+              <td>String</td>
+              <td>Sujet de l'email</td>
+            </tr>
+            <tr>
+              <td><code>designJson</code></td>
+              <td>JSON (nullable)</td>
+              <td>Design Maily (éditeur visuel) — prioritaire</td>
+            </tr>
+            <tr>
+              <td><code>htmlContent</code></td>
+              <td>Text (nullable)</td>
+              <td>HTML brut — utilisé si pas de designJson</td>
+            </tr>
+            <tr>
+              <td><code>isActive</code></td>
+              <td>Boolean</td>
+              <td>Activer/désactiver le template</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-success">
+          <strong>Éditeur admin</strong> — Les templates peuvent être créés et modifiés via l'interface d'administration avec l'éditeur visuel Maily, qui génère automatiquement le <code>designJson</code>.
+        </div>
+
+        <h2>Fichiers clés</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fichier</th>
+              <th>Rôle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lib/email/triggers.js</code></td>
+              <td>5 triggers, catégories, labels de catégorie</td>
+            </tr>
+            <tr>
+              <td><code>lib/email/emailSenderFactory.js</code></td>
+              <td>Factory pattern — chargement template DB, rendu Maily/HTML, substitution, envoi</td>
+            </tr>
+            <tr>
+              <td><code>lib/email/templates/fallbackTemplates.js</code></td>
+              <td>6 templates HTML hardcodés avec <code>getBaseTemplate()</code></td>
+            </tr>
+            <tr>
+              <td><code>lib/email/emailService.js</code></td>
+              <td>6 fonctions d'envoi créées via la factory</td>
+            </tr>
+            <tr>
+              <td><code>lib/email/transports.js</code></td>
+              <td>Double transport SMTP/Resend</td>
+            </tr>
+          </tbody>
+        </table>
+
       </div>
     </main>
   </div>
@@ -88,7 +318,6 @@ export async function sendEmail(to, subject, template, data) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
-
   <script src="../assets/js/layout.js?v=1.0.4"></script>
   <script src="../assets/js/main.js?v=1.0.4"></script>
 </body>
