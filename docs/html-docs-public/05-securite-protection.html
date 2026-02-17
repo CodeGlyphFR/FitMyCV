@@ -698,20 +698,15 @@ flowchart LR
         <div class="diagram">
           <div class="diagram-title">Timeline de gestion d'un compte inactif</div>
           <div class="mermaid">
-gantt
-    title Cycle de vie d'un compte inactif
-    dateFormat  YYYY-MM-DD
-    axisFormat  %Y
+flowchart LR
+    A(["Dernière connexion<br/>Mois 0"]) -->|"35 mois d'inactivité"| B["Email d'avertissement<br/>Mois 35<br/>(30 jours avant suppression)"]
+    B -->|"30 jours sans<br/>reconnexion"| C(["Suppression complète<br/>du compte — Mois 36"])
+    B -->|"L'utilisateur se reconnecte"| D(["Délai réinitialisé<br/>Compte préservé ✓"])
 
-    section Compte actif
-    Dernière connexion           :milestone, m1, 2023-01-01, 0d
-    Période d'activité normale   :active, a1, 2023-01-01, 730d
-
-    section Avertissement
-    Email d'avertissement (35 mois) :crit, w1, 2025-12-01, 30d
-
-    section Suppression
-    Suppression du compte (36 mois) :milestone, m2, 2026-01-01, 0d
+    style A fill:#2196F3,color:#fff,stroke:#1565C0
+    style B fill:#F57C00,color:#fff,stroke:#E65100
+    style C fill:#C62828,color:#fff,stroke:#B71C1C
+    style D fill:#2E7D32,color:#fff,stroke:#1B5E20
           </div>
         </div>
 
