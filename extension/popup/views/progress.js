@@ -172,12 +172,13 @@ async function renderTasks(container) {
         if (task.cvFile) {
           try {
             const url = new URL(apiBase);
+            // Ne PAS spécifier domain → crée un cookie host-only,
+            // compatible avec document.cookie côté SaaS (sinon double cookie)
             await browser.cookies.set({
               url: apiBase,
               name: 'cvFile',
               value: task.cvFile,
               path: '/',
-              domain: url.hostname,
               expirationDate: Math.floor(Date.now() / 1000) + 31536000,
             });
           } catch {
