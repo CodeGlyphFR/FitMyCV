@@ -61,6 +61,24 @@ export function useTopBarState(language) {
   const titleCacheRef = React.useRef(new Map());
   const lastSelectedRef = React.useRef(null);
   const lastSelectedMetaRef = React.useRef(null);
+
+  // Initialiser lastSelectedRef depuis localStorage/cookie au montage
+  // pour restaurer le CV sélectionné après un refresh de page
+  React.useEffect(() => {
+    if (lastSelectedRef.current) return; // déjà initialisé
+    try {
+      const stored = localStorage.getItem("admin:cv");
+      if (stored) {
+        lastSelectedRef.current = stored;
+        return;
+      }
+    } catch (_e) {}
+    const cookie = document.cookie.split(";").map(c => c.trim()).find(c => c.startsWith("cvFile="));
+    if (cookie) {
+      const value = decodeURIComponent(cookie.split("=")[1] || "");
+      if (value) lastSelectedRef.current = value;
+    }
+  }, []);
   const isScrollingDownRef = React.useRef(false);
 
   // Derived state
