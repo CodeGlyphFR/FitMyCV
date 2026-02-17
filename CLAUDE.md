@@ -68,7 +68,7 @@ module.exports = async (prisma) => {
 
 ## Workflow Git & CI/CD
 
-* **Branches** : `main` (Production) ← `release` (Stable) ← `dev` (Travail).
+* **Branches** : `main` (Production) ← `dev` (Travail).
 * **Pull Request vers `main**` :
 * Déclenche un déploiement Pre-prod sur `dev.fitmycv.io` (Port 3001).
 * Clone automatiquement la DB `fitmycv_prod` vers `fitmycv_release` pour les tests.
@@ -78,7 +78,7 @@ module.exports = async (prisma) => {
 * **Merge sur `main**` :
 * Incrémente la version et la propage dynamiquement dans toute la codebase.
 * Déploie en production sur `app.fitmycv.io` (Port 3000).
-* Synchronise automatiquement `main` vers les branches `release` et `dev`.
+* Synchronise automatiquement `main` vers la branche `dev`.
 
 
 
