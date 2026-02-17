@@ -40,6 +40,7 @@ export function useCvOperations({
   const isReloadingRef = React.useRef(false);
   const pendingReloadRef = React.useRef(null);
   const isDeletingRef = React.useRef(false);
+  const hasEmittedInitialSelectRef = React.useRef(false);
   const lastReloadTimeRef = React.useRef(0);
   const reloadDebounceRef = React.useRef(null);
   const RELOAD_DEBOUNCE_MS = 500; // Debounce de 500ms entre les reloads
@@ -157,9 +158,10 @@ export function useCvOperations({
           lastSelectedMetaRef.current = matched;
         }
 
-        // Ne dispatcher cv:selected que si le CV a réellement changé
-        // (évite les refetch inutiles dans Header qui causent un flash visuel)
-        if (cvChanged && typeof window !== "undefined") {
+        // Dispatcher cv:selected au premier chargement (pour initialiser Header)
+        // et à chaque changement réel de CV
+        if ((cvChanged || !hasEmittedInitialSelectRef.current) && typeof window !== "undefined") {
+          hasEmittedInitialSelectRef.current = true;
           window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: nextCurrent } }));
         }
       }
