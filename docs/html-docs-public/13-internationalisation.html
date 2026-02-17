@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internationalisation - FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb">
+          <a href="./index.html">Accueil</a>
+          <span>&rsaquo;</span>
+          <span>Internationalisation</span>
+        </div>
+
+        <h1>Internationalisation</h1>
+        <p class="lead">
+          FitMyCV.io est disponible en 4 langues — francais, anglais, espagnol et allemand — avec une couverture complete de l'interface, du contenu des CV, des niveaux de competences, des messages d'erreur, des emails transactionnels et de l'extension navigateur.
+        </p>
+
+        <!-- ============================================================ -->
+        <!-- 4 LANGUES SUPPORTEES                                         -->
+        <!-- ============================================================ -->
+
+        <h2>4 langues supportees</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Francais</h4>
+            <p>Langue principale de l'application. L'integralite de l'interface, des CV et des communications est disponible en francais.</p>
+          </div>
+          <div class="card">
+            <h4>Anglais</h4>
+            <p>Support complet pour les utilisateurs anglophones et pour la generation de CV destines au marche international.</p>
+          </div>
+          <div class="card">
+            <h4>Espagnol</h4>
+            <p>Couverture complete pour le marche hispanophone, incluant les niveaux de competences et les titres de sections CV localises.</p>
+          </div>
+          <div class="card">
+            <h4>Allemand</h4>
+            <p>Support integral pour le marche germanophone, avec les equivalences locales des niveaux de competences.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- COUVERTURE                                                    -->
+        <!-- ============================================================ -->
+
+        <h2>Couverture complete</h2>
+
+        <p>
+          Le systeme de traduction couvre l'integralite de l'ecosysteme FitMyCV.io, aussi bien l'application web que l'extension navigateur.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture d'internationalisation</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph SaaS["APPLICATION WEB"]
+        Interface["Interface utilisateur<br/>menus, boutons, formulaires"]
+        CV["Contenu des CV<br/>titres de sections"]
+        Skills["Niveaux de competences<br/>echelle localisee"]
+        Errors["Messages d erreur<br/>et notifications"]
+        Billing["Abonnements<br/>et paiements"]
+        Onboarding["Parcours d accueil<br/>guide etape par etape"]
+    end
+
+    subgraph Ext["EXTENSION NAVIGATEUR"]
+        ExtUI["Interface popup<br/>4 langues"]
+        ExtDetect["Detection automatique<br/>langue du navigateur"]
+    end
+
+    Lang["4 langues<br/>FR - EN - ES - DE"]
+
+    Lang --> SaaS
+    Lang --> Ext
+
+    style Interface fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CV fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Skills fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Errors fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Billing fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Onboarding fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style ExtUI fill:#f59e0b,stroke:#d97706,color:#fff
+    style ExtDetect fill:#f59e0b,stroke:#d97706,color:#fff
+    style Lang fill:#6366f1,stroke:#4f46e5,color:#fff
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Domaine traduit</th>
+              <th>Application web</th>
+              <th>Extension</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Interface utilisateur</strong></td>
+              <td>Menus, boutons, formulaires, modales, etats vides</td>
+              <td>Popup, messages de detection, progression</td>
+            </tr>
+            <tr>
+              <td><strong>Contenu CV</strong></td>
+              <td>Titres de sections, niveaux de competences</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><strong>Erreurs</strong></td>
+              <td>Messages d'erreur API, validations de formulaires</td>
+              <td>Erreurs de connexion et d'extraction</td>
+            </tr>
+            <tr>
+              <td><strong>Abonnements</strong></td>
+              <td>Noms des plans, facturation, credits</td>
+              <td>Affichage du solde de credits</td>
+            </tr>
+            <tr>
+              <td><strong>Parcours d'accueil</strong></td>
+              <td>9 etapes guidees entierement traduites</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><strong>Emails</strong></td>
+              <td>Templates transactionnels localises</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================================================ -->
+        <!-- NIVEAUX DE COMPETENCES                                       -->
+        <!-- ============================================================ -->
+
+        <h2>Niveaux de competences multilingues</h2>
+
+        <p>
+          Le systeme utilise une echelle standardisee a 6 niveaux (0 a 5) comme reference unique. Chaque niveau est traduit dans les 4 langues avec les equivalences locales appropriees, garantissant une lecture naturelle quel que soit le marche cible du CV.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Niveau</th>
+              <th>Francais</th>
+              <th>Anglais</th>
+              <th>Espagnol</th>
+              <th>Allemand</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>0</strong></td>
+              <td>Notions</td>
+              <td>Awareness</td>
+              <td>Conocimiento</td>
+              <td>Grundkenntnisse</td>
+            </tr>
+            <tr>
+              <td><strong>1</strong></td>
+              <td>Debutant</td>
+              <td>Beginner</td>
+              <td>Principiante</td>
+              <td>Anfanger</td>
+            </tr>
+            <tr>
+              <td><strong>2</strong></td>
+              <td>Intermediaire</td>
+              <td>Intermediate</td>
+              <td>Intermedio</td>
+              <td>Mittelstufe</td>
+            </tr>
+            <tr>
+              <td><strong>3</strong></td>
+              <td>Competent</td>
+              <td>Proficient</td>
+              <td>Competente</td>
+              <td>Kompetent</td>
+            </tr>
+            <tr>
+              <td><strong>4</strong></td>
+              <td>Avance</td>
+              <td>Advanced</td>
+              <td>Avanzado</td>
+              <td>Fortgeschritten</td>
+            </tr>
+            <tr>
+              <td><strong>5</strong></td>
+              <td>Expert</td>
+              <td>Expert</td>
+              <td>Experto</td>
+              <td>Experte</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Reconnaissance intelligente des variantes</div>
+          <p>L'intelligence artificielle reconnait automatiquement <strong>plus de 40 variantes textuelles</strong> dans les 4 langues. Par exemple, les termes "maitrise", "senior", "fortgeschritten" ou "avanzado" sont tous normalises vers le niveau numerique correspondant. Cette normalisation garantit une coherence parfaite quelle que soit la facon dont les competences ont ete saisies dans le CV d'origine.</p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SEPARATION LANGUE CV / INTERFACE                             -->
+        <!-- ============================================================ -->
+
+        <h2>Separation langue du CV et langue de l'interface</h2>
+
+        <p>
+          Une fonctionnalite cle du systeme d'internationalisation est la <strong>separation complete entre la langue de navigation et la langue du CV</strong>. Un utilisateur peut naviguer sur le site en francais tout en generant un CV en anglais, ou inversement.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Independance des langues</div>
+          <div class="mermaid">
+flowchart LR
+    User["Utilisateur"] --> SiteLang["Langue du site<br/>Navigation en francais"]
+    User --> CvLang["Langue du CV<br/>CV en anglais"]
+
+    SiteLang --> UI["Interface<br/>menus et boutons<br/>en francais"]
+    CvLang --> Sections["Titres de sections<br/>Experience, Skills...<br/>en anglais"]
+    CvLang --> Levels["Niveaux de competences<br/>Advanced, Expert...<br/>en anglais"]
+
+    style User fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style SiteLang fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CvLang fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style UI fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Sections fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Levels fill:#8b5cf6,stroke:#7c3aed,color:#fff
+          </div>
+        </div>
+
+        <h3>Titres de sections traduits automatiquement</h3>
+
+        <p>
+          Les titres des 7 sections standard d'un CV sont automatiquement traduits dans la langue cible du CV. Le systeme detecte intelligemment si un titre est un titre par defaut (dans n'importe quelle langue) et le retraduit dans la langue cible. Les titres personnalises par l'utilisateur sont preserves tels quels.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Section</th>
+              <th>Francais</th>
+              <th>Anglais</th>
+              <th>Espagnol</th>
+              <th>Allemand</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Resume</strong></td>
+              <td>Resume</td>
+              <td>Summary</td>
+              <td>Resumen</td>
+              <td>Zusammenfassung</td>
+            </tr>
+            <tr>
+              <td><strong>Experience</strong></td>
+              <td>Experience</td>
+              <td>Experience</td>
+              <td>Experiencia</td>
+              <td>Berufserfahrung</td>
+            </tr>
+            <tr>
+              <td><strong>Formation</strong></td>
+              <td>Formation</td>
+              <td>Education</td>
+              <td>Formacion</td>
+              <td>Ausbildung</td>
+            </tr>
+            <tr>
+              <td><strong>Competences</strong></td>
+              <td>Competences</td>
+              <td>Skills</td>
+              <td>Competencias</td>
+              <td>Kompetenzen</td>
+            </tr>
+            <tr>
+              <td><strong>Projets</strong></td>
+              <td>Projets personnels</td>
+              <td>Personal Projects</td>
+              <td>Proyectos personales</td>
+              <td>Personliche Projekte</td>
+            </tr>
+            <tr>
+              <td><strong>Langues</strong></td>
+              <td>Langues</td>
+              <td>Languages</td>
+              <td>Idiomas</td>
+              <td>Sprachen</td>
+            </tr>
+            <tr>
+              <td><strong>Informations</strong></td>
+              <td>Informations complementaires</td>
+              <td>Additional Information</td>
+              <td>Informacion adicional</td>
+              <td>Zusatzliche Informationen</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <div class="callout-title">Retranscription intelligente</div>
+          <p>Si un CV en anglais contient un titre de section en francais (par exemple "Formation" au lieu de "Education"), le systeme detecte automatiquement qu'il s'agit d'un titre par defaut dans une autre langue et le retraduit dans la langue cible du CV. En revanche, un titre personnalise comme "Mon Parcours Professionnel" est conserve tel quel.</p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- EXTENSION NAVIGATEUR                                         -->
+        <!-- ============================================================ -->
+
+        <h2>Extension navigateur multilingue</h2>
+
+        <p>
+          L'extension navigateur dispose de son propre systeme de traduction, leger et autonome, couvrant l'integralite de son interface :
+        </p>
+
+        <ul>
+          <li><strong>Detection automatique</strong> : la langue du navigateur est detectee au premier lancement pour configurer automatiquement l'extension.</li>
+          <li><strong>4 langues disponibles</strong> : francais, anglais, espagnol et allemand, comme l'application principale.</li>
+          <li><strong>Sauvegarde de la preference</strong> : le choix de langue de l'utilisateur est memorise localement dans le navigateur.</li>
+          <li><strong>Changement instantane</strong> : le passage d'une langue a l'autre est immediat, sans rechargement de la page.</li>
+          <li><strong>Langue de secours</strong> : l'anglais est utilise comme langue de repli si la langue du navigateur n'est pas supportee.</li>
+        </ul>
+
+        <!-- ============================================================ -->
+        <!-- POINTS CLES                                                  -->
+        <!-- ============================================================ -->
+
+        <h2>Points cles</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Couverture integrale</h4>
+            <p>Tout est traduit : interface, CV, competences, erreurs, paiements, emails transactionnels et extension navigateur. Aucun element de l'experience utilisateur n'est laisse dans une seule langue.</p>
+          </div>
+          <div class="card">
+            <h4>Intelligence linguistique</h4>
+            <p>Plus de 40 variantes de niveaux de competences sont reconnues dans 4 langues. L'IA comprend et normalise automatiquement les termes utilises dans les CV d'origine.</p>
+          </div>
+          <div class="card">
+            <h4>Flexibilite CV</h4>
+            <p>La langue du CV est totalement independante de celle du site. Un utilisateur francophone peut generer des CV en anglais, espagnol ou allemand sans changer la langue de l'interface.</p>
+          </div>
+          <div class="card">
+            <h4>Coherence ecosysteme</h4>
+            <p>Les memes 4 langues sont supportees dans l'application web et dans l'extension navigateur, garantissant une experience homogene sur tous les points de contact.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">En resume</div>
+          <p>FitMyCV.io offre une internationalisation native en 4 langues couvrant l'integralite de l'ecosysteme. Le systeme va au-dela de la simple traduction d'interface : il comprend les equivalences de niveaux de competences, traduit automatiquement les sections de CV et permet de generer des CV dans n'importe quelle langue supportee, independamment de la langue de navigation.</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="./assets/js/layout.js?v=1.0.4"></script>
+  <script src="./assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exp&eacute;rience Utilisateur | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb"><a href="./index.html">Accueil</a><span>/</span><span>Exp&eacute;rience Utilisateur</span></div>
+
+        <!-- ==================== INTRODUCTION ==================== -->
+        <h1>Exp&eacute;rience Utilisateur</h1>
+        <p class="lead">
+          FitMyCV.io propose une exp&eacute;rience fluide et r&eacute;active &agrave; travers <strong>175 composants d'interface</strong>, un &eacute;diteur de CV intelligent en <strong>4 &eacute;tapes</strong>, un parcours d'accueil interactif en <strong>9 &eacute;tapes</strong>, et une synchronisation <strong>temps r&eacute;el</strong> couvrant 15 types d'&eacute;v&eacute;nements.
+        </p>
+
+        <p>
+          L'architecture de l'interface a &eacute;t&eacute; con&ccedil;ue autour de trois principes fondamentaux : <strong>l'utilisateur garde le contr&ocirc;le</strong> sur chaque suggestion de l'IA, <strong>tout se met &agrave; jour instantan&eacute;ment</strong> sans rechargement de page, et <strong>le guidage est progressif</strong> pour que les nouveaux utilisateurs d&eacute;couvrent naturellement les fonctionnalit&eacute;s.
+        </p>
+
+        <!-- ==================== EDITEUR DE CV ==================== -->
+        <h2>L'&eacute;diteur de CV intelligent</h2>
+
+        <p>
+          Le c&oelig;ur du produit est un &eacute;diteur de CV interactif organis&eacute; en <strong>4 &eacute;tapes</strong> qui combinent &eacute;dition manuelle et assistance IA. La sauvegarde automatique toutes les <strong>2 secondes</strong> garantit qu'aucune modification n'est jamais perdue.
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Workflow de l'&eacute;diteur de CV</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Editer["1 - EDITER"]
+        Sections["8 sections structurees<br/>(resume, experiences,<br/>competences, formation,<br/>langues, projets...)"]
+        Save["Sauvegarde<br/>automatique<br/>toutes les 2s"]
+    end
+
+    subgraph Analyser["2 - ANALYSER"]
+        Score["Score de<br/>correspondance<br/>CV / offre"]
+        Suggestions["Suggestions IA<br/>et competences<br/>manquantes"]
+    end
+
+    subgraph Reviser["3 - REVISER"]
+        Diff["Comparaison visuelle<br/>avant / apres"]
+        Actions["Accepter ou rejeter<br/>chaque modification<br/>individuellement"]
+    end
+
+    subgraph Exporter["4 - EXPORTER"]
+        Formats["PDF ou Word<br/>pret pour la<br/>candidature"]
+    end
+
+    Editer --> Analyser --> Reviser --> Exporter
+
+    style Sections fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Save fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Score fill:#22c55e,stroke:#16a34a,color:#fff
+    style Suggestions fill:#22c55e,stroke:#16a34a,color:#fff
+    style Diff fill:#f59e0b,stroke:#d97706,color:#fff
+    style Actions fill:#f59e0b,stroke:#d97706,color:#fff
+    style Formats fill:#8b5cf6,stroke:#7c3aed,color:#fff
+          </div>
+        </div>
+
+        <h3>&Eacute;tape 1 &mdash; &Eacute;diter</h3>
+        <p>
+          L'&eacute;diteur propose <strong>8 sections structur&eacute;es</strong> couvrant l'int&eacute;gralit&eacute; du CV : en-t&ecirc;te et coordonn&eacute;es, r&eacute;sum&eacute; professionnel, exp&eacute;riences, formation, comp&eacute;tences, langues, projets et informations compl&eacute;mentaires. Chaque section dispose de son propre formulaire d'&eacute;dition, et toutes les modifications sont sauvegard&eacute;es automatiquement.
+        </p>
+
+        <h3>&Eacute;tape 2 &mdash; Analyser</h3>
+        <p>
+          Le <strong>panneau d'am&eacute;lioration IA</strong> compare le CV &agrave; l'offre d'emploi cibl&eacute;e et fournit :
+        </p>
+        <ul>
+          <li>Un <strong>score de correspondance</strong> en pourcentage (match score)</li>
+          <li>Des <strong>suggestions d'am&eacute;lioration</strong> g&eacute;n&eacute;r&eacute;es par l'IA</li>
+          <li>La liste des <strong>comp&eacute;tences manquantes</strong> identifi&eacute;es</li>
+          <li>La liste des <strong>comp&eacute;tences d&eacute;j&agrave; pr&eacute;sentes</strong> et correspondantes</li>
+          <li>Un <strong>s&eacute;lecteur de versions</strong> du CV optimis&eacute;</li>
+        </ul>
+
+        <h3>&Eacute;tape 3 &mdash; R&eacute;viser</h3>
+        <p>
+          Contrairement aux g&eacute;n&eacute;rateurs de CV enti&egrave;rement automatiques, FitMyCV pr&eacute;sente chaque modification IA sous forme de <strong>diff visuel</strong> (avant/apr&egrave;s) que l'utilisateur peut <strong>accepter ou rejeter individuellement</strong>. Cette approche collaborative IA + humain garantit que l'utilisateur reste ma&icirc;tre de son CV &agrave; tout moment.
+        </p>
+
+        <div class="callout callout-success">
+          <strong>Diff&eacute;renciateur cl&eacute;</strong> &mdash; Chaque suggestion de l'intelligence artificielle est pr&eacute;sent&eacute;e dans une comparaison visuelle avant/apr&egrave;s. L'utilisateur d&eacute;cide pr&eacute;cis&eacute;ment quelles modifications int&eacute;grer, section par section, pour conserver un CV qui lui ressemble.
+        </div>
+
+        <h3>&Eacute;tape 4 &mdash; Exporter</h3>
+        <p>
+          Une fois satisfait du r&eacute;sultat, l'utilisateur exporte son CV en <strong>PDF ou Word (DOCX)</strong>, pr&ecirc;t &agrave; accompagner sa candidature.
+        </p>
+
+        <!-- ==================== RICHESSE FONCTIONNELLE ==================== -->
+        <h2>Richesse fonctionnelle</h2>
+
+        <p>
+          L'application comprend <strong>175 composants d'interface</strong> r&eacute;partis dans 19 cat&eacute;gories, couvrant l'int&eacute;gralit&eacute; de l'exp&eacute;rience &mdash; de l'&eacute;diteur de CV &agrave; l'administration en passant par la mon&eacute;tisation et l'accueil des nouveaux utilisateurs. Cette couverture fonctionnelle compl&egrave;te signifie que le produit est <strong>pr&ecirc;t pour le march&eacute;</strong> sans lacunes majeures.
+        </p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Administration</h4>
+            <p><strong>68 composants</strong> &mdash; Tableau de bord complet avec gestion des utilisateurs, revenus, co&ucirc;ts IA, emails et param&eacute;trage dynamique. <a href="./14-administration.html">En savoir plus &rarr;</a></p>
+          </div>
+          <div class="card">
+            <h4>Navigation</h4>
+            <p><strong>34 composants</strong> &mdash; Barre de navigation avec s&eacute;lection de CV, menus contextuels, fen&ecirc;tres modales d'import, export et g&eacute;n&eacute;ration IA.</p>
+          </div>
+          <div class="card">
+            <h4>Parcours d'accueil</h4>
+            <p><strong>20 composants</strong> &mdash; Tutoriel interactif pas-&agrave;-pas avec surbrillance des &eacute;l&eacute;ments de la page, checklist de progression et navigation tactile.</p>
+          </div>
+          <div class="card">
+            <h4>Biblioth&egrave;que d'interface</h4>
+            <p><strong>19 composants</strong> &mdash; Design system r&eacute;utilisable : fen&ecirc;tres modales, menus contextuels, infobulles, barres de progression, s&eacute;lecteurs et indicateurs.</p>
+          </div>
+          <div class="card">
+            <h4>Abonnements &amp; cr&eacute;dits</h4>
+            <p><strong>15 composants</strong> &mdash; Gestion des plans, comparaison des offres, solde de cr&eacute;dits, historique de transactions et factures. <a href="./09-monetisation.html">En savoir plus &rarr;</a></p>
+          </div>
+          <div class="card">
+            <h4>Analyse &amp; optimisation IA</h4>
+            <p><strong>26 composants</strong> &mdash; Panneau d'am&eacute;lioration (score, suggestions, comp&eacute;tences) et syst&egrave;me de revue avec diff visuel. <a href="./03-pipeline-optimisation.html">En savoir plus &rarr;</a></p>
+          </div>
+          <div class="card">
+            <h4>&Eacute;diteur de CV</h4>
+            <p><strong>8 composants</strong> &mdash; Sections structur&eacute;es &eacute;ditables : en-t&ecirc;te, r&eacute;sum&eacute;, exp&eacute;riences, formation, comp&eacute;tences, langues, projets, extras.</p>
+          </div>
+          <div class="card">
+            <h4>Autres</h4>
+            <p><strong>+9 cat&eacute;gories</strong> &mdash; Authentification, gestion du compte, cookies et consentement, notifications, retour utilisateur, &eacute;tats vides et pages publiques.</p>
+          </div>
+        </div>
+
+        <!-- ==================== PARCOURS D'ACCUEIL ==================== -->
+        <h2>Parcours d'accueil interactif</h2>
+
+        <p>
+          Les nouveaux utilisateurs sont guid&eacute;s &agrave; travers <strong>9 &eacute;tapes interactives</strong> couvrant l'ensemble des fonctionnalit&eacute;s : de la premi&egrave;re &eacute;dition de CV jusqu'&agrave; l'export final, en passant par la g&eacute;n&eacute;ration IA, le scoring d'ad&eacute;quation et l'optimisation.
+        </p>
+
+        <p>Le parcours utilise <strong>deux niveaux de guidage</strong> :</p>
+        <ul>
+          <li><span class="badge badge-primary">Fen&ecirc;tres explicatives</span> avec carrousels visuels pour les fonctionnalit&eacute;s cl&eacute;s</li>
+          <li><span class="badge badge-success">Bulles contextuelles</span> pointant directement sur les &eacute;l&eacute;ments de l'interface</li>
+        </ul>
+
+        <div class="diagram">
+          <div class="diagram-title">Parcours d'accueil en 9 &eacute;tapes</div>
+          <div class="mermaid">
+flowchart LR
+    S1["1. Edition<br/>de CV"]
+    S2["2. Generation<br/>IA"]
+    S3["3. Gestionnaire<br/>de taches"]
+    S4["4. Consultation<br/>du CV"]
+    S5["5. Revue<br/>IA"]
+    S6["6. Score<br/>d'adequation"]
+    S7["7. Optimisation<br/>ATS"]
+    S8["8. Historique<br/>des versions"]
+    S9["9. Export<br/>PDF / Word"]
+
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8 --> S9
+
+    style S1 fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style S2 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style S3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S4 fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style S5 fill:#6366f1,stroke:#4f46e5,color:#fff
+    style S6 fill:#22c55e,stroke:#16a34a,color:#fff
+    style S7 fill:#f59e0b,stroke:#d97706,color:#fff
+    style S8 fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style S9 fill:#14b8a6,stroke:#0d9488,color:#fff
+          </div>
+        </div>
+
+        <h3>Les 9 &eacute;tapes</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>&Eacute;tape</th>
+              <th>Interaction</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>&Eacute;dition de CV</td>
+              <td><span class="badge badge-primary">Explication</span> + <span class="badge badge-success">Guidage</span></td>
+              <td>D&eacute;couverte de l'&eacute;diteur interactif et de ses sections</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>G&eacute;n&eacute;ration IA</td>
+              <td><span class="badge badge-primary">Explication</span> + <span class="badge badge-success">Guidage</span></td>
+              <td>Premi&egrave;re cr&eacute;ation automatique d'un CV adapt&eacute; &agrave; une offre</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Gestionnaire de t&acirc;ches</td>
+              <td><span class="badge badge-success">Guidage</span></td>
+              <td>Suivi des traitements en arri&egrave;re-plan</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Consultation du CV</td>
+              <td><span class="badge badge-success">Guidage</span></td>
+              <td>Ouverture et v&eacute;rification du CV g&eacute;n&eacute;r&eacute;</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Revue IA</td>
+              <td><span class="badge badge-primary">Explication</span> + <span class="badge badge-success">Guidage</span></td>
+              <td>Analyse des modifications propos&eacute;es par l'intelligence artificielle</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Score d'ad&eacute;quation</td>
+              <td><span class="badge badge-success">Guidage</span></td>
+              <td>Mesure de la correspondance entre le CV et l'offre</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Optimisation</td>
+              <td><span class="badge badge-primary">Explication</span> + <span class="badge badge-success">Guidage</span></td>
+              <td>Am&eacute;lioration pour les syst&egrave;mes de tri automatique (ATS)</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>Historique</td>
+              <td><span class="badge badge-primary">Explication</span> + <span class="badge badge-success">Guidage</span></td>
+              <td>Navigation entre les versions du CV</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>Export</td>
+              <td><span class="badge badge-primary">Explication</span> + <span class="badge badge-success">Guidage</span></td>
+              <td>T&eacute;l&eacute;chargement en PDF ou Word</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Synchronisation multi-appareils</h4>
+            <p>La progression est synchronis&eacute;e en <strong>temps r&eacute;el</strong> entre tous les appareils et onglets de l'utilisateur. Pas de risque de perdre sa progression en changeant de navigateur.</p>
+          </div>
+          <div class="card">
+            <h4>Protection anti-r&eacute;gression</h4>
+            <p>Un m&eacute;canisme emp&ecirc;che les conflits entre plusieurs sessions simultan&eacute;es (multi-onglets, multi-appareils), garantissant que la <strong>progression ne recule jamais</strong> accidentellement.</p>
+          </div>
+          <div class="card">
+            <h4>Suivi data-driven</h4>
+            <p>Le tableau de bord admin fournit des m&eacute;triques en temps r&eacute;el : <strong>taux de compl&eacute;tion</strong>, taux d'abandon par &eacute;tape (funnel d'engagement), temps moyen de parcours et <strong>score de sant&eacute; global</strong>.</p>
+          </div>
+          <div class="card">
+            <h4>Internationalisation</h4>
+            <p>Le parcours d'accueil est enti&egrave;rement traduit dans les <strong>4 langues</strong> support&eacute;es par la plateforme. <a href="./13-internationalisation.html">En savoir plus &rarr;</a></p>
+          </div>
+        </div>
+
+        <!-- ==================== TEMPS REEL ==================== -->
+        <h2>Synchronisation temps r&eacute;el</h2>
+
+        <p>
+          L'interface de FitMyCV.io se met &agrave; jour <strong>instantan&eacute;ment</strong> lors de chaque op&eacute;ration en arri&egrave;re-plan, sans aucun rechargement de page. La technologie <strong>Server-Sent Events (SSE)</strong> a &eacute;t&eacute; choisie pour sa simplicit&eacute;, sa compatibilit&eacute; native avec HTTP/2 et sa gestion automatique de la reconnexion &mdash; une alternative l&eacute;g&egrave;re et moderne aux WebSockets, parfaitement adapt&eacute;e au besoin de flux unidirectionnel (serveur &rarr; client).
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">Architecture de la synchronisation temps r&eacute;el</div>
+          <div class="mermaid">
+flowchart LR
+    subgraph Donnees["DONNEES"]
+        Modif["Modifications<br/>en base de<br/>donnees"]
+    end
+
+    subgraph Evenements["EVENEMENTS"]
+        Emission["Systeme centralise<br/>d'emission<br/>d'evenements"]
+    end
+
+    subgraph Flux["FLUX TEMPS REEL"]
+        Filtre["Flux filtre<br/>par utilisateur<br/>(isolation des donnees)"]
+    end
+
+    subgraph Interface["INTERFACE"]
+        MAJ["Mise a jour<br/>instantanee<br/>des composants"]
+    end
+
+    Modif -->|"Declenchement<br/>automatique"| Emission
+    Emission -->|"15 types<br/>d'evenements"| Filtre
+    Filtre -->|"SSE"| MAJ
+
+    style Modif fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Emission fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Filtre fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style MAJ fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Couverture fonctionnelle &mdash; 15 types d'&eacute;v&eacute;nements</h3>
+
+        <p>
+          Le syst&egrave;me temps r&eacute;el couvre <strong>8 domaines fonctionnels</strong> avec 15 types d'&eacute;v&eacute;nements distincts, garantissant que toute modification de donn&eacute;es se refl&egrave;te imm&eacute;diatement dans l'interface :
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Domaine</th>
+              <th>&Eacute;v&eacute;nements</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-primary">T&acirc;ches</span></td>
+              <td>Mise &agrave; jour</td>
+              <td>Progression et statut des traitements en arri&egrave;re-plan</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">CVs</span></td>
+              <td>Cr&eacute;ation, modification</td>
+              <td>Nouveau CV disponible ou CV mis &agrave; jour</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">G&eacute;n&eacute;ration CV</span></td>
+              <td>Progression, compl&eacute;tion, &eacute;chec</td>
+              <td>Suivi d&eacute;taill&eacute; par offre et global de la g&eacute;n&eacute;ration IA</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-success">Am&eacute;lioration CV</span></td>
+              <td>Progression, compl&eacute;tion, &eacute;chec</td>
+              <td>Suivi de l'optimisation IA en temps r&eacute;el</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">Cr&eacute;dits</span></td>
+              <td>Mise &agrave; jour du solde</td>
+              <td>Solde actualis&eacute; instantan&eacute;ment apr&egrave;s chaque op&eacute;ration</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-warning">Param&egrave;tres</span></td>
+              <td>Diffusion globale</td>
+              <td>Configuration admin propag&eacute;e &agrave; tous les utilisateurs connect&eacute;s</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">Onboarding</span></td>
+              <td>Mise &agrave; jour, r&eacute;initialisation</td>
+              <td>Progression du parcours d'accueil synchronis&eacute;e</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-primary">Email</span></td>
+              <td>V&eacute;rification</td>
+              <td>Confirmation instantan&eacute;e de validation d'adresse</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <strong>Isolation des donn&eacute;es</strong> &mdash; Chaque utilisateur ne re&ccedil;oit que ses propres &eacute;v&eacute;nements, garantissant la s&eacute;curit&eacute; et la confidentialit&eacute; des donn&eacute;es. Seuls les &eacute;v&eacute;nements de configuration syst&egrave;me (maintenance, param&egrave;tres globaux) sont diffus&eacute;s &agrave; l'ensemble des utilisateurs connect&eacute;s.
+        </div>
+
+        <h3>Exp&eacute;rience concr&egrave;te : suivi en direct</h3>
+
+        <p>
+          Lorsqu'un utilisateur lance la g&eacute;n&eacute;ration d'un CV, il voit en temps r&eacute;el :
+        </p>
+        <ul>
+          <li>La <strong>progression pour chaque offre</strong> trait&eacute;e (ex : &laquo;&nbsp;Analyse en cours &mdash; 30&nbsp;%&nbsp;&raquo;)</li>
+          <li>La <strong>compl&eacute;tion</strong> de chaque offre avec son score d'ad&eacute;quation (ex : &laquo;&nbsp;92/100&nbsp;&raquo;)</li>
+          <li>Le <strong>r&eacute;sum&eacute; final</strong> : nombre de CV g&eacute;n&eacute;r&eacute;s, nombre de succ&egrave;s et d'&eacute;checs</li>
+          <li>Le <strong>solde de cr&eacute;dits</strong> mis &agrave; jour instantan&eacute;ment apr&egrave;s chaque op&eacute;ration</li>
+        </ul>
+
+        <h3>Fiabilit&eacute; de la connexion</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Reconnexion automatique</h4>
+            <p>En cas de perte de connexion r&eacute;seau, le syst&egrave;me r&eacute;tablit automatiquement la communication temps r&eacute;el en <strong>5 secondes</strong>, assurant une exp&eacute;rience sans interruption.</p>
+          </div>
+          <div class="card">
+            <h4>Signal de maintien</h4>
+            <p>Un signal de maintien est envoy&eacute; toutes les <strong>30 secondes</strong> pour garantir la stabilit&eacute; de la connexion, m&ecirc;me derri&egrave;re des proxies ou r&eacute;partiteurs de charge.</p>
+          </div>
+          <div class="card">
+            <h4>Nettoyage automatique</h4>
+            <p>Les ressources sont lib&eacute;r&eacute;es automatiquement lors de la fermeture d'un onglet ou de la navigation vers une autre page.</p>
+          </div>
+          <div class="card">
+            <h4>Indicateur visuel</h4>
+            <p>L'&eacute;tat de la connexion temps r&eacute;el est visible dans l'interface avec une <strong>option de reconnexion manuelle</strong> en cas de probl&egrave;me persistant.</p>
+          </div>
+        </div>
+
+        <!-- ==================== NOTIFICATIONS ==================== -->
+        <h2>Notifications et retour en temps r&eacute;el</h2>
+
+        <p>
+          Toute modification de donn&eacute;es d&eacute;clenche automatiquement une notification temps r&eacute;el vers l'interface du client concern&eacute;. Ce m&eacute;canisme est int&eacute;gr&eacute; au niveau de la <strong>couche d'acc&egrave;s aux donn&eacute;es</strong> : aucune modification ne peut se produire en base sans qu'une notification soit &eacute;mise. Cette approche garantit que le temps r&eacute;el est un <strong>pilier architectural</strong>, pas un ajout superficiel.
+        </p>
+
+        <div class="callout callout-warning">
+          <strong>Choix architectural : SSE vs WebSocket</strong> &mdash; FitMyCV.io utilise les Server-Sent Events plut&ocirc;t que les WebSockets. Ce choix offre la compatibilit&eacute; native avec HTTP/2, une reconnexion automatique int&eacute;gr&eacute;e au navigateur, et une simplicit&eacute; d'int&eacute;gration sup&eacute;rieure &mdash; tout en &eacute;tant parfaitement adapt&eacute; au besoin (notifications serveur &rarr; client). Les actions utilisateur transitent par des API REST classiques.
+        </div>
+
+        <!-- ==================== TABLEAU RECAPITULATIF ==================== -->
+        <h2>R&eacute;capitulatif</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Capacit&eacute;</th>
+              <th>D&eacute;tail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Composants d'interface</strong></td>
+              <td>175 composants r&eacute;partis dans 19 cat&eacute;gories</td>
+            </tr>
+            <tr>
+              <td><strong>Workflow &eacute;diteur</strong></td>
+              <td>4 &eacute;tapes : &Eacute;diter &rarr; Analyser &rarr; R&eacute;viser &rarr; Exporter</td>
+            </tr>
+            <tr>
+              <td><strong>Sauvegarde automatique</strong></td>
+              <td>Toutes les 2 secondes, sans intervention</td>
+            </tr>
+            <tr>
+              <td><strong>Revue IA collaborative</strong></td>
+              <td>Diff visuel avant/apr&egrave;s, accepter/rejeter individuellement</td>
+            </tr>
+            <tr>
+              <td><strong>Parcours d'accueil</strong></td>
+              <td>9 &eacute;tapes interactives avec 2 niveaux de guidage</td>
+            </tr>
+            <tr>
+              <td><strong>Synchronisation temps r&eacute;el</strong></td>
+              <td>15 types d'&eacute;v&eacute;nements couvrant 8 domaines fonctionnels</td>
+            </tr>
+            <tr>
+              <td><strong>Reconnexion automatique</strong></td>
+              <td>5 secondes en cas de perte r&eacute;seau</td>
+            </tr>
+            <tr>
+              <td><strong>Signal de maintien</strong></td>
+              <td>Toutes les 30 secondes pour stabilit&eacute; r&eacute;seau</td>
+            </tr>
+            <tr>
+              <td><strong>Isolation des donn&eacute;es</strong></td>
+              <td>Chaque utilisateur ne re&ccedil;oit que ses propres &eacute;v&eacute;nements</td>
+            </tr>
+            <tr>
+              <td><strong>Protection anti-r&eacute;gression</strong></td>
+              <td>Multi-sessions, multi-onglets, multi-appareils</td>
+            </tr>
+            <tr>
+              <td><strong>Analytics d'onboarding</strong></td>
+              <td>Funnel par &eacute;tape, taux de compl&eacute;tion, score de sant&eacute;</td>
+            </tr>
+            <tr>
+              <td><strong>Internationalisation</strong></td>
+              <td>4 langues support&eacute;es</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="./assets/js/layout.js?v=1.0.4"></script>
+  <script src="./assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

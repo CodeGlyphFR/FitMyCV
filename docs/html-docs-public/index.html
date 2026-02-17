@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation Technique - FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+
+        <h1>Documentation Technique FitMyCV<span class="accent">.io</span></h1>
+        <p class="lead">
+          Guide complet de l'architecture, des fonctionnalites et des pipelines IA de la plateforme SaaS de generation de CV optimises par intelligence artificielle.
+        </p>
+
+        <div class="callout callout-info">
+          <div class="callout-title">Version 1.1.0 — Documentation de reference</div>
+          <p>Cette documentation presente l'architecture technique de FitMyCV.io dans un format accessible. Elle est destinee aux partenaires techniques, recruteurs et investisseurs souhaitant comprendre les choix d'ingenierie et la maturite du projet.</p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VUE D'ENSEMBLE                                               -->
+        <!-- ============================================================ -->
+
+        <h2>Vue d'ensemble</h2>
+
+        <p>
+          <strong>FitMyCV.io</strong> est une application SaaS permettant aux utilisateurs de creer, optimiser et exporter des CV personnalises grace a l'intelligence artificielle. L'application analyse les offres d'emploi et adapte automatiquement les CV pour maximiser les chances de selection. Une extension navigateur Chrome et Firefox complete l'ecosysteme en permettant de capturer les offres directement depuis les sites d'emploi.
+        </p>
+
+        <!-- ============================================================ -->
+        <!-- METRIQUES CLES                                               -->
+        <!-- ============================================================ -->
+
+        <h2>Le projet en chiffres</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>175+ composants</h4>
+            <p>Interface riche et modulaire avec composants reactifs et sauvegarde automatique.</p>
+          </div>
+          <div class="card">
+            <h4>123 routes API</h4>
+            <p>API RESTful complete repartie en 7 domaines fonctionnels.</p>
+          </div>
+          <div class="card">
+            <h4>34 modules metier</h4>
+            <p>Architecture monolithique modulaire avec separation rigoureuse des responsabilites.</p>
+          </div>
+          <div class="card">
+            <h4>5 pipelines IA</h4>
+            <p>Adaptation, optimisation, import PDF, generation depuis offre et depuis titre de poste.</p>
+          </div>
+          <div class="card">
+            <h4>34 entites en 9 domaines</h4>
+            <p>Modele de donnees mature avec modelisation orientee domaine.</p>
+          </div>
+          <div class="card">
+            <h4>4 langues (FR, EN, ES, DE)</h4>
+            <p>Internationalisation native couvrant interface, CV, competences et emails.</p>
+          </div>
+          <div class="card">
+            <h4>14+ sites d'emploi</h4>
+            <p>Extension navigateur Chrome et Firefox avec detection automatique des offres.</p>
+          </div>
+          <div class="card">
+            <h4>10 etapes d'adaptation</h4>
+            <p>Pipeline IA complet avec 6 batches paralleles et cache bicouche.</p>
+          </div>
+          <div class="card">
+            <h4>7 menaces OWASP</h4>
+            <p>Defense en profondeur a 3 niveaux avec conformite RGPD native.</p>
+          </div>
+          <div class="card">
+            <h4>15 types d'evenements</h4>
+            <p>Communication temps reel couvrant 8 domaines fonctionnels.</p>
+          </div>
+          <div class="card">
+            <h4>59 parametres dynamiques</h4>
+            <p>Configuration admin modifiable sans redeploiement de l'application.</p>
+          </div>
+          <div class="card">
+            <h4>CI/CD automatise</h4>
+            <p>Deploiement continu avec pre-production et versioning automatique a 4 niveaux.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- STRUCTURE DE LA DOCUMENTATION                                -->
+        <!-- ============================================================ -->
+
+        <h2>Structure de la documentation</h2>
+
+        <h3>Architecture et Fondations</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><a href="01-vue-ensemble.html">01 — Vue d'ensemble et Architecture</a></h4>
+            <p>Architecture monolithique modulaire, 4 couches techniques, 6 domaines fonctionnels, patterns d'ingenierie standardises et pipeline CI/CD automatise.</p>
+          </div>
+          <div class="card">
+            <h4><a href="11-modele-donnees.html">11 — Modele de Donnees et Architecture Technique</a></h4>
+            <p>Stack technologique, 34 entites en 9 domaines fonctionnels, stockage JSON structure des CV, monitoring IA et optimisations de performance.</p>
+          </div>
+        </div>
+
+        <h3>Intelligence Artificielle</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><a href="02-pipeline-adaptation.html">02 — Pipeline IA : Adaptation de CV</a></h4>
+            <p>Pipeline en 10 etapes avec parallelisation massive de 6 batches, cache bicouche, hierarchie anti-hallucination et revue individuelle des modifications.</p>
+          </div>
+          <div class="card">
+            <h4><a href="03-pipeline-optimisation.html">03 — Pipeline IA : Optimisation et Scoring</a></h4>
+            <p>Score d'adequation en 4 dimensions ponderees, suggestions priorisees par impact, competences manquantes et optimisation contextuelle.</p>
+          </div>
+          <div class="card">
+            <h4><a href="10-generation-zero.html">10 — Generation de CV depuis Zero</a></h4>
+            <p>Creation de CV complets a partir d'un intitule de poste ou d'une offre d'emploi, entierement generes par intelligence artificielle.</p>
+          </div>
+        </div>
+
+        <h3>Fonctionnalites principales</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><a href="04-extension-navigateur.html">04 — Extension Navigateur</a></h4>
+            <p>Extension Chrome et Firefox Manifest V3 pour detecter et extraire les offres sur 14+ sites d'emploi, avec generation de CV en un clic.</p>
+          </div>
+          <div class="card">
+            <h4><a href="07-gestion-cv.html">07 — Gestion des CV</a></h4>
+            <p>Cycle de vie complet : import PDF intelligent, versioning automatique, traduction multilingue en 4 langues et export multi-format (PDF, Word).</p>
+          </div>
+          <div class="card">
+            <h4><a href="08-extraction-offres.html">08 — Extraction d'Offres d'Emploi</a></h4>
+            <p>3 canaux d'entree convergents (URL, PDF, extension), extraction IA de 13 champs structures et deduplication intelligente par empreinte.</p>
+          </div>
+        </div>
+
+        <h3>Securite et Comptes</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><a href="05-securite-protection.html">05 — Securite et Protection des Donnees</a></h4>
+            <p>Defense en profondeur a 3 niveaux, 7 menaces OWASP couvertes, masquage automatique des donnees personnelles et conformite RGPD native.</p>
+          </div>
+          <div class="card">
+            <h4><a href="06-authentification.html">06 — Authentification et Comptes</a></h4>
+            <p>4 methodes de connexion (email, Google, GitHub, Apple), gestion complete du compte, authentification dediee pour l'extension navigateur.</p>
+          </div>
+        </div>
+
+        <h3>Monetisation</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><a href="09-monetisation.html">09 — Monetisation et Abonnements</a></h4>
+            <p>Double modele economique configurable (abonnements + credits ou credits uniquement), 3 plans, tarification degressive et remboursement automatique.</p>
+          </div>
+        </div>
+
+        <h3>Experience Utilisateur et Transversal</h3>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4><a href="12-experience-utilisateur.html">12 — Experience Utilisateur</a></h4>
+            <p>Parcours d'accueil guide en 9 etapes, editeur CV avec sauvegarde automatique, suivi temps reel des operations et 15 types d'evenements.</p>
+          </div>
+          <div class="card">
+            <h4><a href="13-internationalisation.html">13 — Internationalisation</a></h4>
+            <p>4 langues natives, 40+ variantes de competences reconnues, separation langue du CV et langue de l'interface, extension multilingue.</p>
+          </div>
+          <div class="card">
+            <h4><a href="14-administration.html">14 — Administration et Monitoring</a></h4>
+            <p>Dashboard admin complet, KPIs financiers et IA, 59 parametres dynamiques, monitoring des couts avec alertes configurables.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- POINTS FORTS TECHNIQUES                                      -->
+        <!-- ============================================================ -->
+
+        <h2>Points forts techniques</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h4>Pipeline IA de pointe</h4>
+            <p>Un pipeline d'adaptation en 10 etapes avec 6 batches paralleles, cache bicouche des instructions IA, et une hierarchie stricte anti-hallucination (Verite > Langue > ATS > Style). L'utilisateur conserve un controle total en acceptant ou rejetant chaque modification individuellement.</p>
+          </div>
+          <div class="card">
+            <h4>Extension navigateur universelle</h4>
+            <p>Detection intelligente en 2 phases (donnees structurees + scoring heuristique) sur 14+ sites d'emploi. L'extension fonctionne aussi sur les sites inconnus grace a un algorithme de detection universel, et gere les applications web modernes avec reinjection automatique.</p>
+          </div>
+          <div class="card">
+            <h4>Securite et conformite RGPD</h4>
+            <p>Defense en profondeur a 3 niveaux couvrant 7 menaces OWASP. Conformite RGPD native avec consentement opt-in, audit trail complet, masquage automatique de 6 types de donnees personnelles et retention automatisee des donnees.</p>
+          </div>
+          <div class="card">
+            <h4>Monetisation flexible</h4>
+            <p>Double modele economique commutable sans interruption (abonnements + credits ou credits uniquement). 3 plans avec quotas par fonctionnalite, credits non perissables, tarification degressive et remboursement automatique en cas d'echec.</p>
+          </div>
+          <div class="card">
+            <h4>Architecture mature</h4>
+            <p>Monolithe modulaire avec 34 modules independants, 34 entites en 9 domaines, et des patterns standardises (API en 4 phases, erreurs internationalisees, facturation robuste avec rollback). CI/CD automatise avec pre-production et copie de la base de donnees.</p>
+          </div>
+          <div class="card">
+            <h4>Observabilite complete</h4>
+            <p>Monitoring IA integre avec suivi des couts par pipeline, 15 types d'evenements temps reel, telemetrie d'usage, 59 parametres configurables dynamiquement et alertes de depenses automatiques.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <div class="callout-title">Documentation accessible</div>
+          <p>Cette documentation presente les choix d'architecture et les fonctionnalites de FitMyCV.io a un niveau technique senior, sans exposer les details d'implementation internes. Pour des raisons de securite, le code source, les noms de fichiers et les variables de configuration ne sont pas inclus.</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="./assets/js/layout.js?v=1.0.4"></script>
+  <script src="./assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>

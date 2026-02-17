@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monetisation &amp; Abonnements | FitMyCV.io</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css?v=1.0.4">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: false });</script>
+</head>
+<body>
+  <div class="layout">
+    <div id="sidebar-container"></div>
+    <main class="main">
+      <div id="header-container"></div>
+      <div class="content">
+        <div class="breadcrumb"><a href="./index.html">Accueil</a><span>/</span><span>Monetisation &amp; Abonnements</span></div>
+
+        <h1>Monetisation &amp; Abonnements</h1>
+        <p class="lead">
+          FitMyCV.io propose une monetisation flexible construite autour de <strong>deux modeles economiques</strong> interchangeables, de <strong>3 plans d'abonnement</strong> et d'un systeme de <strong>credits non perissables</strong>. La tarification est transparente : chaque fonctionnalite a un cout en credits proportionnel a la puissance IA mobilisee.
+        </p>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- DEUX MODELES ECONOMIQUES -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Deux modeles economiques configurables</h2>
+
+        <p>FitMyCV.io supporte deux modeles economiques distincts, activables <strong>instantanement</strong> depuis l'interface d'administration, sans interruption de service ni redeploiement. Cette flexibilite permet de pivoter la strategie commerciale en fonction du marche.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Modele 1 : Abonnement + Credits</h3>
+            <p><strong>Revenus previsibles</strong></p>
+            <ul>
+              <li>3 plans (Gratuit, Pro, Premium) avec limites mensuelles par fonctionnalite</li>
+              <li>Facturation recurrente (mensuelle ou annuelle)</li>
+              <li>Compteurs d'utilisation reinitialises a chaque periode</li>
+              <li>Les credits servent d'<strong>extension</strong> quand les limites du plan sont atteintes</li>
+              <li>Fonctionnalites exclusives reservees au plan Premium</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Modele 2 : Credits uniquement</h3>
+            <p><strong>Barriere d'entree basse</strong></p>
+            <ul>
+              <li>Pas d'abonnement ni de facturation recurrente</li>
+              <li>Modele <em>pay-as-you-go</em> : l'utilisateur paie uniquement ce qu'il consomme</li>
+              <li>Credits de bienvenue offerts a l'inscription (montant configurable)</li>
+              <li>Achat de packs de credits a la demande</li>
+              <li>Les fonctionnalites a cout zero sont accessibles gratuitement par tous</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Comparaison des deux modeles</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Abonnement + Credits</th>
+              <th>Credits uniquement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Facturation</strong></td>
+              <td>Recurrente (mensuelle ou annuelle)</td>
+              <td>Ponctuelle (a l'achat de packs)</td>
+            </tr>
+            <tr>
+              <td><strong>A l'inscription</strong></td>
+              <td>Plan Gratuit attribue automatiquement</td>
+              <td>Credits de bienvenue offerts</td>
+            </tr>
+            <tr>
+              <td><strong>Verification d'acces</strong></td>
+              <td>Plan, puis limites mensuelles, puis credits en extension</td>
+              <td>Cout de la fonctionnalite, puis solde de credits</td>
+            </tr>
+            <tr>
+              <td><strong>Monetisation</strong></td>
+              <td>Abonnements recurrents + vente de credits complementaires</td>
+              <td>Vente de packs de credits uniquement</td>
+            </tr>
+            <tr>
+              <td><strong>Ideal pour</strong></td>
+              <td>Revenus previsibles, retention long terme</td>
+              <td>Acquisition rapide, conversion progressive</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <strong>Basculement instantane</strong> : Le passage d'un modele a l'autre s'effectue via un seul parametre dans l'interface d'administration. Le changement est immediat pour tous les utilisateurs, sans migration de donnees ni interruption de service.
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- FLUX MODELE ABONNEMENT -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h3>Flux du modele Abonnement</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Verification d'acces en mode Abonnement</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Plans["PLANS"]
+        Free["Gratuit"]
+        Pro["Pro"]
+        Premium["Premium"]
+    end
+
+    subgraph Verif["VERIFICATION"]
+        Limits["Limites mensuelles<br/>du plan"]
+        Check{"Limite<br/>atteinte ?"}
+    end
+
+    subgraph Credits["EXTENSION CREDITS"]
+        Balance["Solde de credits"]
+        CredCheck{"Credits<br/>suffisants ?"}
+    end
+
+    subgraph Result["RESULTAT"]
+        OK["Fonctionnalite<br/>accessible"]
+        Blocked["Proposition d upgrade<br/>ou d achat de credits"]
+    end
+
+    Free & Pro & Premium --> Limits
+    Limits --> Check
+    Check -->|"Non"| OK
+    Check -->|"Oui"| Balance
+    Balance --> CredCheck
+    CredCheck -->|"Oui"| OK
+    CredCheck -->|"Non"| Blocked
+
+    style Free fill:#64748b,stroke:#475569,color:#fff
+    style Pro fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Premium fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Limits fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Check fill:#f59e0b,stroke:#d97706,color:#fff
+    style Balance fill:#14b8a6,stroke:#0d9488,color:#fff
+    style CredCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style OK fill:#22c55e,stroke:#16a34a,color:#fff
+    style Blocked fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- FLUX MODELE CREDITS -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h3>Flux du modele Credits uniquement</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Verification d'acces en mode Credits</div>
+          <div class="mermaid">
+flowchart TB
+    subgraph Inscription["INSCRIPTION"]
+        NewUser["Nouvel utilisateur"]
+        Welcome["Credits de bienvenue<br/>(montant configurable)"]
+    end
+
+    subgraph Verif["VERIFICATION"]
+        Cost{"Fonctionnalite<br/>gratuite ?"}
+        CredCheck{"Credits<br/>suffisants ?"}
+    end
+
+    subgraph Achat["RECHARGE"]
+        Packs["Achat de packs<br/>de credits"]
+    end
+
+    subgraph Result["RESULTAT"]
+        FreeOK["Acces gratuit"]
+        PaidOK["Acces autorise<br/>(credits debites)"]
+        Blocked["Proposition d achat<br/>de credits"]
+    end
+
+    NewUser --> Welcome
+    Welcome --> Cost
+    Cost -->|"Oui"| FreeOK
+    Cost -->|"Non"| CredCheck
+    CredCheck -->|"Oui"| PaidOK
+    CredCheck -->|"Non"| Blocked
+    Blocked --> Packs
+    Packs --> CredCheck
+
+    style NewUser fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Welcome fill:#22c55e,stroke:#16a34a,color:#fff
+    style Cost fill:#f59e0b,stroke:#d97706,color:#fff
+    style CredCheck fill:#f59e0b,stroke:#d97706,color:#fff
+    style Packs fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FreeOK fill:#22c55e,stroke:#16a34a,color:#fff
+    style PaidOK fill:#22c55e,stroke:#16a34a,color:#fff
+    style Blocked fill:#ef4444,stroke:#dc2626,color:#fff
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- 3 PLANS -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Strategie de conversion en 3 plans</h2>
+
+        <p>En mode abonnement, FitMyCV.io propose un entonnoir de conversion en 3 niveaux, concu pour accompagner l'utilisateur de la decouverte gratuite vers un engagement rentable.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th>Objectif</th>
+              <th>Facturation</th>
+              <th>Caracteristiques</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Gratuit</strong></td>
+              <td>Acquisition</td>
+              <td>0 EUR</td>
+              <td>Limites strictes par fonctionnalite, suffisantes pour decouvrir le produit. Aucune carte bancaire requise.</td>
+            </tr>
+            <tr>
+              <td><strong>Pro</strong></td>
+              <td>Conversion</td>
+              <td>Mensuel ou annuel</td>
+              <td>Limites etendues, acces a l'ensemble des fonctionnalites. Facturation recurrente via Stripe.</td>
+            </tr>
+            <tr>
+              <td><strong>Premium</strong></td>
+              <td>Retention</td>
+              <td>Mensuel ou annuel</td>
+              <td>Utilisation illimitee + fonctionnalites exclusives reservees a ce plan. Meilleur rapport qualite-prix.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="diagram">
+          <div class="diagram-title">Entonnoir de conversion</div>
+          <div class="mermaid">
+flowchart LR
+    A["Inscription<br/>gratuite"] --> B["Decouverte<br/>du produit"]
+    B --> C["Limite<br/>atteinte"]
+    C --> D{"Choix<br/>utilisateur"}
+    D -->|"Upgrade"| E["Plan Pro<br/>ou Premium"]
+    D -->|"Credits"| F["Achat de<br/>credits"]
+    E --> G["Retention<br/>long terme"]
+    F --> G
+
+    style A fill:#64748b,stroke:#475569,color:#fff
+    style B fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style C fill:#f59e0b,stroke:#d97706,color:#fff
+    style D fill:#f59e0b,stroke:#d97706,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style F fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style G fill:#22c55e,stroke:#16a34a,color:#fff
+          </div>
+        </div>
+
+        <h3>Configuration dynamique</h3>
+
+        <p>Les prix, limites et caracteristiques de chaque plan sont <strong>configurables en temps reel</strong> via l'interface d'administration, sans redeploiement de l'application. La remise annuelle est calculee automatiquement. Les plans supportent les periodes de facturation <strong>mensuelle et annuelle</strong>.</p>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- GRILLE TARIFAIRE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Grille tarifaire : 9 fonctionnalites</h2>
+
+        <p>Chaque fonctionnalite consomme un nombre defini de credits, proportionnel a la <strong>complexite IA mobilisee</strong>. Les actions simples coutent 1 credit, tandis que les traitements IA intensifs peuvent couter jusqu'a 5 credits. Tous les couts sont configurables dynamiquement sans redemarrage.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Fonctionnalite</th>
+              <th>Cout (credits)</th>
+              <th>IA</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Creation CV manuelle</strong></td>
+              <td>1</td>
+              <td>Non</td>
+              <td>Creer un nouveau CV vide a remplir manuellement</td>
+            </tr>
+            <tr>
+              <td><strong>Edition CV</strong></td>
+              <td>1</td>
+              <td>Non</td>
+              <td>Modifier le contenu d'un CV existant</td>
+            </tr>
+            <tr>
+              <td><strong>Export CV (PDF/DOCX)</strong></td>
+              <td>1</td>
+              <td>Non</td>
+              <td>Telecharger le CV en format PDF ou Word</td>
+            </tr>
+            <tr>
+              <td><strong>Calcul de score d'adequation</strong></td>
+              <td>1</td>
+              <td>Oui</td>
+              <td>Evaluer la correspondance entre un CV et une offre</td>
+            </tr>
+            <tr>
+              <td><strong>Traduction CV</strong></td>
+              <td>1</td>
+              <td>Oui</td>
+              <td>Traduire un CV dans l'une des 4 langues supportees</td>
+            </tr>
+            <tr>
+              <td><strong>Generation CV (depuis offre)</strong></td>
+              <td>2</td>
+              <td>Oui</td>
+              <td>Adapter un CV existant pour une offre d'emploi specifique</td>
+            </tr>
+            <tr>
+              <td><strong>Optimisation CV</strong></td>
+              <td>2</td>
+              <td>Oui</td>
+              <td>Ameliorer un CV avec suggestions IA et scoring</td>
+            </tr>
+            <tr>
+              <td><strong>Generation depuis titre de poste</strong></td>
+              <td>3</td>
+              <td>Oui</td>
+              <td>Generer un CV complet a partir d'un simple intitule de poste</td>
+            </tr>
+            <tr>
+              <td><strong>Import PDF</strong></td>
+              <td>5</td>
+              <td>Oui</td>
+              <td>Extraire et structurer le contenu d'un CV au format PDF via analyse visuelle IA</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-info">
+          <strong>Tarification transparente</strong> : Le cout reflette directement la puissance IA mobilisee. Les actions sans IA coutent 1 credit. L'import PDF, qui necessite une analyse visuelle avancee du document, est la fonctionnalite la plus couteuse a 5 credits.
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- CREDITS -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Systeme de credits</h2>
+
+        <h3>Credits non perissables</h3>
+
+        <p>Les credits achetes <strong>n'expirent jamais</strong>. C'est un argument commercial fort : l'utilisateur n'est soumis a aucune pression temporelle et peut utiliser ses credits a son rythme. Le solde est mis a jour en <strong>temps reel</strong> dans l'interface apres chaque action.</p>
+
+        <h3>Packs de credits avec tarification degressive</h3>
+
+        <p>Les credits sont vendus sous forme de packs a paiement unique. La tarification degressive incite a l'achat en volume : plus le pack est important, plus le prix par credit est avantageux.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Pack</th>
+              <th>Credits</th>
+              <th>Prix unitaire</th>
+              <th>Avantage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Decouverte</strong></td>
+              <td>15 credits</td>
+              <td>Prix de reference</td>
+              <td>Ideal pour tester</td>
+            </tr>
+            <tr>
+              <td><strong>Standard</strong></td>
+              <td>50 credits</td>
+              <td>Remise progressive</td>
+              <td>Usage regulier</td>
+            </tr>
+            <tr>
+              <td><strong>Avance</strong></td>
+              <td>100 credits</td>
+              <td>Remise importante</td>
+              <td>Recherche d'emploi active</td>
+            </tr>
+            <tr>
+              <td><strong>Professionnel</strong></td>
+              <td>150 credits</td>
+              <td>Meilleur prix par credit</td>
+              <td>Usage intensif</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>Le nombre de packs, les volumes et les prix sont <strong>entierement configurables</strong> depuis l'administration, sans redeploiement.</p>
+
+        <h3>Double role des credits selon le modele</h3>
+
+        <ul>
+          <li><strong>En mode abonnement</strong> : les credits servent de <em>filet de securite</em> quand les limites mensuelles du plan sont atteintes. Ils constituent un revenu additionnel et un levier de monetisation complementaire.</li>
+          <li><strong>En mode credits uniquement</strong> : les credits sont la <em>monnaie principale</em>. Toute l'activite est basee sur le solde disponible.</li>
+        </ul>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- PARCOURS UTILISATEUR -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Parcours utilisateur complets</h2>
+
+        <p>Chaque parcours de monetisation est concu pour une experience fluide et transparente, sans mauvaises surprises pour l'utilisateur.</p>
+
+        <h3>Nouvelle souscription</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Parcours de souscription</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant App as FitMyCV
+    participant Pay as Paiement securise
+
+    U->>App: Choisit un plan et une periode
+    App->>Pay: Redirection vers la page de paiement
+    Note over Pay: Acceptation CGV<br/>Codes promo autorises<br/>Adresse facturation
+    U->>Pay: Saisie des informations de paiement
+    Pay-->>App: Confirmation du paiement
+    App->>App: Activation du plan et reinitialisation des compteurs
+    App-->>U: Redirection et acces immediat
+          </div>
+        </div>
+
+        <h3>Upgrade (passage a un plan superieur)</h3>
+
+        <p>L'upgrade est <strong>immediat</strong> : l'utilisateur accede instantanement aux nouvelles limites. Le montant restant de l'ancien plan est automatiquement credite grace a un <strong>calcul de prorata</strong> transparent. Avant de confirmer, l'utilisateur peut visualiser le montant exact a payer.</p>
+
+        <ul>
+          <li>Passage immediat au plan superieur</li>
+          <li>Prorata automatique : pas de double facturation</li>
+          <li>Apercu du montant avant confirmation</li>
+          <li>Compteurs d'utilisation reinitialises</li>
+        </ul>
+
+        <h3>Downgrade (passage a un plan inferieur)</h3>
+
+        <p>Le downgrade est <strong>programme en fin de periode</strong> : l'utilisateur conserve l'acces a son plan actuel jusqu'a la fin de sa periode de facturation. Aucune perte de service avant l'echeance.</p>
+
+        <ul>
+          <li>Le plan actuel reste actif jusqu'a la fin de la periode payee</li>
+          <li>Le nouveau plan prend effet automatiquement a la date d'echeance</li>
+          <li>Le downgrade peut etre annule a tout moment avant sa prise d'effet</li>
+        </ul>
+
+        <h3>Annulation</h3>
+
+        <p>L'annulation supporte deux modes :</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Mode</th>
+              <th>Comportement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Annulation differee</strong></td>
+              <td>L'abonnement reste actif jusqu'a la fin de la periode en cours, puis l'utilisateur est degrade vers le plan Gratuit. <strong>Mode par defaut</strong>, respectueux de la periode payee.</td>
+            </tr>
+            <tr>
+              <td><strong>Annulation immediate</strong></td>
+              <td>Retour immediat au plan Gratuit. L'acces aux fonctionnalites du plan payant est coupe instantanement.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Reactivation</h3>
+
+        <p>Un abonnement annule (en attente de fin de periode) peut etre <strong>reactive a tout moment</strong> avant l'echeance. L'utilisateur retrouve son plan sans interruption et sans nouvelle facturation.</p>
+
+        <h3>Achat de credits</h3>
+
+        <div class="diagram">
+          <div class="diagram-title">Parcours d'achat de credits</div>
+          <div class="mermaid">
+sequenceDiagram
+    participant U as Utilisateur
+    participant App as FitMyCV
+    participant Pay as Paiement securise
+
+    U->>App: Choisit un pack de credits
+    App->>Pay: Redirection vers la page de paiement
+    U->>Pay: Paiement unique
+    Pay-->>App: Confirmation du paiement
+    App->>App: Credits credites instantanement
+    App-->>U: Solde mis a jour en temps reel
+    App->>U: Email de confirmation + facture
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- REMBOURSEMENT -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Remboursement automatique en cas d'echec</h2>
+
+        <p>Si une tache IA echoue (timeout, erreur du modele, resultat invalide), les credits consommes sont <strong>automatiquement restitues</strong> au solde de l'utilisateur. Ce mecanisme fonctionne aussi bien pour les debits de credits que pour les compteurs d'utilisation mensuels.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Zero risque pour l'utilisateur</h3>
+            <p>Aucune intervention manuelle requise. Le remboursement est instantane et visible en temps reel dans l'interface. L'utilisateur ne perd <strong>jamais</strong> de credit pour une operation echouee.</p>
+          </div>
+          <div class="card">
+            <h3>Idempotence garantie</h3>
+            <p>Le systeme empeche tout double remboursement. Chaque transaction de remboursement est liee a la transaction d'origine, garantissant l'integrite du solde.</p>
+          </div>
+          <div class="card">
+            <h3>Tracabilite complete</h3>
+            <p>L'historique complet des transactions est accessible a l'utilisateur : debits, achats, credits offerts, remboursements. Chaque mouvement est enregistre avec sa raison et sa date.</p>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- INTEGRATION STRIPE -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Integration Stripe</h2>
+
+        <p>L'ensemble de la facturation et des paiements est gere par <strong>Stripe</strong>, leader mondial du paiement en ligne, conforme au standard <strong>PCI DSS</strong>. Aucune donnee de carte bancaire ne transite par les serveurs de FitMyCV.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Securite</strong></td>
+              <td>Paiement gere integralement par Stripe (conforme PCI DSS). Aucune donnee bancaire stockee cote FitMyCV.</td>
+            </tr>
+            <tr>
+              <td><strong>Localisation</strong></td>
+              <td>Page de paiement disponible en 4 langues (francais, anglais, espagnol, allemand). CGV localisees dans chaque langue.</td>
+            </tr>
+            <tr>
+              <td><strong>Portail self-service</strong></td>
+              <td>Les utilisateurs gerent leurs moyens de paiement, factures et abonnement en autonomie via le portail integre.</td>
+            </tr>
+            <tr>
+              <td><strong>Facturation</strong></td>
+              <td>Factures generees automatiquement pour chaque paiement (abonnement et credits). Accessibles depuis le portail.</td>
+            </tr>
+            <tr>
+              <td><strong>Codes promo</strong></td>
+              <td>Support natif des codes promotionnels lors du paiement.</td>
+            </tr>
+            <tr>
+              <td><strong>Synchronisation</strong></td>
+              <td>Les produits et prix sont synchronises automatiquement entre l'application et Stripe. Toute modification dans l'administration est refletee instantanement.</td>
+            </tr>
+            <tr>
+              <td><strong>Temps reel</strong></td>
+              <td>Le solde de credits et l'etat de l'abonnement sont mis a jour en temps reel dans l'interface via un flux d'evenements continu.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- POINTS FORTS -->
+        <!-- ═══════════════════════════════════════════════ -->
+
+        <h2>Points forts de la monetisation</h2>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Flexibilite strategique</h3>
+            <p>Basculement instantane entre modele abonnement et modele pay-as-you-go. <strong>Zero downtime</strong>, zero migration, un seul parametre a modifier.</p>
+          </div>
+          <div class="card">
+            <h3>Tarification transparente</h3>
+            <p><strong>9 fonctionnalites</strong> avec des couts de 1 a 5 credits, proportionnels a la puissance IA mobilisee. L'utilisateur sait exactement ce qu'il paie.</p>
+          </div>
+          <div class="card">
+            <h3>Credits non perissables</h3>
+            <p>Les credits achetes <strong>n'expirent jamais</strong>. Pas de pression temporelle. Packs avec tarification degressive pour inciter l'achat en volume.</p>
+          </div>
+          <div class="card">
+            <h3>Confiance utilisateur</h3>
+            <p><strong>Remboursement automatique</strong> en cas d'echec IA. Aucun credit perdu. Historique complet des transactions, toujours transparent.</p>
+          </div>
+          <div class="card">
+            <h3>Parcours respectueux</h3>
+            <p>Upgrade immediat avec prorata. Downgrade programme en fin de periode. Annulation et reactivation simples. <strong>Jamais de mauvaise surprise.</strong></p>
+          </div>
+          <div class="card">
+            <h3>Configuration dynamique</h3>
+            <p>Prix, limites, packs et couts par fonctionnalite <strong>modifiables en temps reel</strong> via l'administration, sans redeploiement ni interruption.</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script src="./assets/js/layout.js?v=1.0.4"></script>
+  <script src="./assets/js/main.js?v=1.0.4"></script>
+</body>
+</html>
