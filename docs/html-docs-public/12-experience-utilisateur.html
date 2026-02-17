@@ -41,22 +41,22 @@
           <div class="mermaid">
 flowchart LR
     subgraph Editer["1 - EDITER"]
-        Sections["8 sections structurees<br/>(resume, experiences,<br/>competences, formation,<br/>langues, projets...)"]
+        Sections["8 sections structurées<br/>(résumé, expériences,<br/>compétences, formation,<br/>langues, projets...)"]
         Save["Sauvegarde<br/>automatique<br/>toutes les 2s"]
     end
 
     subgraph Analyser["2 - ANALYSER"]
         Score["Score de<br/>correspondance<br/>CV / offre"]
-        Suggestions["Suggestions IA<br/>et competences<br/>manquantes"]
+        Suggestions["Suggestions IA<br/>et compétences<br/>manquantes"]
     end
 
     subgraph Reviser["3 - REVISER"]
-        Diff["Comparaison visuelle<br/>avant / apres"]
+        Diff["Comparaison visuelle<br/>avant / après"]
         Actions["Accepter ou rejeter<br/>chaque modification<br/>individuellement"]
     end
 
     subgraph Exporter["4 - EXPORTER"]
-        Formats["PDF ou Word<br/>pret pour la<br/>candidature"]
+        Formats["PDF ou Word<br/>prêt pour la<br/>candidature"]
     end
 
     Editer --> Analyser --> Reviser --> Exporter
@@ -162,11 +162,11 @@ flowchart LR
           <div class="mermaid">
 flowchart LR
     S1["1. Edition<br/>de CV"]
-    S2["2. Generation<br/>IA"]
-    S3["3. Gestionnaire<br/>de taches"]
+    S2["2. Génération<br/>IA"]
+    S3["3. Gestionnaire<br/>de tâches"]
     S4["4. Consultation<br/>du CV"]
     S5["5. Revue<br/>IA"]
-    S6["6. Score<br/>d'adequation"]
+    S6["6. Score<br/>d'adéquation"]
     S7["7. Optimisation<br/>ATS"]
     S8["8. Historique<br/>des versions"]
     S9["9. Export<br/>PDF / Word"]
@@ -284,23 +284,23 @@ flowchart LR
           <div class="diagram-title">Architecture de la synchronisation temps r&eacute;el</div>
           <div class="mermaid">
 flowchart LR
-    subgraph Donnees["DONNEES"]
-        Modif["Modifications<br/>en base de<br/>donnees"]
+    subgraph Donnees["DONNÉES"]
+        Modif["Modifications<br/>en base de<br/>données"]
     end
 
-    subgraph Evenements["EVENEMENTS"]
-        Emission["Systeme centralise<br/>d'emission<br/>d'evenements"]
+    subgraph Evenements["ÉVÉNEMENTS"]
+        Emission["Système centralisé<br/>d'émission<br/>d'événements"]
     end
 
-    subgraph Flux["FLUX TEMPS REEL"]
-        Filtre["Flux filtre<br/>par utilisateur<br/>(isolation des donnees)"]
+    subgraph Flux["FLUX TEMPS RÉEL"]
+        Filtre["Flux filtré<br/>par utilisateur<br/>(isolation des données)"]
     end
 
     subgraph Interface["INTERFACE"]
-        MAJ["Mise a jour<br/>instantanee<br/>des composants"]
+        MAJ["Mise à jour<br/>instantanée<br/>des composants"]
     end
 
-    Modif -->|"Declenchement<br/>automatique"| Emission
+    Modif -->|"Déclenchement<br/>automatique"| Emission
     Emission -->|"15 types<br/>d'evenements"| Filtre
     Filtre -->|"SSE"| MAJ
 

@@ -25,7 +25,7 @@
 
         <h1>Vue d'ensemble & Architecture</h1>
         <p class="lead">
-          FitMyCV.io est une plateforme SaaS de nouvelle generation qui permet de creer, optimiser et exporter des CV personnalises grace a l'intelligence artificielle. Cette page presente l'architecture globale du systeme, ses choix techniques et les principes d'ingenierie qui garantissent fiabilite et evolutivite.
+          FitMyCV.io est une plateforme SaaS de nouvelle génération qui permet de créer, optimiser et exporter des CV personnalisés grâce à l'intelligence artificielle. Cette page présente l'architecture globale du système, ses choix techniques et les principes d'ingénierie qui garantissent fiabilité et évolutivité.
         </p>
 
         <!-- ============================================================ -->
@@ -39,15 +39,15 @@
           </div>
           <div class="card">
             <h4>123</h4>
-            <p>points d'acces API</p>
+            <p>points d'accès API</p>
           </div>
           <div class="card">
             <h4>34</h4>
-            <p>modules metier</p>
+            <p>modules métier</p>
           </div>
           <div class="card">
             <h4>5</h4>
-            <p>pipelines IA specialises</p>
+            <p>pipelines IA spécialisés</p>
           </div>
         </div>
 
@@ -58,7 +58,7 @@
         <h2>Un monolithe modulaire par choix</h2>
 
         <p>
-          FitMyCV.io adopte une <strong>architecture monolithique modulaire</strong> &mdash; un choix delibere qui combine la simplicite de deploiement d'un monolithe avec la separation rigoureuse des responsabilites d'une architecture modulaire. Chaque domaine fonctionnel est isole dans son propre module avec une interface publique claire, garantissant un couplage faible et une haute cohesion.
+          FitMyCV.io adopte une <strong>architecture monolithique modulaire</strong> &mdash; un choix délibéré qui combine la simplicité de déploiement d'un monolithe avec la séparation rigoureuse des responsabilités d'une architecture modulaire. Chaque domaine fonctionnel est isolé dans son propre module avec une interface publique claire, garantissant un couplage faible et une haute cohésion.
         </p>
 
         <p>
@@ -66,14 +66,14 @@
         </p>
 
         <ul>
-          <li><strong>Deploiement simplifie</strong> &mdash; Une seule unite de deploiement, sans orchestration de microservices.</li>
-          <li><strong>Coherence transactionnelle</strong> &mdash; Les operations critiques (facturation, generation IA, gestion de credits) s'executent dans un contexte partage, sans synchronisation distribuee.</li>
-          <li><strong>Modularite interne</strong> &mdash; 34 modules independants organisent la logique metier par domaine, permettant de faire evoluer chaque partie sans impacter les autres.</li>
+          <li><strong>Déploiement simplifié</strong> &mdash; Une seule unité de déploiement, sans orchestration de microservices.</li>
+          <li><strong>Cohérence transactionnelle</strong> &mdash; Les opérations critiques (facturation, génération IA, gestion de crédits) s'exécutent dans un contexte partagé, sans synchronisation distribuée.</li>
+          <li><strong>Modularité interne</strong> &mdash; 34 modules indépendants organisent la logique métier par domaine, permettant de faire évoluer chaque partie sans impacter les autres.</li>
         </ul>
 
         <div class="callout callout-info">
-          <div class="callout-title">Compromis assume</div>
-          <p>La file de taches asynchrones est geree en memoire (sans systeme de messaging externe), ce qui simplifie considerablement l'infrastructure mais limite la mise a l'echelle horizontale. Ce compromis est delibere : il correspond parfaitement aux besoins actuels de la plateforme tout en restant evoluable si necessaire.</p>
+          <div class="callout-title">Compromis assumé</div>
+          <p>La file de tâches asynchrones est gérée en mémoire (sans système de messaging externe), ce qui simplifie considérablement l'infrastructure mais limite la mise à l'échelle horizontale. Ce compromis est délibéré : il correspond parfaitement aux besoins actuels de la plateforme tout en restant évoluable si nécessaire.</p>
         </div>
 
         <!-- ============================================================ -->
@@ -83,7 +83,7 @@
         <h2>Architecture en 4 couches</h2>
 
         <p>
-          Le systeme est structure en quatre couches distinctes, chacune ayant un perimetre de responsabilite clairement defini. Ce decoupage garantit que les evolutions d'une couche n'impactent pas les autres.
+          Le système est structuré en quatre couches distinctes, chacune ayant un périmètre de responsabilité clairement défini. Ce découpage garantit que les évolutions d'une couche n'impactent pas les autres.
         </p>
 
         <div class="diagram">
@@ -150,30 +150,30 @@ flowchart TB
           <thead>
             <tr>
               <th>Couche</th>
-              <th>Role</th>
+              <th>Rôle</th>
               <th>Envergure</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Presentation</strong></td>
-              <td>Interface utilisateur reactive avec rendu hybride (serveur et client)</td>
+              <td><strong>Présentation</strong></td>
+              <td>Interface utilisateur réactive avec rendu hybride (serveur et client)</td>
               <td>175+ composants</td>
             </tr>
             <tr>
               <td><strong>API</strong></td>
-              <td>Points d'acces securises avec authentification, validation et formatage</td>
+              <td>Points d'accès sécurisés avec authentification, validation et formatage</td>
               <td>123 routes en 7 domaines</td>
             </tr>
             <tr>
-              <td><strong>Logique metier</strong></td>
-              <td>Modules autonomes couvrant l'ensemble des fonctionnalites</td>
+              <td><strong>Logique métier</strong></td>
+              <td>Modules autonomes couvrant l'ensemble des fonctionnalités</td>
               <td>34 modules, 5 pipelines IA</td>
             </tr>
             <tr>
-              <td><strong>Donnees</strong></td>
-              <td>Persistance relationnelle avec modelisation orientee domaine</td>
-              <td>34 entites en 9 domaines</td>
+              <td><strong>Données</strong></td>
+              <td>Persistance relationnelle avec modélisation orientée domaine</td>
+              <td>34 entités en 9 domaines</td>
             </tr>
           </tbody>
         </table>
@@ -182,14 +182,14 @@ flowchart TB
         <!-- FLUX DE DONNEES                                              -->
         <!-- ============================================================ -->
 
-        <h2>Flux de donnees</h2>
+        <h2>Flux de données</h2>
 
         <p>
-          Chaque interaction utilisateur suit un flux standardise a travers les couches du systeme. Ce diagramme illustre le parcours typique d'une requete, de l'interface jusqu'aux services externes.
+          Chaque interaction utilisateur suit un flux standardisé à travers les couches du système. Ce diagramme illustre le parcours typique d'une requête, de l'interface jusqu'aux services externes.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Parcours d'une requete</div>
+          <div class="diagram-title">Parcours d'une requête</div>
           <div class="mermaid">
 sequenceDiagram
     participant C as Interface utilisateur
@@ -219,38 +219,38 @@ sequenceDiagram
         <h2>6 domaines fonctionnels</h2>
 
         <p>
-          La logique metier est structuree en 34 modules independants, organises par domaine fonctionnel. Chaque module possede son propre perimetre et expose uniquement une interface publique, garantissant une separation nette des responsabilites.
+          La logique métier est structurée en 34 modules indépendants, organisés par domaine fonctionnel. Chaque module possède son propre périmètre et expose uniquement une interface publique, garantissant une séparation nette des responsabilités.
         </p>
 
         <div class="card-grid">
           <div class="card">
-            <h4>Authentification & Securite</h4>
-            <p>Connexion multi-fournisseur (email, Google, GitHub, Apple), validation des fichiers uploades, protection anti-bot, conformite RGPD et gestion des consentements.</p>
+            <h4>Authentification & Sécurité</h4>
+            <p>Connexion multi-fournisseur (email, Google, GitHub, Apple), validation des fichiers uploadés, protection anti-bot, conformité RGPD et gestion des consentements.</p>
           </div>
 
           <div class="card">
             <h4>Moteur CV</h4>
-            <p>Gestion complete du cycle de vie des CV : stockage structure au format JSON, versioning automatique, scoring d'adequation CV/offre, traduction multilingue (4 langues) et export multi-format.</p>
+            <p>Gestion complète du cycle de vie des CV : stockage structuré au format JSON, versioning automatique, scoring d'adéquation CV/offre, traduction multilingue (4 langues) et export multi-format.</p>
           </div>
 
           <div class="card">
             <h4>Intelligence Artificielle</h4>
-            <p>5 pipelines IA specialises : adaptation de CV selon une offre, optimisation de contenu, import PDF intelligent, generation depuis un intitule de poste, et creation de templates. Chaque pipeline utilise des appels IA parallelises avec des reponses validees par schema.</p>
+            <p>5 pipelines IA spécialisés : adaptation de CV selon une offre, optimisation de contenu, import PDF intelligent, génération depuis un intitulé de poste, et création de templates. Chaque pipeline utilise des appels IA parallélisés avec des réponses validées par schéma.</p>
           </div>
 
           <div class="card">
-            <h4>Abonnements & Credits</h4>
-            <p>Systeme de monetisation hybride : abonnements avec limites par fonctionnalite et credits a l'unite, synchronise avec la plateforme de paiement. Remboursement automatique en cas d'echec.</p>
+            <h4>Abonnements & Crédits</h4>
+            <p>Système de monétisation hybride : abonnements avec limites par fonctionnalité et crédits à l'unité, synchronisé avec la plateforme de paiement. Remboursement automatique en cas d'échec.</p>
           </div>
 
           <div class="card">
             <h4>Traitement asynchrone</h4>
-            <p>File de taches asynchrones avec suivi temps reel, retry automatique et evenements de progression pour les operations longues (generation IA, export, traduction).</p>
+            <p>File de tâches asynchrones avec suivi temps réel, retry automatique et événements de progression pour les opérations longues (génération IA, export, traduction).</p>
           </div>
 
           <div class="card">
             <h4>Communication & Monitoring</h4>
-            <p>Emails transactionnels avec templates dynamiques, telemetrie d'usage et suivi des couts IA, analytics, et internationalisation complete de l'interface en 4 langues.</p>
+            <p>Emails transactionnels avec templates dynamiques, télémétrie d'usage et suivi des coûts IA, analytics, et internationalisation complète de l'interface en 4 langues.</p>
           </div>
         </div>
 
@@ -258,14 +258,14 @@ sequenceDiagram
         <!-- DEPENDANCES ENTRE MODULES                                    -->
         <!-- ============================================================ -->
 
-        <h2>Dependances entre domaines</h2>
+        <h2>Dépendances entre domaines</h2>
 
         <p>
-          Le graphe de dependances entre les principaux domaines suit un flux unidirectionnel &mdash; aucune dependance circulaire. C'est le signe d'une architecture saine ou chaque domaine peut evoluer independamment.
+          Le graphe de dépendances entre les principaux domaines suit un flux unidirectionnel &mdash; aucune dépendance circulaire. C'est le signe d'une architecture saine où chaque domaine peut évoluer indépendamment.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Flux de dependances entre domaines</div>
+          <div class="diagram-title">Flux de dépendances entre domaines</div>
           <div class="mermaid">
 flowchart LR
     auth["Authentification"] --> subscription["Abonnements"]
@@ -303,22 +303,22 @@ flowchart LR
         <!-- PATTERNS D'INGENIERIE                                        -->
         <!-- ============================================================ -->
 
-        <h2>Patterns d'ingenierie</h2>
+        <h2>Patterns d'ingénierie</h2>
 
         <p>
-          Quatre patterns fondamentaux structurent l'ensemble du code et garantissent coherence, fiabilite et maintenabilite a travers toute la plateforme.
+          Quatre patterns fondamentaux structurent l'ensemble du code et garantissent cohérence, fiabilité et maintenabilité à travers toute la plateforme.
         </p>
 
-        <h3>1. API standardisee en 4 phases</h3>
+        <h3>1. API standardisée en 4 phases</h3>
 
         <p>
-          Les 123 points d'acces suivent un protocole identique en quatre phases : <strong>verification de l'identite</strong>, <strong>validation des donnees entrantes</strong>, <strong>execution de la logique metier</strong>, puis <strong>reponse formatee avec gestion d'erreurs</strong>. Cette uniformite facilite la maintenance et l'ajout de nouvelles fonctionnalites.
+          Les 123 points d'accès suivent un protocole identique en quatre phases : <strong>vérification de l'identité</strong>, <strong>validation des données entrantes</strong>, <strong>exécution de la logique métier</strong>, puis <strong>réponse formatée avec gestion d'erreurs</strong>. Cette uniformité facilite la maintenance et l'ajout de nouvelles fonctionnalités.
         </p>
 
-        <h3>2. Erreurs internationalisees par domaine</h3>
+        <h3>2. Erreurs internationalisées par domaine</h3>
 
         <p>
-          Le systeme d'erreurs utilise un mecanisme d'internationalisation par domaine. Chaque erreur est associee a une cle de traduction, permettant a l'interface d'afficher des messages localises dans la langue de l'utilisateur. Les erreurs sont organisees en 8 domaines (authentification, CV, abonnement, taches, extension, compte, etc.) avec support d'actions contextuelles &mdash; par exemple, une erreur de limite atteinte propose directement la mise a niveau du plan.
+          Le système d'erreurs utilise un mécanisme d'internationalisation par domaine. Chaque erreur est associée à une clé de traduction, permettant à l'interface d'afficher des messages localisés dans la langue de l'utilisateur. Les erreurs sont organisées en 8 domaines (authentification, CV, abonnement, tâches, extension, compte, etc.) avec support d'actions contextuelles &mdash; par exemple, une erreur de limite atteinte propose directement la mise à niveau du plan.
         </p>
 
         <div class="diagram">
@@ -361,33 +361,33 @@ flowchart TB
           </div>
         </div>
 
-        <h3>3. Facturation robuste a double voie</h3>
+        <h3>3. Facturation robuste à double voie</h3>
 
         <p>
-          Avant chaque action payante, le systeme execute un protocole de securite en 5 etapes :
+          Avant chaque action payante, le système exécute un protocole de sécurité en 5 étapes :
         </p>
 
         <ol>
-          <li><strong>Verification des droits</strong> &mdash; Le plan d'abonnement et les quotas sont controles.</li>
-          <li><strong>Debit preventif</strong> &mdash; Les credits sont reserves <em>avant</em> l'execution.</li>
-          <li><strong>Execution de l'action</strong> &mdash; La generation IA ou l'operation demandee se lance.</li>
-          <li><strong>Mise a jour des compteurs</strong> &mdash; Les statistiques d'usage sont enregistrees.</li>
-          <li><strong>Remboursement automatique</strong> &mdash; En cas d'echec, les credits sont restitues sans aucune intervention.</li>
+          <li><strong>Vérification des droits</strong> &mdash; Le plan d'abonnement et les quotas sont contrôlés.</li>
+          <li><strong>Débit préventif</strong> &mdash; Les crédits sont réservés <em>avant</em> l'exécution.</li>
+          <li><strong>Exécution de l'action</strong> &mdash; La génération IA ou l'opération demandée se lance.</li>
+          <li><strong>Mise à jour des compteurs</strong> &mdash; Les statistiques d'usage sont enregistrées.</li>
+          <li><strong>Remboursement automatique</strong> &mdash; En cas d'échec, les crédits sont restitués sans aucune intervention.</li>
         </ol>
 
         <div class="callout callout-success">
-          <div class="callout-title">Zero credit perdu</div>
-          <p>Ce mecanisme garantit qu'aucun credit n'est perdu en cas d'erreur technique. Le systeme supporte deux modes de facturation transparents : abonnement avec quotas par fonctionnalite, ou credits a l'unite avec debit/remboursement automatique.</p>
+          <div class="callout-title">Zéro crédit perdu</div>
+          <p>Ce mécanisme garantit qu'aucun crédit n'est perdu en cas d'erreur technique. Le système supporte deux modes de facturation transparents : abonnement avec quotas par fonctionnalité, ou crédits à l'unité avec débit/remboursement automatique.</p>
         </div>
 
-        <h3>4. Taches asynchrones avec retry intelligent</h3>
+        <h3>4. Tâches asynchrones avec retry intelligent</h3>
 
         <p>
-          Les operations longues (generation de CV, traduction, export) sont executees de maniere asynchrone avec un suivi complet en base de donnees. Chaque tache suit un cycle de vie precis avec retry automatique en cas d'echec.
+          Les opérations longues (génération de CV, traduction, export) sont exécutées de manière asynchrone avec un suivi complet en base de données. Chaque tâche suit un cycle de vie précis avec retry automatique en cas d'échec.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Cycle de vie d'une tache asynchrone</div>
+          <div class="diagram-title">Cycle de vie d'une tâche asynchrone</div>
           <div class="mermaid">
 flowchart TD
     START(("*")) -->|"Creation"| pending["En attente"]
@@ -408,21 +408,21 @@ flowchart TD
         </div>
 
         <p>
-          La progression de chaque tache est diffusee en temps reel vers l'interface utilisateur via une connexion persistante (Server-Sent Events), permettant un suivi en direct sans rechargement de page.
+          La progression de chaque tâche est diffusée en temps réel vers l'interface utilisateur via une connexion persistante (Server-Sent Events), permettant un suivi en direct sans rechargement de page.
         </p>
 
         <!-- ============================================================ -->
         <!-- CI/CD ET VERSIONING                                          -->
         <!-- ============================================================ -->
 
-        <h2>Deploiement continu et versioning automatique</h2>
+        <h2>Déploiement continu et versioning automatique</h2>
 
         <p>
-          Le deploiement est entierement automatise. Chaque demande de fusion declenche un environnement de pre-production complet avec une <strong>copie de la base de donnees de production</strong>, permettant de tester dans des conditions reelles avant toute mise en ligne.
+          Le déploiement est entièrement automatisé. Chaque demande de fusion déclenche un environnement de pré-production complet avec une <strong>copie de la base de données de production</strong>, permettant de tester dans des conditions réelles avant toute mise en ligne.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Pipeline de deploiement automatise</div>
+          <div class="diagram-title">Pipeline de déploiement automatisé</div>
           <div class="mermaid">
 flowchart LR
     PR["Demande de fusion"] --> PreProd["Pre-production<br/>avec copie de la base"]
@@ -441,17 +441,17 @@ flowchart LR
           </div>
         </div>
 
-        <h3>Versioning semantique a 4 niveaux</h3>
+        <h3>Versioning sémantique à 4 niveaux</h3>
 
         <p>
-          Le versioning est entierement automatise via un systeme a 4 niveaux (<strong>Major.Minor.Patch.Build</strong>) base sur les conventions de messages de commit. A chaque fusion, un script analyse automatiquement tous les commits de la demande de fusion et applique le bon increment de version :
+          Le versioning est entièrement automatisé via un système à 4 niveaux (<strong>Major.Minor.Patch.Build</strong>) basé sur les conventions de messages de commit. À chaque fusion, un script analyse automatiquement tous les commits de la demande de fusion et applique le bon incrément de version :
         </p>
 
         <table>
           <thead>
             <tr>
               <th>Niveau</th>
-              <th>Declencheur</th>
+              <th>Déclencheur</th>
               <th>Signification</th>
             </tr>
           </thead>
@@ -463,13 +463,13 @@ flowchart LR
             </tr>
             <tr>
               <td><span class="badge badge-primary">Minor</span></td>
-              <td>Nouvelle fonctionnalite</td>
-              <td>Capacite inedite ajoutee a la plateforme</td>
+              <td>Nouvelle fonctionnalité</td>
+              <td>Capacité inédite ajoutée à la plateforme</td>
             </tr>
             <tr>
               <td><span class="badge badge-warning">Patch</span></td>
-              <td>Correction ou amelioration</td>
-              <td>Bug corrige ou fonctionnalite existante amelioree</td>
+              <td>Correction ou amélioration</td>
+              <td>Bug corrigé ou fonctionnalité existante améliorée</td>
             </tr>
             <tr>
               <td><span class="badge badge-success">Build</span></td>
@@ -480,28 +480,28 @@ flowchart LR
         </table>
 
         <p>
-          La version est propagee automatiquement dans l'ensemble de la plateforme apres chaque fusion. Les branches de developpement sont ensuite synchronisees pour maintenir la coherence du code a travers tous les environnements.
+          La version est propagée automatiquement dans l'ensemble de la plateforme après chaque fusion. Les branches de développement sont ensuite synchronisées pour maintenir la cohérence du code à travers tous les environnements.
         </p>
 
         <!-- ============================================================ -->
         <!-- POINTS CLES                                                  -->
         <!-- ============================================================ -->
 
-        <h2>Points cles a retenir</h2>
+        <h2>Points clés à retenir</h2>
 
         <div class="callout callout-info">
           <div class="callout-title">Monolithe modulaire</div>
-          <p>Bien que deployee comme une seule unite, l'application est rigoureusement separee en 34 modules independants. Chaque module possede son propre perimetre fonctionnel et expose uniquement une interface publique &mdash; garantissant un couplage faible et une haute cohesion.</p>
+          <p>Bien que déployée comme une seule unité, l'application est rigoureusement séparée en 34 modules indépendants. Chaque module possède son propre périmètre fonctionnel et expose uniquement une interface publique &mdash; garantissant un couplage faible et une haute cohésion.</p>
         </div>
 
         <div class="callout callout-success">
-          <div class="callout-title">5 pipelines IA specialises</div>
-          <p>Cinq pipelines d'intelligence artificielle couvrent l'ensemble des besoins : adaptation de CV selon une offre, optimisation de contenu, import PDF intelligent, generation depuis un intitule de poste, et creation de templates. Chaque pipeline utilise des appels paralleles avec des reponses structurees et validees par schema.</p>
+          <div class="callout-title">5 pipelines IA spécialisés</div>
+          <p>Cinq pipelines d'intelligence artificielle couvrent l'ensemble des besoins : adaptation de CV selon une offre, optimisation de contenu, import PDF intelligent, génération depuis un intitulé de poste, et création de templates. Chaque pipeline utilise des appels parallèles avec des réponses structurées et validées par schéma.</p>
         </div>
 
         <div class="callout callout-warning">
-          <div class="callout-title">Sorties IA structurees et fiables</div>
-          <p>Tous les appels a l'intelligence artificielle utilisent un systeme de sorties structurees avec validation par schema, garantissant que chaque reponse de l'IA respecte un format predefini. Cela elimine les erreurs d'interpretation et assure la fiabilite des traitements automatises.</p>
+          <div class="callout-title">Sorties IA structurées et fiables</div>
+          <p>Tous les appels à l'intelligence artificielle utilisent un système de sorties structurées avec validation par schéma, garantissant que chaque réponse de l'IA respecte un format prédéfini. Cela élimine les erreurs d'interprétation et assure la fiabilité des traitements automatisés.</p>
         </div>
 
       </div>

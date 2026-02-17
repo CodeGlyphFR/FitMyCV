@@ -21,7 +21,7 @@
 
         <h1>Extension Navigateur</h1>
         <p class="lead">
-          Capturez et adaptez une offre d'emploi en un clic, sans quitter votre navigateur. L'extension FitMyCV pour Chrome et Firefox transforme votre navigation quotidienne en outil de productivité : elle detecte automatiquement les offres d'emploi sur plus de 14 sites, extrait leur contenu et lance la generation d'un CV optimise directement depuis la page.
+          Capturez et adaptez une offre d'emploi en un clic, sans quitter votre navigateur. L'extension FitMyCV pour Chrome et Firefox transforme votre navigation quotidienne en outil de productivité : elle détecte automatiquement les offres d'emploi sur plus de 14 sites, extrait leur contenu et lance la génération d'un CV optimisé directement depuis la page.
         </p>
 
         <!-- ═══════════════════════════════════════════════ -->
@@ -30,35 +30,35 @@
 
         <h2>Architecture de l'extension</h2>
 
-        <p>L'extension repose sur l'architecture <strong>Manifest V3</strong>, le standard actuel impose par les navigateurs. Elle est construite autour de <strong>5 composants specialises</strong> qui communiquent entre eux via un systeme de messages interne.</p>
+        <p>L'extension repose sur l'architecture <strong>Manifest V3</strong>, le standard actuel imposé par les navigateurs. Elle est construite autour de <strong>5 composants spécialisés</strong> qui communiquent entre eux via un système de messages interne.</p>
 
         <table>
           <thead>
             <tr>
               <th>Composant</th>
-              <th>Role</th>
+              <th>Rôle</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Service Worker</strong></td>
-              <td>Orchestrateur central : gestion des badges, surveillance periodique des taches en arriere-plan, routage des messages entre composants, renouvellement automatique des jetons d'authentification</td>
+              <td>Orchestrateur central : gestion des badges, surveillance périodique des tâches en arrière-plan, routage des messages entre composants, renouvellement automatique des jetons d'authentification</td>
             </tr>
             <tr>
-              <td><strong>Detecteur d'offres</strong></td>
-              <td>Script injecte sur toutes les pages web, analyse en temps reel si la page contient une offre d'emploi et injecte un bouton d'action sur les sites connus</td>
+              <td><strong>Détecteur d'offres</strong></td>
+              <td>Script injecté sur toutes les pages web, analyse en temps réel si la page contient une offre d'emploi et injecte un bouton d'action sur les sites connus</td>
             </tr>
             <tr>
               <td><strong>Extracteur de contenu</strong></td>
-              <td>Charge dynamiquement a la demande pour convertir le contenu HTML de l'offre en texte structure, pret pour le traitement par l'IA</td>
+              <td>Chargé dynamiquement à la demande pour convertir le contenu HTML de l'offre en texte structuré, prêt pour le traitement par l'IA</td>
             </tr>
             <tr>
-              <td><strong>Recepteur d'authentification</strong></td>
-              <td>Script dedie aux pages FitMyCV pour recevoir le jeton d'authentification apres connexion via Google ou GitHub</td>
+              <td><strong>Récepteur d'authentification</strong></td>
+              <td>Script dédié aux pages FitMyCV pour recevoir le jeton d'authentification après connexion via Google ou GitHub</td>
             </tr>
             <tr>
               <td><strong>Interface Popup</strong></td>
-              <td>Interface compacte en mode sombre pour gerer les offres capturees, selectionner un CV source et suivre la progression de la generation en temps reel</td>
+              <td>Interface compacte en mode sombre pour gérer les offres capturées, sélectionner un CV source et suivre la progression de la génération en temps réel</td>
             </tr>
           </tbody>
         </table>
@@ -114,20 +114,20 @@ graph TB
           </div>
         </div>
 
-        <h3>Compatibilite Chrome et Firefox</h3>
+        <h3>Compatibilité Chrome et Firefox</h3>
 
-        <p>L'extension est developpee a partir d'une <strong>seule base de code</strong> avec une compatibilite native Chrome et Firefox. Le systeme de build produit automatiquement deux versions adaptees a chaque navigateur, sans duplication de code. L'internationalisation couvre <strong>4 langues</strong> (francais, anglais, espagnol, allemand) avec detection automatique de la langue du navigateur.</p>
+        <p>L'extension est développée à partir d'une <strong>seule base de code</strong> avec une compatibilité native Chrome et Firefox. Le système de build produit automatiquement deux versions adaptées à chaque navigateur, sans duplication de code. L'internationalisation couvre <strong>4 langues</strong> (français, anglais, espagnol, allemand) avec détection automatique de la langue du navigateur.</p>
 
         <!-- ═══════════════════════════════════════════════ -->
         <!-- DETECTION -->
         <!-- ═══════════════════════════════════════════════ -->
 
-        <h2>Detection intelligente des offres d'emploi</h2>
+        <h2>Détection intelligente des offres d'emploi</h2>
 
-        <p>L'extension utilise un systeme de detection en <strong>2 phases</strong> qui fonctionne sur n'importe quel site web, avec une precision optimisee pour les job boards connus. Ce systeme est capable d'identifier une offre d'emploi en quelques millisecondes, y compris sur des sites jamais rencontres auparavant.</p>
+        <p>L'extension utilise un système de détection en <strong>2 phases</strong> qui fonctionne sur n'importe quel site web, avec une précision optimisée pour les job boards connus. Ce système est capable d'identifier une offre d'emploi en quelques millisecondes, y compris sur des sites jamais rencontrés auparavant.</p>
 
         <div class="diagram">
-          <div class="diagram-title">Processus de detection en 2 phases</div>
+          <div class="diagram-title">Processus de détection en 2 phases</div>
           <div class="mermaid">
 flowchart TD
     START["Page web chargee"] --> P1["Phase 1 : Pre-detection rapide<br/>(~1 ms)"]
@@ -162,26 +162,26 @@ flowchart TD
           </div>
         </div>
 
-        <h3>Phase 1 : Pre-detection rapide (~1 ms)</h3>
+        <h3>Phase 1 : Pré-détection rapide (~1 ms)</h3>
 
-        <p>Trois verifications structurelles ultra-rapides, executees en parallele :</p>
+        <p>Trois vérifications structurelles ultra-rapides, exécutées en parallèle :</p>
 
         <ol>
-          <li><strong>Metadonnees structurees</strong> : Recherche du schema <code>JobPosting</code> dans les donnees structurees de la page (standard Schema.org utilise par les sites optimises pour le referencement)</li>
-          <li><strong>Marqueurs de genre dans les titres</strong> : Detection de patterns typiques comme <em>(H/F)</em>, <em>(m/w/d)</em>, <em>(F/H/X)</em> dans les titres principaux, courants dans les offres d'emploi en 4 langues</li>
-          <li><strong>Segments d'URL</strong> : Analyse du chemin de l'URL pour detecter des termes comme <em>/jobs/</em>, <em>/careers/</em>, <em>/emplois/</em>, <em>/stellenangebote/</em> en 6 langues</li>
+          <li><strong>Métadonnées structurées</strong> : Recherche du schéma <code>JobPosting</code> dans les données structurées de la page (standard Schema.org utilisé par les sites optimisés pour le référencement)</li>
+          <li><strong>Marqueurs de genre dans les titres</strong> : Détection de patterns typiques comme <em>(H/F)</em>, <em>(m/w/d)</em>, <em>(F/H/X)</em> dans les titres principaux, courants dans les offres d'emploi en 4 langues</li>
+          <li><strong>Segments d'URL</strong> : Analyse du chemin de l'URL pour détecter des termes comme <em>/jobs/</em>, <em>/careers/</em>, <em>/emplois/</em>, <em>/stellenangebote/</em> en 6 langues</li>
         </ol>
 
-        <p>Si l'une de ces verifications reussit, la page est immediatement identifiee comme offre d'emploi <strong>sans passer a la Phase 2</strong>.</p>
+        <p>Si l'une de ces vérifications réussit, la page est immédiatement identifiée comme offre d'emploi <strong>sans passer à la Phase 2</strong>.</p>
 
         <h3>Phase 2 : Scoring heuristique (~5-10 ms)</h3>
 
-        <p>Si la Phase 1 echoue, un systeme de scoring analyse le contenu de la page. Le seuil de detection est fixe a <strong>40 points</strong>.</p>
+        <p>Si la Phase 1 échoue, un système de scoring analyse le contenu de la page. Le seuil de détection est fixé à <strong>40 points</strong>.</p>
 
         <table>
           <thead>
             <tr>
-              <th>Critere</th>
+              <th>Critère</th>
               <th>Points</th>
               <th>Maximum</th>
               <th>Description</th>
@@ -192,72 +192,72 @@ flowchart TD
               <td><strong>Bouton "Postuler" / "Apply"</strong></td>
               <td>+30</td>
               <td>30</td>
-              <td>Detection multilingue des boutons de candidature en francais, anglais, allemand et espagnol, incluant les variantes idiomatiques (<em>Je postule</em>, <em>Jetzt bewerben</em>, <em>Enviar candidatura</em>)</td>
+              <td>Détection multilingue des boutons de candidature en français, anglais, allemand et espagnol, incluant les variantes idiomatiques (<em>Je postule</em>, <em>Jetzt bewerben</em>, <em>Enviar candidatura</em>)</td>
             </tr>
             <tr>
-              <td><strong>Titres de sections metier</strong></td>
+              <td><strong>Titres de sections métier</strong></td>
               <td>+15 chacun</td>
               <td>30</td>
-              <td>Titres typiques comme <em>Missions</em>, <em>Requirements</em>, <em>Aufgaben</em>, <em>Profil recherche</em></td>
+              <td>Titres typiques comme <em>Missions</em>, <em>Requirements</em>, <em>Aufgaben</em>, <em>Profil recherché</em></td>
             </tr>
             <tr>
-              <td><strong>Mots-cles emploi</strong></td>
+              <td><strong>Mots-clés emploi</strong></td>
               <td>+2 chacun</td>
               <td>20</td>
-              <td>Termes courants : <em>CDI</em>, <em>full-time</em>, <em>Vollzeit</em>, <em>salario</em>, <em>teletravail</em></td>
+              <td>Termes courants : <em>CDI</em>, <em>full-time</em>, <em>Vollzeit</em>, <em>salario</em>, <em>télétravail</em></td>
             </tr>
             <tr>
-              <td><strong>Contenu structure</strong></td>
+              <td><strong>Contenu structuré</strong></td>
               <td>+10</td>
               <td>10</td>
-              <td>Zone de contenu principal depassant 500 caracteres</td>
+              <td>Zone de contenu principal dépassant 500 caractères</td>
             </tr>
           </tbody>
         </table>
 
         <div class="callout callout-info">
-          <strong>Detection universelle</strong> : Meme sur un site jamais rencontre, l'extension peut identifier une offre d'emploi grace a ce systeme de scoring multilingue. Elle n'est pas limitee aux 14+ sites connus.
+          <strong>Détection universelle</strong> : Même sur un site jamais rencontré, l'extension peut identifier une offre d'emploi grâce à ce système de scoring multilingue. Elle n'est pas limitée aux 14+ sites connus.
         </div>
 
         <h3>Gestion des applications web modernes (SPA)</h3>
 
-        <p>L'extension gere nativement les sites modernes construits avec des frameworks comme React ou Angular, ou la navigation ne recharge pas la page :</p>
+        <p>L'extension gère nativement les sites modernes construits avec des frameworks comme React ou Angular, où la navigation ne recharge pas la page :</p>
 
         <ul>
-          <li><strong>Observation des changements d'URL</strong> : Detection automatique des navigations cote client sans rechargement de page</li>
-          <li><strong>Observation du contenu</strong> : Surveillance des panneaux lateraux (utilisee par Indeed, LinkedIn, Glassdoor) qui changent le contenu affiche sans modifier l'URL</li>
-          <li><strong>Reinjection automatique</strong> : Si un re-rendu du site supprime le bouton FitMyCV, celui-ci est reinjecte automatiquement avec un systeme de tentatives progressives</li>
+          <li><strong>Observation des changements d'URL</strong> : Détection automatique des navigations côté client sans rechargement de page</li>
+          <li><strong>Observation du contenu</strong> : Surveillance des panneaux latéraux (utilisée par Indeed, LinkedIn, Glassdoor) qui changent le contenu affiché sans modifier l'URL</li>
+          <li><strong>Réinjection automatique</strong> : Si un re-rendu du site supprime le bouton FitMyCV, celui-ci est réinjecté automatiquement avec un système de tentatives progressives</li>
         </ul>
 
         <!-- ═══════════════════════════════════════════════ -->
         <!-- SITES SUPPORTES -->
         <!-- ═══════════════════════════════════════════════ -->
 
-        <h2>Sites d'emploi supportes (14+)</h2>
+        <h2>Sites d'emploi supportés (14+)</h2>
 
-        <p>L'extension optimise la detection et l'extraction pour plus de 14 sites d'emploi majeurs, tout en fonctionnant sur n'importe quel autre site grace a la detection universelle.</p>
+        <p>L'extension optimise la détection et l'extraction pour plus de 14 sites d'emploi majeurs, tout en fonctionnant sur n'importe quel autre site grâce à la détection universelle.</p>
 
         <table>
           <thead>
             <tr>
-              <th>Marche</th>
+              <th>Marché</th>
               <th>Site</th>
-              <th>Particularites</th>
+              <th>Particularités</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td rowspan="8"><strong>France</strong></td>
               <td>LinkedIn</td>
-              <td>Panneau lateral, extraction optimisee</td>
+              <td>Panneau latéral, extraction optimisée</td>
             </tr>
             <tr>
               <td>Indeed (.fr)</td>
-              <td>Panneau lateral, deduplication avancee</td>
+              <td>Panneau latéral, déduplication avancée</td>
             </tr>
             <tr>
               <td>France Travail</td>
-              <td>Extraction ciblee</td>
+              <td>Extraction ciblée</td>
             </tr>
             <tr>
               <td>APEC</td>
@@ -265,49 +265,49 @@ flowchart TD
             </tr>
             <tr>
               <td>Cadremploi</td>
-              <td>Extraction ciblee</td>
+              <td>Extraction ciblée</td>
             </tr>
             <tr>
               <td>HelloWork</td>
-              <td>Extraction ciblee</td>
+              <td>Extraction ciblée</td>
             </tr>
             <tr>
               <td>LesJeudis</td>
-              <td>Extraction ciblee</td>
+              <td>Extraction ciblée</td>
             </tr>
             <tr>
               <td>Meteojob</td>
-              <td>Extraction ciblee</td>
+              <td>Extraction ciblée</td>
             </tr>
             <tr>
               <td rowspan="6"><strong>International</strong></td>
               <td>LinkedIn</td>
-              <td>Panneau lateral, extraction optimisee</td>
+              <td>Panneau latéral, extraction optimisée</td>
             </tr>
             <tr>
               <td>Indeed (.com)</td>
-              <td>Panneau lateral, deduplication avancee</td>
+              <td>Panneau latéral, déduplication avancée</td>
             </tr>
             <tr>
               <td>Glassdoor (.com / .fr)</td>
-              <td>Panneau lateral, extraction ciblee</td>
+              <td>Panneau latéral, extraction ciblée</td>
             </tr>
             <tr>
               <td>Monster (.com / .fr)</td>
-              <td>Extraction ciblee</td>
+              <td>Extraction ciblée</td>
             </tr>
             <tr>
               <td>Welcome to the Jungle</td>
-              <td>Extraction ciblee</td>
+              <td>Extraction ciblée</td>
             </tr>
             <tr>
               <td>Workday Jobs</td>
-              <td>Extraction ciblee</td>
+              <td>Extraction ciblée</td>
             </tr>
             <tr>
               <td><strong>Universel</strong></td>
               <td><em>Tout autre site</em></td>
-              <td>Detection automatique via Phase 1 et Phase 2 + extraction par algorithme de contenu principal</td>
+              <td>Détection automatique via Phase 1 et Phase 2 + extraction par algorithme de contenu principal</td>
             </tr>
           </tbody>
         </table>
@@ -318,10 +318,10 @@ flowchart TD
 
         <h2>Extraction intelligente du contenu</h2>
 
-        <p>Une fois l'offre detectee, l'extension extrait le contenu pertinent en eliminant automatiquement la navigation, les publicites et les elements parasites. Elle utilise une <strong>double strategie d'extraction</strong> pour garantir un resultat optimal sur tous les sites.</p>
+        <p>Une fois l'offre détectée, l'extension extrait le contenu pertinent en éliminant automatiquement la navigation, les publicités et les éléments parasites. Elle utilise une <strong>double stratégie d'extraction</strong> pour garantir un résultat optimal sur tous les sites.</p>
 
         <div class="diagram">
-          <div class="diagram-title">Double strategie d'extraction</div>
+          <div class="diagram-title">Double stratégie d'extraction</div>
           <div class="mermaid">
 flowchart TD
     START["Extraction demandee"] --> M1["Strategie 1 :<br/>Algorithme de contenu principal"]
@@ -344,69 +344,69 @@ flowchart TD
           </div>
         </div>
 
-        <h3>Strategie 1 : Algorithme d'extraction du contenu principal</h3>
+        <h3>Stratégie 1 : Algorithme d'extraction du contenu principal</h3>
 
-        <p>L'extension utilise un algorithme avance d'extraction de contenu (le meme que celui du mode lecture des navigateurs) qui isole automatiquement le texte pertinent de la page en eliminant la navigation, les publicites, les menus et tout element superflu. Le contenu HTML est ensuite converti en texte structure (titres, listes, paragraphes) pret pour le traitement par l'IA.</p>
+        <p>L'extension utilise un algorithme avancé d'extraction de contenu (le même que celui du mode lecture des navigateurs) qui isole automatiquement le texte pertinent de la page en éliminant la navigation, les publicités, les menus et tout élément superflu. Le contenu HTML est ensuite converti en texte structuré (titres, listes, paragraphes) prêt pour le traitement par l'IA.</p>
 
-        <h3>Strategie 2 : Selecteurs cibles par site</h3>
+        <h3>Stratégie 2 : Sélecteurs ciblés par site</h3>
 
-        <p>Pour chaque job board connu, l'extension dispose de <strong>regles d'extraction specifiques</strong> qui ciblent directement la zone de description de l'offre. Cette approche garantit une precision maximale sur les sites les plus populaires, independamment de leur mise en page.</p>
+        <p>Pour chaque job board connu, l'extension dispose de <strong>règles d'extraction spécifiques</strong> qui ciblent directement la zone de description de l'offre. Cette approche garantit une précision maximale sur les sites les plus populaires, indépendamment de leur mise en page.</p>
 
-        <p>Les deux resultats sont compares et le meilleur est conserve. Cette approche duale permet une extraction fiable aussi bien sur les sites connus que sur les sites decouverts pour la premiere fois.</p>
+        <p>Les deux résultats sont comparés et le meilleur est conservé. Cette approche duale permet une extraction fiable aussi bien sur les sites connus que sur les sites découverts pour la première fois.</p>
 
-        <h3>Scoring de qualite de l'extraction (0-100)</h3>
+        <h3>Scoring de qualité de l'extraction (0-100)</h3>
 
-        <p>Chaque extraction est automatiquement evaluee sur 4 axes. Le contenu est considere valide s'il atteint un score minimum de <strong>25/100</strong> et depasse 200 caracteres. Ce scoring alimente un indicateur visuel dans l'interface (badge vert, jaune ou rouge).</p>
+        <p>Chaque extraction est automatiquement évaluée sur 4 axes. Le contenu est considéré valide s'il atteint un score minimum de <strong>25/100</strong> et dépasse 200 caractères. Ce scoring alimente un indicateur visuel dans l'interface (badge vert, jaune ou rouge).</p>
 
         <table>
           <thead>
             <tr>
               <th>Composante</th>
               <th>Poids</th>
-              <th>Criteres</th>
+              <th>Critères</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Longueur</strong></td>
               <td>0-20 pts</td>
-              <td>Score optimal entre 1 500 et 8 000 caracteres, degradation progressive au-dela</td>
+              <td>Score optimal entre 1 500 et 8 000 caractères, dégradation progressive au-delà</td>
             </tr>
             <tr>
-              <td><strong>Mots-cles pertinents</strong></td>
+              <td><strong>Mots-clés pertinents</strong></td>
               <td>0-30 pts</td>
-              <td>Presence de termes essentiels (<em>mission</em>, <em>profil</em>, <em>competences</em>) et bonus (<em>salaire</em>, <em>remote</em>, <em>CDI</em>)</td>
+              <td>Présence de termes essentiels (<em>mission</em>, <em>profil</em>, <em>compétences</em>) et bonus (<em>salaire</em>, <em>remote</em>, <em>CDI</em>)</td>
             </tr>
             <tr>
               <td><strong>Structure</strong></td>
               <td>0-25 pts</td>
-              <td>Presence de listes a puces, de titres et de paragraphes bien formes</td>
+              <td>Présence de listes à puces, de titres et de paragraphes bien formés</td>
             </tr>
             <tr>
-              <td><strong>Bruit</strong> (penalite)</td>
-              <td>0 a -25 pts</td>
-              <td>Contenu parasite detecte (mentions de cookies, politique de confidentialite, newsletter)</td>
+              <td><strong>Bruit</strong> (pénalité)</td>
+              <td>0 à -25 pts</td>
+              <td>Contenu parasite détecté (mentions de cookies, politique de confidentialité, newsletter)</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Deduplication des offres</h3>
+        <h3>Déduplication des offres</h3>
 
-        <p>Pour eviter les doublons, l'extension normalise les URLs des offres. Sur les grands sites d'emploi (LinkedIn, Indeed), des methodes specifiques extraient l'identifiant unique de l'offre, garantissant qu'une meme offre n'est capturee qu'une seule fois, quel que soit le chemin de navigation emprunte.</p>
+        <p>Pour éviter les doublons, l'extension normalise les URLs des offres. Sur les grands sites d'emploi (LinkedIn, Indeed), des méthodes spécifiques extraient l'identifiant unique de l'offre, garantissant qu'une même offre n'est capturée qu'une seule fois, quel que soit le chemin de navigation emprunté.</p>
 
         <!-- ═══════════════════════════════════════════════ -->
         <!-- AUTHENTIFICATION -->
         <!-- ═══════════════════════════════════════════════ -->
 
-        <h2>Authentification JWT dediee</h2>
+        <h2>Authentification JWT dédiée</h2>
 
-        <p>L'extension utilise un systeme d'authentification <strong>independant du cookie de session web</strong>, concu specifiquement pour le contexte d'extension navigateur. Il repose sur un jeton JWT signe cote serveur, valide 7 jours.</p>
+        <p>L'extension utilise un système d'authentification <strong>indépendant du cookie de session web</strong>, conçu spécifiquement pour le contexte d'extension navigateur. Il repose sur un jeton JWT signé côté serveur, valide 7 jours.</p>
 
-        <h3>Deux methodes de connexion</h3>
+        <h3>Deux méthodes de connexion</h3>
 
         <ol>
-          <li><strong>Email et mot de passe</strong> : Saisie directe dans l'interface de l'extension avec validation cote serveur</li>
-          <li><strong>OAuth (Google / GitHub)</strong> : L'extension ouvre un onglet vers le SaaS qui gere le flux de connexion standard, puis transmet le jeton de maniere securisee a l'extension</li>
+          <li><strong>Email et mot de passe</strong> : Saisie directe dans l'interface de l'extension avec validation côté serveur</li>
+          <li><strong>OAuth (Google / GitHub)</strong> : L'extension ouvre un onglet vers le SaaS qui gère le flux de connexion standard, puis transmet le jeton de manière sécurisée à l'extension</li>
         </ol>
 
         <h3>Renouvellement intelligent du jeton</h3>
@@ -414,44 +414,44 @@ flowchart TD
         <table>
           <thead>
             <tr>
-              <th>Mecanisme</th>
-              <th>Declencheur</th>
+              <th>Mécanisme</th>
+              <th>Déclencheur</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Refresh proactif</strong></td>
-              <td>Verification periodique (12h) + avant chaque requete</td>
-              <td>Si le jeton expire dans moins de 24h, il est renouvele automatiquement en arriere-plan, sans intervention de l'utilisateur</td>
+              <td>Vérification périodique (12h) + avant chaque requête</td>
+              <td>Si le jeton expire dans moins de 24h, il est renouvelé automatiquement en arrière-plan, sans intervention de l'utilisateur</td>
             </tr>
             <tr>
-              <td><strong>Refresh reactif</strong></td>
-              <td>Reception d'une reponse "non autorise"</td>
-              <td>Tentative automatique de renouvellement puis rejeu de la requete initiale</td>
+              <td><strong>Refresh réactif</strong></td>
+              <td>Réception d'une réponse "non autorisé"</td>
+              <td>Tentative automatique de renouvellement puis rejeu de la requête initiale</td>
             </tr>
             <tr>
-              <td><strong>Expiration definitive</strong></td>
-              <td>Echec du renouvellement</td>
-              <td>Nettoyage du jeton, arret de la surveillance, retour automatique a l'ecran de connexion</td>
+              <td><strong>Expiration définitive</strong></td>
+              <td>Échec du renouvellement</td>
+              <td>Nettoyage du jeton, arrêt de la surveillance, retour automatique à l'écran de connexion</td>
             </tr>
           </tbody>
         </table>
 
         <div class="callout callout-info">
-          <strong>Securite</strong> : Le jeton est signe cote serveur et verifie a chaque requete par un middleware dedie. La transmission du jeton OAuth entre la page web et l'extension est securisee par validation d'origine.
+          <strong>Sécurité</strong> : Le jeton est signé côté serveur et vérifié à chaque requête par un middleware dédié. La transmission du jeton OAuth entre la page web et l'extension est sécurisée par validation d'origine.
         </div>
 
         <!-- ═══════════════════════════════════════════════ -->
         <!-- FLUX DE DONNEES -->
         <!-- ═══════════════════════════════════════════════ -->
 
-        <h2>Flux de donnees : de l'offre au CV</h2>
+        <h2>Flux de données : de l'offre au CV</h2>
 
-        <p>L'extension envoie le contenu extrait au serveur, qui prend ensuite le relais pour la structuration et la generation du CV. Ce flux permet de centraliser l'intelligence IA cote serveur tout en offrant une experience fluide cote navigateur.</p>
+        <p>L'extension envoie le contenu extrait au serveur, qui prend ensuite le relais pour la structuration et la génération du CV. Ce flux permet de centraliser l'intelligence IA côté serveur tout en offrant une expérience fluide côté navigateur.</p>
 
         <div class="diagram">
-          <div class="diagram-title">Flux de donnees Extension vers Pipeline de generation</div>
+          <div class="diagram-title">Flux de données Extension vers Pipeline de génération</div>
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
@@ -474,14 +474,14 @@ sequenceDiagram
           </div>
         </div>
 
-        <h3>Etapes detaillees</h3>
+        <h3>Étapes détaillées</h3>
 
         <ol>
-          <li>L'extension extrait le contenu de l'offre et le convertit en <strong>texte structure</strong> cote navigateur</li>
-          <li>Le contenu est envoye au serveur qui execute une <strong>extraction IA</strong> pour structurer les donnees en format exploitable (titre, entreprise, competences, etc.)</li>
-          <li>Le <strong>pipeline standard de generation de CV</strong> prend le relais (le meme que pour les offres soumises via URL ou PDF)</li>
-          <li>L'extension suit la progression via une <strong>surveillance periodique</strong> : rafraichissement toutes les 5 secondes quand l'interface est ouverte, toutes les 30 secondes en arriere-plan</li>
-          <li>Le CV genere est accessible en <strong>un clic</strong> depuis l'extension, avec ouverture directe dans le SaaS et pre-selection automatique du document</li>
+          <li>L'extension extrait le contenu de l'offre et le convertit en <strong>texte structuré</strong> côté navigateur</li>
+          <li>Le contenu est envoyé au serveur qui exécute une <strong>extraction IA</strong> pour structurer les données en format exploitable (titre, entreprise, compétences, etc.)</li>
+          <li>Le <strong>pipeline standard de génération de CV</strong> prend le relais (le même que pour les offres soumises via URL ou PDF)</li>
+          <li>L'extension suit la progression via une <strong>surveillance périodique</strong> : rafraîchissement toutes les 5 secondes quand l'interface est ouverte, toutes les 30 secondes en arrière-plan</li>
+          <li>Le CV généré est accessible en <strong>un clic</strong> depuis l'extension, avec ouverture directe dans le SaaS et pré-sélection automatique du document</li>
         </ol>
 
         <!-- ═══════════════════════════════════════════════ -->
@@ -490,7 +490,7 @@ sequenceDiagram
 
         <h2>Interface de l'extension (Popup)</h2>
 
-        <p>L'interface est une fenetre compacte en <strong>mode sombre</strong>, concue pour etre efficace sans quitter la page en cours. Elle est disponible en <strong>4 langues</strong> avec changement instantane.</p>
+        <p>L'interface est une fenêtre compacte en <strong>mode sombre</strong>, conçue pour être efficace sans quitter la page en cours. Elle est disponible en <strong>4 langues</strong> avec changement instantané.</p>
 
         <h3>Vues principales</h3>
 
@@ -498,7 +498,7 @@ sequenceDiagram
           <thead>
             <tr>
               <th>Vue</th>
-              <th>Fonctionnalite</th>
+              <th>Fonctionnalité</th>
             </tr>
           </thead>
           <tbody>
@@ -507,41 +507,41 @@ sequenceDiagram
               <td>Email/mot de passe ou connexion via Google/GitHub, avec messages d'erreur traduits</td>
             </tr>
             <tr>
-              <td><strong>Selecteur de CV</strong></td>
-              <td>Liste deroulante filtrant les CV sources (importes, manuels, traduits) avec icones de type et drapeaux de langue</td>
+              <td><strong>Sélecteur de CV</strong></td>
+              <td>Liste déroulante filtrant les CV sources (importés, manuels, traduits) avec icônes de type et drapeaux de langue</td>
             </tr>
             <tr>
               <td><strong>Panier d'offres</strong></td>
-              <td>Accumulation des offres extraites avec badge de score de qualite, gestion des doublons, suppression individuelle</td>
+              <td>Accumulation des offres extraites avec badge de score de qualité, gestion des doublons, suppression individuelle</td>
             </tr>
             <tr>
-              <td><strong>Barre de credits</strong></td>
-              <td>Calcul dynamique du cout total avec alerte si credits insuffisants</td>
+              <td><strong>Barre de crédits</strong></td>
+              <td>Calcul dynamique du coût total avec alerte si crédits insuffisants</td>
             </tr>
             <tr>
-              <td><strong>Bouton Generer</strong></td>
-              <td>Active conditionnellement : offres selectionnees + CV choisi + credits suffisants + pas de generation en cours</td>
+              <td><strong>Bouton Générer</strong></td>
+              <td>Activé conditionnellement : offres sélectionnées + CV choisi + crédits suffisants + pas de génération en cours</td>
             </tr>
             <tr>
               <td><strong>Progression</strong></td>
-              <td>Suivi temps reel de chaque tache avec 6 etats visuels : analyse, file d'attente, en cours (avec etape detaillee), termine, echoue, annule</td>
+              <td>Suivi temps réel de chaque tâche avec 6 états visuels : analyse, file d'attente, en cours (avec étape détaillée), terminé, échoué, annulé</td>
             </tr>
             <tr>
-              <td><strong>Selecteur de langue</strong></td>
-              <td>4 drapeaux en pied de page, changement instantane de toute l'interface</td>
+              <td><strong>Sélecteur de langue</strong></td>
+              <td>4 drapeaux en pied de page, changement instantané de toute l'interface</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Bouton "FitMyCV +" injecte dans les pages</h3>
+        <h3>Bouton "FitMyCV +" injecté dans les pages</h3>
 
-        <p>Sur les job boards connus, un bouton est injecte directement dans la page a cote du titre de l'offre. Ce bouton :</p>
+        <p>Sur les job boards connus, un bouton est injecté directement dans la page à côté du titre de l'offre. Ce bouton :</p>
 
         <ul>
-          <li><strong>S'adapte visuellement</strong> au design de chaque site (taille, espacement, disposition) pour une integration naturelle</li>
-          <li>Presente <strong>5 etats visuels</strong> avec retour immediat : par defaut, chargement, succes, doublon et erreur</li>
+          <li><strong>S'adapte visuellement</strong> au design de chaque site (taille, espacement, disposition) pour une intégration naturelle</li>
+          <li>Présente <strong>5 états visuels</strong> avec retour immédiat : par défaut, chargement, succès, doublon et erreur</li>
           <li>Est <strong>traduit dynamiquement</strong> selon la langue choisie dans l'extension</li>
-          <li><strong>Persiste automatiquement</strong> malgre les re-rendus des applications web modernes</li>
+          <li><strong>Persiste automatiquement</strong> malgré les re-rendus des applications web modernes</li>
         </ul>
 
         <!-- ═══════════════════════════════════════════════ -->
@@ -552,28 +552,28 @@ sequenceDiagram
 
         <div class="card-grid">
           <div class="card">
-            <h3>Detection intelligente</h3>
-            <p>Systeme en 2 phases capable de detecter des offres sur <strong>n'importe quel site</strong>, avec optimisation pour 14+ job boards connus. Detection en moins de 10 ms.</p>
+            <h3>Détection intelligente</h3>
+            <p>Système en 2 phases capable de détecter des offres sur <strong>n'importe quel site</strong>, avec optimisation pour 14+ job boards connus. Détection en moins de 10 ms.</p>
           </div>
           <div class="card">
             <h3>Extraction adaptative</h3>
-            <p>Double strategie (algorithme de contenu principal + regles ciblees par site) avec <strong>scoring automatique de qualite</strong>. Le meilleur resultat est toujours selectionne.</p>
+            <p>Double stratégie (algorithme de contenu principal + règles ciblées par site) avec <strong>scoring automatique de qualité</strong>. Le meilleur résultat est toujours sélectionné.</p>
           </div>
           <div class="card">
-            <h3>Compatibilite universelle</h3>
-            <p><strong>Chrome + Firefox</strong> depuis une seule base de code. Gestion native des applications web modernes et des panneaux lateraux (Indeed, LinkedIn, Glassdoor).</p>
+            <h3>Compatibilité universelle</h3>
+            <p><strong>Chrome + Firefox</strong> depuis une seule base de code. Gestion native des applications web modernes et des panneaux latéraux (Indeed, LinkedIn, Glassdoor).</p>
           </div>
           <div class="card">
-            <h3>Securite robuste</h3>
-            <p>Authentification JWT dediee avec <strong>renouvellement proactif et reactif</strong>. Transmission securisee des jetons, gestion gracieuse de l'expiration.</p>
+            <h3>Sécurité robuste</h3>
+            <p>Authentification JWT dédiée avec <strong>renouvellement proactif et réactif</strong>. Transmission sécurisée des jetons, gestion gracieuse de l'expiration.</p>
           </div>
           <div class="card">
-            <h3>Experience utilisateur soignee</h3>
-            <p>Interface en <strong>mode sombre</strong>, feedback instantane, progression temps reel, <strong>4 langues</strong> avec detection automatique.</p>
+            <h3>Expérience utilisateur soignée</h3>
+            <p>Interface en <strong>mode sombre</strong>, feedback instantané, progression temps réel, <strong>4 langues</strong> avec détection automatique.</p>
           </div>
           <div class="card">
-            <h3>Integration transparente</h3>
-            <p>Le bouton injecte dans les pages cree un <strong>pont fluide</strong> entre la navigation et la generation de CV. Un clic suffit pour capturer une offre.</p>
+            <h3>Intégration transparente</h3>
+            <p>Le bouton injecté dans les pages crée un <strong>pont fluide</strong> entre la navigation et la génération de CV. Un clic suffit pour capturer une offre.</p>
           </div>
         </div>
 

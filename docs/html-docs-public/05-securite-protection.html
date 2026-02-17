@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Securite & Protection des Donnees | FitMyCV.io</title>
+  <title>Sécurité & Protection des Données | FitMyCV.io</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -20,12 +20,12 @@
         <div class="breadcrumb">
           <a href="./index.html">Accueil</a>
           <span>/</span>
-          <span>Securite & Protection des Donnees</span>
+          <span>Sécurité & Protection des Données</span>
         </div>
 
-        <h1>Securite & Protection des Donnees</h1>
+        <h1>Sécurité & Protection des Données</h1>
         <p class="lead">
-          FitMyCV.io manipule des donnees professionnelles sensibles &mdash; CV, informations personnelles, coordonnees. La securite est integree a chaque niveau de la plateforme, de la validation des fichiers importes jusqu'a la conformite RGPD automatisee. Cette page presente les trois piliers de protection : securite applicative, securite middleware et conformite reglementaire.
+          FitMyCV.io manipule des données professionnelles sensibles &mdash; CV, informations personnelles, coordonnées. La sécurité est intégrée à chaque niveau de la plateforme, de la validation des fichiers importés jusqu'à la conformité RGPD automatisée. Cette page présente les trois piliers de protection : sécurité applicative, sécurité middleware et conformité réglementaire.
         </p>
 
         <!-- ============================================================ -->
@@ -35,7 +35,7 @@
         <div class="card-grid">
           <div class="card">
             <h4>3 niveaux</h4>
-            <p>de defense en profondeur</p>
+            <p>de défense en profondeur</p>
           </div>
           <div class="card">
             <h4>7 menaces</h4>
@@ -47,7 +47,7 @@
           </div>
           <div class="card">
             <h4>12 limites</h4>
-            <p>de debit differenciees</p>
+            <p>de débit différenciées</p>
           </div>
         </div>
 
@@ -55,35 +55,35 @@
         <!-- DEFENSE EN PROFONDEUR                                        -->
         <!-- ============================================================ -->
 
-        <h2>Defense en profondeur</h2>
+        <h2>Défense en profondeur</h2>
 
         <p>
-          La securite de FitMyCV.io s'organise en <strong>trois niveaux complementaires</strong>. Si une faille venait a contourner un niveau, les protections des autres niveaux prennent le relais. C'est le principe de <em>defense en profondeur</em>, recommande par les standards de securite internationaux.
+          La sécurité de FitMyCV.io s'organise en <strong>trois niveaux complémentaires</strong>. Si une faille venait à contourner un niveau, les protections des autres niveaux prennent le relais. C'est le principe de <em>défense en profondeur</em>, recommandé par les standards de sécurité internationaux.
         </p>
 
         <table>
           <thead>
             <tr>
               <th>Niveau</th>
-              <th>Perimetre</th>
+              <th>Périmètre</th>
               <th>Protections</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><span class="badge badge-primary">Applicatif</span></td>
-              <td>Validation des donnees entrantes</td>
-              <td>Verification des fichiers en 5 couches, masquage des donnees personnelles dans les logs, nettoyage anti-injection sur toutes les entrees</td>
+              <td>Validation des données entrantes</td>
+              <td>Vérification des fichiers en 5 couches, masquage des données personnelles dans les logs, nettoyage anti-injection sur toutes les entrées</td>
             </tr>
             <tr>
               <td><span class="badge badge-warning">Middleware</span></td>
-              <td>Filtrage des requetes</td>
-              <td>Limitation de debit par route, en-tetes de securite (HSTS, CSP, anti-clickjacking), gestion CORS pour les extensions navigateur</td>
+              <td>Filtrage des requêtes</td>
+              <td>Limitation de débit par route, en-têtes de sécurité (HSTS, CSP, anti-clickjacking), gestion CORS pour les extensions navigateur</td>
             </tr>
             <tr>
               <td><span class="badge badge-success">Infrastructure</span></td>
-              <td>Couche reseau et transport</td>
-              <td>HTTPS obligatoire, chiffrement des donnees, isolation des environnements</td>
+              <td>Couche réseau et transport</td>
+              <td>HTTPS obligatoire, chiffrement des données, isolation des environnements</td>
             </tr>
           </tbody>
         </table>
@@ -92,14 +92,14 @@
         <!-- PARTIE 1 : SECURITE APPLICATIVE                             -->
         <!-- ============================================================ -->
 
-        <h2>Securite applicative</h2>
+        <h2>Sécurité applicative</h2>
 
         <p>
-          La protection des donnees est integree a chaque niveau de FitMyCV.io grace a trois modules de securite complementaires : la validation approfondie des fichiers importes, la protection automatique des donnees personnelles dans les journaux systeme, et le nettoyage exhaustif de toutes les donnees utilisateur contre les injections de code.
+          La protection des données est intégrée à chaque niveau de FitMyCV.io grâce à trois modules de sécurité complémentaires : la validation approfondie des fichiers importés, la protection automatique des données personnelles dans les journaux système, et le nettoyage exhaustif de toutes les données utilisateur contre les injections de code.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Trois piliers de securite applicative</div>
+          <div class="diagram-title">Trois piliers de sécurité applicative</div>
           <div class="mermaid">
 graph TB
     subgraph Security["Modules de securite"]
@@ -136,11 +136,11 @@ graph TB
         <h3>Validation des fichiers en 5 couches</h3>
 
         <p>
-          Chaque fichier importe (CV au format PDF, par exemple) traverse un pipeline de validation en <strong>5 couches successives</strong>. Le fichier doit passer chaque etape pour etre accepte &mdash; un seul echec suffit a provoquer le rejet immediat.
+          Chaque fichier importé (CV au format PDF, par exemple) traverse un pipeline de validation en <strong>5 couches successives</strong>. Le fichier doit passer chaque étape pour être accepté &mdash; un seul échec suffit à provoquer le rejet immédiat.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Pipeline de validation d'un fichier importe</div>
+          <div class="diagram-title">Pipeline de validation d'un fichier importé</div>
           <div class="mermaid">
 graph LR
     A["1. Presence<br/>du fichier"] --> B["2. Nom<br/>valide"]
@@ -171,90 +171,90 @@ graph LR
           <thead>
             <tr>
               <th>Couche</th>
-              <th>Verification</th>
+              <th>Vérification</th>
               <th>Protection</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>1. Presence</strong></td>
-              <td>Le fichier existe-t-il reellement dans la requete ?</td>
-              <td>Rejette les requetes vides ou malformees</td>
+              <td><strong>1. Présence</strong></td>
+              <td>Le fichier existe-t-il réellement dans la requête ?</td>
+              <td>Rejette les requêtes vides ou malformées</td>
             </tr>
             <tr>
               <td><strong>2. Nom du fichier</strong></td>
-              <td>Le nom contient-il des caracteres dangereux ou des sequences d'acces non autorise ?</td>
-              <td>Bloque les tentatives d'acces a des fichiers systeme</td>
+              <td>Le nom contient-il des caractères dangereux ou des séquences d'accès non autorisé ?</td>
+              <td>Bloque les tentatives d'accès à des fichiers système</td>
             </tr>
             <tr>
-              <td><strong>3. Type declare</strong></td>
-              <td>Le type MIME annonce correspond-il aux formats autorises ?</td>
-              <td>Rejette les types de fichiers non prevus</td>
+              <td><strong>3. Type déclaré</strong></td>
+              <td>Le type MIME annoncé correspond-il aux formats autorisés ?</td>
+              <td>Rejette les types de fichiers non prévus</td>
             </tr>
             <tr>
               <td><strong>4. Taille</strong></td>
-              <td>Le fichier respecte-t-il la limite de taille autorisee ?</td>
-              <td>Empeche les uploads surdimensionnes</td>
+              <td>Le fichier respecte-t-il la limite de taille autorisée ?</td>
+              <td>Empêche les uploads surdimensionnés</td>
             </tr>
             <tr>
               <td><strong>5. Signature binaire</strong></td>
-              <td>Les premiers octets du fichier correspondent-ils au type annonce ?</td>
-              <td>Detecte les fichiers deguises (un executable renomme en PDF, par exemple)</td>
+              <td>Les premiers octets du fichier correspondent-ils au type annoncé ?</td>
+              <td>Détecte les fichiers déguisés (un exécutable renommé en PDF, par exemple)</td>
             </tr>
           </tbody>
         </table>
 
         <div class="callout callout-info">
-          <div class="callout-title">Pourquoi verifier la signature binaire ?</div>
-          <p>Le type declare d'un fichier (PDF, image...) peut etre falsifie par un attaquant. FitMyCV.io verifie les premiers octets du fichier &mdash; sa <em>signature binaire</em> &mdash; pour confirmer son type reel. Cette mesure avancee empeche l'import de fichiers malveillants deguises en documents legitimes, une protection que beaucoup d'applications n'implementent pas.</p>
+          <div class="callout-title">Pourquoi vérifier la signature binaire ?</div>
+          <p>Le type déclaré d'un fichier (PDF, image...) peut être falsifié par un attaquant. FitMyCV.io vérifie les premiers octets du fichier &mdash; sa <em>signature binaire</em> &mdash; pour confirmer son type réel. Cette mesure avancée empêche l'import de fichiers malveillants déguisés en documents légitimes, une protection que beaucoup d'applications n'implémentent pas.</p>
         </div>
 
         <!-- --- Masquage PII --- -->
 
-        <h3>Protection des donnees personnelles dans les journaux</h3>
+        <h3>Protection des données personnelles dans les journaux</h3>
 
         <p>
-          Toutes les operations du systeme sont journalisees pour le diagnostic et le monitoring, mais les donnees sensibles sont <strong>automatiquement masquees avant tout enregistrement</strong>. Ce masquage s'applique de maniere recursive a toutes les structures de donnees, garantissant qu'aucune information personnelle ne peut fuiter dans les journaux, meme dans des objets profondement imbriques.
+          Toutes les opérations du système sont journalisées pour le diagnostic et le monitoring, mais les données sensibles sont <strong>automatiquement masquées avant tout enregistrement</strong>. Ce masquage s'applique de manière récursive à toutes les structures de données, garantissant qu'aucune information personnelle ne peut fuiter dans les journaux, même dans des objets profondément imbriqués.
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Type de donnee</th>
-              <th>Protection appliquee</th>
+              <th>Type de donnée</th>
+              <th>Protection appliquée</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Adresses email</strong></td>
-              <td>Partiellement masquees (ex : j***n@domaine.com)</td>
+              <td>Partiellement masquées (ex : j***n@domaine.com)</td>
             </tr>
             <tr>
-              <td><strong>Cles d'API</strong></td>
-              <td>Integralement remplacees par un marqueur</td>
+              <td><strong>Clés d'API</strong></td>
+              <td>Intégralement remplacées par un marqueur</td>
             </tr>
             <tr>
               <td><strong>Jetons d'authentification</strong></td>
-              <td>Integralement masques</td>
+              <td>Intégralement masqués</td>
             </tr>
             <tr>
               <td><strong>Mots de passe</strong></td>
-              <td>Supprimes des journaux</td>
+              <td>Supprimés des journaux</td>
             </tr>
             <tr>
               <td><strong>Jetons de session</strong></td>
-              <td>Integralement masques</td>
+              <td>Intégralement masqués</td>
             </tr>
             <tr>
               <td><strong>Identifiants utilisateur</strong></td>
-              <td>Pseudonymises par hachage cryptographique</td>
+              <td>Pseudonymisés par hachage cryptographique</td>
             </tr>
           </tbody>
         </table>
 
         <div class="callout callout-success">
-          <div class="callout-title">Conformite RGPD integree</div>
-          <p>Ce mecanisme de masquage automatique est un pilier de la conformite RGPD : aucune donnee personnelle n'apparait en clair dans les journaux systeme. En cas d'audit, les logs peuvent etre presentes sans risque de fuite de donnees personnelles.</p>
+          <div class="callout-title">Conformité RGPD intégrée</div>
+          <p>Ce mécanisme de masquage automatique est un pilier de la conformité RGPD : aucune donnée personnelle n'apparaît en clair dans les journaux système. En cas d'audit, les logs peuvent être présentés sans risque de fuite de données personnelles.</p>
         </div>
 
         <!-- --- Sanitisation XSS --- -->
@@ -262,7 +262,7 @@ graph LR
         <h3>Protection contre les injections de code (XSS)</h3>
 
         <p>
-          Toute donnee saisie ou importee par un utilisateur est nettoyee contre les injections de code (XSS) avant stockage. Trois niveaux de protection sont appliques selon le contexte d'utilisation.
+          Toute donnée saisie ou importée par un utilisateur est nettoyée contre les injections de code (XSS) avant stockage. Trois niveaux de protection sont appliqués selon le contexte d'utilisation.
         </p>
 
         <div class="diagram">
@@ -293,51 +293,51 @@ graph TB
           <thead>
             <tr>
               <th>Niveau</th>
-              <th>Strategie</th>
+              <th>Stratégie</th>
               <th>Cas d'usage</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><span class="badge badge-primary">1. Echappement</span></td>
-              <td>Les caracteres HTML dangereux sont convertis en entites inoffensives</td>
+              <td><span class="badge badge-primary">1. Échappement</span></td>
+              <td>Les caractères HTML dangereux sont convertis en entités inoffensives</td>
               <td>Affichage de texte dans des pages web</td>
             </tr>
             <tr>
               <td><span class="badge badge-warning">2. Liste blanche</span></td>
-              <td>Seules 10 balises de mise en forme sont autorisees, tout le reste est supprime</td>
-              <td>Contenu riche (editeur de texte)</td>
+              <td>Seules 10 balises de mise en forme sont autorisées, tout le reste est supprimé</td>
+              <td>Contenu riche (éditeur de texte)</td>
             </tr>
             <tr>
               <td><span class="badge badge-error">3. Suppression totale</span></td>
-              <td>Tout le HTML est integralement supprime</td>
-              <td>Donnees structurees comme les CV</td>
+              <td>Tout le HTML est intégralement supprimé</td>
+              <td>Données structurées comme les CV</td>
             </tr>
           </tbody>
         </table>
 
         <p>
-          Le nettoyage HTML s'effectue en <strong>4 passes successives</strong>, chacune ciblant un vecteur d'attaque different :
+          Le nettoyage HTML s'effectue en <strong>4 passes successives</strong>, chacune ciblant un vecteur d'attaque différent :
         </p>
 
         <ol>
-          <li><strong>Suppression des blocs de script et de style</strong> &mdash; Elimine tout code executable embarque.</li>
+          <li><strong>Suppression des blocs de script et de style</strong> &mdash; Élimine tout code exécutable embarqué.</li>
           <li><strong>Suppression des URLs dangereuses</strong> &mdash; Bloque les protocoles malveillants dans les liens.</li>
-          <li><strong>Suppression des gestionnaires d'evenements</strong> &mdash; Retire les attributs qui executent du code lors d'interactions.</li>
-          <li><strong>Filtrage par liste blanche</strong> &mdash; Seules les balises de mise en forme autorisees sont conservees, toutes les autres sont supprimees.</li>
+          <li><strong>Suppression des gestionnaires d'événements</strong> &mdash; Retire les attributs qui exécutent du code lors d'interactions.</li>
+          <li><strong>Filtrage par liste blanche</strong> &mdash; Seules les balises de mise en forme autorisées sont conservées, toutes les autres sont supprimées.</li>
         </ol>
 
         <div class="callout callout-warning">
-          <div class="callout-title">Protection renforcee des CV</div>
-          <p>Les donnees de CV, etant des donnees structurees critiques, beneficient d'une protection renforcee de niveau 3 : tout le HTML est integralement supprime, garantissant que les CV stockes ne contiennent aucun code potentiellement malveillant. De meme, les URLs fournies par les utilisateurs sont verifiees &mdash; seuls les protocoles HTTP et HTTPS sont acceptes.</p>
+          <div class="callout-title">Protection renforcée des CV</div>
+          <p>Les données de CV, étant des données structurées critiques, bénéficient d'une protection renforcée de niveau 3 : tout le HTML est intégralement supprimé, garantissant que les CV stockés ne contiennent aucun code potentiellement malveillant. De même, les URLs fournies par les utilisateurs sont vérifiées &mdash; seuls les protocoles HTTP et HTTPS sont acceptés.</p>
         </div>
 
         <!-- --- Tableau 7 menaces --- -->
 
-        <h3>7 menaces identifiees et couvertes</h3>
+        <h3>7 menaces identifiées et couvertes</h3>
 
         <p>
-          Le systeme de securite applicative couvre 7 menaces reconnues par le referentiel OWASP :
+          Le système de sécurité applicative couvre 7 menaces reconnues par le référentiel OWASP :
         </p>
 
         <table>
@@ -350,31 +350,31 @@ graph TB
           <tbody>
             <tr>
               <td>Import de fichier malveillant</td>
-              <td>Verification de la signature binaire + type + taille (5 couches)</td>
+              <td>Vérification de la signature binaire + type + taille (5 couches)</td>
             </tr>
             <tr>
-              <td>Acces non autorise a des fichiers</td>
-              <td>Detection de chemins dangereux et nettoyage des noms de fichiers</td>
+              <td>Accès non autorisé à des fichiers</td>
+              <td>Détection de chemins dangereux et nettoyage des noms de fichiers</td>
             </tr>
             <tr>
-              <td>Fuite de donnees personnelles dans les journaux</td>
-              <td>Masquage automatique de 6 types de donnees sensibles</td>
+              <td>Fuite de données personnelles dans les journaux</td>
+              <td>Masquage automatique de 6 types de données sensibles</td>
             </tr>
             <tr>
-              <td>Injection de code dans les donnees CV (XSS stocke)</td>
-              <td>Suppression complete du HTML dans les donnees structurees</td>
+              <td>Injection de code dans les données CV (XSS stocké)</td>
+              <td>Suppression complète du HTML dans les données structurées</td>
             </tr>
             <tr>
-              <td>Injection de code via les formulaires (XSS reflechi)</td>
-              <td>Echappement de tous les caracteres HTML dangereux</td>
+              <td>Injection de code via les formulaires (XSS réfléchi)</td>
+              <td>Échappement de tous les caractères HTML dangereux</td>
             </tr>
             <tr>
               <td>Injection via URL malveillante</td>
-              <td>Seuls les protocoles HTTP et HTTPS sont autorises</td>
+              <td>Seuls les protocoles HTTP et HTTPS sont autorisés</td>
             </tr>
             <tr>
               <td>Injection via adresse email</td>
-              <td>Validation de format + nettoyage des caracteres dangereux</td>
+              <td>Validation de format + nettoyage des caractères dangereux</td>
             </tr>
           </tbody>
         </table>
@@ -383,14 +383,14 @@ graph TB
         <!-- PARTIE 2 : SECURITE MIDDLEWARE                               -->
         <!-- ============================================================ -->
 
-        <h2>Securite middleware</h2>
+        <h2>Sécurité middleware</h2>
 
         <p>
-          Toutes les requetes HTTP entrantes transitent par une <strong>couche de securite centralisee</strong> qui applique une chaine de verifications avant de transmettre la requete a l'application. Cette couche assure la protection anti-abus, l'injection d'en-tetes de securite et la gestion des acces cross-origin pour les extensions navigateur.
+          Toutes les requêtes HTTP entrantes transitent par une <strong>couche de sécurité centralisée</strong> qui applique une chaîne de vérifications avant de transmettre la requête à l'application. Cette couche assure la protection anti-abus, l'injection d'en-têtes de sécurité et la gestion des accès cross-origin pour les extensions navigateur.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Chaine de traitement des requetes</div>
+          <div class="diagram-title">Chaîne de traitement des requêtes</div>
           <div class="mermaid">
 flowchart LR
     Req["Requete<br/>entrante"] --> CORS["Verification<br/>CORS"]
@@ -408,25 +408,25 @@ flowchart LR
 
         <!-- --- Rate limiting --- -->
 
-        <h3>Limitation de debit par route (12 limites differenciees)</h3>
+        <h3>Limitation de débit par route (12 limites différenciées)</h3>
 
         <p>
-          Le systeme de limitation de debit protege contre les abus en appliquant des <strong>limites differenciees par type d'operation</strong>. Les operations sensibles (creation de compte, authentification) ont des limites strictes, tandis que les operations courantes beneficient de seuils plus eleves. Ce mecanisme protege aussi contre les <strong>couts non maitrises</strong> &mdash; chaque generation de CV consomme des ressources d'intelligence artificielle, et les limites empechent un usage abusif de faire exploser la facture.
+          Le système de limitation de débit protège contre les abus en appliquant des <strong>limites différenciées par type d'opération</strong>. Les opérations sensibles (création de compte, authentification) ont des limites strictes, tandis que les opérations courantes bénéficient de seuils plus élevés. Ce mécanisme protège aussi contre les <strong>coûts non maîtrisés</strong> &mdash; chaque génération de CV consomme des ressources d'intelligence artificielle, et les limites empêchent un usage abusif de faire exploser la facture.
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Type d'operation</th>
+              <th>Type d'opération</th>
               <th>Limite par minute</th>
               <th>Justification</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Creation de compte</td>
+              <td>Création de compte</td>
               <td>5</td>
-              <td>Prevention des inscriptions en masse</td>
+              <td>Prévention des inscriptions en masse</td>
             </tr>
             <tr>
               <td>Authentification</td>
@@ -436,198 +436,198 @@ flowchart LR
             <tr>
               <td>Feedback et signalements</td>
               <td>10</td>
-              <td>Prevention du spam</td>
+              <td>Prévention du spam</td>
             </tr>
             <tr>
-              <td>Creation de taches IA</td>
+              <td>Création de tâches IA</td>
               <td>30</td>
-              <td>Maitrise des couts d'intelligence artificielle</td>
+              <td>Maîtrise des coûts d'intelligence artificielle</td>
             </tr>
             <tr>
               <td>Administration</td>
               <td>40&ndash;60</td>
-              <td>Operations d'administration (seuils adaptes)</td>
+              <td>Opérations d'administration (seuils adaptés)</td>
             </tr>
             <tr>
-              <td>Operations sur les CV</td>
+              <td>Opérations sur les CV</td>
               <td>60</td>
-              <td>Usage courant (lecture, edition)</td>
+              <td>Usage courant (lecture, édition)</td>
             </tr>
             <tr>
               <td>Routes de l'extension</td>
               <td>60</td>
-              <td>Operations standard depuis le navigateur</td>
+              <td>Opérations standard depuis le navigateur</td>
             </tr>
             <tr>
-              <td>Requetes par defaut</td>
+              <td>Requêtes par défaut</td>
               <td>100</td>
-              <td>Limite globale de securite</td>
+              <td>Limite globale de sécurité</td>
             </tr>
             <tr>
-              <td>Synchronisation temps reel</td>
+              <td>Synchronisation temps réel</td>
               <td>120</td>
-              <td>Requetes frequentes (suivi de progression)</td>
+              <td>Requêtes fréquentes (suivi de progression)</td>
             </tr>
           </tbody>
         </table>
 
         <!-- --- Security headers --- -->
 
-        <h3>En-tetes de securite</h3>
+        <h3>En-têtes de sécurité</h3>
 
         <p>
-          Le middleware injecte un ensemble complet d'en-tetes de securite sur toutes les reponses, conformement aux recommandations OWASP :
+          Le middleware injecte un ensemble complet d'en-têtes de sécurité sur toutes les réponses, conformément aux recommandations OWASP :
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>En-tete</th>
+              <th>En-tête</th>
               <th>Protection</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>HSTS</strong> (avec preload)</td>
-              <td>Force HTTPS pendant 2 ans, y compris les sous-domaines. Le domaine est inscrit dans les listes de preload des navigateurs pour forcer HTTPS des la premiere visite.</td>
+              <td>Force HTTPS pendant 2 ans, y compris les sous-domaines. Le domaine est inscrit dans les listes de preload des navigateurs pour forcer HTTPS dès la première visite.</td>
             </tr>
             <tr>
               <td><strong>Anti-clickjacking</strong></td>
-              <td>Empeche l'embarquement du site dans un cadre tiers, bloquant les attaques par superposition d'interface.</td>
+              <td>Empêche l'embarquement du site dans un cadre tiers, bloquant les attaques par superposition d'interface.</td>
             </tr>
             <tr>
               <td><strong>Content Security Policy (CSP)</strong></td>
-              <td>Politique de securite du contenu avec 10 directives controlant les sources autorisees pour les scripts, styles, images, polices et connexions.</td>
+              <td>Politique de sécurité du contenu avec 10 directives contrôlant les sources autorisées pour les scripts, styles, images, polices et connexions.</td>
             </tr>
             <tr>
               <td><strong>Politique de permissions</strong></td>
-              <td>Desactive l'acces a la camera, au microphone, a la geolocalisation et au suivi publicitaire.</td>
+              <td>Désactive l'accès à la caméra, au microphone, à la géolocalisation et au suivi publicitaire.</td>
             </tr>
             <tr>
-              <td><strong>Politique de referent</strong></td>
-              <td>Limite les informations partagees lors de la navigation vers des sites tiers.</td>
+              <td><strong>Politique de référent</strong></td>
+              <td>Limite les informations partagées lors de la navigation vers des sites tiers.</td>
             </tr>
             <tr>
               <td><strong>Isolation cross-origin</strong></td>
-              <td>Isole le contexte de navigation, protegeant contre les attaques par canal auxiliaire.</td>
+              <td>Isole le contexte de navigation, protégeant contre les attaques par canal auxiliaire.</td>
             </tr>
             <tr>
               <td><strong>Anti-MIME sniffing</strong></td>
-              <td>Force le navigateur a respecter le type de contenu declare, empechant l'execution de fichiers deguises.</td>
+              <td>Force le navigateur à respecter le type de contenu déclaré, empêchant l'exécution de fichiers déguisés.</td>
             </tr>
           </tbody>
         </table>
 
         <!-- --- Resilience --- -->
 
-        <h3>Resilience au redemarrage</h3>
+        <h3>Résilience au redémarrage</h3>
 
         <p>
-          Apres un redemarrage du serveur (deploiement, mise a jour, incident), le systeme detecte et nettoie automatiquement toutes les operations qui etaient en cours au moment de l'arret. Les taches interrompues sont marquees comme echouees, et les operations de calcul en cours sont reinitialisees. Les utilisateurs ne voient jamais de taches bloquees indefiniment &mdash; <strong>zero maintenance manuelle requise</strong>.
+          Après un redémarrage du serveur (déploiement, mise à jour, incident), le système détecte et nettoie automatiquement toutes les opérations qui étaient en cours au moment de l'arrêt. Les tâches interrompues sont marquées comme échouées, et les opérations de calcul en cours sont réinitialisées. Les utilisateurs ne voient jamais de tâches bloquées indéfiniment &mdash; <strong>zéro maintenance manuelle requise</strong>.
         </p>
 
         <div class="callout callout-info">
-          <div class="callout-title">CORS securise pour les extensions</div>
-          <p>L'extension navigateur (Chrome et Firefox) communique avec l'API via des requetes cross-origin. Le middleware valide strictement l'origine de chaque requete et n'autorise que les extensions legitimes. Les requetes provenant d'origines non reconnues sont refusees.</p>
+          <div class="callout-title">CORS sécurisé pour les extensions</div>
+          <p>L'extension navigateur (Chrome et Firefox) communique avec l'API via des requêtes cross-origin. Le middleware valide strictement l'origine de chaque requête et n'autorise que les extensions légitimes. Les requêtes provenant d'origines non reconnues sont refusées.</p>
         </div>
 
         <!-- ============================================================ -->
         <!-- PARTIE 3 : CONFORMITE RGPD                                  -->
         <!-- ============================================================ -->
 
-        <h2>Conformite RGPD native</h2>
+        <h2>Conformité RGPD native</h2>
 
         <p>
-          La conformite RGPD est integree <em>nativement</em> dans l'architecture de FitMyCV.io &mdash; pas en couche supplementaire, mais dans la conception meme du systeme. Chaque mecanisme de gestion des donnees personnelles est automatise et auditable.
+          La conformité RGPD est intégrée <em>nativement</em> dans l'architecture de FitMyCV.io &mdash; pas en couche supplémentaire, mais dans la conception même du système. Chaque mécanisme de gestion des données personnelles est automatisé et auditable.
         </p>
 
         <div class="card-grid">
           <div class="card">
-            <h4>Opt-in par defaut</h4>
-            <p>Tous les cookies non-necessaires sont desactives par defaut. Aucun suivi ne s'active sans consentement explicite de l'utilisateur.</p>
+            <h4>Opt-in par défaut</h4>
+            <p>Tous les cookies non-nécessaires sont désactivés par défaut. Aucun suivi ne s'active sans consentement explicite de l'utilisateur.</p>
           </div>
           <div class="card">
-            <h4>Zero cookies tiers</h4>
-            <p>La plateforme n'utilise aucun cookie de service tiers. Les 7 cookies necessaires sont tous de premiere partie et documentes dans un registre de transparence.</p>
+            <h4>Zéro cookies tiers</h4>
+            <p>La plateforme n'utilise aucun cookie de service tiers. Les 7 cookies nécessaires sont tous de première partie et documentés dans un registre de transparence.</p>
           </div>
           <div class="card">
             <h4>Audit trail complet</h4>
-            <p>Chaque modification de consentement est tracee en base de donnees : action, preferences, adresse IP, navigateur et horodatage. Preuve opposable en cas de controle.</p>
+            <p>Chaque modification de consentement est tracée en base de données : action, préférences, adresse IP, navigateur et horodatage. Preuve opposable en cas de contrôle.</p>
           </div>
           <div class="card">
-            <h4>Droit a l'oubli automatise</h4>
-            <p>Suppression complete du compte et de toutes les donnees associees a la demande de l'utilisateur ou automatiquement apres 3 ans d'inactivite.</p>
+            <h4>Droit à l'oubli automatisé</h4>
+            <p>Suppression complète du compte et de toutes les données associées à la demande de l'utilisateur ou automatiquement après 3 ans d'inactivité.</p>
           </div>
         </div>
 
         <!-- --- Consentement --- -->
 
-        <h3>Consentement simplifie et respectueux</h3>
+        <h3>Consentement simplifié et respectueux</h3>
 
         <p>
-          Le systeme de consentement est volontairement simplifie a <strong>2 categories seulement</strong> (contre 4 ou 5 dans la plupart des plateformes), evitant la confusion qui pousse souvent les utilisateurs a accepter tout sans comprendre :
+          Le système de consentement est volontairement simplifié à <strong>2 catégories seulement</strong> (contre 4 ou 5 dans la plupart des plateformes), évitant la confusion qui pousse souvent les utilisateurs à accepter tout sans comprendre :
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Categorie</th>
-              <th>Etat par defaut</th>
+              <th>Catégorie</th>
+              <th>État par défaut</th>
               <th>Modifiable</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Necessaires</strong></td>
+              <td><strong>Nécessaires</strong></td>
               <td><span class="badge badge-success">Actif</span></td>
               <td>Non</td>
-              <td>Session, protection CSRF, consentement, preference de langue. Toujours actifs car indispensables au fonctionnement.</td>
+              <td>Session, protection CSRF, consentement, préférence de langue. Toujours actifs car indispensables au fonctionnement.</td>
             </tr>
             <tr>
               <td><strong>Analytiques</strong></td>
               <td><span class="badge badge-error">Inactif</span></td>
               <td>Oui</td>
-              <td>Prepare pour un outil d'analytics respectueux de la vie privee. Consentement explicite requis avant toute activation.</td>
+              <td>Préparé pour un outil d'analytics respectueux de la vie privée. Consentement explicite requis avant toute activation.</td>
             </tr>
           </tbody>
         </table>
 
         <p>
-          L'utilisateur dispose de trois options claires : <strong>Accepter tout</strong>, <strong>Refuser</strong>, ou <strong>Personnaliser</strong> ses preferences. En cas de changement de version du systeme de consentement, un re-consentement est automatiquement demande. Le consentement est synchronise instantanement entre tous les onglets du navigateur. La revocation est effective et immediate : les cookies, le stockage local et le stockage de session de la categorie revoquee sont supprimes.
+          L'utilisateur dispose de trois options claires : <strong>Accepter tout</strong>, <strong>Refuser</strong>, ou <strong>Personnaliser</strong> ses préférences. En cas de changement de version du système de consentement, un re-consentement est automatiquement demandé. Le consentement est synchronisé instantanément entre tous les onglets du navigateur. La révocation est effective et immédiate : les cookies, le stockage local et le stockage de session de la catégorie révoquée sont supprimés.
         </p>
 
         <!-- --- Audit trail --- -->
 
-        <h3>Audit trail en base de donnees</h3>
+        <h3>Audit trail en base de données</h3>
 
         <p>
-          Chaque modification de consentement est enregistree en base de donnees pour constituer un <strong>audit trail complet</strong>, prouvable en cas de controle. L'enregistrement capture :
+          Chaque modification de consentement est enregistrée en base de données pour constituer un <strong>audit trail complet</strong>, prouvable en cas de contrôle. L'enregistrement capture :
         </p>
 
         <ul>
-          <li><strong>L'action effectuee</strong> &mdash; creation, modification ou revocation du consentement</li>
-          <li><strong>Les preferences detaillees</strong> &mdash; quelles categories ont ete acceptees ou refusees</li>
-          <li><strong>L'adresse IP</strong> &mdash; pour prouver l'origine geographique du consentement</li>
-          <li><strong>Le navigateur utilise</strong> &mdash; identification de l'appareil</li>
-          <li><strong>L'horodatage precis</strong> &mdash; date et heure exactes de la decision</li>
+          <li><strong>L'action effectuée</strong> &mdash; création, modification ou révocation du consentement</li>
+          <li><strong>Les préférences détaillées</strong> &mdash; quelles catégories ont été acceptées ou refusées</li>
+          <li><strong>L'adresse IP</strong> &mdash; pour prouver l'origine géographique du consentement</li>
+          <li><strong>Le navigateur utilisé</strong> &mdash; identification de l'appareil</li>
+          <li><strong>L'horodatage précis</strong> &mdash; date et heure exactes de la décision</li>
         </ul>
 
         <div class="callout callout-info">
           <div class="callout-title">Non-bloquant par conception</div>
-          <p>L'enregistrement de l'audit trail est non-bloquant : si la base de donnees rencontre une erreur, l'utilisateur n'est pas impacte. Le systeme continue de fonctionner normalement et l'erreur est journalisee pour investigation ulterieure. En cas de doute (erreur de lecture), le systeme refuse par defaut &mdash; principe de precaution RGPD.</p>
+          <p>L'enregistrement de l'audit trail est non-bloquant : si la base de données rencontre une erreur, l'utilisateur n'est pas impacté. Le système continue de fonctionner normalement et l'erreur est journalisée pour investigation ultérieure. En cas de doute (erreur de lecture), le système refuse par défaut &mdash; principe de précaution RGPD.</p>
         </div>
 
         <!-- --- Retention --- -->
 
-        <h3>Retention automatisee des donnees</h3>
+        <h3>Rétention automatisée des données</h3>
 
         <p>
-          La minimisation des donnees fonctionne en <strong>pilote automatique</strong> grace a 4 taches de nettoyage programmees. Aucune intervention manuelle n'est necessaire : la conformite RGPD est maintenue en continu.
+          La minimisation des données fonctionne en <strong>pilote automatique</strong> grâce à 4 tâches de nettoyage programmées. Aucune intervention manuelle n'est nécessaire : la conformité RGPD est maintenue en continu.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">4 taches de retention automatisee</div>
+          <div class="diagram-title">4 tâches de rétention automatisée</div>
           <div class="mermaid">
 flowchart LR
     CRON["Planificateur<br/>automatique"] --> Runner["Lancer toutes les<br/>taches de retention"]
@@ -658,7 +658,7 @@ flowchart LR
         <table>
           <thead>
             <tr>
-              <th>Tache</th>
+              <th>Tâche</th>
               <th>Seuil</th>
               <th>Action</th>
             </tr>
@@ -676,13 +676,13 @@ flowchart LR
             </tr>
             <tr>
               <td>Comptes inactifs (avertissement)</td>
-              <td>35 mois d'inactivite</td>
+              <td>35 mois d'inactivité</td>
               <td>Email d'avertissement (30 jours avant suppression)</td>
             </tr>
             <tr>
               <td>Comptes inactifs (suppression)</td>
-              <td>Plus de 3 ans d'inactivite</td>
-              <td>Suppression complete du compte et de toutes les donnees</td>
+              <td>Plus de 3 ans d'inactivité</td>
+              <td>Suppression complète du compte et de toutes les données</td>
             </tr>
           </tbody>
         </table>
@@ -692,7 +692,7 @@ flowchart LR
         <h3>Cycle de vie des comptes inactifs</h3>
 
         <p>
-          Le cycle de gestion des comptes inactifs offre un delai raisonnable et transparent. L'utilisateur est prevenu 30 jours avant toute suppression, lui laissant le temps de se reconnecter pour conserver son compte.
+          Le cycle de gestion des comptes inactifs offre un délai raisonnable et transparent. L'utilisateur est prévenu 30 jours avant toute suppression, lui laissant le temps de se reconnecter pour conserver son compte.
         </p>
 
         <div class="diagram">
@@ -717,7 +717,7 @@ gantt
 
         <div class="callout callout-warning">
           <div class="callout-title">Protection des comptes administrateur</div>
-          <p>Les comptes avec le role administrateur ne sont <strong>jamais</strong> notifies ni supprimes, quel que soit leur temps d'inactivite. Cette protection empeche toute perte d'acces a la plateforme par le personnel technique.</p>
+          <p>Les comptes avec le rôle administrateur ne sont <strong>jamais</strong> notifiés ni supprimés, quel que soit leur temps d'inactivité. Cette protection empêche toute perte d'accès à la plateforme par le personnel technique.</p>
         </div>
 
         <!-- ============================================================ -->
@@ -727,52 +727,52 @@ gantt
         <h3>Registre de transparence des cookies</h3>
 
         <p>
-          Conformement aux obligations RGPD, chaque cookie utilise par la plateforme est documente dans un registre de transparence accessible. FitMyCV.io utilise <strong>7 cookies necessaires</strong> et <strong>zero cookie tiers</strong>.
+          Conformément aux obligations RGPD, chaque cookie utilisé par la plateforme est documenté dans un registre de transparence accessible. FitMyCV.io utilise <strong>7 cookies nécessaires</strong> et <strong>zéro cookie tiers</strong>.
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Finalite</th>
-              <th>Duree</th>
+              <th>Finalité</th>
+              <th>Durée</th>
               <th>Fournisseur</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Preferences de consentement</td>
+              <td>Préférences de consentement</td>
               <td>6 mois</td>
-              <td>FitMyCV (premiere partie)</td>
+              <td>FitMyCV (première partie)</td>
             </tr>
             <tr>
               <td>Session d'authentification</td>
               <td>30 jours</td>
-              <td>FitMyCV (premiere partie)</td>
+              <td>FitMyCV (première partie)</td>
             </tr>
             <tr>
-              <td>Session d'authentification securisee (HTTPS)</td>
+              <td>Session d'authentification sécurisée (HTTPS)</td>
               <td>30 jours</td>
-              <td>FitMyCV (premiere partie)</td>
+              <td>FitMyCV (première partie)</td>
             </tr>
             <tr>
               <td>Protection CSRF</td>
-              <td>Duree de la session</td>
-              <td>FitMyCV (premiere partie)</td>
+              <td>Durée de la session</td>
+              <td>FitMyCV (première partie)</td>
             </tr>
             <tr>
-              <td>Protection CSRF securisee</td>
-              <td>Duree de la session</td>
-              <td>FitMyCV (premiere partie)</td>
+              <td>Protection CSRF sécurisée</td>
+              <td>Durée de la session</td>
+              <td>FitMyCV (première partie)</td>
             </tr>
             <tr>
-              <td>URL de retour apres authentification</td>
-              <td>Duree de la session</td>
-              <td>FitMyCV (premiere partie)</td>
+              <td>URL de retour après authentification</td>
+              <td>Durée de la session</td>
+              <td>FitMyCV (première partie)</td>
             </tr>
             <tr>
-              <td>Preference de langue</td>
+              <td>Préférence de langue</td>
               <td>1 an</td>
-              <td>FitMyCV (premiere partie)</td>
+              <td>FitMyCV (première partie)</td>
             </tr>
           </tbody>
         </table>
@@ -781,21 +781,21 @@ gantt
         <!-- POINTS CLES                                                  -->
         <!-- ============================================================ -->
 
-        <h2>Points cles a retenir</h2>
+        <h2>Points clés à retenir</h2>
 
         <div class="callout callout-success">
-          <div class="callout-title">Securite professionnelle a 3 niveaux</div>
-          <p>La securite de FitMyCV.io ne repose pas sur un seul mecanisme mais sur trois niveaux complementaires : securite applicative (validation, masquage, sanitisation), securite middleware (limitation de debit, en-tetes de securite, CORS) et securite infrastructure (HTTPS, chiffrement). Cette approche de defense en profondeur garantit qu'une faille a un niveau est compensee par les protections des autres niveaux.</p>
+          <div class="callout-title">Sécurité professionnelle à 3 niveaux</div>
+          <p>La sécurité de FitMyCV.io ne repose pas sur un seul mécanisme mais sur trois niveaux complémentaires : sécurité applicative (validation, masquage, sanitisation), sécurité middleware (limitation de débit, en-têtes de sécurité, CORS) et sécurité infrastructure (HTTPS, chiffrement). Cette approche de défense en profondeur garantit qu'une faille à un niveau est compensée par les protections des autres niveaux.</p>
         </div>
 
         <div class="callout callout-info">
           <div class="callout-title">RGPD en pilote automatique</div>
-          <p>La conformite reglementaire n'est pas un effort ponctuel mais un systeme autonome : consentement opt-in, audit trail, masquage des donnees personnelles dans les logs, retention automatisee des donnees, et droit a l'oubli programme. Toutes ces protections fonctionnent en continu sans intervention humaine.</p>
+          <p>La conformité réglementaire n'est pas un effort ponctuel mais un système autonome : consentement opt-in, audit trail, masquage des données personnelles dans les logs, rétention automatisée des données, et droit à l'oubli programmé. Toutes ces protections fonctionnent en continu sans intervention humaine.</p>
         </div>
 
         <div class="callout callout-warning">
-          <div class="callout-title">Protection des donnees sensibles a chaque etape</div>
-          <p>Les CV et donnees professionnelles beneficient de protections specifiques a chaque etape de leur cycle de vie : validation en 5 couches a l'import, suppression complete du HTML dans les donnees stockees, masquage automatique dans les journaux, et suppression complete lors de la fermeture du compte.</p>
+          <div class="callout-title">Protection des données sensibles à chaque étape</div>
+          <p>Les CV et données professionnelles bénéficient de protections spécifiques à chaque étape de leur cycle de vie : validation en 5 couches à l'import, suppression complète du HTML dans les données stockées, masquage automatique dans les journaux, et suppression complète lors de la fermeture du compte.</p>
         </div>
 
       </div>

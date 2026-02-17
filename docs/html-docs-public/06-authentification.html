@@ -25,21 +25,21 @@
 
         <h1>Authentification & Comptes</h1>
         <p class="lead">
-          FitMyCV.io propose quatre methodes de connexion pour s'adapter aux preferences de chaque utilisateur. Le systeme d'authentification couvre l'ensemble du cycle de vie du compte : inscription, verification, gestion du profil, liaison de comptes et suppression. L'extension navigateur dispose de son propre systeme d'authentification, independant de la session web.
+          FitMyCV.io propose quatre méthodes de connexion pour s'adapter aux préférences de chaque utilisateur. Le système d'authentification couvre l'ensemble du cycle de vie du compte : inscription, vérification, gestion du profil, liaison de comptes et suppression. L'extension navigateur dispose de son propre système d'authentification, indépendant de la session web.
         </p>
 
         <!-- ============================================================ -->
         <!-- 4 METHODES DE CONNEXION                                      -->
         <!-- ============================================================ -->
 
-        <h2>4 methodes de connexion</h2>
+        <h2>4 méthodes de connexion</h2>
 
         <p>
-          L'utilisateur peut choisir la methode qui lui convient le mieux. Les trois methodes OAuth permettent une inscription en un clic avec un email automatiquement verifie. La methode classique par email et mot de passe offre un controle total et ne depend d'aucun service tiers.
+          L'utilisateur peut choisir la méthode qui lui convient le mieux. Les trois méthodes OAuth permettent une inscription en un clic avec un email automatiquement vérifié. La méthode classique par email et mot de passe offre un contrôle total et ne dépend d'aucun service tiers.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Quatre voies d'acces au compte FitMyCV</div>
+          <div class="diagram-title">Quatre voies d'accès au compte FitMyCV</div>
           <div class="mermaid">
 flowchart LR
     subgraph Methods["METHODES DE CONNEXION"]
@@ -68,25 +68,25 @@ flowchart LR
         <div class="card-grid">
           <div class="card">
             <h4>Email et mot de passe</h4>
-            <p>Inscription classique avec verification d'email obligatoire. Politique de mot de passe stricte et protection anti-bot sur chaque etape.</p>
+            <p>Inscription classique avec vérification d'email obligatoire. Politique de mot de passe stricte et protection anti-bot sur chaque étape.</p>
           </div>
           <div class="card">
             <h4>Google</h4>
-            <p>Connexion en un clic via un compte Google. Email automatiquement verifie, nom et photo de profil recuperes.</p>
+            <p>Connexion en un clic via un compte Google. Email automatiquement vérifié, nom et photo de profil récupérés.</p>
           </div>
           <div class="card">
             <h4>GitHub</h4>
-            <p>Connexion en un clic via un compte GitHub. Email primaire verifie automatiquement utilise.</p>
+            <p>Connexion en un clic via un compte GitHub. Email primaire vérifié automatiquement utilisé.</p>
           </div>
           <div class="card">
             <h4>Apple</h4>
-            <p>Connexion via Apple Sign-In, avec la possibilite de masquer son adresse email. Email automatiquement verifie.</p>
+            <p>Connexion via Apple Sign-In, avec la possibilité de masquer son adresse email. Email automatiquement vérifié.</p>
           </div>
         </div>
 
         <div class="callout callout-info">
           <div class="callout-title">Fournisseurs conditionnels</div>
-          <p>Les methodes de connexion OAuth sont activees dynamiquement selon la configuration du serveur. Si un fournisseur n'est pas configure, il n'apparait simplement pas sur la page de connexion. La methode email et mot de passe est toujours disponible.</p>
+          <p>Les méthodes de connexion OAuth sont activées dynamiquement selon la configuration du serveur. Si un fournisseur n'est pas configuré, il n'apparaît simplement pas sur la page de connexion. La méthode email et mot de passe est toujours disponible.</p>
         </div>
 
         <!-- ============================================================ -->
@@ -95,10 +95,10 @@ flowchart LR
 
         <h2>Parcours d'inscription</h2>
 
-        <h3>Inscription par email (6 etapes)</h3>
+        <h3>Inscription par email (6 étapes)</h3>
 
         <p>
-          L'inscription par email suit un parcours securise en 6 etapes, de la creation du compte jusqu'a la connexion automatique apres verification.
+          L'inscription par email suit un parcours sécurisé en 6 étapes, de la création du compte jusqu'à la connexion automatique après vérification.
         </p>
 
         <div class="diagram">
@@ -122,49 +122,49 @@ sequenceDiagram
         <table>
           <thead>
             <tr>
-              <th>Etape</th>
+              <th>Étape</th>
               <th>Action</th>
-              <th>Securite</th>
+              <th>Sécurité</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>1. Formulaire</strong></td>
-              <td>L'utilisateur saisit son prenom, nom, email et mot de passe</td>
-              <td>Nettoyage des entrees, verification de l'unicite de l'email</td>
+              <td>L'utilisateur saisit son prénom, nom, email et mot de passe</td>
+              <td>Nettoyage des entrées, vérification de l'unicité de l'email</td>
             </tr>
             <tr>
               <td><strong>2. Validation</strong></td>
-              <td>Verification anti-bot et validation du mot de passe (8 regles)</td>
+              <td>Vérification anti-bot et validation du mot de passe (8 règles)</td>
               <td>reCAPTCHA v3 + politique de mot de passe stricte</td>
             </tr>
             <tr>
-              <td><strong>3. Creation</strong></td>
-              <td>Le compte est cree avec un email non verifie</td>
-              <td>Mot de passe chiffre par hachage cryptographique</td>
+              <td><strong>3. Création</strong></td>
+              <td>Le compte est créé avec un email non vérifié</td>
+              <td>Mot de passe chiffré par hachage cryptographique</td>
             </tr>
             <tr>
-              <td><strong>4. Verification</strong></td>
-              <td>Un email contenant un lien de verification est envoye</td>
+              <td><strong>4. Vérification</strong></td>
+              <td>Un email contenant un lien de vérification est envoyé</td>
               <td>Jeton cryptographique, valide 24 heures, usage unique</td>
             </tr>
             <tr>
               <td><strong>5. Confirmation</strong></td>
               <td>L'utilisateur clique sur le lien dans l'email</td>
-              <td>Le jeton est consomme et supprime apres utilisation</td>
+              <td>Le jeton est consommé et supprimé après utilisation</td>
             </tr>
             <tr>
               <td><strong>6. Connexion</strong></td>
-              <td>Connexion automatique securisee, redirection vers l'accueil</td>
+              <td>Connexion automatique sécurisée, redirection vers l'accueil</td>
               <td>Jeton de connexion automatique valide 5 minutes, usage unique</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Inscription via OAuth (3 etapes)</h3>
+        <h3>Inscription via OAuth (3 étapes)</h3>
 
         <p>
-          Les methodes OAuth (Google, GitHub, Apple) offrent un parcours simplifie en 3 etapes. L'email est automatiquement verifie et le plan gratuit est attribue immediatement.
+          Les méthodes OAuth (Google, GitHub, Apple) offrent un parcours simplifié en 3 étapes. L'email est automatiquement vérifié et le plan gratuit est attribué immédiatement.
         </p>
 
         <div class="diagram">
@@ -187,8 +187,8 @@ sequenceDiagram
         </div>
 
         <div class="callout callout-success">
-          <div class="callout-title">Connexion instantanee</div>
-          <p>Pour un utilisateur qui possede deja un compte, la connexion OAuth est encore plus rapide : clic sur le bouton, autorisation, et la session est immediatement creee. Aucune saisie de mot de passe necessaire.</p>
+          <div class="callout-title">Connexion instantanée</div>
+          <p>Pour un utilisateur qui possède déjà un compte, la connexion OAuth est encore plus rapide : clic sur le bouton, autorisation, et la session est immédiatement créée. Aucune saisie de mot de passe nécessaire.</p>
         </div>
 
         <!-- ============================================================ -->
@@ -198,13 +198,13 @@ sequenceDiagram
         <h2>Gestion du compte</h2>
 
         <p>
-          Une fois inscrit, l'utilisateur dispose d'un ensemble complet de fonctionnalites pour gerer son compte depuis sa page de profil.
+          Une fois inscrit, l'utilisateur dispose d'un ensemble complet de fonctionnalités pour gérer son compte depuis sa page de profil.
         </p>
 
-        <h3>Liaison et deliaison de comptes OAuth</h3>
+        <h3>Liaison et déliaison de comptes OAuth</h3>
 
         <p>
-          Un utilisateur peut <strong>lier</strong> un fournisseur OAuth supplementaire a son compte existant &mdash; par exemple, ajouter Google a un compte cree par email. Il peut egalement <strong>delier</strong> un fournisseur, a condition de conserver au moins deux methodes de connexion actives pour eviter tout verrouillage.
+          Un utilisateur peut <strong>lier</strong> un fournisseur OAuth supplémentaire à son compte existant &mdash; par exemple, ajouter Google à un compte créé par email. Il peut également <strong>délier</strong> un fournisseur, à condition de conserver au moins deux méthodes de connexion actives pour éviter tout verrouillage.
         </p>
 
         <table>
@@ -212,31 +212,31 @@ sequenceDiagram
             <tr>
               <th>Action</th>
               <th>Condition</th>
-              <th>Securite</th>
+              <th>Sécurité</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Lier un fournisseur</strong></td>
-              <td>L'email du compte OAuth doit correspondre a l'email FitMyCV</td>
+              <td>L'email du compte OAuth doit correspondre à l'email FitMyCV</td>
               <td>Protection anti-bot + jeton anti-falsification</td>
             </tr>
             <tr>
-              <td><strong>Delier un fournisseur</strong></td>
-              <td>L'utilisateur doit conserver au moins 2 methodes de connexion</td>
-              <td>Prevention du verrouillage de compte</td>
+              <td><strong>Délier un fournisseur</strong></td>
+              <td>L'utilisateur doit conserver au moins 2 méthodes de connexion</td>
+              <td>Prévention du verrouillage de compte</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Reinitialisation du mot de passe</h3>
+        <h3>Réinitialisation du mot de passe</h3>
 
         <p>
-          Le processus de reinitialisation est concu pour etre securise tout en restant simple pour l'utilisateur.
+          Le processus de réinitialisation est conçu pour être sécurisé tout en restant simple pour l'utilisateur.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Reinitialisation du mot de passe oublie</div>
+          <div class="diagram-title">Réinitialisation du mot de passe oublié</div>
           <div class="mermaid">
 flowchart LR
     A["1. Demande de<br/>reinitialisation<br/>(email + anti-bot)"] --> B["2. Email avec lien<br/>(jeton valide 1h)"]
@@ -251,32 +251,32 @@ flowchart LR
         </div>
 
         <div class="callout callout-info">
-          <div class="callout-title">Protection anti-enumeration</div>
-          <p>Que l'adresse email existe ou non dans le systeme, la reponse est toujours identique : &laquo; Si un compte existe avec cette adresse, un email a ete envoye. &raquo; Cette mesure empeche un attaquant de decouvrir quels emails sont inscrits sur la plateforme.</p>
+          <div class="callout-title">Protection anti-énumération</div>
+          <p>Que l'adresse email existe ou non dans le système, la réponse est toujours identique : &laquo; Si un compte existe avec cette adresse, un email a été envoyé. &raquo; Cette mesure empêche un attaquant de découvrir quels emails sont inscrits sur la plateforme.</p>
         </div>
 
         <h3>Changement d'email</h3>
 
         <p>
-          Le changement d'adresse email est disponible uniquement pour les comptes avec mot de passe (pas pour les comptes OAuth, dont l'email est gere par le fournisseur). Le processus envoie un email de confirmation a la nouvelle adresse, et la modification n'est effective qu'apres validation. Un delai minimum de 60 secondes est impose entre deux demandes.
+          Le changement d'adresse email est disponible uniquement pour les comptes avec mot de passe (pas pour les comptes OAuth, dont l'email est géré par le fournisseur). Le processus envoie un email de confirmation à la nouvelle adresse, et la modification n'est effective qu'après validation. Un délai minimum de 60 secondes est imposé entre deux demandes.
         </p>
 
         <h3>Changement de mot de passe</h3>
 
         <p>
-          L'utilisateur peut modifier son mot de passe depuis sa page de profil. L'ancien mot de passe est verifie avant d'autoriser le changement, et le nouveau mot de passe doit respecter la meme politique stricte que lors de l'inscription.
+          L'utilisateur peut modifier son mot de passe depuis sa page de profil. L'ancien mot de passe est vérifié avant d'autoriser le changement, et le nouveau mot de passe doit respecter la même politique stricte que lors de l'inscription.
         </p>
 
         <h3>Suppression de compte</h3>
 
         <p>
-          La suppression est definitive et entraine la disparition complete de toutes les donnees associees. Le processus est concu pour etre sur et transparent.
+          La suppression est définitive et entraîne la disparition complète de toutes les données associées. Le processus est conçu pour être sûr et transparent.
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Etape</th>
+              <th>Étape</th>
               <th>Description</th>
             </tr>
           </thead>
@@ -287,11 +287,11 @@ flowchart LR
             </tr>
             <tr>
               <td><strong>Annulation de l'abonnement</strong></td>
-              <td>Si l'utilisateur a un abonnement actif, il est automatiquement annule aupres du prestataire de paiement</td>
+              <td>Si l'utilisateur a un abonnement actif, il est automatiquement annulé auprès du prestataire de paiement</td>
             </tr>
             <tr>
               <td><strong>Suppression en cascade</strong></td>
-              <td>Toutes les donnees sont supprimees : CV, offres, historique, preferences, taches, transactions</td>
+              <td>Toutes les données sont supprimées : CV, offres, historique, préférences, tâches, transactions</td>
             </tr>
           </tbody>
         </table>
@@ -303,11 +303,11 @@ flowchart LR
         <h2>Authentification de l'extension navigateur</h2>
 
         <p>
-          L'extension Chrome et Firefox dispose de son propre systeme d'authentification, <strong>independant de la session web</strong>. Ce choix garantit que l'extension fonctionne meme si l'utilisateur n'est pas connecte au site, et inversement.
+          L'extension Chrome et Firefox dispose de son propre système d'authentification, <strong>indépendant de la session web</strong>. Ce choix garantit que l'extension fonctionne même si l'utilisateur n'est pas connecté au site, et inversement.
         </p>
 
         <div class="diagram">
-          <div class="diagram-title">Deux methodes d'obtention du jeton d'extension</div>
+          <div class="diagram-title">Deux méthodes d'obtention du jeton d'extension</div>
           <div class="mermaid">
 flowchart LR
     subgraph Login["OBTENTION DU JETON"]
@@ -336,7 +336,7 @@ flowchart LR
         <table>
           <thead>
             <tr>
-              <th>Methode</th>
+              <th>Méthode</th>
               <th>Description</th>
               <th>Cas d'usage</th>
             </tr>
@@ -345,81 +345,81 @@ flowchart LR
             <tr>
               <td><strong>Connexion directe</strong></td>
               <td>L'utilisateur saisit son email et mot de passe directement dans l'extension</td>
-              <td>Premiere utilisation de l'extension, ou session web expiree</td>
+              <td>Première utilisation de l'extension, ou session web expirée</td>
             </tr>
             <tr>
               <td><strong>Depuis la session web</strong></td>
-              <td>Le jeton est genere automatiquement a partir d'une session web active</td>
-              <td>L'utilisateur est deja connecte sur le site</td>
+              <td>Le jeton est généré automatiquement à partir d'une session web active</td>
+              <td>L'utilisateur est déjà connecté sur le site</td>
             </tr>
           </tbody>
         </table>
 
         <div class="callout callout-info">
           <div class="callout-title">Renouvellement automatique</div>
-          <p>Le jeton d'extension est valide 7 jours et peut etre renouvele automatiquement tant qu'il n'a pas expire. L'extension gere un renouvellement proactif (avant expiration) et reactif (en cas de refus d'acces), garantissant une experience fluide sans deconnexion intempestive.</p>
+          <p>Le jeton d'extension est valide 7 jours et peut être renouvelé automatiquement tant qu'il n'a pas expiré. L'extension gère un renouvellement proactif (avant expiration) et réactif (en cas de refus d'accès), garantissant une expérience fluide sans déconnexion intempestive.</p>
         </div>
 
         <!-- ============================================================ -->
         <!-- ROLES                                                        -->
         <!-- ============================================================ -->
 
-        <h2>Roles utilisateur</h2>
+        <h2>Rôles utilisateur</h2>
 
         <p>
-          Le systeme de permissions repose sur deux roles simples et clairement separes.
+          Le système de permissions repose sur deux rôles simples et clairement séparés.
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Role</th>
-              <th>Acces</th>
+              <th>Rôle</th>
+              <th>Accès</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><span class="badge badge-primary">Utilisateur</span></td>
-              <td>Tableau de bord, creation et gestion de CV, generation IA, profil, parametres du compte</td>
+              <td>Tableau de bord, création et gestion de CV, génération IA, profil, paramètres du compte</td>
             </tr>
             <tr>
               <td><span class="badge badge-warning">Administrateur</span></td>
-              <td>Tout l'acces utilisateur + tableau de bord d'administration, configuration systeme et acces en mode maintenance</td>
+              <td>Tout l'accès utilisateur + tableau de bord d'administration, configuration système et accès en mode maintenance</td>
             </tr>
           </tbody>
         </table>
 
         <div class="callout callout-warning">
           <div class="callout-title">Mode maintenance</div>
-          <p>Le mode maintenance bloque l'acces a tous les utilisateurs non-administrateurs, tant pour la connexion que pour les sessions existantes. Ce mecanisme permet d'effectuer des interventions sur la plateforme sans risque d'impact utilisateur. De plus, la possibilite de desactiver les inscriptions depuis l'administration offre un controle supplementaire.</p>
+          <p>Le mode maintenance bloque l'accès à tous les utilisateurs non-administrateurs, tant pour la connexion que pour les sessions existantes. Ce mécanisme permet d'effectuer des interventions sur la plateforme sans risque d'impact utilisateur. De plus, la possibilité de désactiver les inscriptions depuis l'administration offre un contrôle supplémentaire.</p>
         </div>
 
         <!-- ============================================================ -->
         <!-- SECURITE                                                     -->
         <!-- ============================================================ -->
 
-        <h2>Securite de l'authentification</h2>
+        <h2>Sécurité de l'authentification</h2>
 
         <p>
-          Chaque etape du processus d'authentification est protegee par des mesures de securite complementaires, de la creation du compte jusqu'a la gestion quotidienne de la session.
+          Chaque étape du processus d'authentification est protégée par des mesures de sécurité complémentaires, de la création du compte jusqu'à la gestion quotidienne de la session.
         </p>
 
         <div class="card-grid">
           <div class="card">
             <h4>Politique de mot de passe stricte</h4>
-            <p>Minimum 8 caracteres, majuscule, minuscule, chiffre, caractere special, maximum 128 caracteres. Les mots de passe courants sont refuses via une liste noire.</p>
+            <p>Minimum 8 caractères, majuscule, minuscule, chiffre, caractère spécial, maximum 128 caractères. Les mots de passe courants sont refusés via une liste noire.</p>
           </div>
           <div class="card">
             <h4>Protection anti-bot</h4>
-            <p>Verification reCAPTCHA v3 sur l'inscription, la connexion, la reinitialisation de mot de passe, le renvoi de verification et la liaison OAuth.</p>
+            <p>Vérification reCAPTCHA v3 sur l'inscription, la connexion, la réinitialisation de mot de passe, le renvoi de vérification et la liaison OAuth.</p>
           </div>
           <div class="card">
             <h4>Jetons cryptographiques</h4>
-            <p>Tous les jetons (verification email, reinitialisation, connexion automatique) sont generes avec 32 octets aleatoires, ont une expiration stricte et ne sont utilisables qu'une seule fois.</p>
+            <p>Tous les jetons (vérification email, réinitialisation, connexion automatique) sont générés avec 32 octets aléatoires, ont une expiration stricte et ne sont utilisables qu'une seule fois.</p>
           </div>
           <div class="card">
-            <h4>Protections supplementaires</h4>
-            <p>Chiffrement des mots de passe, protection anti-falsification (CSRF) automatique, nettoyage des entrees contre les injections, et limitation de debit sur les operations sensibles.</p>
+            <h4>Protections supplémentaires</h4>
+            <p>Chiffrement des mots de passe, protection anti-falsification (CSRF) automatique, nettoyage des entrées contre les injections, et limitation de débit sur les opérations sensibles.</p>
           </div>
         </div>
 
@@ -427,21 +427,21 @@ flowchart LR
         <!-- POINTS CLES                                                  -->
         <!-- ============================================================ -->
 
-        <h2>Points cles a retenir</h2>
+        <h2>Points clés à retenir</h2>
 
         <div class="callout callout-success">
-          <div class="callout-title">Flexibilite maximale</div>
-          <p>4 methodes de connexion, liaison dynamique de comptes OAuth, et un systeme d'authentification d'extension independant. L'utilisateur choisit comment il se connecte, et peut combiner plusieurs methodes sur un seul compte.</p>
+          <div class="callout-title">Flexibilité maximale</div>
+          <p>4 méthodes de connexion, liaison dynamique de comptes OAuth, et un système d'authentification d'extension indépendant. L'utilisateur choisit comment il se connecte, et peut combiner plusieurs méthodes sur un seul compte.</p>
         </div>
 
         <div class="callout callout-info">
           <div class="callout-title">Cycle de vie complet</div>
-          <p>De l'inscription a la suppression, chaque etape est geree : verification d'email, changement d'email et de mot de passe, liaison de comptes, reinitialisation et suppression avec annulation automatique de l'abonnement.</p>
+          <p>De l'inscription à la suppression, chaque étape est gérée : vérification d'email, changement d'email et de mot de passe, liaison de comptes, réinitialisation et suppression avec annulation automatique de l'abonnement.</p>
         </div>
 
         <div class="callout callout-warning">
-          <div class="callout-title">Securite a chaque etape</div>
-          <p>Politique de mot de passe stricte, protection anti-bot sur tous les points d'entree, jetons cryptographiques a usage unique, protection anti-enumeration, et limitation de debit. La securite n'est pas une couche ajoutee : elle est integree dans chaque fonctionnalite.</p>
+          <div class="callout-title">Sécurité à chaque étape</div>
+          <p>Politique de mot de passe stricte, protection anti-bot sur tous les points d'entrée, jetons cryptographiques à usage unique, protection anti-énumération, et limitation de débit. La sécurité n'est pas une couche ajoutée : elle est intégrée dans chaque fonctionnalité.</p>
         </div>
 
       </div>
