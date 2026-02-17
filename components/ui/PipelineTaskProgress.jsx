@@ -88,16 +88,16 @@ function OfferProgressLine({ offer, t, createdAt }) {
   const displayStep = PIPELINE_STEPS.find(step => runningSteps[step]) || offer.currentStep;
 
   // Récupérer currentItem/totalItems pour le step affiché (depuis runningSteps si disponible)
-  const stepData = runningSteps[displayStep] || {};
-  const currentItem = stepData.currentItem ?? offer.currentItem;
-  const totalItems = stepData.totalItems ?? offer.totalItems;
+  const stepData = typeof runningSteps[displayStep] === 'object' ? runningSteps[displayStep] : {};
+  const currentItem = stepData.currentItem ?? offer.currentItem ?? null;
+  const totalItems = stepData.totalItems ?? offer.totalItems ?? null;
 
   // Label de l'étape en cours
   let stepLabel = '';
   if (displayStep) {
     const translationKey = STEP_LABELS[displayStep];
     const label = (translationKey && t(translationKey)) || STEP_FALLBACKS[displayStep] || displayStep;
-    if (currentItem !== null && totalItems !== null) {
+    if (currentItem != null && totalItems != null) {
       stepLabel = `${label} ${currentItem + 1}/${totalItems}`;
     } else {
       stepLabel = label;

@@ -8,6 +8,17 @@ import { refundCredit } from '@/lib/subscription/credits';
 const MAX_PERSISTED_TASKS = 100;
 const MAX_RETURNED_TASKS = 150;
 
+const SUBTASK_TYPE_MAP = {
+  extraction: 'extraction',
+  classify: 'classify',
+  batch_experience: 'experiences',
+  batch_project: 'projects',
+  batch_extras: 'extras',
+  batch_skills: 'skills',
+  batch_summary: 'summary',
+  recompose: 'recompose',
+};
+
 const LAST_WIPE_SYMBOL = Symbol.for('cvSite.backgroundTasksLastFullSync');
 if (!globalThis[LAST_WIPE_SYMBOL]) {
   globalThis[LAST_WIPE_SYMBOL] = new Map();
@@ -24,7 +35,7 @@ function toNumberTimestamp(value, fallback = Date.now()) {
   return num;
 }
 
-function serializeTask(record) {
+function serializeTask(record, progress) {
   const base = {
     id: record.id,
     title: record.title,
@@ -58,6 +69,8 @@ function serializeTask(record) {
   } else {
     base.payload = null;
   }
+
+  if (progress) { base.progress = progress; }
 
   return base;
 }
@@ -147,7 +160,90 @@ export async function GET(request) {
       take: MAX_RETURNED_TASKS,
     });
 
-    const serialized = tasks.map(serializeTask);
+    // Enrichir les tâches cv_generation actives avec la progression du pipeline
+    const cvTaskIds = tasks
+      .filter(t => t.type === 'cv_generation' && (t.status === 'queued' || t.status === 'running'))
+      .map(t => t.id);
+
+    const progressMap = new Map();
+    if (cvTaskIds.length > 0) {
+      const offers = await prisma.cvGenerationOffer.findMany({
+        where: { taskId: { in: cvTaskIds } },
+        select: {
+          id: true,
+          taskId: true,
+          offerIndex: true,
+          status: true,
+          sourceUrl: true,
+          jobOfferId: true,
+          subtasks: {
+            select: { type: true, status: true },
+          },
+        },
+        orderBy: [{ taskId: 'asc' }, { offerIndex: 'asc' }],
+      });
+
+      // Récupérer les titres d'offres depuis JobOffer (pas de relation Prisma formelle)
+      const jobOfferIds = offers.map(o => o.jobOfferId).filter(Boolean);
+      const jobTitleMap = new Map();
+      if (jobOfferIds.length > 0) {
+        const jobOffers = await prisma.jobOffer.findMany({
+          where: { id: { in: jobOfferIds } },
+          select: { id: true, content: true },
+        });
+        for (const jo of jobOffers) {
+          jobTitleMap.set(jo.id, jo.content?.title || null);
+        }
+      }
+
+      // Grouper par taskId et construire le progress
+      for (const offer of offers) {
+        if (!progressMap.has(offer.taskId)) {
+          progressMap.set(offer.taskId, { offers: {}, completedOffers: [], failedOffers: [] });
+        }
+        const taskProgress = progressMap.get(offer.taskId);
+
+        const completedSteps = {};
+        const runningSteps = {};
+        let currentStep = null;
+
+        for (const subtask of offer.subtasks) {
+          const clientStep = SUBTASK_TYPE_MAP[subtask.type];
+          if (!clientStep) continue;
+          if (subtask.status === 'completed') {
+            completedSteps[clientStep] = true;
+          } else if (subtask.status === 'running') {
+            runningSteps[clientStep] = true;
+            currentStep = clientStep;
+          }
+        }
+
+        // Si l'offre est en extraction mais qu'aucun subtask n'a encore été détecté,
+        // marquer l'extraction comme en cours manuellement
+        if (offer.status === 'extracting' && !completedSteps.extraction && !runningSteps.extraction) {
+          runningSteps.extraction = true;
+          currentStep = 'extraction';
+        }
+
+        taskProgress.offers[offer.id] = {
+          offerIndex: offer.offerIndex,
+          status: offer.status,
+          sourceUrl: offer.sourceUrl || null,
+          jobTitle: offer.jobOfferId ? (jobTitleMap.get(offer.jobOfferId) || null) : null,
+          completedSteps,
+          runningSteps,
+          currentStep,
+        };
+
+        if (offer.status === 'completed') {
+          taskProgress.completedOffers.push({ id: offer.id, offerIndex: offer.offerIndex });
+        } else if (offer.status === 'failed') {
+          taskProgress.failedOffers.push({ id: offer.id, offerIndex: offer.offerIndex });
+        }
+      }
+    }
+
+    const serialized = tasks.map(t => serializeTask(t, progressMap.get(t.id) || null));
 
     return NextResponse.json({
       success: true,
