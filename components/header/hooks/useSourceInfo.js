@@ -43,6 +43,11 @@ export function useSourceInfo({ fetchMatchScore, setCurrentCvFile, setIsLoadingM
           sourceCvInfo: data.sourceCvInfo,
         });
 
+        // Mettre à jour hasJobOffer depuis la source (source de vérité)
+        // Indispensable car fetchMatchScore peut échouer (404, erreur réseau)
+        // et ne jamais mettre hasJobOffer à true
+        setHasJobOffer(data.hasJobOffer);
+
         // Ne récupérer le score que si le CV a une offre d'emploi associée
         if (data.hasJobOffer) {
           fetchMatchScore();
@@ -52,7 +57,6 @@ export function useSourceInfo({ fetchMatchScore, setCurrentCvFile, setIsLoadingM
           setScoreBefore(null);
           setMatchScoreStatus('idle');
           setOptimiseStatus('idle');
-          setHasJobOffer(false);
           setHasScoreBreakdown(false);
           setIsLoadingMatchScore(false);
         }
