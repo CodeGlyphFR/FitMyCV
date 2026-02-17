@@ -1,78 +1,188 @@
-# FitMyCV.io
+<div align="center">
 
-> Application SaaS de génération de CV optimisés par IA
+<img src="public/icons/logo.png" alt="FitMyCV Logo" width="360" />
 
-**Version:** 1.1.0.0
+# FitMyCV — SaaS d'optimisation de CV par IA
 
----
+[![En production](https://img.shields.io/badge/En_production-app.fitmycv.io-00C853)](https://app.fitmycv.io)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES2024-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma_6-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4.1_%7C_o4--mini_%7C_GPT--4o-412991?logo=openai&logoColor=white)](https://openai.com/)
+[![Docker](https://img.shields.io/badge/Docker-Prod-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
-## À propos
+**[app.fitmycv.io](https://app.fitmycv.io)** · **[fitmycv.io](https://www.fitmycv.io)**
 
-FitMyCV.io permet de créer des CV personnalisés et optimisés pour des offres d'emploi spécifiques grâce à l'intelligence artificielle.
+🇫🇷 Français | [🇬🇧 English](README.en.md)
 
-### Fonctionnalités
-
-- **Génération CV par IA** - Adapte un CV existant à une offre d'emploi (URL ou PDF)
-- **Import PDF** - Conversion de CV existants en format structuré
-- **Export PDF/DOCX** - Export professionnel avec personnalisation
-- **Match Score** - Analyse de correspondance CV/offre avec suggestions
-- **Optimisation IA** - Amélioration automatique du CV
-- **Multi-langues** - Français, Anglais, Allemand, Espagnol
-- **Abonnements** - Plans avec crédits via Stripe
+</div>
 
 ---
 
-## Quick Start
+## Pourquoi ce projet
 
-```bash
-# Installation
-npm install
-cp .env.example .env
-# Éditer .env avec vos clés
+J'ai construit FitMyCV comme un projet end-to-end pour développer et démontrer mes compétences en **AI Engineering** dans un contexte de production réel — pas un PoC, pas un notebook, mais un SaaS complet avec des utilisateurs, des paiements et une infrastructure de déploiement.
 
-# Base de données
-npm run db:setup
+Le produit adapte des CV à des offres d'emploi via des pipelines LLM multi-étapes. La contrainte centrale : **l'IA ne fabrique rien** — elle reformule et réorganise uniquement le parcours existant du candidat, avec des garde-fous anti-hallucination appliqués dans le code.
 
-# Lancer
-npm run dev  # http://localhost:3001
+---
+
+## Compétences démontrées
+
+### 1. Orchestration multi-modèles
+
+Chaque phase du pipeline utilise un modèle choisi pour ses caractéristiques spécifiques. Les affectations sont stockées en base de données et modifiables à chaud.
+
+| Phase | Modèle | Pourquoi ce modèle |
+|-------|--------|-------------------|
+| Extraction d'offre (HTML/Markdown bruité) | `o4-mini` | Raisonnement structuré pour extraction complexe |
+| Classification KEEP / REMOVE / MOVE | `gpt-4o` | Haute précision sur des décisions discrètes |
+| Adaptation des expériences (×N en parallèle) | `o4-mini` (`reasoning_effort: low`) | Réécriture nuancée, optimisée en vitesse |
+| Déduction des compétences | `o4-mini` | Inférence logique depuis le contenu adapté |
+| Amélioration ciblée des expériences | `gpt-4.1` | Qualité maximale pour les réécritures critiques |
+| Import PDF (multi-pages) | `gpt-4.1-mini` (Vision) | Extraction multi-modale page par page |
+| Score de matching | `gpt-4.1-mini` | Scoring structuré + suggestions |
+
+**Ce que ça démontre** : la capacité à sélectionner et configurer le bon modèle pour chaque tâche selon le compromis coût / qualité / latence, plutôt que d'utiliser un modèle unique pour tout.
+
+---
+
+### 2. Prompt Engineering
+
+Les prompts ne sont pas des chaînes en dur — c'est une architecture composable :
+
+- **Fichiers Markdown** avec directive `{INCLUDE:chemin}` pour réutiliser des fragments communs (règles d'adaptation, politique de langue, système de base)
+- **Substitution de variables** (`{{experience}}`, `{{job_offer}}`) au moment de l'appel
+- **Schémas JSON Structured Output** versionnés aux côtés de chaque prompt — le LLM est contraint de respecter un format strict
+- **Cache en production, hot reload en dev** — le loader adapte son comportement selon l'environnement
+
+```
+lib/prompts-shared/              ← Fragments partagés
+├── system-base.md
+├── cv-adaptation-rules.md
+├── scoring-rules.md
+└── language-policy.md
+
+lib/features/cv-adaptation/phases/batch-experiences/
+├── system.md                    ← {INCLUDE:../../../prompts-shared/system-base.md}
+├── user.md                      ← {{experience}}, {{job_offer}}, {{language}}
+└── schemas/adaptationSchema.json
 ```
 
+**Ce que ça démontre** : une ingénierie de prompts pensée pour la maintenabilité et la scalabilité, pas du copier-coller de chaînes dans le code.
+
 ---
 
-## Stack Technique
+### 3. Pipeline IA de production
 
-| Catégorie | Technologies |
-|-----------|--------------|
-| Frontend | React 19, Next.js 16, Tailwind CSS 4 |
-| Backend | Next.js API Routes, Prisma 6 |
-| Database | PostgreSQL |
-| IA | OpenAI API |
-| Paiements | Stripe |
-| Auth | NextAuth.js |
+Deux pipelines distincts, chacun multi-étapes avec parallélisme contrôlé :
+
+**Pipeline Adaptation** (CV → offre d'emploi) :
+
+```
+Offre (URL / PDF / Markdown)
+  → Phase 0    Extraction structurée (o4-mini, json_schema)
+  → Phase 0.5  Warmup cache (appel à 50 tokens pour pré-charger le cache serveur OpenAI)
+  → Phase 1    Classification KEEP/REMOVE/MOVE (gpt-4o)
+  → Phase 2    7 tâches en parallèle (Promise.all) :
+               expériences · projets · compétences · résumé · extras · formation · langues
+  → Phase 3    Recomposition (aucun appel LLM) + initialisation du mode révision
+```
+
+**Pipeline Amélioration** (depuis les suggestions du score de matching) :
+
+```
+  → Stage 1+2  Classification des compétences + préprocesseur (en parallèle)
+  → Stage 3    Amélioration parallèle par section (p-limit(5) appels concurrents)
+  → Stage 4    Mise à jour du résumé post-améliorations
+```
+
+**Détails d'implémentation notables** :
+- La 1ère expérience s'exécute seule, suivie d'un délai de 500ms avant le batch restant — pour laisser le cache serveur d'OpenAI se propager avant les appels parallèles
+- File de jobs in-process (`MAX_CONCURRENT_JOBS = 3`) avec limites par utilisateur, sans broker externe
+- `AbortController` propagé à tous les appels OpenAI en cours — l'annulation est instantanée et rembourse automatiquement les crédits
+- Progression poussée en temps réel au client via Server-Sent Events (SSE)
+
+**Ce que ça démontre** : la capacité à orchestrer des appels LLM complexes en production avec gestion de la concurrence, des erreurs, de l'annulation et du feedback temps réel.
+
+---
+
+### 4. Garde-fous anti-hallucination
+
+L'IA ne peut pas halluciner parce que le **code l'en empêche**, pas seulement le prompt :
+
+| Garde-fou | Comment |
+|-----------|---------|
+| Champs immuables | `entreprise`, `dates`, `lieu` sont **supprimés** de l'objet avant l'appel LLM et **restaurés** depuis l'original après — le modèle ne les voit jamais |
+| Réalisations quantifiées | Seuls les points contenant au moins un chiffre sont conservés (`/\d/.test(item)`) |
+| Score indépendant | Le score global retourné par GPT est **ignoré** ; seuls les sous-scores sont extraits et recombinés avec une formule pondérée fixe (35/30/20/15) |
+| Structured Outputs | `json_schema` force le modèle à respecter un format strict — pas de texte libre |
+| Mode révision | Chaque modification IA est stockée dans `pendingChanges[]` — l'utilisateur accepte ou refuse chaque diff |
+
+**Ce que ça démontre** : une approche défensive où la fiabilité repose sur l'architecture du code, pas sur la bonne volonté du modèle.
+
+---
+
+### 5. Optimisation des coûts et télémétrie
+
+Chaque appel OpenAI est tracé individuellement et agrégé quotidiennement :
+
+- **Par appel** (`OpenAICall`) : tokens prompt / completion / cached, coût, modèle, feature, durée
+- **Agrégat journalier** (`OpenAIUsage`) : userId × feature × modèle, avec économies de cache
+- **Référentiel de prix** (`OpenAIPricing`) : tarifs standard + priority tier par modèle
+- **Alertes sur seuils** (`OpenAIAlert`) : dépense quotidienne / mensuelle, par utilisateur ou globale
+- **Stratégie de cache** : warmup de prompt, délai inter-batch pour propagation, `reasoning_effort: low` sur les tâches batch
+
+**Ce que ça démontre** : la maîtrise des coûts et la capacité à instrumenter un système IA pour le suivre et l'optimiser en continu.
+
+---
+
+### 6. Développement Full-Stack SaaS
+
+Au-delà de l'IA, le projet couvre l'ensemble du spectre SaaS :
+
+| Domaine | Implémentation |
+|---------|---------------|
+| **Frontend** | Next.js 16 (App Router), React 19, Tailwind CSS 4 — 138 composants |
+| **Backend** | 113 routes API, Prisma 6, 34 modèles de données |
+| **Auth** | NextAuth.js — email/password, Google, GitHub, Apple OAuth |
+| **Paiements** | Stripe — crédits à la carte, sans abonnement |
+| **Extension navigateur** | Chrome / Firefox Manifest V3 — extraction d'offres depuis 11 sites d'emploi |
+| **Import / Export** | Vision API (PDF→JSON), export PDF et DOCX avec templates |
+| **Multi-langues** | Français, Anglais, Allemand, Espagnol |
+| **Infrastructure** | Docker, GitHub Actions (CI/CD automatisé), Caddy, Cloudflare |
+| **Versioning** | Historique complet des CV, restauration en un clic |
+
+---
+
+## Stack technique
+
+| Couche | Technologies |
+|--------|-------------|
+| **Application** | Next.js 16, React 19, Tailwind CSS 4, JavaScript ES2024 |
+| **Base de données** | PostgreSQL, Prisma 6 (34 modèles) |
+| **IA** | OpenAI API — GPT-4.1, GPT-4o, o4-mini, GPT-4.1-mini (Vision) |
+| **Auth** | NextAuth.js (Google, GitHub, Apple) |
+| **Paiements** | Stripe |
+| **Extension** | Vite, Manifest V3, Readability, Turndown |
+| **Infra** | Docker, GitHub Actions, Caddy, Cloudflare |
 
 ---
 
 ## Documentation
 
-Toute la documentation est dans [`docs/`](./docs/) :
+La documentation technique complète est disponible dans [`docs/`](./docs/) :
 
-| Document | Description |
-|----------|-------------|
-| [index.md](./docs/index.md) | Index maître |
-| [architecture.md](./docs/architecture.md) | Architecture technique |
-| [api-reference.md](./docs/api-reference.md) | 113 endpoints API |
-| [data-models.md](./docs/data-models.md) | 34 modèles Prisma |
-| [components.md](./docs/components.md) | 138 composants React |
-| [development.md](./docs/development.md) | Guide développement |
-
----
-
-## Développement avec IA
-
-Le fichier [`CLAUDE.md`](./CLAUDE.md) contient les instructions pour le développement assisté par IA (patterns, conventions, références).
+| Document | Contenu |
+|----------|---------|
+| [Architecture](./docs/architecture.md) | Architecture système |
+| [API Reference](./docs/api-reference.md) | 113 endpoints |
+| [Data Models](./docs/data-models.md) | 34 modèles Prisma |
+| [Components](./docs/components.md) | 138 composants React |
 
 ---
 
 ## Licence
 
-Propriétaire - Tous droits réservés
+Propriétaire — Tous droits réservés.

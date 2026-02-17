@@ -41,6 +41,7 @@ data/background-tasks.json
 # Fichiers Markdown d'analyse (sauf docs et prompts)
 /*.md
 !README.md
+!README.en.md
 !CLAUDE.md
 
 # Base de données de développement
