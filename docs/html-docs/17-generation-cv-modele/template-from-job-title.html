@@ -108,34 +108,34 @@ flowchart TB
     end
 
     subgraph Step1["ETAPE 1 - VERIFICATION"]
-        Credits["checkOpenAICredits()&lt;br/&gt;V&eacute;rification budget OpenAI"]
-        Model["getAiModelSetting()&lt;br/&gt;'model_generate_from_job_title'"]
+        Credits["Vérifier les crédits<br/>OpenAI disponibles"]
+        Model["Récupérer le modèle IA<br/>configuré"]
     end
 
     subgraph Step2["ETAPE 2 - VALIDATION (DESACTIVEE)"]
-        Validate["validateJobTitle()&lt;br/&gt;BYPASSEE - tous les titres accept&eacute;s"]
+        Validate["Valider le titre de poste<br/>(désactivée, tous acceptés)"]
     end
 
     subgraph Step3["ETAPE 3 - PREPARATION"]
-        Schema["getCvSchema()&lt;br/&gt;data/template.json (ou fallback)"]
-        Prompts["Chargement prompts&lt;br/&gt;system.md + user.md"]
+        Schema["Charger le schéma CV<br/>depuis le fichier modèle"]
+        Prompts["Charger les instructions<br/>système et utilisateur"]
     end
 
     subgraph Step4["ETAPE 4 - GENERATION IA"]
-        Call["OpenAI chat.completions.create()&lt;br/&gt;response_format: json_object"]
+        Call["Appeler l'IA OpenAI<br/>pour générer le CV"]
     end
 
     subgraph Step5["ETAPE 5 - VALIDATION RESULTAT"]
-        Parse["JSON.parse()"]
-        Check{"parsedCV.header.full_name&lt;br/&gt;ET&lt;br/&gt;parsedCV.header.current_title&lt;br/&gt;existent ?"}
+        Parse["Analyser la réponse JSON"]
+        Check{"Le CV contient<br/>un nom complet ET<br/>un titre de poste ?"}
     end
 
-    subgraph Step6["ETAPE 6 - TRACKING"]
-        Track["trackOpenAIUsage()&lt;br/&gt;featureName: generate_from_job_title"]
+    subgraph Step6["ETAPE 6 - SUIVI"]
+        Track["Enregistrer la<br/>consommation OpenAI"]
     end
 
     subgraph Output["SORTIE"]
-        Result["{ cvContent, jobTitle, language }"]
+        Result["CV généré avec succès"]
         Error["Erreur : CV invalide"]
     end
 

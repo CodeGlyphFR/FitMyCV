@@ -40,45 +40,45 @@
 flowchart TB
     subgraph S1["Stage 1 — deps"]
         direction TB
-        A1["node:20-alpine"]
-        A2["apk: libc6-compat, python3, make, g++"]
-        A3["npm ci (toutes dépendances)"]
-        A4["PUPPETEER_SKIP_DOWNLOAD=true"]
+        A1["Image Node.js 20 Alpine"]
+        A2["Paquets système<br/>(compilation native)"]
+        A3["Installer toutes<br/>les dépendances"]
+        A4["Ignorer le téléchargement<br/>de Puppeteer"]
         A1 --> A2 --> A3 --> A4
     end
 
     subgraph S2["Stage 2 — production-deps"]
         direction TB
-        B1["node:20-alpine"]
-        B2["npm ci --omit=dev"]
-        B3["Dépendances de production uniquement"]
+        B1["Image Node.js 20 Alpine"]
+        B2["Installer les dépendances<br/>de production"]
+        B3["Dépendances de<br/>production uniquement"]
         B1 --> B2 --> B3
     end
 
     subgraph S3["Stage 3 — builder"]
         direction TB
-        C1["Copie node_modules depuis deps"]
-        C2["Copie du code source complet"]
-        C3["Injection ARG NEXT_PUBLIC_*"]
-        C4["prisma generate"]
-        C5["npm run build"]
+        C1["Copier les dépendances<br/>depuis le stage 1"]
+        C2["Copie du code source<br/>complet"]
+        C3["Injecter les variables<br/>publiques"]
+        C4["Générer le client<br/>base de données"]
+        C5["Compiler l'application"]
         C1 --> C2 --> C3 --> C4 --> C5
     end
 
     subgraph S4["Stage 4 — runner"]
         direction TB
-        D1["node:20-alpine"]
-        D2["apk: chromium, fonts, graphicsmagick, ghostscript, libc6-compat"]
-        D3["Copie production node_modules"]
-        D4["Copie .next/standalone + static + public"]
-        D5["Copie prisma/ + scripts/"]
-        D6["HEALTHCHECK + CMD node server.js"]
+        D1["Image Node.js 20 Alpine"]
+        D2["Paquets système<br/>(navigateur, polices,<br/>outils PDF)"]
+        D3["Copier les dépendances<br/>de production"]
+        D4["Copier le serveur<br/>et les fichiers statiques"]
+        D5["Copier les migrations<br/>et scripts"]
+        D6["Vérification de santé<br/>et démarrage serveur"]
         D1 --> D2 --> D3 --> D4 --> D5 --> D6
     end
 
-    S1 -->|"node_modules"| S3
-    S2 -->|"node_modules (prod)"| S4
-    S3 -->|".next/standalone + static"| S4
+    S1 -->|"Toutes les dependances"| S3
+    S2 -->|"Dependances production"| S4
+    S3 -->|"Serveur et fichiers statiques"| S4
     style A1 fill:#0ea5e9,stroke:#0284c7,color:#fff
     style A2 fill:#64748b,stroke:#475569,color:#fff
     style A3 fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -271,28 +271,28 @@ COPY --from=builder /app/package.json ./package.json</code></pre>
 flowchart LR
     subgraph PR["Pull Request vers main"]
         direction TB
-        CI["CI: npm ci + build + audit"]
-        CD["CD: Docker build + deploy staging"]
-        DB["Clone DB prod → staging"]
-        Stripe["Sync Stripe test"]
+        CI["Validation du build<br/>et audit"]
+        CD["Build Docker et<br/>déploiement staging"]
+        DB["Cloner la base de données<br/>production vers staging"]
+        Stripe["Synchronisation<br/>Stripe test"]
         CI --> CD --> DB --> Stripe
     end
 
     subgraph Merge["Merge sur main"]
         direction TB
         Version["Versioning automatique"]
-        Build["Docker build production"]
-        Deploy["Deploy + health check"]
-        Migrate["Prisma + data migrations"]
-        Sync["Sync branches release + dev"]
+        Build["Construire l'image<br/>Docker production"]
+        Deploy["Déploiement et<br/>vérification de santé"]
+        Migrate["Migrations de schéma<br/>et de données"]
+        Sync["Synchroniser les branches<br/>release et dev"]
         Version --> Build --> Deploy --> Migrate
         Version --> Sync
     end
 
     subgraph Close["Fermeture PR"]
         direction TB
-        Stop["Stop conteneur staging"]
-        Drop["Drop DB fitmycv_release"]
+        Stop["Arrêter le conteneur<br/>staging"]
+        Drop["Supprimer la base<br/>de données staging"]
         Stop --> Drop
     end
 
@@ -372,17 +372,17 @@ UPDATE "Subscription" SET
           <div class="diagram-title">Pipeline de déploiement production</div>
           <div class="mermaid">
 flowchart TB
-    A["Push sur main"] --> B["Checkout (fetch-depth: 0)"]
+    A["Push sur main"] --> B["Récupérer le code<br/>(historique complet)"]
     B --> C["Versioning automatique"]
-    C --> D["git tag vX.X.X.X + push"]
-    D --> E["Sync branches release + dev"]
-    E --> F["Extract Public Config"]
-    F --> G["Docker Build"]
-    G --> H["docker compose up -d"]
-    H --> I["Health Check (30 × 5s)"]
-    I -->|"✅ OK"| J["Prisma migrate deploy"]
-    I -->|"❌ Fail"| K["docker logs + exit 1"]
-    J --> L["Data migrations"]
+    C --> D["Créer le tag de version<br/>et publier"]
+    D --> E["Synchroniser les branches<br/>release et dev"]
+    E --> F["Extraire la configuration<br/>publique"]
+    F --> G["Construire l'image Docker"]
+    G --> H["Démarrer les conteneurs"]
+    H --> I["Vérification de santé<br/>(30 x 5s)"]
+    I -->|"✅ OK"| J["Migrations de schéma"]
+    I -->|"❌ Echec"| K["Afficher les logs<br/>et signaler l'erreur"]
+    J --> L["Migrations de données"]
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff
     style B fill:#64748b,stroke:#475569,color:#fff
     style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -742,22 +742,22 @@ docker exec fitmycv-prod node scripts/run-data-migrations.js</code></pre>
           <div class="mermaid">
 flowchart TB
     Dev["Développeur push sur dev"] --> PR["Ouvre PR vers main"]
-    PR --> CI["CI: Build validation"]
-    CI --> Staging["Deploy sur dev.fitmycv.io"]
-    Staging --> Clone["Clone DB prod → staging"]
-    Clone --> Test["Tests manuels sur staging"]
-    Test -->|"Approuvé"| Merge["Merge PR dans main"]
-    Test -->|"Rejeté"| Close["Close PR"]
-    Close --> Cleanup["Cleanup: stop container + drop DB"]
-    Merge --> Version["Bump version automatique"]
-    Version --> Tag["Git tag vX.X.X.X"]
-    Tag --> Build["Docker build production"]
-    Build --> Deploy["docker compose up -d"]
-    Deploy --> Health["Health check (150s max)"]
-    Health -->|"✅"| Migrations["Prisma + data migrations"]
-    Health -->|"❌"| Fail["Logs + échec pipeline"]
+    PR --> CI["Validation du build"]
+    CI --> Staging["Déploiement sur<br/>dev.fitmycv.io"]
+    Staging --> Clone["Cloner la base de<br/>données vers staging"]
+    Clone --> Test["Tests manuels<br/>sur staging"]
+    Test -->|"Approuve"| Merge["Merge PR dans main"]
+    Test -->|"Rejete"| Close["Fermer la PR"]
+    Close --> Cleanup["Nettoyage : arrêter<br/>le conteneur et supprimer<br/>la base"]
+    Merge --> Version["Incrémenter la version<br/>automatiquement"]
+    Version --> Tag["Créer le tag<br/>de version"]
+    Tag --> Build["Construire l'image<br/>Docker production"]
+    Build --> Deploy["Démarrer les conteneurs"]
+    Deploy --> Health["Vérification de santé<br/>(150s max)"]
+    Health -->|"✅"| Migrations["Migrations de schéma<br/>et de données"]
+    Health -->|"❌"| Fail["Afficher les logs<br/>et signaler l'echec"]
     Migrations --> Live["🚀 En production"]
-    Version --> SyncDev["Sync branches release + dev"]
+    Version --> SyncDev["Synchroniser les branches<br/>release et dev"]
     style Dev fill:#0ea5e9,stroke:#0284c7,color:#fff
     style PR fill:#0ea5e9,stroke:#0284c7,color:#fff
     style CI fill:#8b5cf6,stroke:#7c3aed,color:#fff

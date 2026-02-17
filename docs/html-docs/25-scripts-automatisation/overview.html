@@ -86,19 +86,19 @@
           <div class="diagram-title">Scripts dans le cycle de vie du projet</div>
           <div class="mermaid">
 graph LR
-    subgraph DEV["Développement"]
-        EXPORT["export-email-templates.js"]
-        PREVIEW["preview-emails.js"]
+    subgraph DEV["Developpement"]
+        EXPORT["Export des modèles<br/>d'email"]
+        PREVIEW["Prévisualisation<br/>des emails"]
     end
 
     subgraph CICD["CI/CD (merge sur main)"]
-        BUMP["bump-version.sh"]
-        MIGRATE["run-data-migrations.js"]
-        SYNC["sync-stripe.mjs"]
+        BUMP["Incrémentation<br/>de version"]
+        MIGRATE["Migrations de<br/>données"]
+        SYNC["Synchronisation<br/>Stripe"]
     end
 
     subgraph STAGING["Pre-production (PR)"]
-        STAGING_STRIPE["sync-staging-stripe.js"]
+        STAGING_STRIPE["Synchronisation<br/>Stripe staging"]
     end
 
     EXPORT --> PREVIEW
@@ -174,22 +174,22 @@ graph LR
           <div class="diagram-title">Flux d'exécution de bump-version.sh</div>
           <div class="mermaid">
 graph TD
-    A["Lire version depuis package.json"] --> B["Découper en V1.V2.V3.V4"]
-    B --> C["Valider : chaque partie est un entier"]
-    C --> D["git describe --tags : trouver dernier tag"]
-    D --> E["git log depuis le tag : récupérer tous les commits"]
+    A["Lire la version<br/>actuelle"] --> B["Découper en 4 parties<br/>(Major.Minor.Patch.Build)"]
+    B --> C["Vérifier le format<br/>de la version"]
+    C --> D["Trouver le dernier<br/>tag Git"]
+    D --> E["Lister les commits<br/>depuis le tag"]
     E --> F{"Scanner les préfixes"}
-    F -->|"feat!: trouvé"| G["BUMP = major"]
-    F -->|"feat: trouvé"| H["BUMP = minor"]
-    F -->|"fix: trouvé"| I["BUMP = patch"]
-    F -->|"Aucun"| J["BUMP = build"]
-    G --> K["Calculer nouvelle version"]
+    F -->|"feat!: trouve"| G["Incrémenter<br/>le numéro Major"]
+    F -->|"feat: trouve"| H["Incrémenter<br/>le numéro Minor"]
+    F -->|"fix: trouve"| I["Incrémenter<br/>le numéro Patch"]
+    F -->|"Aucun"| J["Incrémenter<br/>le numéro Build"]
+    G --> K["Calculer la nouvelle version"]
     H --> K
     I --> K
     J --> K
-    K --> L["Mettre à jour package.json + package-lock.json"]
-    L --> M["Scan dynamique : grep -rl ancienne version"]
-    M --> N["sed -i remplacement dans tous les fichiers"]
+    K --> L["Mettre à jour<br/>les fichiers de config"]
+    L --> M["Chercher l'ancienne version<br/>dans tous les fichiers"]
+    M --> N["Remplacer par la<br/>nouvelle version"]
 
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -237,15 +237,15 @@ done</code></pre>
           <div class="diagram-title">Flux d'exécution des migrations de données</div>
           <div class="mermaid">
 graph TD
-    A["Créer table _data_migrations<br/>(si inexistante)"] --> B["Lire prisma/data-migrations/*.js"]
-    B --> C["Trier par nom (chronologique)"]
+    A["Créer la table de suivi<br/>(si inexistante)"] --> B["Lire les scripts<br/>de migration"]
+    B --> C["Trier par ordre<br/>chronologique"]
     C --> D{"Pour chaque fichier"}
-    D --> E["Vérifier dans _data_migrations"]
-    E -->|"Déjà appliqué"| D
-    E -->|"Non appliqué"| F["Exécuter migration(prisma)"]
-    F -->|"Succès"| G["INSERT dans _data_migrations"]
+    D --> E["Vérifier si déjà<br/>appliqué"]
+    E -->|"Deja applique"| D
+    E -->|"Non applique"| F["Exécuter la migration"]
+    F -->|"Succes"| G["Enregistrer dans<br/>la table de suivi"]
     G --> D
-    F -->|"Erreur"| H["process.exit(1)"]
+    F -->|"Erreur"| H["Arrêter avec erreur"]
 
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -368,9 +368,9 @@ Packs de crédits:
           <div class="diagram-title">Pipeline de synchronisation Staging</div>
           <div class="mermaid">
 graph LR
-    P1["Phase 1<br/>Products &amp; Prices<br/>Live → Test"] --> P2["Phase 2<br/>Update DB<br/>Stripe Test → DB"]
+    P1["Phase 1<br/>Produits et prix<br/>Live → Test"] --> P2["Phase 2<br/>Mettre à jour la base<br/>Stripe Test"]
     P2 --> P3["Phase 3<br/>Coupons<br/>Live → Test"]
-    P3 --> P4["Phase 4<br/>Promo Codes<br/>Live → Test"]
+    P3 --> P4["Phase 4<br/>Codes promo<br/>Live → Test"]
 
     style P1 fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style P2 fill:#14b8a6,stroke:#0d9488,color:#fff
@@ -496,9 +496,9 @@ node scripts/export-email-templates.js</code></pre>
           <div class="diagram-title">Flux d'export des templates</div>
           <div class="mermaid">
 graph LR
-    DB["DB: EmailTemplate<br/>+ EmailTrigger"] --> QUERY["findMany<br/>(include trigger)"]
-    QUERY --> SLUG["Slugify nom<br/>+ trigger name"]
-    SLUG --> WRITE["Écrire fichier JSON<br/>prisma/email-templates/"]
+    DB["Base de données<br/>(modèles d'email)"] --> QUERY["Récupérer les modèles<br/>et déclencheurs"]
+    QUERY --> SLUG["Générer le nom<br/>de fichier"]
+    SLUG --> WRITE["Écrire le fichier JSON<br/>dans le dossier export"]
 
     style DB fill:#14b8a6,stroke:#0d9488,color:#fff
     style QUERY fill:#8b5cf6,stroke:#7c3aed,color:#fff

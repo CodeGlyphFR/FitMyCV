@@ -38,24 +38,24 @@
           <div class="diagram-title">Pipeline d'extraction URL</div>
           <div class="mermaid">
 flowchart TB
-    URL["URL Offre"] --> Normalize["normalizeJobUrl<br/>Supprime tracking params"]
-    Normalize --> CacheCheck{"Cache?<br/>unique userId+sourceValue"}
-    CacheCheck -->|"Hit"| ReturnCache["Retour cache"]
-    CacheCheck -->|"Miss"| Strategy{"shouldUsePuppeteerFirst?"}
-    Strategy -->|"Sites proteges/SPA"| PuppeteerFirst["Puppeteer + Stealth<br/>waitForContent + autoScroll"]
-    Strategy -->|"Autres"| SimpleFetch["Simple HTTP Fetch"]
-    SimpleFetch -->|"Antibot detecte"| PuppeteerFallback["Puppeteer fallback"]
+    URL["URL Offre"] --> Normalize["Normaliser l'URL<br/>Supprimer les paramètres<br/>de tracking"]
+    Normalize --> CacheCheck{"Déjà en cache ?"}
+    CacheCheck -->|"Oui"| ReturnCache["Retour cache"]
+    CacheCheck -->|"Non"| Strategy{"Site protégé ?"}
+    Strategy -->|"Oui"| PuppeteerFirst["Navigation complète<br/>Attente du contenu<br/>+ défilement auto"]
+    Strategy -->|"Non"| SimpleFetch["Requête HTTP simple"]
+    SimpleFetch -->|"Antibot detecte"| PuppeteerFallback["Navigation de secours"]
     SimpleFetch -->|"OK"| Convert
     PuppeteerFirst --> Convert
     PuppeteerFallback --> Convert
-    Convert["HTML vers Markdown<br/>Readability + Turndown"]
-    Convert --> Expired{"Page expiree?<br/>detectExpiredOrDeletedPage"}
-    Expired -->|"Oui"| ErrorExp["Erreur: offre expiree"]
-    Expired -->|"Non"| Extract["OpenAI Structured Outputs<br/>jobOfferExtractionSchema.json"]
-    Extract --> ValidateOffer{"isJobOfferValid?"}
-    ValidateOffer -->|"Non"| ErrorNoJob["Erreur: pas d offre detectee"]
-    ValidateOffer -->|"Oui"| LangDetect["detectJobOfferLanguageWithOpenAI"]
-    LangDetect --> Store["storeJobOffer<br/>Upsert dans JobOffer"]
+    Convert["Convertir HTML<br/>en Markdown"]
+    Convert --> Expired{"Page expirée ?"}
+    Expired -->|"Oui"| ErrorExp["Erreur : offre expirée"]
+    Expired -->|"Non"| Extract["Extraction IA<br/>Sortie structurée OpenAI"]
+    Extract --> ValidateOffer{"Offre valide ?"}
+    ValidateOffer -->|"Non"| ErrorNoJob["Erreur : pas d'offre détectée"]
+    ValidateOffer -->|"Oui"| LangDetect["Détecter la langue"]
+    LangDetect --> Store["Enregistrer l'offre<br/>en base de données"]
 
     style URL fill:#0ea5e9,stroke:#0284c7,color:#fff
     style Normalize fill:#8b5cf6,stroke:#7c3aed,color:#fff

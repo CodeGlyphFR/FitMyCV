@@ -91,8 +91,8 @@ const GENDER_MARKER_RE =
           <div class="mermaid">
 graph LR
     A["Bouton Postuler<br/>+30 pts"] --> S["Score total"]
-    B["Headings métier<br/>+15 pts × 2 max"] --> S
-    C["Keywords contenu<br/>+2 pts × 10 max"] --> S
+    B["Titres de section métier<br/>+15 pts x 2 max"] --> S
+    C["Mots-clés du contenu<br/>+2 pts x 10 max"] --> S
     D["Contenu structuré > 500 cars<br/>+10 pts"] --> S
     S -->|"≥ 40"| Y["✓ Offre détectée"]
     S -->|"< 40"| N["✗ Pas une offre"]
@@ -170,36 +170,36 @@ graph LR
           <div class="mermaid">
 sequenceDiagram
     participant Page as Page Web
-    participant DET as detector.js
-    participant SW as Service Worker
-    participant DOM as DOM (bouton)
+    participant DET as Detecteur d offres
+    participant SW as Service en arriere-plan
+    participant DOM as Page (bouton)
 
-    Page->>DET: document_idle / SPA navigation
-    DET->>DET: detectPhase1()
+    Page->>DET: Page chargee ou navigation dynamique
+    DET->>DET: Lance la detection rapide (Phase 1)
 
-    alt Phase 1 réussit
-        DET->>DET: found = true
-    else Phase 1 échoue
-        DET->>DET: detectPhase2() — scoring DOM
-        alt Score ≥ 40
-            DET->>DET: found = true
+    alt Phase 1 reussit
+        DET->>DET: Offre trouvee
+    else Phase 1 echoue
+        DET->>DET: Lance l analyse du contenu (Phase 2)
+        alt Score >= 40
+            DET->>DET: Offre trouvee
         else Score < 40
-            DET->>DET: found = false
+            DET->>DET: Pas d'offre detectee
         end
     end
 
-    alt Offre détectée
-        DET->>SW: JOB_OFFER_DETECTED
-        SW->>SW: setIconActive(tabId)
-        DET->>DET: findButtonAnchor()
-        alt Site connu + auth
-            DET->>DOM: Injecte "FitMyCV +" après le titre
-            DET->>DET: watchButtonPresence() (MutationObserver)
+    alt Offre detectee
+        DET->>SW: Signale une offre detectee
+        SW->>SW: Active l'icone de l'extension
+        DET->>DET: Cherche l'emplacement du bouton
+        alt Site connu + authentifie
+            DET->>DOM: Injecte "FitMyCV +" apres le titre
+            DET->>DET: Surveille la presence du bouton
         end
     else Pas d'offre
-        DET->>SW: JOB_OFFER_NOT_DETECTED
-        SW->>SW: setIconInactive(tabId)
-        DET->>DOM: removeButton()
+        DET->>SW: Signale aucune offre
+        SW->>SW: Desactive l'icone de l'extension
+        DET->>DOM: Retire le bouton FitMyCV
     end
           </div>
         </div>
@@ -363,16 +363,16 @@ window.addEventListener('popstate', () => {
           <div class="diagram-title">Stratégie d'extraction par priorité</div>
           <div class="mermaid">
 flowchart TD
-    START["extractJobOffer()"] --> READ["1. Readability"]
-    READ -->|"contenu ≥ 200 chars"| GOOD["✓ Utilise résultat Readability"]
-    READ -->|"contenu < 200 chars ou null"| SEL["2. Sélecteurs CSS"]
-    SEL -->|"meilleur contenu trouvé"| COMPARE["Compare longueur"]
-    SEL -->|"rien trouvé"| FAIL["✗ Erreur extraction"]
-    COMPARE -->|"selector > readability"| SEL_WIN["✓ Utilise résultat Selector"]
-    COMPARE -->|"readability ≥ selector"| GOOD
-    GOOD --> SCORE["Scoring qualité"]
+    START["Extraire l'offre<br/>d'emploi"] --> READ["1. Extraction<br/>automatique du contenu"]
+    READ -->|"contenu suffisant"| GOOD["Utilise le contenu<br/>extrait automatiquement"]
+    READ -->|"contenu insuffisant ou vide"| SEL["2. Extraction via<br/>sélecteurs par site"]
+    SEL -->|"meilleur contenu trouve"| COMPARE["Compare les<br/>résultats"]
+    SEL -->|"rien trouve"| FAIL["Erreur d'extraction"]
+    COMPARE -->|"selecteur meilleur"| SEL_WIN["Utilise le contenu<br/>des sélecteurs par site"]
+    COMPARE -->|"extraction auto meilleure"| GOOD
+    GOOD --> SCORE["Évaluer la qualité<br/>du contenu"]
     SEL_WIN --> SCORE
-    SCORE --> RETURN["Retour { title, content, sourceUrl, score, isValid }"]
+    SCORE --> RETURN["Retourne le titre, contenu,<br/>URL, score et validité"]
     style START fill:#0ea5e9,stroke:#0284c7,color:#fff
     style READ fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style GOOD fill:#22c55e,stroke:#16a34a,color:#fff
@@ -703,11 +703,11 @@ function cleanMarkdown(md) {
           <div class="mermaid">
 graph LR
     L["Longueur<br/>0-20 pts"] --> T["Score Total<br/>(0-100)"]
-    K["Keywords<br/>0-30 pts"] --> T
+    K["Mots-clés<br/>0-30 pts"] --> T
     S["Structure<br/>0-25 pts"] --> T
     N["Bruit<br/>-0 à -25 pts"] --> T
-    T -->|"≥ 25 + len ≥ 200"| V["✓ isValid = true"]
-    T -->|"< 25"| I["✗ isValid = false"]
+    T -->|"score >= 25 et >= 200 car."| V["Contenu valide"]
+    T -->|"score < 25"| I["Contenu invalide"]
     style L fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style K fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style S fill:#8b5cf6,stroke:#7c3aed,color:#fff

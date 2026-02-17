@@ -38,23 +38,23 @@
           <div class="diagram-title">Chaîne de traitement du middleware proxy.js</div>
           <div class="mermaid">
 flowchart TB
-    Req["Requête entrante"] --> HMR{"/_next/webpack-hmr ?"}
-    HMR -->|"Oui"| Bypass["Bypass complet (WebSocket)"]
-    HMR -->|"Non"| CORS{"Route extension ?<br/>/api/ext/* ou /api/auth/extension-token"}
-    CORS -->|"OPTIONS"| Preflight{"Origin autorisé ?"}
-    Preflight -->|"Oui"| CorsOK["204 + CORS headers"]
-    Preflight -->|"Non"| Cors403["403 Forbidden"]
-    CORS -->|"Non OPTIONS"| Email["Vérification email"]
+    Req["Requête entrante"] --> HMR{"Connexion temps réel ?"}
+    HMR -->|"Oui"| Bypass["Laisser passer<br/>(temps reel)"]
+    HMR -->|"Non"| CORS{"Route extension ?"}
+    CORS -->|"Preflight"| Preflight{"Origine autorisée ?"}
+    Preflight -->|"Oui"| CorsOK["Accès autorisé"]
+    Preflight -->|"Non"| Cors403["Accès refusé"]
+    CORS -->|"Autre"| Email["Vérification email"]
     Email --> EmailCheck{"Utilisateur connecté<br/>sans email vérifié ?"}
-    EmailCheck -->|"Oui"| Redirect["Redirect /auth/verify-email-required"]
-    EmailCheck -->|"Non"| RateLimit{"Route /api/* ?"}
-    RateLimit -->|"Oui"| RLCheck{"Rate limit dépassé ?"}
-    RLCheck -->|"Oui"| RL429["429 Too Many Requests"]
-    RLCheck -->|"Non"| Headers["Appliquer Security Headers"]
+    EmailCheck -->|"Oui"| Redirect["Rediriger vers<br/>vérification email"]
+    EmailCheck -->|"Non"| RateLimit{"Route API ?"}
+    RateLimit -->|"Oui"| RLCheck{"Limite de requêtes<br/>dépassée ?"}
+    RLCheck -->|"Oui"| RL429["Trop de requêtes"]
+    RLCheck -->|"Non"| Headers["Appliquer les en-têtes<br/>de sécurité"]
     RateLimit -->|"Non"| Headers
     Headers --> CorsAdd{"Route extension ?"}
-    CorsAdd -->|"Oui"| AddCors["Ajouter CORS headers"]
-    CorsAdd -->|"Non"| Done["NextResponse.next()"]
+    CorsAdd -->|"Oui"| AddCors["Ajouter les en-têtes<br/>cross-origin"]
+    CorsAdd -->|"Non"| Done["Continuer vers<br/>la route"]
     AddCors --> Done
     style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
     style HMR fill:#f59e0b,stroke:#d97706,color:#fff
@@ -142,13 +142,13 @@ const EXTRA_ORIGINS = (process.env.EXTENSION_ALLOWED_ORIGINS || '')
           <div class="diagram-title">Mécanisme de rate limiting</div>
           <div class="mermaid">
 flowchart LR
-    Req["Requête API"] --> Key["Clé = IP:pathname"]
+    Req["Requête API"] --> Key["Identifier la requête<br/>(IP + chemin)"]
     Key --> Check{"Fenêtre expirée ?"}
-    Check -->|"Oui"| Reset["Reset compteur à 0"]
-    Check -->|"Non"| Inc["Incrémenter compteur"]
+    Check -->|"Oui"| Reset["Réinitialiser le compteur"]
+    Check -->|"Non"| Inc["Incrémenter le compteur"]
     Reset --> Inc
-    Inc --> Limit{"count > maxRequests ?"}
-    Limit -->|"Oui"| Block["429 + Retry-After"]
+    Inc --> Limit{"Limite dépassée ?"}
+    Limit -->|"Oui"| Block["Bloquer la requête"]
     Limit -->|"Non"| Pass["Requête autorisée"]
     style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
     style Key fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -430,13 +430,13 @@ connectSrcSources.push(
           <div class="mermaid">
 flowchart TB
     Req["Requête entrante"] --> Public{"Route publique ?"}
-    Public -->|"Oui (/auth, /api, /_next)"| Pass["Pas de vérification"]
-    Public -->|"Non"| Token["getToken() via NextAuth"]
+    Public -->|"Oui"| Pass["Pas de vérification"]
+    Public -->|"Non"| Token["Récupérer le jeton<br/>d'authentification"]
     Token --> Connected{"Utilisateur connecté ?"}
     Connected -->|"Non"| Pass
-    Connected -->|"Oui"| Verified{"emailVerified ?"}
+    Connected -->|"Oui"| Verified{"Email vérifié ?"}
     Verified -->|"Oui"| Pass
-    Verified -->|"Non"| Redirect["302 → /auth/verify-email-required"]
+    Verified -->|"Non"| Redirect["Rediriger vers<br/>vérification email"]
     style Req fill:#0ea5e9,stroke:#0284c7,color:#fff
     style Public fill:#f59e0b,stroke:#d97706,color:#fff
     style Pass fill:#22c55e,stroke:#16a34a,color:#fff

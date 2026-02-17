@@ -44,44 +44,44 @@
           <div class="mermaid">
 flowchart TB
     subgraph Input["ENTREE UTILISATEUR"]
-        CV["CV Source JSON<br/>CvFile.content"]
+        CV["CV source JSON<br/>Contenu du fichier CV"]
         URL["URL / PDF / Markdown"]
     end
 
     subgraph Phase0["PHASE 0 - EXTRACTION"]
-        Extract["executeExtraction<br/>extract.js"]
-        JobOffer["JobOffer JSON"]
+        Extract["Extraire l'offre d'emploi"]
+        JobOffer["Offre d'emploi JSON"]
     end
 
     subgraph Phase05["PHASE 0.5 - CLASSIFICATION"]
-        Classify["executeClassification<br/>classifyCore"]
-        ApplyClass["applyClassification"]
-        Decision{"KEEP / REMOVE /<br/>MOVE_TO_PROJECTS"}
+        Classify["Classifier les expériences<br/>et projets"]
+        ApplyClass["Appliquer la classification"]
+        Decision{"Conserver / Supprimer /<br/>Déplacer en Projets"}
     end
 
     subgraph Phase1["PHASE 1 - BATCHES"]
         direction TB
-        subgraph Parallel["6 Batches en Promise.all"]
-            BatchExp["1a: Experiences<br/>batch-experiences.js"]
-            BatchProj["1b: Projects<br/>batch-projects.js"]
-            BatchExtras["1c: Extras<br/>batch-extras.js"]
-            BatchEdu["1d: Education<br/>batch-education.js"]
-            BatchLang["1e: Languages<br/>batch-languages.js"]
-            BatchSkills["1f: Skills<br/>batch-skills.js"]
+        subgraph Parallel["6 BATCHES EN PARALLELE"]
+            BatchExp["1a: Adapter<br/>les expériences"]
+            BatchProj["1b: Adapter<br/>les projets"]
+            BatchExtras["1c: Adapter<br/>les extras"]
+            BatchEdu["1d: Adapter<br/>la formation"]
+            BatchLang["1e: Adapter<br/>les langues"]
+            BatchSkills["1f: Adapter<br/>les compétences"]
         end
-        BatchSummary["1g: Summary<br/>batch-summary.js<br/>sequentiel apres Promise.all"]
+        BatchSummary["1g: Générer le résumé<br/>séquentiel après<br/>les batches parallèles"]
     end
 
     subgraph Phase2["PHASE 2 - RECOMPOSITION"]
-        Recompose["executeRecomposition<br/>recompose.js"]
-        ReviewInit["initializeReviewState<br/>Change Tracking"]
-        FinalCV["CV Adapte JSON"]
+        Recompose["Assembler le CV final"]
+        ReviewInit["Initialiser le suivi<br/>des modifications"]
+        FinalCV["CV adapté JSON"]
     end
 
     subgraph StorageLayer["STOCKAGE"]
-        CvFile[(CvFile)]
-        CvVersion[(CvVersion v0)]
-        OfferRecord[(CvGenerationOffer)]
+        CvFile[("Fichier CV")]
+        CvVersion[("Version CV v0")]
+        OfferRecord[("Offre de génération")]
     end
 
     URL --> Extract --> JobOffer
@@ -89,8 +89,8 @@ flowchart TB
     JobOffer --> Classify
     Classify --> ApplyClass --> Decision
 
-    Decision -->|"KEEP experiences"| BatchExp
-    Decision -->|"KEEP + MOVE_TO_PROJECTS"| BatchProj
+    Decision -->|"Experiences conservees"| BatchExp
+    Decision -->|"Conservees + deplacees"| BatchProj
     Decision --> BatchExtras
     Decision --> BatchEdu
     Decision --> BatchLang

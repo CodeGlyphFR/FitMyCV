@@ -39,39 +39,39 @@
           <div class="mermaid">
 flowchart TB
     subgraph Input["ENTREES"]
-        CV["CV JSON<br/>CvFile.content"]
-        JO["Offre d emploi<br/>JobOffer.content ou<br/>jobOfferSnapshot.content"]
+        CV["CV JSON<br/>Contenu du CV"]
+        JO["Offre d emploi<br/>Contenu de l offre"]
     end
 
     subgraph Prepare["PREPARATION"]
-        Parse["Parser CV JSON"]
-        Format["formatJobOfferForAnalysis<br/>Sections avec emojis"]
-        LangN["detectCvLanguage /<br/>cvData.language"]
+        Parse["Lire le CV JSON"]
+        Format["Formater l offre<br/>Sections avec emojis"]
+        LangN["Détecter la langue<br/>du CV"]
         Trans{"Langues<br/>differentes ?"}
         Instruction["Ajouter instruction<br/>de traduction"]
     end
 
     subgraph Prompts["PROMPTS"]
-        SystemP["lib/scoring/prompts/system.md<br/>+ cvLanguage + translationInstruction"]
-        UserP["lib/scoring/prompts/user.md<br/>+ cvContent + jobOfferContent"]
+        SystemP["Prompt système<br/>+ langue CV + traduction"]
+        UserP["Prompt utilisateur<br/>+ contenu CV + offre"]
     end
 
-    subgraph OpenAI["APPEL OPENAI"]
-        Call["client.chat.completions.create<br/>model: model_match_score<br/>response_format: json_object<br/>temperature: 0.1"]
+    subgraph OpenAI["APPEL IA"]
+        Call["Appel au modèle IA<br/>Format JSON<br/>Température 0.1"]
     end
 
     subgraph Calculate["RECALCUL"]
-        Breakdown["Extraire scoreBreakdown"]
+        Breakdown["Extraire les sous-scores"]
         Formula["Appliquer formule<br/>de ponderation"]
-        Clamp["Clamp 0-100 sur<br/>chaque sous-score"]
+        Clamp["Limiter entre 0 et 100<br/>chaque sous-score"]
     end
 
     subgraph Output["SORTIE"]
-        Score["matchScore recalcule"]
-        SB["scoreBreakdown"]
-        Sugg["suggestions"]
-        Missing["missingSkills"]
-        Matching["matchingSkills"]
+        Score["Score recalculé"]
+        SB["Sous-scores"]
+        Sugg["Suggestions"]
+        Missing["Compétences manquantes"]
+        Matching["Compétences correspondantes"]
     end
 
     CV --> Parse

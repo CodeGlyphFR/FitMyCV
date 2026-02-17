@@ -38,32 +38,32 @@
           <div class="diagram-title">Modules de l'orchestrateur et leurs relations</div>
           <div class="mermaid">
 flowchart TB
-    subgraph OrchestratorMod["ORCHESTRATOR"]
-        TaskRunner["taskRunner.js<br/>startSingleOfferGeneration<br/>startMultiOfferGeneration"]
-        OfferProcessor["offerProcessor.js<br/>processOffer<br/>runBatchesPhase"]
-        CreditManager["creditManager.js<br/>refundCreditForOffer"]
-        ProgressEmitter["progressEmitter.js<br/>emitProgress"]
-        RetryHandler["retryHandler.js<br/>withRetry"]
+    subgraph OrchestratorMod["ORCHESTRATEUR"]
+        TaskRunner["Lanceur de tâches<br/>Démarre et supervise<br/>la génération CV"]
+        OfferProcessor["Traitement des offres<br/>Coordonne les phases<br/>de génération"]
+        CreditManager["Gestion des crédits<br/>Rembourse en cas d'échec"]
+        ProgressEmitter["Émetteur de progrès<br/>Événements SSE temps réel"]
+        RetryHandler["Gestion des erreurs<br/>Relance avec délai croissant"]
     end
 
     subgraph PhasesGroup["PHASES"]
-        P0["extract.js"]
-        P05["classify.js"]
-        P1["batch-*.js x7"]
-        P2["recompose.js"]
+        P0["Extraction<br/>Analyser l'offre d'emploi"]
+        P05["Classification<br/>Trier les expériences"]
+        P1["Batches IA<br/>7 sections en parallèle"]
+        P2["Recomposition<br/>Assembler le CV final"]
     end
 
-    subgraph DBLayer["PRISMA"]
-        TaskDB[(CvGenerationTask)]
-        OfferDB[(CvGenerationOffer)]
-        SubtaskDB[(CvGenerationSubtask)]
+    subgraph DBLayer["BASE DE DONNEES"]
+        TaskDB[("Tâche de génération")]
+        OfferDB[("Offre de génération")]
+        SubtaskDB[("Sous-tâche de traçabilité")]
     end
 
-    TaskRunner -->|"offerId"| OfferProcessor
+    TaskRunner -->|"traiter une offre"| OfferProcessor
     OfferProcessor -->|"chaque phase"| PhasesGroup
-    OfferProcessor -->|"wrap fn"| RetryHandler
-    TaskRunner -->|"refund on fail"| CreditManager
-    OfferProcessor -->|"phase, step, status"| ProgressEmitter
+    OfferProcessor -->|"relance auto en cas d'erreur"| RetryHandler
+    TaskRunner -->|"rembourser si echec"| CreditManager
+    OfferProcessor -->|"progression temps reel"| ProgressEmitter
 
     PhasesGroup --> SubtaskDB
     TaskRunner --> TaskDB
@@ -150,19 +150,19 @@ activeControllers.delete(taskId);</code></pre>
           <div class="diagram-title">Ex&eacute;cution parall&egrave;le des 7 batches</div>
           <div class="mermaid">
 flowchart TB
-    ApplyClass["applyClassification<br/>Filtrage KEEP / MOVE_TO_PROJECTS"]
+    ApplyClass["Appliquer la classification<br/>Filtrer et répartir<br/>les expériences"]
 
-    subgraph ParallelBatches["Promise.all - 6 Batches"]
-        Exp["executeBatchExperiences"]
-        Proj["executeBatchProjects"]
-        Extras["executeBatchExtras"]
-        Edu["executeBatchEducation"]
-        Lang["executeBatchLanguages"]
-        SkillsBatch["executeBatchSkills"]
+    subgraph ParallelBatches["6 Batches en parallele"]
+        Exp["Adapter les expériences<br/>professionnelles"]
+        Proj["Adapter les projets"]
+        Extras["Adapter les extras"]
+        Edu["Adapter la formation"]
+        Lang["Adapter les langues"]
+        SkillsBatch["Adapter les compétences"]
     end
 
-    Summary["executeBatchSummary<br/>sequentiel apres Promise.all"]
-    PostSkills["processSkillsResponse<br/>Post-traitement skills"]
+    Summary["Générer le résumé<br/>séquentiel après les batches"]
+    PostSkills["Post-traitement<br/>des compétences"]
 
     ApplyClass --> ParallelBatches
     ParallelBatches --> PostSkills
@@ -363,20 +363,20 @@ export function emitProgress(userId, context, phase, step, status, extra = {}) {
           <div class="diagram-title">&Eacute;tats d'une CvGenerationTask / CvGenerationOffer</div>
           <div class="mermaid">
 graph TD
-    START_NODE(("Start")) --> QUEUED["queued<br/>API Route cree la tache"]
-    QUEUED --> RUNNING["running<br/>enqueueJob demarre"]
-    RUNNING --> EXTRACTION["extraction<br/>Phase 0"]
-    EXTRACTION --> CLASSIFICATION["classification<br/>Phase 0.5"]
-    CLASSIFICATION --> BATCHES["batches<br/>Phase 1 - 6 paralleles + 1 sequentiel"]
-    BATCHES --> RECOMPOSITION["recomposition<br/>Phase 2"]
-    RECOMPOSITION --> COMPLETED["completed<br/>Succes"]
-    RUNNING -->|"Erreur + refund"| FAILED["failed"]
+    START_NODE(("Début")) --> QUEUED["En file d'attente<br/>Tâche créée par l'API"]
+    QUEUED --> RUNNING["En cours<br/>Traitement démarré"]
+    RUNNING --> EXTRACTION["Extraction<br/>Analyser l'offre d'emploi"]
+    EXTRACTION --> CLASSIFICATION["Classification<br/>Trier les expériences"]
+    CLASSIFICATION --> BATCHES["Batches IA<br/>6 parallèles + 1 séquentiel"]
+    BATCHES --> RECOMPOSITION["Recomposition<br/>Assembler le CV final"]
+    RECOMPOSITION --> COMPLETED["Terminé<br/>Succès"]
+    RUNNING -->|"Erreur + remboursement"| FAILED["Échoué"]
     EXTRACTION -->|"Erreur extraction"| FAILED
     CLASSIFICATION -->|"Erreur classification"| FAILED
     BATCHES -->|"Erreur batch"| FAILED
     RECOMPOSITION -->|"Erreur recomposition"| FAILED
-    RUNNING -->|"AbortController.abort"| CANCELLED["cancelled"]
-    COMPLETED --> END_NODE(("End"))
+    RUNNING -->|"Annulation par l'utilisateur"| CANCELLED["Annulé"]
+    COMPLETED --> END_NODE(("Fin"))
     FAILED --> END_NODE
     CANCELLED --> END_NODE
 

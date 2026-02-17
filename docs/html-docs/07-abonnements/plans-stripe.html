@@ -102,18 +102,18 @@ export function comparePlans(currentPlan, targetPlan) {
           <div class="mermaid">
 flowchart LR
     subgraph DB["BASE DE DONNEES"]
-        Plans["SubscriptionPlan"]
-        Packs["CreditPack"]
+        Plans["Plans d'abonnement"]
+        Packs["Packs de crédits"]
     end
 
-    subgraph Sync["syncStripeProductsInternal"]
-        PlanSync["Pour chaque plan payant :<br/>1. Creer/recuperer Product<br/>2. Creer/verifier Price mensuel<br/>3. Creer/verifier Price annuel<br/>4. Archiver anciens prix"]
-        PackSync["Pour chaque pack actif :<br/>1. Creer/recuperer Product<br/>2. Creer/verifier Price<br/>3. Definir default_price<br/>4. Archiver ancien prix"]
+    subgraph Sync["Synchronisation Stripe"]
+        PlanSync["Pour chaque plan payant :<br/>1. Créer/récupérer le produit<br/>2. Créer/vérifier le prix mensuel<br/>3. Créer/vérifier le prix annuel<br/>4. Archiver les anciens prix"]
+        PackSync["Pour chaque pack actif :<br/>1. Créer/récupérer le produit<br/>2. Créer/vérifier le prix<br/>3. Définir le prix par défaut<br/>4. Archiver l'ancien prix"]
     end
 
     subgraph Stripe["STRIPE"]
-        Products["Products"]
-        Prices["Prices"]
+        Products["Produits Stripe"]
+        Prices["Prix Stripe"]
     end
 
     Plans --> PlanSync

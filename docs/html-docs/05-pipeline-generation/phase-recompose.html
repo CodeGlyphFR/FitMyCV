@@ -81,53 +81,53 @@
           <div class="diagram-title">Processus complet de la phase Recomposition</div>
           <div class="mermaid">
 flowchart TB
-    subgraph InputBatch["ENTREES - batchResults"]
+    subgraph InputBatch["ENTREES - RESULTATS DES BATCHES"]
         direction LR
-        BR_EXP["batch-experiences<br/>experiences[]"]
-        BR_PROJ["batch-projects<br/>projects[]"]
-        BR_SKILLS["batch-skills<br/>skills + _raw"]
-        BR_SUMMARY["batch-summary<br/>summary"]
-        BR_EXTRAS["batch-extras<br/>extras[] + extras_modifications[]"]
-        BR_EDU["batch-education<br/>education[] + education_modifications[]"]
-        BR_LANG["batch-languages<br/>languages[] + language_modifications[]"]
+        BR_EXP["Expériences<br/>adaptées"]
+        BR_PROJ["Projets<br/>adaptés"]
+        BR_SKILLS["Compétences<br/>adaptées + données brutes"]
+        BR_SUMMARY["Résumé professionnel<br/>adapté"]
+        BR_EXTRAS["Extras adaptés<br/>+ modifications"]
+        BR_EDU["Formation adaptée<br/>+ modifications"]
+        BR_LANG["Langues adaptées<br/>+ modifications"]
     end
 
     subgraph SourceCV["CV SOURCE"]
-        SRC_CV["sourceCv<br/>CvFile.content"]
-        SRC_NAME["sourceCvFileName"]
+        SRC_CV["CV source<br/>Contenu JSON"]
+        SRC_NAME["Nom du fichier CV source"]
     end
 
-    subgraph AssemblyStep["ASSEMBLAGE algorithmique"]
+    subgraph AssemblyStep["ASSEMBLAGE ALGORITHMIQUE"]
         direction TB
-        A1["1. header = sourceCv.header<br/>+ current_title = jobOffer.title"]
-        A2["2. summary = batchResults.summary"]
-        A3["3. experience = batchResults.experiences<br/>KEEP uniquement"]
-        A4["4. projects = batchResults.projects<br/>KEEP + MOVE_TO_PROJECTS"]
-        A5["5. skills = cleanSkills<br/>sans _raw"]
-        A6["6. education = batchResults.education"]
-        A7["7. languages = batchResults.languages"]
-        A8["8. extras = batchResults.extras"]
+        A1["1. En-tête du CV<br/>+ titre du poste visé"]
+        A2["2. Résumé professionnel"]
+        A3["3. Expériences conservées"]
+        A4["4. Projets conservés<br/>+ expériences déplacées"]
+        A5["5. Compétences nettoyées<br/>sans données internes"]
+        A6["6. Formation adaptée"]
+        A7["7. Langues adaptées"]
+        A8["8. Extras adaptés"]
         A1 --> A2 --> A3 --> A4 --> A5 --> A6 --> A7 --> A8
     end
 
-    subgraph SanitizeStep["SANITIZE"]
-        SAN["sanitizeForPostgres<br/>Supprime null bytes"]
+    subgraph SanitizeStep["NETTOYAGE"]
+        SAN["Nettoyage des caractères<br/>invalides pour la base"]
     end
 
     subgraph DBPersist["PERSISTENCE"]
         direction TB
-        CF["CvFile.create<br/>createdBy = generate-cv"]
-        CV0["CvVersion.create<br/>version = 0, changeType = import"]
-        UPD["CvGenerationOffer.update<br/>generatedCvFileId"]
+        CF["Créer le fichier CV<br/>généré par le pipeline"]
+        CV0["Créer la version 0<br/>référence source"]
+        UPD["Lier le CV généré<br/>à l'offre"]
     end
 
-    subgraph ChangeTrack["CHANGE TRACKING"]
+    subgraph ChangeTrack["SUIVI DES MODIFICATIONS"]
         direction TB
-        EXTRACTCH["extractChangesFromBatchResults<br/>Modifications IA before/after/reason"]
-        DIFFCH["computeCvDiff<br/>Diff programmatique removed + added"]
-        DEDUPCH["Deduplication<br/>aiChangeKeys, modifiedBeforeValues"]
-        MERGECH["mergeTranslationPairs<br/>Fusionne removed+added traductions"]
-        INITCH["initializeReviewState<br/>Stocke dans CvFile.pendingChanges"]
+        EXTRACTCH["Extraire les modifications<br/>IA avant/après/raison"]
+        DIFFCH["Calculer les différences<br/>éléments ajoutés/supprimés"]
+        DEDUPCH["Déduplication<br/>des modifications"]
+        MERGECH["Fusionner les paires<br/>de traduction"]
+        INITCH["Initialiser l'état de revue<br/>Modifications en attente"]
         EXTRACTCH --> DEDUPCH
         DIFFCH --> DEDUPCH
         DEDUPCH --> MERGECH --> INITCH
@@ -469,23 +469,23 @@ const cleanSkills = batchResults.skills ? {
           <div class="mermaid">
 flowchart LR
     subgraph Step1["Etape 1"]
-        EXTRACT2["extractChangesFromBatchResults<br/>Modifications IA<br/>before/after/reason"]
+        EXTRACT2["Extraire les modifications IA<br/>avant/après/raison"]
     end
 
     subgraph Step2["Etape 2"]
-        DIFF2["computeCvDiff<br/>Diff programmatique<br/>removed + added"]
+        DIFF2["Calcul des différences<br/>éléments ajoutés/supprimés"]
     end
 
     subgraph Step3["Etape 3"]
-        DEDUP2["Deduplication<br/>aiChangeKeys<br/>modifiedBeforeValues<br/>removedOriginalNames<br/>consolidatedOriginalKeys"]
+        DEDUP2["Déduplication<br/>des modifications<br/>par clés uniques"]
     end
 
     subgraph Step4["Etape 4"]
-        MERGE2["mergeTranslationPairs<br/>Fusionne removed+added<br/>= traductions"]
+        MERGE2["Fusionner les paires<br/>de traduction"]
     end
 
     subgraph Step5["Etape 5"]
-        INIT2["initializeReviewState<br/>CvFile.pendingChanges"]
+        INIT2["Initialiser l'état de revue<br/>Modifications en attente"]
     end
 
     Step1 --> Step3

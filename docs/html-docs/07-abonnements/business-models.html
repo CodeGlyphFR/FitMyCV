@@ -48,24 +48,24 @@
           <div class="mermaid">
 flowchart TB
     subgraph Plans["PLANS D ABONNEMENT"]
-        Free["Gratuit<br/>tier 0 - 0 EUR"]
-        Pro["Pro<br/>tier 1"]
-        Premium["Premium<br/>tier 2"]
+        Free["Gratuit<br/>niveau 0 - 0 EUR"]
+        Pro["Pro<br/>niveau 1"]
+        Premium["Premium<br/>niveau 2"]
     end
 
     subgraph Limits["SYSTEME DE LIMITES"]
-        FL["SubscriptionPlanFeatureLimit"]
-        CounterN["FeatureUsageCounter<br/>reset mensuel auto"]
+        FL["Limites de features<br/>par plan"]
+        CounterN["Compteur d'utilisation<br/>réinitialisation mensuelle"]
     end
 
     subgraph Usage["VERIFICATION"]
-        CheckN{"canUseFeature"}
-        Premium2{"premiumRequired ?"}
+        CheckN{"Peut utiliser<br/>la feature ?"}
+        Premium2{"Réservé Premium ?"}
     end
 
     subgraph Credits["EXTENSION CREDITS"]
-        Buy["Achat pack credits"]
-        BalanceN["CreditBalance"]
+        Buy["Achat pack crédits"]
+        BalanceN["Solde de crédits"]
     end
 
     subgraph Action["RESULTAT"]
@@ -79,12 +79,12 @@ flowchart TB
 
     CheckN -->|"Limite non atteinte"| Execute
     CheckN -->|"Limite atteinte"| BalanceN
-    CheckN -->|"Feature disabled"| BalanceN
+    CheckN -->|"Feature desactivee"| BalanceN
     BalanceN -->|"Credits OK"| Execute
     BalanceN -->|"Insuffisant"| BlockN
     BlockN --> Buy --> BalanceN
 
-    CheckN -->|"premiumRequired"| Premium2
+    CheckN -->|"Reserve Premium"| Premium2
     Premium2 -->|"Plan Premium"| PremExec
     Premium2 -->|"Autre plan"| BlockN
 
@@ -171,18 +171,18 @@ await prisma.creditBalance.create({
 flowchart TB
     subgraph Register["INSCRIPTION"]
         NewUser["Nouvel utilisateur"]
-        Welcome["Credits de bienvenue<br/>setting: welcome_credits"]
+        Welcome["Crédits de bienvenue<br/>montant configurable"]
     end
 
     subgraph Usage["UTILISATION"]
-        BalanceC["CreditBalance"]
-        CostLookup["getCreditCostForFeature"]
+        BalanceC["Solde de crédits"]
+        CostLookup["Récupérer le coût<br/>en crédits"]
         CheckC{"Cout = 0 ?"}
         CredCheckC{"Credits >= cout ?"}
     end
 
     subgraph Purchase["ACHAT"]
-        Packs["Packs de credits<br/>CreditPack"]
+        Packs["Packs de crédits"]
     end
 
     subgraph Action["RESULTAT"]
@@ -403,36 +403,36 @@ if (welcomeCredits > 0) {
           <div class="diagram-title">Arbre de d&eacute;cision complet de canUseFeature()</div>
           <div class="mermaid">
 flowchart TD
-    Start["canUseFeature(userId, featureName)"]
+    Start["Vérifier l'accès<br/>à la feature"]
 
-    BalCheck{"Balance &lt; 0 ?<br/>(chargeback)"}
-    ModeCheck{"subscription_mode_enabled ?"}
+    BalCheck{"Solde &lt; 0 ?<br/>(contestation paiement)"}
+    ModeCheck{"Mode abonnement<br/>activé ?"}
 
-    subgraph Credits["MODE CRÉDITS-ONLY"]
-        CreditCost["getCreditCostForFeature()"]
-        CostZero{"cost === 0 ?"}
-        CreditSuff{"balance >= cost ?"}
-        CreditFree["✅ Feature gratuite<br/>useCredit: false"]
-        CreditUse["✅ Utiliser crédits<br/>useCredit: true"]
+    subgraph Credits["MODE CREDITS-ONLY"]
+        CreditCost["Récupérer le coût<br/>en crédits"]
+        CostZero{"Coût = 0 ?"}
+        CreditSuff{"Solde >= coût ?"}
+        CreditFree["✅ Feature gratuite"]
+        CreditUse["✅ Utiliser crédits"]
         CreditBlock["❌ Crédits insuffisants"]
     end
 
     subgraph Sub["MODE ABONNEMENT"]
-        GetSub["getUserSubscriptionWithPlan()"]
-        SubActive{"status === 'active' ?"}
-        FindLimit["Trouver featureLimit dans plan"]
-        PremReq{"premiumRequired ?<br/>(cost === 0)"}
+        GetSub["Récupérer l'abonnement<br/>avec le plan"]
+        SubActive{"Abonnement actif ?"}
+        FindLimit["Trouver la limite<br/>dans le plan"]
+        PremReq{"Réservé Premium ?<br/>(coût = 0)"}
         IsPrem{"Plan Premium ?"}
-        Enabled{"featureLimit.isEnabled ?"}
-        LimitInf{"usageLimit === -1 ?"}
-        Counter["getOrCreateFeatureCounter()"]
-        UnderLimit{"count &lt; limit ?"}
-        SubCreditSuff{"balance >= cost ?"}
-        PremOk["✅ Premium inclus<br/>useCredit: false"]
+        Enabled{"Feature activée ?"}
+        LimitInf{"Limite illimitée ?"}
+        Counter["Récupérer ou créer<br/>le compteur"]
+        UnderLimit{"Compteur &lt; limite ?"}
+        SubCreditSuff{"Solde >= coût ?"}
+        PremOk["✅ Premium inclus"]
         PremBlock["❌ Réservé Premium"]
-        SubUnlimited["✅ Illimité<br/>useCredit: false"]
-        SubOk["✅ Limite non atteinte<br/>useCredit: false"]
-        SubCreditUse["✅ Via crédits<br/>useCredit: true"]
+        SubUnlimited["✅ Illimité"]
+        SubOk["✅ Limite non atteinte"]
+        SubCreditUse["✅ Via crédits"]
         SubBlock["❌ Limite + crédits insuffisants"]
         DisabledCred{"Crédits suffisants ?"}
         DisabledOk["✅ Feature désactivée → crédits"]
@@ -440,17 +440,17 @@ flowchart TD
     end
 
     Start --> BalCheck
-    BalCheck -->|"Oui"| BlockNeg["❌ Balance négative"]
+    BalCheck -->|"Oui"| BlockNeg["❌ Solde négatif"]
     BalCheck -->|"Non"| ModeCheck
 
-    ModeCheck -->|"false"| CreditCost
+    ModeCheck -->|"Non"| CreditCost
     CreditCost --> CostZero
     CostZero -->|"Oui"| CreditFree
     CostZero -->|"Non"| CreditSuff
     CreditSuff -->|"Oui"| CreditUse
     CreditSuff -->|"Non"| CreditBlock
 
-    ModeCheck -->|"true"| GetSub
+    ModeCheck -->|"Oui"| GetSub
     GetSub --> SubActive
     SubActive -->|"Non"| SubInactive["❌ Abonnement inactif"]
     SubActive -->|"Oui"| FindLimit

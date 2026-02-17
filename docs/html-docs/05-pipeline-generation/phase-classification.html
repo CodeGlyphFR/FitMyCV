@@ -60,25 +60,25 @@
           <div class="mermaid">
 flowchart TB
     subgraph InputSection["ENTREE"]
-        CV["CvFile.content<br/>experiences + projects"]
-        Job["JobOffer.content<br/>skills, responsibilities"]
+        CV["Contenu du CV<br/>expériences + projets"]
+        Job["Contenu de l'offre<br/>compétences, responsabilités"]
     end
 
-    subgraph CoreSection["classifyCore"]
-        Prompt["Chargement prompts<br/>classify-system.md<br/>classify-user.md"]
-        Schema["classificationSchema.json<br/>Structured Outputs"]
-        OpenAI["OpenAI API<br/>model_cv_classify"]
+    subgraph CoreSection["CLASSIFICATION IA"]
+        Prompt["Chargement des prompts<br/>système et utilisateur<br/>de classification"]
+        Schema["Schéma de classification<br/>Sortie structurée"]
+        OpenAI["Appel OpenAI<br/>Modèle de classification"]
     end
 
     subgraph DecisionSection["DECISIONS"]
-        Keep["KEEP<br/>Experience pertinente"]
-        Remove["REMOVE<br/>Non pertinent"]
-        Move["MOVE_TO_PROJECTS<br/>Exp courte vers Projet"]
+        Keep["Conserver<br/>Expérience pertinente"]
+        Remove["Supprimer<br/>Non pertinent"]
+        Move["Déplacer en projet<br/>Expérience courte"]
     end
 
-    subgraph ApplySection["applyClassification"]
-        FilterExp["Experiences KEEP"]
-        ConvertProj["Conversion inline<br/>MOVE_TO_PROJECTS vers Projets"]
+    subgraph ApplySection["APPLICATION DES DECISIONS"]
+        FilterExp["Expériences conservées"]
+        ConvertProj["Conversion des expériences<br/>déplacées en projets"]
         Stats["Statistiques"]
     end
 

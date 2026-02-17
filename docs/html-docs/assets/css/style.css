@@ -1000,9 +1000,7 @@ li strong {
   height: 100%;
   overflow: hidden;
   cursor: grab;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
 }
 
 .diagram-lightbox-viewport.dragging {
@@ -1010,6 +1008,9 @@ li strong {
 }
 
 .diagram-lightbox-content {
+  position: absolute;
+  top: 0;
+  left: 0;
   transform-origin: 0 0;
   will-change: transform;
   transition: none;
@@ -1019,6 +1020,11 @@ li strong {
   display: block;
   max-width: none;
   max-height: none;
+  pointer-events: none;
+}
+
+.diagram-lightbox-content svg * {
+  pointer-events: none;
 }
 
 /* Lightbox controls */

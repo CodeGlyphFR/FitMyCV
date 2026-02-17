@@ -41,24 +41,24 @@
           <div class="diagram-title">Structure des vues et composants du popup</div>
           <div class="mermaid">
 graph TB
-    subgraph Popup["popup.html"]
-        HEADER["Header<br/>Logo + Crédits + User + Logout"]
-        LOGIN["view-login<br/>(login.js)"]
-        MAIN["view-main"]
-        LANG["Language Selector<br/>FR | EN | ES | DE"]
+    subgraph Popup["Interface Popup"]
+        HEADER["En-tête<br/>Logo + Crédits + Utilisateur + Déconnexion"]
+        LOGIN["Vue de connexion"]
+        MAIN["Vue principale"]
+        LANG["Sélecteur de langue<br/>FR | EN | ES | DE"]
     end
 
-    subgraph MainView["view-main composants"]
-        CV["cv-selector<br/>(cv-selector.js)"]
-        PROG["progress-inline<br/>(progress.js)"]
-        OFFERS["offer-list<br/>(offer-list.js)"]
-        CREDITS["credits-container"]
-        GEN["generate-container<br/>(pinned bottom)"]
+    subgraph MainView["Vue principale - Composants"]
+        CV["Sélecteur de CV"]
+        PROG["Progression en ligne"]
+        OFFERS["Liste des offres"]
+        CREDITS["Conteneur de crédits"]
+        GEN["Bouton Générer<br/>(épinglé en bas)"]
     end
 
-    subgraph Libs["Librairies"]
-        API["api-client.js"]
-        I18N["i18n.js"]
+    subgraph Libs["Bibliotheques"]
+        API["Client API authentifié"]
+        I18N["Module de traduction"]
     end
 
     HEADER --> LOGIN
@@ -266,27 +266,27 @@ function showView(name) {
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant OL as offer-list.js
-    participant SW as Service Worker
-    participant DET as detector.js (onglet)
-    participant EXT as extractor.js
-    participant API as SaaS API
+    participant OL as Liste des offres
+    participant SW as Service en arriere-plan
+    participant DET as Detecteur d offres
+    participant EXT as Extracteur de contenu
+    participant API as API du SaaS
 
-    U->>OL: Clic "Ajouter l'offre de cette page"
-    OL->>SW: sendMessage({ type: 'EXTRACT_OFFER' })
-    SW->>DET: tabs.sendMessage({ type: 'EXTRACT_OFFER' })
-    DET->>EXT: import('./extractor.js')
-    EXT->>EXT: extractJobOffer()
-    EXT-->>DET: { title, content, sourceUrl, score, isValid }
-    DET-->>SW: résultat extraction
-    SW-->>OL: résultat extraction
+    U->>OL: Clic "Ajouter l offre de cette page"
+    OL->>SW: Demande d extraction de l offre
+    SW->>DET: Transmet la demande d extraction
+    DET->>EXT: Charge le module d extraction
+    EXT->>EXT: Extrait le contenu de l offre
+    EXT-->>DET: Resultat de l extraction
+    DET-->>SW: Resultat de l extraction
+    SW-->>OL: Resultat de l extraction
 
-    alt Contenu valide + non dupliqué
-        OL->>OL: picklist.push(offer)
-        OL->>OL: storage.local.set(picklist)
-        OL->>OL: Re-render liste
-    else Dupliqué
-        OL->>OL: Affiche "Déjà ajouté" (1.5s)
+    alt Contenu valide et non duplique
+        OL->>OL: Ajoute l offre a la liste
+        OL->>OL: Sauvegarde dans le stockage local
+        OL->>OL: Actualise la liste
+    else Duplique
+        OL->>OL: Affiche "Deja ajoute" (1.5s)
     else Pas de contenu
         OL->>OL: Affiche erreur (2s)
     end
@@ -596,45 +596,45 @@ t('offers.creditsCost', { total: 4, count: 2, cost: 2 });
           <div class="diagram-title">Flux de messages entre les composants de l'extension</div>
           <div class="mermaid">
 graph LR
-    subgraph ContentScripts["Content Scripts"]
-        DET["detector.js"]
-        EXT["extractor.js"]
-        AR["auth-receiver.js"]
+    subgraph ContentScripts["Scripts de contenu"]
+        DET["Détecteur d'offres"]
+        EXT["Extracteur de contenu"]
+        AR["Récepteur d'authentification"]
     end
 
-    subgraph Background["Service Worker"]
-        SW["service-worker.js"]
+    subgraph Background["Service en arriere-plan"]
+        SW["Service en arrière-plan"]
     end
 
     subgraph PopupUI["Popup"]
-        PJS["popup.js"]
-        LV["login.js"]
-        CV["cv-selector.js"]
-        OL["offer-list.js"]
-        PR["progress.js"]
+        PJS["Script principal du popup"]
+        LV["Vue de connexion"]
+        CV["Sélecteur de CV"]
+        OL["Liste des offres"]
+        PR["Suivi de progression"]
     end
 
-    subgraph Storage["browser.storage.local"]
+    subgraph Storage["Stockage local du navigateur"]
         ST["Données partagées"]
     end
 
-    DET -->|"JOB_OFFER_DETECTED"| SW
-    DET -->|"JOB_OFFER_NOT_DETECTED"| SW
+    DET -->|"offre detectee"| SW
+    DET -->|"aucune offre detectee"| SW
     DET -->|"import dynamique"| EXT
-    AR -->|"OAUTH_LOGIN_SUCCESS"| SW
+    AR -->|"connexion reussie"| SW
 
-    OL -->|"EXTRACT_OFFER"| SW
-    SW -->|"forward EXTRACT_OFFER"| DET
-    OL -->|"START_POLLING"| SW
-    PJS -->|"AUTH_EXPIRED listener"| SW
+    OL -->|"extraction offre"| SW
+    SW -->|"transmet extraction offre"| DET
+    OL -->|"demarrer surveillance"| SW
+    PJS -->|"ecoute expiration authentification"| SW
 
-    SW -->|"alarms polling"| SW
-    SW -->|"read/write"| ST
-    OL -->|"read/write picklist"| ST
-    CV -->|"read/write selected_cv"| ST
-    PR -->|"read tasks"| ST
-    LV -->|"write token"| ST
-    AR -->|"write token"| ST
+    SW -->|"surveillance periodique"| SW
+    SW -->|"lecture/ecriture"| ST
+    OL -->|"lecture/ecriture liste offres"| ST
+    CV -->|"lecture/ecriture CV selectionne"| ST
+    PR -->|"lecture des taches"| ST
+    LV -->|"ecriture jeton"| ST
+    AR -->|"ecriture jeton"| ST
     style DET fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style EXT fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style AR fill:#8b5cf6,stroke:#7c3aed,color:#fff

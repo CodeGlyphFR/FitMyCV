@@ -87,22 +87,22 @@
           <div class="mermaid">
 graph TB
     subgraph Extension["Extension Navigateur"]
-        SW["Service Worker<br/>(background)"]
-        DET["detector.js<br/>(content script)"]
-        EXT["extractor.js<br/>(content script)"]
-        AUTH["auth-receiver.js<br/>(content script)"]
-        POPUP["Popup UI<br/>(popup.html)"]
-        LIB["Librairies partagées<br/>(lib/)"]
+        SW["Service en arrière-plan"]
+        DET["Détecteur d'offres<br/>(script de contenu)"]
+        EXT["Extracteur de contenu<br/>(script de contenu)"]
+        AUTH["Récepteur d'authentification<br/>(script de contenu)"]
+        POPUP["Interface popup"]
+        LIB["Librairies partagées"]
     end
 
     subgraph SaaS["SaaS FitMyCV.io"]
-        API_AUTH["POST /api/auth/extension-token"]
-        API_REFRESH["POST .../extension-token/refresh"]
-        API_SESSION["GET .../extension-token/from-session"]
-        API_CVS["GET /api/ext/cvs"]
-        API_CREDITS["GET /api/ext/credits/*"]
-        API_GENERATE["POST /api/ext/background-tasks/generate-cv-from-content"]
-        API_SYNC["GET /api/ext/background-tasks/sync"]
+        API_AUTH["Authentification<br/>extension"]
+        API_REFRESH["Renouvellement<br/>du jeton"]
+        API_SESSION["Jeton depuis<br/>session web"]
+        API_CVS["Liste des CVs"]
+        API_CREDITS["Solde de crédits"]
+        API_GENERATE["Lancer la génération<br/>de CV"]
+        API_SYNC["Synchroniser<br/>les tâches"]
     end
 
     subgraph JobSites["Sites d'emploi"]
@@ -114,19 +114,19 @@ graph TB
         OTHER["+ 7 autres sites"]
     end
 
-    DET -->|"détecte offre"| SW
+    DET -->|"detecte offre"| SW
     DET -->|"import dynamique"| EXT
     POPUP -->|"messages"| SW
-    SW -->|"EXTRACT_OFFER"| DET
-    AUTH -->|"OAUTH_LOGIN_SUCCESS"| SW
+    SW -->|"extraction offre"| DET
+    AUTH -->|"connexion reussie"| SW
     LIB --> POPUP
     LIB --> SW
 
-    POPUP -->|"Bearer JWT"| API_CVS
-    POPUP -->|"Bearer JWT"| API_CREDITS
-    POPUP -->|"Bearer JWT"| API_GENERATE
-    SW -->|"polling alarms"| API_SYNC
-    AUTH -->|"postMessage"| API_SESSION
+    POPUP -->|"jeton authentification"| API_CVS
+    POPUP -->|"jeton authentification"| API_CREDITS
+    POPUP -->|"jeton authentification"| API_GENERATE
+    SW -->|"surveillance periodique"| API_SYNC
+    AUTH -->|"message direct"| API_SESSION
 
     JobSites --> DET
     style SW fill:#6366f1,stroke:#4f46e5,color:#fff
@@ -539,42 +539,42 @@ switch (message.type) {
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant JB as Site d'emploi
-    participant DET as detector.js
-    participant EXT as extractor.js
+    participant JB as Site d emploi
+    participant DET as Detecteur d offres
+    participant EXT as Extracteur de contenu
     participant POP as Popup
-    participant SW as Service Worker
-    participant API as SaaS API
+    participant SW as Service en arriere-plan
+    participant API as API du SaaS
 
-    U->>JB: Navigue sur une offre d'emploi
-    JB->>DET: Page chargée (document_idle)
-    DET->>DET: Phase 1 : JSON-LD, H1, URL
-    DET->>DET: Phase 2 : scoring DOM
-    DET->>SW: JOB_OFFER_DETECTED
-    SW->>SW: Icône active (couleur)
-    DET->>JB: Injecte bouton "FitMyCV +"
+    U->>JB: Navigue sur une offre d emploi
+    JB->>DET: Page chargee (apres chargement)
+    DET->>DET: Detection rapide (metadonnees)
+    DET->>DET: Analyse approfondie (contenu)
+    DET->>SW: Offre detectee
+    SW->>SW: Icone active (couleur)
+    DET->>JB: Injecte bouton FitMyCV +
 
-    alt Clic bouton "FitMyCV +"
-        U->>DET: Clic sur "FitMyCV +"
-        DET->>EXT: import('./extractor.js')
-        EXT->>EXT: Readability + Turndown
-        EXT->>EXT: Score qualité contenu
-        DET->>DET: Ajoute au picklist (storage.local)
-        DET->>SW: Badge mis à jour
+    alt Clic bouton FitMyCV +
+        U->>DET: Clic sur FitMyCV +
+        DET->>EXT: Charger l extracteur
+        EXT->>EXT: Convertir HTML en Markdown
+        EXT->>EXT: Evaluer la qualite du contenu
+        DET->>DET: Ajouter au panier d offres
+        DET->>SW: Badge mis a jour
     end
 
-    alt Popup : Générer CVs
+    alt Popup : Generer CVs
         U->>POP: Ouvre le popup
-        POP->>API: GET /api/ext/cvs
-        POP->>API: GET /api/ext/credits/balance
-        U->>POP: Sélectionne CV + clique "Générer"
-        POP->>API: POST /api/ext/background-tasks/generate-cv-from-content
-        API-->>POP: { tasks: [...] }
-        POP->>SW: START_POLLING
-        SW->>API: GET /api/ext/background-tasks/sync (alarm 30s)
-        API-->>SW: { tasks: [{ status: "running" }] }
-        SW->>SW: Stocke tasks → storage.local
-        POP->>POP: Affiche progression temps réel
+        POP->>API: Recuperer les CVs
+        POP->>API: Recuperer le solde de credits
+        U->>POP: Selectionne CV + clique Generer
+        POP->>API: Lancer la generation de CVs
+        API-->>POP: Liste des taches creees
+        POP->>SW: Demarrer le suivi
+        SW->>API: Synchroniser les taches (toutes les 30s)
+        API-->>SW: Etat des taches en cours
+        SW->>SW: Sauvegarder l etat des taches
+        POP->>POP: Affiche progression temps reel
     end
           </div>
         </div>

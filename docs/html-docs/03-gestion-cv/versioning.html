@@ -38,21 +38,21 @@
 
         <div class="mermaid">
 flowchart TD
-    A["CvFile<br/>contentVersion = N"] -->|"Optimisation IA"| B["createCvVersion"]
-    B --> C["Sauvegarde contenu actuel<br/>comme CvVersion N"]
-    C --> D["Incremente contentVersion<br/>a N+1"]
-    D --> E["Rotation : suppression<br/>versions au-dela du max"]
-    E --> F["CvFile<br/>contentVersion = N+1<br/>Contenu IA applique"]
+    A["CV actuel<br/>version N"] -->|"Optimisation IA"| B["Créer une version"]
+    B --> C["Sauvegarder le contenu<br/>actuel en version N"]
+    C --> D["Incrémenter le numéro<br/>de version à N+1"]
+    D --> E["Rotation : suppression<br/>versions au-delà du max"]
+    E --> F["CV mis à jour<br/>version N+1<br/>Contenu IA appliqué"]
 
-    F -->|"Restauration safe"| G["restoreCvVersion"]
-    G --> G1["Sauvegarde contenu actuel<br/>comme nouvelle version"]
-    G1 --> G2["Ecrase contenu avec<br/>version cible"]
-    G2 --> G3["Historique conserve"]
+    F -->|"Restauration safe"| G["Restaurer une version<br/>(avec sauvegarde)"]
+    G --> G1["Sauvegarder le contenu<br/>actuel comme nouvelle version"]
+    G1 --> G2["Écraser le contenu avec<br/>la version cible"]
+    G2 --> G3["Historique conservé"]
 
-    F -->|"Restauration destructive"| H["restoreCvVersionDestructive"]
-    H --> H1["Ecrase contenu + scores<br/>avec version cible"]
-    H1 --> H2["contentVersion = cible<br/>pendingChanges = vide"]
-    H2 --> H3["Supprime version cible<br/>+ versions plus recentes"]
+    F -->|"Restauration destructive"| H["Restaurer une version<br/>(destructif)"]
+    H --> H1["Écraser contenu + scores<br/>avec la version cible"]
+    H1 --> H2["Remettre la version<br/>au numéro cible"]
+    H2 --> H3["Supprimer la version cible<br/>+ versions plus récentes"]
 
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff

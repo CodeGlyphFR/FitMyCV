@@ -39,24 +39,24 @@
           <div class="mermaid">
 flowchart LR
     subgraph Scoring["SCORING"]
-        Calc["calculateMatchScoreWithAnalysis"]
-        Store["Stockage en DB<br/>CvFile.improvementSuggestions"]
+        Calc["Calculer le score<br/>et les suggestions"]
+        Store["Stockage en base<br/>Suggestions d'amélioration"]
     end
 
     subgraph UI["INTERFACE UTILISATEUR"]
         Display["Affichage des suggestions"]
-        SelectN["Selection par utilisateur"]
+        SelectN["Sélection par utilisateur"]
         Context["Ajout de contexte"]
-        Skills["Selection des missingSkills"]
+        Skills["Sélection des compétences<br/>manquantes"]
     end
 
-    subgraph API["API IMPROVE"]
-        Parse["Parse suggestions<br/>legacy ou nouveau format"]
-        Improve["POST /api/cv/improve"]
+    subgraph API["API OPTIMISATION"]
+        Parse["Lire les suggestions<br/>Format actuel ou ancien"]
+        Improve["Lancer l'optimisation"]
     end
 
     subgraph Pipeline["PIPELINE"]
-        Run["runImprovementPipeline"]
+        Run["Exécuter le pipeline<br/>d'amélioration"]
     end
 
     Calc --> Store --> Display
@@ -371,31 +371,31 @@ flowchart LR
           <div class="mermaid">
 flowchart TB
     subgraph Input["ENTREES"]
-        Sug["suggestions<br/>selectionnees par utilisateur"]
-        Skills["missingSkillsToAdd<br/>skills manquants + niveau"]
-        CV["workingCv<br/>CV JSON complet"]
-        Job["jobOffer<br/>offre d emploi"]
+        Sug["Suggestions<br/>sélectionnées par utilisateur"]
+        Skills["Compétences manquantes<br/>à ajouter + niveau"]
+        CV["CV de travail<br/>JSON complet"]
+        Job["Offre d'emploi"]
     end
 
     subgraph S12["STAGE 1 &amp; 2 - PARALLELE"]
-        S1["Stage 1: classifySkills<br/>gpt-4o-mini<br/>hard_skills, tools, soft_skills, methodologies"]
-        S2["Stage 2: preprocessSuggestions<br/>Chain-of-Thought IA<br/>routage par cible"]
+        S1["Stage 1 : Classifier<br/>les compétences<br/>par catégorie"]
+        S2["Stage 2 : Prétraitement<br/>Analyse raisonnée<br/>Routage par cible"]
     end
 
-    subgraph S3["STAGE 3 - PARALLELE avec pLimit=5"]
-        S3E["improveExperience<br/>xN experiences ciblees"]
-        S3P["improveProject<br/>xN projets cibles"]
-        S3NP["improveProject nouveau<br/>xN nouveaux projets"]
-        S3L["improveLanguages<br/>si langues a modifier"]
-        S3X["improveExtras<br/>si extras a modifier"]
+    subgraph S3["STAGE 3 - PARALLELE"]
+        S3E["Améliorer expériences<br/>xN expériences ciblées"]
+        S3P["Améliorer projets<br/>xN projets ciblés"]
+        S3NP["Créer des projets<br/>xN nouveaux projets"]
+        S3L["Améliorer langues<br/>Si langues à modifier"]
+        S3X["Améliorer extras<br/>Si extras à modifier"]
     end
 
     subgraph S4["STAGE 4 - SEQUENTIEL"]
-        S4S["improveSummary<br/>Mise a jour du resume<br/>basee sur modifications Stage 3"]
+        S4S["Améliorer le résumé<br/>Mise à jour basée<br/>sur modifications Stage 3"]
     end
 
     subgraph Output["SORTIE"]
-        Result["workingCv modifie<br/>+ allChangesMade<br/>+ stageMetrics"]
+        Result["CV modifié<br/>+ Liste des modifications<br/>+ Métriques"]
     end
 
     Skills --> S1

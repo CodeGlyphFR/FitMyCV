@@ -38,42 +38,42 @@
           <div class="diagram-title">Ex&eacute;cution d&eacute;taill&eacute;e du pipeline d'am&eacute;lioration</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Stage12["STAGE 1 &amp; 2 - Promise.all"]
+    subgraph Stage12["STAGE 1 &amp; 2 - PARALLELE"]
         direction LR
-        S1["Stage 1: classifySkills<br/>gpt-4o-mini<br/>Classification des missingSkills"]
-        S2["Stage 2: preprocessSuggestions<br/>Chain-of-Thought<br/>Routing des suggestions"]
+        S1["Stage 1 : Classifier<br/>les compétences<br/>Modèle léger"]
+        S2["Stage 2 : Prétraitement<br/>Analyse raisonnée<br/>Routage des suggestions"]
     end
 
     subgraph Apply1["APPLICATION STAGE 1"]
-        ClassResult["Classification result"]
-        AddSkills["Ajouter skills au workingCv<br/>par categorie + niveau"]
-        TrackSkills["Tracker changements<br/>allChangesMade"]
+        ClassResult["Résultat classification"]
+        AddSkills["Ajouter compétences au CV<br/>par catégorie + niveau"]
+        TrackSkills["Suivre les modifications"]
     end
 
-    subgraph Stage3["STAGE 3 - Promise.all + pLimit 5"]
+    subgraph Stage3["STAGE 3 - PARALLELE"]
         direction TB
-        ExpTasks["experienceTasks<br/>improveExperience par exp"]
-        ProjTasks["projectTasks<br/>improveProject par projet"]
-        NewProjTasks["newProjectTasks<br/>improveProject - nouveau"]
-        LangTask["languageTask<br/>improveLanguages"]
-        ExtrasTasks["extrasTasks<br/>improveExtras par extra"]
+        ExpTasks["Tâches expériences<br/>Une par expérience"]
+        ProjTasks["Tâches projets<br/>Un par projet"]
+        NewProjTasks["Nouveaux projets<br/>Création de projets"]
+        LangTask["Tâche langues<br/>Améliorer les langues"]
+        ExtrasTasks["Tâches extras<br/>Un par extra"]
     end
 
     subgraph Apply3["APPLICATION STAGE 3"]
-        ApplyExp["applyExperienceModifications"]
-        ApplyProj["applyProjectModifications"]
-        ApplyLang["applyLanguageModifications"]
-        ApplyExtras["applyExtrasModifications"]
+        ApplyExp["Appliquer les modifications<br/>aux expériences"]
+        ApplyProj["Appliquer les modifications<br/>aux projets"]
+        ApplyLang["Appliquer les modifications<br/>aux langues"]
+        ApplyExtras["Appliquer les modifications<br/>aux extras"]
     end
 
     subgraph Stage4["STAGE 4 - CONDITIONNEL"]
-        Check{"improvedExperiences &gt; 0<br/>OU<br/>improvedProjects &gt; 0 ?"}
-        SummaryN["improveSummary<br/>applySummaryDiff"]
-        SkipN["Skip summary"]
+        Check{"Expériences ou projets<br/>modifiés ?"}
+        SummaryN["Améliorer le résumé<br/>Appliquer les changements"]
+        SkipN["Résumé inchangé"]
     end
 
     subgraph Output["SORTIE"]
-        Result["workingCv + allChangesMade<br/>+ stageMetrics"]
+        Result["CV modifié + modifications<br/>+ métriques"]
     end
 
     S1 --> ClassResult --> AddSkills --> TrackSkills

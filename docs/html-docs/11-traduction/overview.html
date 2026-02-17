@@ -35,26 +35,26 @@
           <div class="diagram-title">Flux de traduction d'un CV</div>
           <div class="mermaid">
 graph TB
-    subgraph APIBlock["API - app/api/background-tasks/translate-cv/"]
-        Request["POST requete"]
-        Auth["Auth + canStartTaskType"]
-        Credits["incrementFeatureCounter<br/>translate_cv"]
-        Schedule["scheduleTranslateCvJob"]
+    subgraph APIBlock["API - ROUTE DE TRADUCTION"]
+        Request["Requête de traduction"]
+        Auth["Authentification +<br/>vérification concurrence"]
+        Credits["Débiter les crédits<br/>traduction"]
+        Schedule["Planifier la tâche<br/>de traduction"]
     end
 
-    subgraph Runner["JOB RUNNER - lib/translation/job.js"]
-        EnsureDir["ensureUserCvDir"]
-        ReadCV["readUserCvFile sourceFile"]
-        Translate["translateCv service"]
-        Save["writeUserCvFile translated"]
-        DBUpsert["Upsert CvFile en DB"]
-        CleanMeta["Nettoyer metadonnees"]
+    subgraph Runner["EXECUTEUR DE TACHE"]
+        EnsureDir["Vérifier le dossier<br/>CV utilisateur"]
+        ReadCV["Lire le fichier CV<br/>source"]
+        Translate["Service de traduction"]
+        Save["Sauvegarder le CV<br/>traduit"]
+        DBUpsert["Créer ou mettre à jour<br/>l'entrée en base"]
+        CleanMeta["Nettoyer les métadonnées"]
     end
 
-    subgraph Service["SERVICE - lib/translation/service.js"]
-        LoadPrompts["loadPrompt +<br/>loadPromptWithVars"]
-        OpenAI["executeOpenAIService"]
-        Validate["JSON.parse - validation"]
+    subgraph Service["SERVICE DE TRADUCTION"]
+        LoadPrompts["Charger les prompts<br/>depuis les fichiers"]
+        OpenAI["Appeler l'API OpenAI"]
+        Validate["Valider le JSON<br/>de réponse"]
     end
 
     Request --> Auth --> Credits --> Schedule

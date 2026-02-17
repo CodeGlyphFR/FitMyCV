@@ -73,35 +73,35 @@ flowchart TB
     end
 
     subgraph Step1["ETAPE 1 - VERIFICATION"]
-        Credits["checkOpenAICredits()&lt;br/&gt;V&eacute;rification budget OpenAI"]
-        Client["getOpenAIClient()&lt;br/&gt;+ getCvModel()"]
-        Schema["getCvSchema()&lt;br/&gt;data/template.json (ou fallback)"]
+        Credits["Vérifier les crédits<br/>OpenAI disponibles"]
+        Client["Initialiser le client<br/>et le modèle IA"]
+        Schema["Charger le schéma CV<br/>depuis le fichier modèle"]
     end
 
     subgraph Step2["ETAPE 2 - EXTRACTION"]
-        ExtractURL["getOrExtractJobOfferFromUrl()&lt;br/&gt;userId, url, signal"]
-        ExtractPDF["getOrExtractJobOfferFromPdf()&lt;br/&gt;userId, path, name, signal"]
-        Callback["onTitleExtracted(title)&lt;br/&gt;Callback titre extrait"]
+        ExtractURL["Extraire l'offre<br/>depuis l'URL"]
+        ExtractPDF["Extraire l'offre<br/>depuis le PDF"]
+        Callback["Notifier le titre<br/>de l'offre extrait"]
     end
 
     subgraph Step3["ETAPE 3 - FORMATAGE"]
-        Format["formatJobOfferForTemplate()&lt;br/&gt;extraction, source, title"]
-        Sections["Sections format&eacute;es :&lt;br/&gt;ENTREPRISE, CONTRAT, EXPERIENCE,&lt;br/&gt;LOCALISATION, COMPETENCES, MISSIONS,&lt;br/&gt;FORMATION, LANGUES, AVANTAGES"]
+        Format["Formater l'offre<br/>en texte structuré"]
+        Sections["Sections formatées :<br/>entreprise, contrat, expérience,<br/>compétences, missions,<br/>formation, langues, avantages"]
     end
 
     subgraph Step4["ETAPE 4 - GENERATION IA"]
-        CallGPT["callChatGPT()&lt;br/&gt;client, model, cvSchema, jobOfferContent, signal"]
-        Prompts["Prompts :&lt;br/&gt;system.md + user.md"]
-        Cache["addCacheRetentionIfSupported()&lt;br/&gt;Cache 24h pour GPT-5"]
+        CallGPT["Appeler l'IA (ChatGPT)<br/>pour générer le CV"]
+        Prompts["Charger les instructions<br/>système et utilisateur"]
+        Cache["Activer le cache<br/>24h (GPT-5)"]
     end
 
     subgraph Step5["ETAPE 5 - NORMALISATION"]
-        Normalize["normalizeJsonPayload()&lt;br/&gt;Parse et re-stringify"]
-        TrackUsage["trackOpenAIUsage()&lt;br/&gt;featureName: create_template_cv_url&lt;br/&gt;ou create_template_cv_pdf"]
+        Normalize["Normaliser le JSON<br/>du CV généré"]
+        TrackUsage["Enregistrer la<br/>consommation OpenAI"]
     end
 
     subgraph Output["SORTIE"]
-        Result["Array de r&eacute;sultats&lt;br/&gt;{ cvContent, jobOfferId, jobOfferLanguage, source }"]
+        Result["Liste des CV générés<br/>avec leurs offres associées"]
     end
 
     URLs --> Credits

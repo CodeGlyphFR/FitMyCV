@@ -43,68 +43,68 @@
           <div class="diagram-title">Orchestration des 7 batches &mdash; Parall&eacute;lisation et d&eacute;pendances</div>
           <div class="mermaid">
 flowchart TB
-    subgraph InputData["ENTREES depuis Classification"]
-        Experiences["experiences KEEP"]
-        Projects["projects KEEP +<br/>MOVE_TO_PROJECTS"]
-        Extras["extras du CV source"]
-        EducationData["education du CV source"]
-        LanguagesData["languages du CV source"]
-        SkillsData["skills du CV source<br/>4 categories"]
+    subgraph InputData["ENTREES DEPUIS CLASSIFICATION"]
+        Experiences["Expériences conservées"]
+        Projects["Projets conservés +<br/>expériences déplacées"]
+        Extras["Extras du CV source"]
+        EducationData["Formation du CV source"]
+        LanguagesData["Langues du CV source"]
+        SkillsData["Compétences du CV source<br/>4 catégories"]
     end
 
-    subgraph CacheALayer["CACHE A - Job Offer"]
-        CA["generateCacheA<br/>Responsabilites top 5"]
+    subgraph CacheALayer["CACHE A - OFFRE D'EMPLOI"]
+        CA["Générer le cache<br/>Responsabilités clés (top 5)"]
     end
 
-    subgraph ParallelBatches["6 BATCHES EN Promise.all"]
+    subgraph ParallelBatches["6 BATCHES EN PARALLELE"]
         direction TB
         subgraph BatchExp["1a: Experiences"]
             direction LR
-            Exp1["1ere experience seule<br/>etablit cache OpenAI"]
-            ExpDelay["500ms delay"]
-            ExpN["Experiences restantes<br/>en Promise.all"]
+            Exp1["1ère expérience seule<br/>établit le cache OpenAI"]
+            ExpDelay["Délai 500ms"]
+            ExpN["Expériences restantes<br/>en parallèle"]
             Exp1 --> ExpDelay --> ExpN
         end
 
         subgraph BatchProj["1b: Projects"]
-            ProjAll["Tous les projets<br/>en Promise.all"]
+            ProjAll["Tous les projets<br/>en parallèle"]
         end
 
         subgraph BatchExtras["1c: Extras"]
-            ExtAll["1 seul appel OpenAI<br/>pour TOUS les extras"]
+            ExtAll["Un seul appel IA<br/>pour tous les extras"]
         end
 
         subgraph BatchEdu["1d: Education"]
-            EduAll["1 seul appel OpenAI<br/>pour TOUTES les formations"]
+            EduAll["Un seul appel IA<br/>pour toutes les formations"]
         end
 
         subgraph BatchLang["1e: Languages"]
-            LangAll["1 seul appel OpenAI<br/>extractLanguageRequirements"]
+            LangAll["Un seul appel IA<br/>Exigences linguistiques"]
         end
 
         subgraph BatchSkills["1f: Skills"]
             direction LR
-            Methods["methodologies<br/>etablit cache"]
-            SkDelay["500ms staggered"]
-            SkPar["hard_skills +<br/>soft_skills + tools<br/>en staggeredParallel"]
+            Methods["Méthodologies<br/>établit le cache"]
+            SkDelay["Délai 500ms<br/>exécution décalée"]
+            SkPar["Compétences techniques +<br/>savoir-être + outils<br/>en parallèle décalé"]
             Methods --> SkDelay --> SkPar
         end
     end
 
     subgraph PostProcess["POST-TRAITEMENT"]
-        ProcessSkills["processSkillsResponse<br/>buildSkillsResult"]
+        ProcessSkills["Post-traitement<br/>des compétences"]
     end
 
-    subgraph CacheBLayer["CACHE B - Job Offer + Sections adaptees"]
-        CB["generateCacheB<br/>Cache A + experiences + projects"]
+    subgraph CacheBLayer["CACHE B - OFFRE + SECTIONS ADAPTEES"]
+        CB["Générer le cache enrichi<br/>Cache A + sections adaptées"]
     end
 
     subgraph SequentialBatch["BATCH SEQUENTIEL"]
-        BatchSummary["1g: Summary<br/>1 seul appel OpenAI<br/>apres TOUS les batches"]
+        BatchSummary["1g: Résumé professionnel<br/>Un seul appel IA<br/>après tous les batches"]
     end
 
     subgraph OutputResults["RESULTATS"]
-        Results["batchResults =<br/>experiences + projects + extras +<br/>education + languages + skills + summary"]
+        Results["Résultats des 7 batches<br/>expériences + projets + extras +<br/>formation + langues + compétences + résumé"]
     end
 
     Experiences --> BatchExp

@@ -41,32 +41,32 @@
           <div class="mermaid">
 graph TB
     subgraph AdminUI["INTERFACE ADMIN"]
-        UsersTab["UsersTab"]
-        AddModal["AddUserModal"]
-        EditModal["EditUserModal"]
+        UsersTab["Onglet gestion<br/>utilisateurs"]
+        AddModal["Fenêtre d'ajout<br/>d'utilisateur"]
+        EditModal["Fenêtre de<br/>modification"]
     end
 
-    subgraph APIUsers["API /api/admin/users"]
-        GetUsers["GET<br/>Liste paginee + KPIs"]
-        PostUser["POST<br/>Creation utilisateur"]
-        PatchUser["PATCH userId<br/>Modification"]
-        DeleteUser["DELETE userId<br/>Suppression"]
+    subgraph APIUsers["API GESTION UTILISATEURS"]
+        GetUsers["Lister<br/>Liste paginée + KPIs"]
+        PostUser["Créer<br/>Création utilisateur"]
+        PatchUser["Modifier<br/>un utilisateur"]
+        DeleteUser["Supprimer<br/>un utilisateur"]
     end
 
-    subgraph PatchActions["ACTIONS PATCH"]
-        UpdateRole["updateRole<br/>USER / ADMIN"]
-        UpdateEmail["updateEmail<br/>+ reset emailVerified"]
-        ValidateEmail["validateEmail<br/>Validation manuelle"]
+    subgraph PatchActions["ACTIONS DE MODIFICATION"]
+        UpdateRole["Changer le rôle<br/>USER / ADMIN"]
+        UpdateEmail["Modifier l'email<br/>+ réinitialiser vérification"]
+        ValidateEmail["Valider l'email<br/>manuellement"]
     end
 
     subgraph DBBlock["BASE DE DONNEES"]
-        UserTable[("User")]
-        CvFileTable[("CvFile")]
-        FilesStorage["Fichiers S3/disque"]
+        UserTable[("Utilisateurs")]
+        CvFileTable[("Fichiers CV")]
+        FilesStorage["Fichiers sur disque"]
     end
 
     UsersTab -->|"Recherche, filtres"| GetUsers
-    AddModal -->|"email, name, password, role"| PostUser
+    AddModal -->|"email, nom, mot de passe, role"| PostUser
     EditModal --> PatchUser
     UsersTab -->|"Supprimer"| DeleteUser
 

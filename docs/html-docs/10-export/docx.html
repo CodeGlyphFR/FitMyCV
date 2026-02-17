@@ -37,13 +37,13 @@
           <div class="diagram-title">Flux d'export DOCX</div>
           <div class="mermaid">
 graph LR
-    Request["POST /api/export-word"]
+    Request["Requête d'export Word"]
     Auth["Authentification"]
-    Credits["incrementFeatureCounter"]
-    Build["Construction Document docx"]
-    Pack["Packer.toBuffer"]
-    Response["Response DOCX"]
-    Refund["refundCredit"]
+    Credits["Débiter les crédits"]
+    Build["Construction du document Word"]
+    Pack["Sérialiser en fichier"]
+    Response["Réponse DOCX"]
+    Refund["Rembourser les crédits"]
 
     Request --> Auth --> Credits --> Build --> Pack --> Response
     Pack -->|"Erreur"| Refund
@@ -250,15 +250,15 @@ export async function POST(request) {
 graph TD
     Doc["Document"]
     Doc --> Section["Section unique"]
-    Section --> Props["Properties<br/>marges, orientation"]
-    Section --> Children["Children - paragraphes"]
+    Section --> Props["Propriétés<br/>marges, orientation"]
+    Section --> Children["Contenu - paragraphes"]
 
-    Children --> Header["En-tete<br/>Heading1: nom, titre"]
+    Children --> Header["En-tête<br/>Titre niveau 1 : nom, titre"]
     Children --> Contact["Contact<br/>email, tel, lieu"]
-    Children --> Summary["Resume<br/>Paragraph normal"]
-    Children --> Exp["Experiences<br/>Heading2 + bullets"]
-    Children --> Edu["Formation<br/>Heading2 + paragraphs"]
-    Children --> Skills["Competences<br/>categories en gras"]
+    Children --> Summary["Résumé<br/>Paragraphe normal"]
+    Children --> Exp["Expériences<br/>Titre niveau 2 + puces"]
+    Children --> Edu["Formation<br/>Titre niveau 2 + paragraphes"]
+    Children --> Skills["Compétences<br/>catégories en gras"]
     Children --> Lang["Langues<br/>niveaux CECRL"]
 
     style Doc fill:#0ea5e9,stroke:#0284c7,color:#fff

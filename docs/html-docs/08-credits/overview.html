@@ -39,40 +39,40 @@
           <div class="mermaid">
 flowchart TB
     subgraph Sources["SOURCES DE CREDITS"]
-        Welcome["Credits bienvenue<br/>mode credits-only"]
-        Purchase["Achat pack<br/>grantCredits"]
-        Refund["Remboursement<br/>refundCredit"]
-        Admin["Attribution admin<br/>grantCredits type=gift"]
+        Welcome["Crédits bienvenue<br/>mode crédits seuls"]
+        Purchase["Achat pack<br/>attribuer crédits"]
+        Refund["Remboursement<br/>rembourser crédit"]
+        Admin["Attribution admin<br/>crédits offerts"]
     end
 
     subgraph Balance["SOLDE"]
-        CB[("CreditBalance<br/>balance, totalPurchased,<br/>totalUsed, totalRefunded,<br/>totalGifted")]
+        CB[("Solde de crédits<br/>solde, total acheté,<br/>total utilisé, total remboursé,<br/>total offert")]
     end
 
     subgraph Usage["UTILISATION"]
-        Check{{"canUseFeature"}}
-        Increment["incrementFeatureCounter"]
-        Debit["debitCredit"]
-        Action["Action executee"]
+        Check{{"Vérifier l'accès"}}
+        Increment["Incrémenter le compteur"]
+        Debit["Débiter les crédits"]
+        Action["Action exécutée"]
     end
 
     subgraph Tracking["TRACABILITE"]
-        CT[("CreditTransaction<br/>type, amount, featureName,<br/>stripePaymentIntentId")]
-        SSE["dbEmitter<br/>SSE temps reel"]
+        CT[("Transaction de crédits<br/>type, montant, feature,<br/>identifiant paiement")]
+        SSE["Événements temps réel<br/>notifications SSE"]
     end
 
     subgraph Protection["PROTECTION"]
-        Chargeback["debitCredits<br/>force, balance negative"]
+        Chargeback["Contestation paiement<br/>débit forcé"]
     end
 
     Sources --> CB
     CB --> Check
-    Check -->|"useCredit: true"| Increment
+    Check -->|"Utiliser credits"| Increment
     Increment --> Debit
     Debit --> Action
     Debit --> CT
     CT --> SSE
-    Action -->|"Echec task"| Refund
+    Action -->|"Echec de la tache"| Refund
     Chargeback --> CB
     Chargeback --> CT
 

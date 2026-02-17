@@ -73,37 +73,37 @@
           <div class="mermaid">
 flowchart TB
     subgraph Frontend["Frontend (React 19)"]
-        UI[Composants UI]
-        Providers[Context Providers]
-        Hooks[Custom Hooks]
+        UI["Composants d'interface"]
+        Providers["Fournisseurs de contexte"]
+        Hooks["Hooks personnalisés"]
     end
 
-    subgraph API["API Layer (Next.js)"]
-        Routes[123 API Routes]
-        Auth[NextAuth.js]
-        Middleware[Middlewares]
+    subgraph API["Couche API (Next.js)"]
+        Routes["123 routes API"]
+        Auth["Authentification"]
+        Middleware["Middlewares"]
     end
 
-    subgraph Business["Business Logic"]
-        CVCore[CV Core]
-        OpenAI[OpenAI Core]
-        Subscription[Subscription]
-        Jobs[Background Jobs]
+    subgraph Business["Logique metier"]
+        CVCore["Gestion des CV"]
+        OpenAI["Intelligence artificielle"]
+        Subscription["Abonnements"]
+        Jobs["Tâches en arrière-plan"]
     end
 
-    subgraph Data["Data Layer"]
-        Prisma[Prisma ORM]
-        DB[(PostgreSQL)]
+    subgraph Data["Couche donnees"]
+        Prisma["Accès aux données"]
+        DB[("PostgreSQL")]
     end
 
     subgraph External["Services Externes"]
-        OpenAIAPI[OpenAI API]
-        StripeAPI[Stripe API]
-        Email[SMTP/Resend]
+        OpenAIAPI["API OpenAI"]
+        StripeAPI["API Stripe"]
+        Email["Service d'email"]
     end
 
     subgraph Extension["Extension Navigateur"]
-        Ext[Chrome/Firefox Manifest V3]
+        Ext["Extension Chrome/Firefox"]
     end
 
     Frontend --> API

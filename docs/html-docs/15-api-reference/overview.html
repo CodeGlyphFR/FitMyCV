@@ -186,30 +186,30 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...</code></pre>
           <div class="diagram-title">Architecture des endpoints API</div>
           <div class="mermaid">
 graph TB
-    subgraph PublicBlock["PUBLIC aucune auth"]
-        HealthEndpoint["health"]
-        AuthEndpoint["auth/*"]
-        RecaptchaEndpoint["recaptcha"]
-        WebhooksEndpoint["webhooks/stripe"]
+    subgraph PublicBlock["PUBLIC aucune authentification"]
+        HealthEndpoint["Vérification de santé"]
+        AuthEndpoint["Authentification"]
+        RecaptchaEndpoint["Protection anti-spam"]
+        WebhooksEndpoint["Notifications Stripe"]
     end
 
-    subgraph SessionBlock["SESSION cookie NextAuth"]
-        CvEndpoint["cv/* cvs/*"]
-        BgEndpoint["background-tasks/*"]
-        SubEndpoint["subscription/*"]
-        CredEndpoint["credits/*"]
-        ExportEndpoint["export-*"]
-        AccountEndpoint["account/*"]
-        OthersEndpoint["feedback, settings,<br/>events, consent,<br/>link-history,<br/>telemetry, onboarding"]
+    subgraph SessionBlock["SESSION cookie de session"]
+        CvEndpoint["Gestion des CV"]
+        BgEndpoint["Tâches en arrière-plan"]
+        SubEndpoint["Abonnements"]
+        CredEndpoint["Crédits"]
+        ExportEndpoint["Export"]
+        AccountEndpoint["Compte utilisateur"]
+        OthersEndpoint["Retours, paramètres,<br/>événements, consentement,<br/>historique de liens,<br/>télémétrie, accueil"]
     end
 
-    subgraph AdminBlock["ADMIN role ADMIN"]
-        AdminEndpoint["admin/*"]
-        AnalyticsEndpoint["analytics/*"]
+    subgraph AdminBlock["ADMIN role administrateur"]
+        AdminEndpoint["Administration"]
+        AnalyticsEndpoint["Statistiques"]
     end
 
-    subgraph ExtBlock["EXTENSION JWT Bearer"]
-        ExtEndpoint["ext/*"]
+    subgraph ExtBlock["EXTENSION jeton authentification"]
+        ExtEndpoint["Extension navigateur"]
     end
 
     style HealthEndpoint fill:#22c55e,stroke:#16a34a,color:#fff

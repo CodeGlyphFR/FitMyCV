@@ -109,38 +109,38 @@
           <div class="mermaid">
 graph TB
     subgraph CreationBlock["CREATION"]
-        AdminCreate["Admin cree le pack<br/>POST /api/admin/credit-packs"]
-        ValidateAmount{"creditAmount<br/>unique ?"}
-        GenName["Generer nom :<br/>creditAmount Credits"]
-        SaveDB["Sauvegarder en DB"]
+        AdminCreate["Admin crée le pack"]
+        ValidateAmount{"Nombre de crédits<br/>unique ?"}
+        GenName["Générer le nom :<br/>N Crédits"]
+        SaveDB["Sauvegarder en base"]
     end
 
     subgraph StripeSync["SYNCHRONISATION STRIPE"]
-        SyncStart["syncStripeProductsInternal"]
-        CreateProduct["Creer Product Stripe"]
-        CreatePrice["Creer Price Stripe<br/>type: one_time"]
-        SetDefault["Definir default_price"]
-        SaveStripeIds["Sauvegarder stripeProductId<br/>et stripePriceId"]
+        SyncStart["Synchroniser avec Stripe"]
+        CreateProduct["Créer le produit Stripe"]
+        CreatePrice["Créer le tarif Stripe<br/>paiement unique"]
+        SetDefault["Définir le tarif par défaut"]
+        SaveStripeIds["Sauvegarder les identifiants<br/>Stripe en base"]
     end
 
     subgraph ActiveBlock["UTILISATION"]
         Visible["Pack visible dans<br/>interface utilisateur"]
         UserCheckout["Utilisateur clique Acheter"]
-        StripeCheckout["Stripe Checkout<br/>mode: payment"]
-        WebhookEvent["Webhook checkout.session.completed"]
-        GrantCredits["grantCredits userId, amount, purchase"]
+        StripeCheckout["Page de paiement Stripe<br/>paiement unique"]
+        WebhookEvent["Notification Stripe<br/>paiement reçu"]
+        GrantCredits["Attribuer les crédits<br/>à l'utilisateur"]
     end
 
     subgraph ModifBlock["MODIFICATION"]
-        AdminPatch["Admin modifie le pack<br/>PATCH /api/admin/credit-packs/id"]
-        PriceChanged{"Prix change ?"}
-        ArchivePrice["Archiver ancien Price"]
-        NewPrice["Creer nouveau Price"]
+        AdminPatch["Admin modifie le pack"]
+        PriceChanged{"Prix changé ?"}
+        ArchivePrice["Archiver l'ancien tarif"]
+        NewPrice["Créer le nouveau tarif"]
     end
 
     subgraph DeleteBlock["SUPPRESSION"]
-        AdminDelete["Admin supprime le pack<br/>DELETE /api/admin/credit-packs/id"]
-        DeleteDB["Supprimer de la DB"]
+        AdminDelete["Admin supprime le pack"]
+        DeleteDB["Supprimer de la base"]
         ArchiveStripe["Archiver sur Stripe"]
     end
 
@@ -332,27 +332,27 @@ graph TB
           <div class="mermaid">
 graph LR
     subgraph DBBlock["BASE DE DONNEES"]
-        CreditPackDB["CreditPack<br/>creditAmount, price,<br/>isActive"]
+        CreditPackDB["Pack de crédits<br/>nombre, prix,<br/>actif"]
     end
 
-    subgraph SyncBlock["syncStripeProductsInternal"]
+    subgraph SyncBlock["SYNCHRONISATION STRIPE"]
         CheckActive{"Pack actif ?"}
-        FindProduct["Chercher Product<br/>par stripeProductId"]
-        CreateProduct["Creer Product<br/>name, metadata"]
-        CheckPrice{"Price a jour ?<br/>montant identique"}
-        CreatePrice["Creer Price<br/>type: one_time"]
-        SetDefault["Definir default_price"]
-        ArchiveOld["Archiver ancien Price"]
-        SaveIds["Sauvegarder IDs<br/>en DB"]
+        FindProduct["Chercher le produit<br/>par identifiant"]
+        CreateProduct["Créer le produit<br/>nom, métadonnées"]
+        CheckPrice{"Tarif à jour ?<br/>montant identique"}
+        CreatePrice["Créer le tarif<br/>paiement unique"]
+        SetDefault["Définir le tarif par défaut"]
+        ArchiveOld["Archiver l'ancien tarif"]
+        SaveIds["Sauvegarder les identifiants<br/>en base"]
     end
 
     subgraph StripeBlock["STRIPE"]
-        StripeProduct["Product"]
-        StripePrice["Price one_time"]
+        StripeProduct["Produit"]
+        StripePrice["Tarif paiement unique"]
     end
 
     CreditPackDB --> CheckActive
-    CheckActive -->|"Non"| SkipPack["Ignore"]
+    CheckActive -->|"Non"| SkipPack["Ignoré"]
     CheckActive -->|"Oui"| FindProduct
     FindProduct -->|"Existe"| CheckPrice
     FindProduct -->|"N existe pas"| CreateProduct

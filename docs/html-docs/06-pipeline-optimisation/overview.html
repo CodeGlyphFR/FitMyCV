@@ -44,38 +44,38 @@
           <div class="mermaid">
 flowchart TB
     subgraph Input["ENTREE"]
-        CV["CV existant<br/>CvFile.content"]
+        CV["CV existant<br/>Contenu du CV"]
         Score["Score + Suggestions<br/>depuis scoring"]
-        UserSel["Selections utilisateur<br/>suggestions + skills"]
+        UserSel["Sélections utilisateur<br/>suggestions + compétences"]
     end
 
-    subgraph API["API ENTRY POINT"]
-        Improve["POST /api/cv/improve<br/>route.js"]
-        Schedule["scheduleImproveCvJob"]
+    subgraph API["POINT D ENTREE API"]
+        Improve["Lancer l'amélioration<br/>du CV"]
+        Schedule["Planifier la tâche<br/>en arrière-plan"]
     end
 
     subgraph Stage12["STAGE 1 &amp; 2 - PARALLELE"]
         direction LR
-        S1["Stage 1<br/>classifySkills<br/>Classification skills manquants"]
-        S2["Stage 2<br/>preprocessSuggestions<br/>Chain-of-Thought routing"]
+        S1["Stage 1<br/>Classifier les compétences<br/>manquantes"]
+        S2["Stage 2<br/>Prétraitement suggestions<br/>Routage par cible"]
     end
 
-    subgraph Stage3["STAGE 3 - AMELIORATIONS - pLimit 5"]
+    subgraph Stage3["STAGE 3 - AMELIORATIONS"]
         direction TB
-        Exp["improveExperience<br/>Responsabilites, deliverables"]
-        Proj["improveProject<br/>Modifier ou creer projets"]
-        Lang["improveLanguages<br/>Niveaux, certifications"]
-        Extras["improveExtras<br/>Certifications, extras"]
+        Exp["Améliorer les expériences<br/>Responsabilités, résultats"]
+        Proj["Améliorer les projets<br/>Modifier ou créer"]
+        Lang["Améliorer les langues<br/>Niveaux, certifications"]
+        Extras["Améliorer les extras<br/>Certifications, divers"]
     end
 
-    subgraph Stage4["STAGE 4 - SUMMARY"]
-        SummaryN["improveSummary<br/>Sequentiel si exp/proj changes"]
+    subgraph Stage4["STAGE 4 - RESUME"]
+        SummaryN["Améliorer le résumé<br/>Séquentiel si modifications"]
     end
 
     subgraph Output["SORTIE"]
-        FinalCV["CV Ameliore"]
-        Changes["allChangesMade"]
-        Metrics["stageMetrics"]
+        FinalCV["CV amélioré"]
+        Changes["Liste des modifications"]
+        Metrics["Métriques par étape"]
     end
 
     CV --> Improve

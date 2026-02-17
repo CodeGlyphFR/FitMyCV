@@ -101,14 +101,14 @@ export const CATEGORY_LABELS = {
           <div class="diagram-title">Résolution du template email</div>
           <div class="mermaid">
 graph TD
-    StartSender["createEmailSender appele"]
-    LoadDB["Charger EmailTemplate par triggerName"]
-    HasTemplate{"Template trouve en DB ?"}
-    HasDesign{"designJson existe ?"}
+    StartSender["Création de l'envoyeur"]
+    LoadDB["Charger le modèle email<br/>par déclencheur"]
+    HasTemplate{"Modèle trouvé<br/>en base ?"}
+    HasDesign{"Design visuel<br/>existe ?"}
     RenderMaily["Rendre via moteur Maily"]
-    UseHtml["Utiliser htmlContent brut"]
+    UseHtml["Utiliser le HTML brut"]
     SubstituteVars["Substituer variables"]
-    UseFallback["Utiliser fallbackTemplates.js"]
+    UseFallback["Utiliser les modèles<br/>de secours"]
     SendEmail["Envoyer email"]
 
     StartSender --> LoadDB --> HasTemplate

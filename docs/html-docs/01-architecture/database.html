@@ -42,46 +42,134 @@
         <div class="diagram">
           <div class="diagram-title">Relations principales - Utilisateur</div>
           <div class="mermaid">
-erDiagram
-    User ||--o{ CvFile : possède
-    User ||--o{ JobOffer : crée
-    User ||--o| Subscription : souscrit
-    User ||--o| CreditBalance : possède
-    User ||--o{ CreditTransaction : effectue
-    User ||--o{ Account : "OAuth lié"
-    User ||--o{ BackgroundTask : lance
-    User ||--o{ CvGenerationTask : génère
-    User ||--o{ ExportTemplate : configure
+flowchart TB
+    subgraph UserGroup["UTILISATEUR"]
+        User["Utilisateur<br/>email, rôle, profil"]
+    end
 
-    CvFile ||--o{ CvVersion : historique
-    CvFile }o--o| JobOffer : "adapté pour"
-    CvFile }o--o| CreditTransaction : "crédit utilisé"
+    subgraph CVGroup["CV & DOCUMENTS"]
+        CvFile["Fichier CV<br/>contenu JSON"]
+        CvVersion["Historique versions<br/>changelog, score"]
+        ExportTpl["Modèle d'export<br/>sélections PDF"]
+    end
 
-    JobOffer ||--o{ CvFile : "CVs générés"
+    subgraph OfferGroup["OFFRES D'EMPLOI"]
+        JobOffer["Offre d'emploi<br/>URL ou PDF extraite"]
+    end
 
-    CvGenerationTask ||--o{ CvGenerationOffer : contient
-    CvGenerationOffer ||--o{ CvGenerationSubtask : exécute
+    subgraph PipelineGroup["PIPELINE GENERATION"]
+        GenTask["Tâche de génération<br/>tâche master"]
+        GenOffer["Offre à traiter<br/>statut, résultats"]
+        GenSubtask["Sous-tâche IA<br/>traçabilité, coûts"]
+    end
 
-    Subscription }o--|| SubscriptionPlan : "plan choisi"
-    SubscriptionPlan ||--o{ SubscriptionPlanFeatureLimit : "limites"
+    subgraph BillingGroup["ABONNEMENTS & CRÉDITS"]
+        Sub["Abonnement<br/>via Stripe"]
+        Plan["Plan d'abonnement<br/>Gratuit / Pro / Premium"]
+        Limits["Limites par feature<br/>quotas par plan"]
+        Balance["Solde de crédits<br/>achetés, utilisés, remboursés"]
+        Tx["Transactions crédits<br/>historique complet"]
+    end
+
+    subgraph AuthGroup["AUTHENTIFICATION"]
+        Account["Comptes OAuth liés<br/>Google, GitHub, Apple"]
+    end
+
+    subgraph SystemGroup["SYSTEME"]
+        BgTask["Tâches asynchrones<br/>avec suivi temps réel"]
+    end
+
+    User -->|"possede"| CvFile
+    User -->|"cree"| JobOffer
+    User -->|"souscrit"| Sub
+    User -->|"possede"| Balance
+    User -->|"effectue"| Tx
+    User -->|"OAuth lie"| Account
+    User -->|"lance"| BgTask
+    User -->|"genere"| GenTask
+    User -->|"configure"| ExportTpl
+
+    CvFile -->|"historique"| CvVersion
+    CvFile -->|"adapte pour"| JobOffer
+    JobOffer -->|"CVs generes"| CvFile
+
+    GenTask -->|"contient"| GenOffer
+    GenOffer -->|"execute"| GenSubtask
+
+    Sub -->|"plan choisi"| Plan
+    Plan -->|"definit"| Limits
+
+    style User fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style CvFile fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style CvVersion fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style ExportTpl fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style JobOffer fill:#6366f1,stroke:#4f46e5,color:#fff
+    style GenTask fill:#f59e0b,stroke:#d97706,color:#fff
+    style GenOffer fill:#f59e0b,stroke:#d97706,color:#fff
+    style GenSubtask fill:#f59e0b,stroke:#d97706,color:#fff
+    style Sub fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Plan fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Limits fill:#14b8a6,stroke:#0d9488,color:#fff
+    style Balance fill:#22c55e,stroke:#16a34a,color:#fff
+    style Tx fill:#22c55e,stroke:#16a34a,color:#fff
+    style Account fill:#64748b,stroke:#475569,color:#fff
+    style BgTask fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 
         <div class="diagram">
           <div class="diagram-title">Relations - Email & Monitoring</div>
           <div class="mermaid">
-erDiagram
-    EmailTrigger ||--o{ EmailTemplate : "templates associés"
-    EmailTemplate ||--o{ EmailLog : "envois"
+flowchart TB
+    subgraph EmailGroup["EMAIL & NOTIFICATIONS"]
+        Trigger["Declencheur email<br/>evenement systeme"]
+        Template["Template email<br/>sujet, HTML, design"]
+        Log["Journal d'envois<br/>statut, provider Resend"]
+    end
 
-    User ||--o{ OpenAIUsage : "usage agrégé"
-    User ||--o{ OpenAICall : "appels individuels"
-    User ||--o{ TelemetryEvent : "événements"
-    User ||--o{ FeatureUsage : "utilisation features"
-    User ||--o{ FeatureUsageCounter : "compteurs mensuels"
-    User ||--o{ Feedback : "retours"
-    User ||--o{ ConsentLog : "consentements"
-    User ||--o{ LinkHistory : "liens visités"
+    subgraph MonitorGroup["MONITORING OPENAI"]
+        Usage["Usage agrege<br/>par jour, feature, modele"]
+        Call["Appels individuels<br/>tokens, cout, duree"]
+    end
+
+    subgraph AnalyticsGroup["TELEMETRIE & ANALYTICS"]
+        Telemetry["Evenements tracking<br/>type, categorie, duree"]
+        FeatUsage["Usage par feature<br/>compteur cumule"]
+        FeatCounter["Compteurs mensuels<br/>reset automatique"]
+        FeedbackN["Retours utilisateurs<br/>notes et bug reports"]
+    end
+
+    subgraph RGPDGroup["RGPD & HISTORIQUE"]
+        Consent["Consentements<br/>historique RGPD"]
+        Links["Liens visites<br/>historique URLs"]
+    end
+
+    UserRef["Utilisateur"]
+
+    Trigger -->|"templates associes"| Template
+    Template -->|"envois"| Log
+
+    UserRef -->|"usage agrege"| Usage
+    UserRef -->|"appels IA"| Call
+    UserRef -->|"evenements"| Telemetry
+    UserRef -->|"utilisation features"| FeatUsage
+    UserRef -->|"compteurs mensuels"| FeatCounter
+    UserRef -->|"retours"| FeedbackN
+    UserRef -->|"consentements"| Consent
+    UserRef -->|"liens visites"| Links
+
+    style UserRef fill:#0ea5e9,stroke:#0284c7,color:#fff
+    style Trigger fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Template fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Log fill:#6366f1,stroke:#4f46e5,color:#fff
+    style Usage fill:#f59e0b,stroke:#d97706,color:#fff
+    style Call fill:#f59e0b,stroke:#d97706,color:#fff
+    style Telemetry fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeatUsage fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeatCounter fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style FeedbackN fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style Consent fill:#64748b,stroke:#475569,color:#fff
+    style Links fill:#64748b,stroke:#475569,color:#fff
           </div>
         </div>
 

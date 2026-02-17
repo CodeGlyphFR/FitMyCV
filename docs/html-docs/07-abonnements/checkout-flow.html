@@ -43,33 +43,33 @@
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant App as POST /api/checkout/subscription
+    participant App as Serveur
     participant Stripe as Stripe
     participant WH as Webhooks
 
-    U->>App: {planId, billingPeriod, locale}
-    App->>App: V&eacute;rifier : pas d'abonnement Stripe actif
+    U->>App: Plan choisi, période, langue
+    App->>App: Vérifier : pas d'abonnement Stripe actif
 
-    alt Pas de Customer Stripe
-        App->>Stripe: customers.create({email, name, invoice_template})
-        Stripe-->>App: customer.id
-        App->>App: Mettre &agrave; jour User.stripeCustomerId
+    alt Pas de client Stripe
+        App->>Stripe: Créer un client
+        Stripe-->>App: Identifiant client
+        App->>App: Enregistrer l'identifiant client
     end
 
-    App->>Stripe: checkout.sessions.create({mode: 'subscription', ...})
-    Note over Stripe: consent_collection: terms_of_service<br/>allow_promotion_codes: true<br/>billing_address_collection: required
-    Stripe-->>App: session.url
+    App->>Stripe: Créer une session de paiement abonnement
+    Note over Stripe: Acceptation CGV<br/>Codes promo autorisés<br/>Adresse facturation obligatoire
+    Stripe-->>App: URL de paiement
     App-->>U: Redirection vers Stripe Checkout
 
     U->>Stripe: Paiement carte
-    Stripe->>WH: checkout.session.completed
-    WH->>WH: updateCustomerBillingDetailsFromCheckout()
-    Stripe->>WH: customer.subscription.created
-    WH->>App: Cr&eacute;er/MAJ Subscription en DB
-    Stripe->>WH: invoice.paid
-    WH->>App: Reset compteurs features
+    Stripe->>WH: Paiement terminé
+    WH->>WH: Mettre à jour les infos de facturation
+    Stripe->>WH: Abonnement créé
+    WH->>App: Créer/MAJ abonnement en base
+    Stripe->>WH: Facture payée
+    WH->>App: Réinitialiser les compteurs
 
-    App-->>U: Redirection /account/subscriptions?success=true
+    App-->>U: Redirection page abonnements
           </div>
         </div>
 
@@ -82,23 +82,23 @@ sequenceDiagram
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant App as POST /api/checkout/subscription
+    participant App as Serveur
     participant Stripe as Stripe
 
-    U->>App: {planId, billingPeriod}
-    App->>Stripe: subscriptions.retrieve(stripeSubscriptionId)
-    App->>App: D&eacute;terminer : isUpgrade = true
+    U->>App: Plan choisi, période
+    App->>Stripe: Récupérer l'abonnement actuel
+    App->>App: Déterminer : upgrade détecté
 
-    App->>Stripe: subscriptions.update({<br/>  items: [{price: newPriceId}],<br/>  proration_behavior: 'create_prorations',<br/>  billing_cycle_anchor: 'now'<br/>})
-    Stripe-->>App: updatedSubscription
+    App->>Stripe: Modifier l'abonnement<br/>avec prorata et nouveau prix
+    Stripe-->>App: Abonnement mis à jour
 
-    App->>App: changeSubscription(userId, planId, billingPeriod)
+    App->>App: Mettre à jour l'abonnement en base
 
-    alt Upgrade Free → Payant
-        App->>App: resetFeatureCounters(userId)
+    alt Upgrade Gratuit → Payant
+        App->>App: Réinitialiser les compteurs
     end
 
-    App-->>U: {success: true, upgraded: true}
+    App-->>U: Upgrade réussi
           </div>
         </div>
 
@@ -116,25 +116,25 @@ sequenceDiagram
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant App as POST /api/checkout/subscription
+    participant App as Serveur
     participant Stripe as Stripe
 
-    U->>App: {planId, billingPeriod}
-    App->>Stripe: subscriptions.retrieve(stripeSubscriptionId)
-    App->>App: D&eacute;terminer : isDowngrade = true
+    U->>App: Plan choisi, période
+    App->>Stripe: Récupérer l'abonnement actuel
+    App->>App: Déterminer : downgrade détecté
 
-    alt Schedule existant
-        App->>Stripe: subscriptionSchedules.retrieve(schedule)
-    else Pas de schedule
-        App->>Stripe: subscriptionSchedules.create({from_subscription})
+    alt Planning existant
+        App->>Stripe: Récupérer le planning existant
+    else Pas de planning
+        App->>Stripe: Créer un planning depuis l'abonnement
     end
 
-    App->>Stripe: subscriptionSchedules.update({<br/>  phases: [<br/>    {plan actuel jusqu'&agrave; current_period_end},<br/>    {nouveau plan apr&egrave;s current_period_end}<br/>  ],<br/>  end_behavior: 'release'<br/>})
-    Stripe-->>App: updatedSchedule
+    App->>Stripe: Mettre à jour le planning :<br/>plan actuel jusqu'à fin de période,<br/>nouveau plan ensuite
+    Stripe-->>App: Planning mis à jour
 
-    App-->>U: {scheduled: true, effectiveDate: "..."}
+    App-->>U: Downgrade programmé, date effective
 
-    Note over U: L'utilisateur garde le plan actuel<br/>jusqu'&agrave; la fin de la p&eacute;riode
+    Note over U: L'utilisateur garde le plan actuel<br/>jusqu'à la fin de la période
           </div>
         </div>
 
@@ -152,25 +152,25 @@ sequenceDiagram
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant App as POST /api/checkout/credits
+    participant App as Serveur
     participant Stripe as Stripe
     participant WH as Webhooks
 
-    U->>App: {packId, locale}
-    App->>App: V&eacute;rifier pack actif + stripePriceId
+    U->>App: Pack choisi, langue
+    App->>App: Vérifier pack actif et prix Stripe
 
-    App->>Stripe: checkout.sessions.create({<br/>  mode: 'payment',<br/>  metadata: {type: 'credit_purchase', creditAmount}<br/>})
-    Stripe-->>App: session.url
+    App->>Stripe: Créer une session de paiement unique
+    Stripe-->>App: URL de paiement
     App-->>U: Redirection Stripe
 
     U->>Stripe: Paiement
-    Stripe->>WH: checkout.session.completed
-    WH->>App: grantCredits(userId, creditAmount)
-    Stripe->>WH: charge.succeeded
-    WH->>App: Cr&eacute;er facture Stripe
+    Stripe->>WH: Paiement terminé
+    WH->>App: Attribuer les crédits achetés
+    Stripe->>WH: Charge réussie
+    WH->>App: Créer la facture
     WH->>App: Envoyer email confirmation
 
-    App-->>U: Redirection /account/subscriptions?credits_success=true
+    App-->>U: Redirection page crédits
           </div>
         </div>
 

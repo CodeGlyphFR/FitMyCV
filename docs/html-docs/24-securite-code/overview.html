@@ -37,18 +37,18 @@
           <div class="diagram-title">Modules de sécurité &mdash; lib/security/</div>
           <div class="mermaid">
 graph TB
-    subgraph Security["lib/security/"]
-        FV["fileValidation.js<br/>Validation uploads"]
-        SL["secureLogger.js<br/>Logger sécurisé"]
-        XSS["xssSanitization.js<br/>Protection XSS"]
+    subgraph Security["Modules de securite"]
+        FV["Validation des fichiers<br/>uploadés"]
+        SL["Journal sécurisé<br/>(masquage données<br/>personnelles)"]
+        XSS["Nettoyage des entrées<br/>(protection injection)"]
     end
 
-    UPLOAD["Upload PDF"] --> FV
-    FV -->|"valid: true"| STORE["Stockage fichier"]
-    FV -->|"valid: false"| REJECT["Rejet + erreur"]
+    UPLOAD["Import fichier PDF"] --> FV
+    FV -->|"Fichier valide"| STORE["Stockage du fichier"]
+    FV -->|"Fichier invalide"| REJECT["Rejet du fichier"]
 
-    LOGS["Toute opération<br/>loguée"] --> SL
-    SL --> CONSOLE["Console<br/>(données masquées)"]
+    LOGS["Opérations<br/>applicatives"] --> SL
+    SL --> CONSOLE["Journaux<br/>(données masquées)"]
 
     INPUT["Données utilisateur<br/>(CV, formulaires)"] --> XSS
     XSS --> DB["Base de données<br/>(données saines)"]
@@ -108,7 +108,7 @@ graph LR
     A["1. Présence<br/>fichier"] --> B["2. Nom<br/>valide"]
     B --> C["3. Type MIME<br/>autorisé"]
     C --> D["4. Taille<br/>≤ limite"]
-    D --> E["5. Magic Number<br/>vérifié"]
+    D --> E["5. Signature<br/>vérifiée"]
     E --> F["✅ Fichier<br/>accepté"]
 
     B -.->|"❌"| R1["Rejet"]
@@ -423,12 +423,12 @@ sanitizeData(data);
 graph TB
     INPUT["Données utilisateur"]
 
-    INPUT --> S1["escapeHtml()<br/>Échappement total"]
-    INPUT --> S2["sanitizeHtml()<br/>Whitelist de balises"]
-    INPUT --> S3["stripHtml()<br/>Suppression totale"]
+    INPUT --> S1["Échapper les caractères<br/>HTML dangereux"]
+    INPUT --> S2["Nettoyer le HTML<br/>(balises autorisées)"]
+    INPUT --> S3["Supprimer tout<br/>le HTML"]
 
-    S1 --> O1["&amp;lt;script&amp;gt; → visible<br/>mais inoffensif"]
-    S2 --> O2["&lt;b&gt;, &lt;em&gt; conservés<br/>&lt;script&gt; supprimé"]
+    S1 --> O1["Code visible<br/>mais inoffensif"]
+    S2 --> O2["Mise en forme conservée<br/>scripts supprimés"]
     S3 --> O3["Texte brut uniquement"]
 
     style INPUT fill:#0ea5e9,stroke:#0284c7,color:#fff

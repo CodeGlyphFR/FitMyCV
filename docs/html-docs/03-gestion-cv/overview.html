@@ -44,23 +44,23 @@
           <div class="diagram-title">Flux de gestion des CV</div>
           <div class="mermaid">
 flowchart TD
-    Manual["Creation manuelle<br/>POST /api/cvs/create"]
-    Import["Import PDF<br/>GPT-4o Vision"]
-    Generate["Generation IA<br/>Pipeline generate-cv"]
-    Extension["Extension navigateur<br/>Markdown pre-extrait"]
+    Manual["Création manuelle"]
+    Import["Import PDF<br/>via IA (Vision)"]
+    Generate["Génération par IA"]
+    Extension["Extension navigateur<br/>contenu pré-extrait"]
 
-    Validate["Validation AJV<br/>data/schema.json"]
-    Storage[("CvFile<br/>PostgreSQL")]
-    Version[("CvVersion<br/>Historique")]
+    Validate["Validation du format"]
+    Storage[("CV en base<br/>PostgreSQL")]
+    Version[("Historique<br/>des versions")]
 
-    Edit["Edition manuelle"]
+    Edit["Édition manuelle"]
     Optimize["Optimisation IA"]
     Translate["Traduction"]
-    Review["Review changes"]
+    Review["Revue des modifications"]
     Export["Export"]
 
-    PDF["PDF<br/>Puppeteer"]
-    Preview["Preview HTML"]
+    PDF["Export PDF"]
+    Preview["Aperçu HTML"]
 
     Manual --> Validate
     Import --> Validate

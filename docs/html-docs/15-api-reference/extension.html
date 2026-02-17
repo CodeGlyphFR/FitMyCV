@@ -102,24 +102,24 @@
           <div class="mermaid">
 sequenceDiagram
     participant Ext as Extension
-    participant API as API /ext/*
+    participant API as API Extension
     participant Pipeline as Pipeline IA
-    participant DB as PostgreSQL
+    participant DB as Base de donnees
 
-    Ext->>API: POST /ext/background-tasks/generate-cv-from-content
-    Note right of Ext: Markdown brut + cvFileId
-    API->>API: extractJobOfferFromMarkdown()
-    API->>DB: Cr&eacute;er BackgroundTask
-    API-->>Ext: 202 { taskId }
+    Ext->>API: Soumet le contenu pour generation CV
+    Note right of Ext: Contenu brut + identifiant CV
+    API->>API: Structurer l offre depuis le contenu
+    API->>DB: Creer une tache en arriere-plan
+    API-->>Ext: 202 identifiant de tache
 
-    loop Polling
-        Ext->>API: GET /ext/background-tasks/sync
-        API->>DB: Statut des t&acirc;ches
-        API-->>Ext: { tasks: [...] }
+    loop Surveillance periodique
+        Ext->>API: Verifier l etat des taches
+        API->>DB: Statut des taches
+        API-->>Ext: Liste des taches
     end
 
-    API->>Pipeline: G&eacute;n&eacute;ration CV (async)
-    Pipeline->>DB: CV g&eacute;n&eacute;r&eacute;
+    API->>Pipeline: Generation CV (asynchrone)
+    Pipeline->>DB: CV genere
           </div>
         </div>
 

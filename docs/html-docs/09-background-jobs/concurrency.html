@@ -72,16 +72,16 @@
           <div class="diagram-title">Logique de canStartTaskType()</div>
           <div class="mermaid">
 graph TD
-    Start["canStartTaskType<br/>userId, taskType"]
-    CheckActive{"Utilisateur a des<br/>taches actives ?"}
-    CheckType{"taskType ===<br/>cv_generation ?"}
-    CheckCvCount{"currentCount >= 3 ?"}
-    CheckSingleCount{"currentCount > 0<br/>pour ce type ?"}
+    Start["Vérifier si la tâche<br/>peut démarrer"]
+    CheckActive{"Utilisateur a des<br/>tâches actives ?"}
+    CheckType{"Type de tâche =<br/>génération CV ?"}
+    CheckCvCount{"Nombre en cours<br/>>= 3 ?"}
+    CheckSingleCount{"Déjà une tâche active<br/>pour ce type ?"}
     CheckTypesLimit{"Nombre de types<br/>actifs >= 3 ?"}
-    Allowed["allowed: true"]
-    DeniedCvMax["allowed: false<br/>max_cv_generation_reached"]
-    DeniedRunning["allowed: false<br/>task_type_already_running"]
-    DeniedTypes["allowed: false<br/>max_concurrent_types_reached"]
+    Allowed["Autorisé"]
+    DeniedCvMax["Refusé : max.<br/>générations CV atteint"]
+    DeniedRunning["Refusé : type déjà<br/>en cours d'exécution"]
+    DeniedTypes["Refusé : max. types<br/>simultanés atteint"]
 
     Start --> CheckActive
     CheckActive -->|"Non"| Allowed

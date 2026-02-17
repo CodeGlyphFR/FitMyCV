@@ -39,37 +39,40 @@
           <div class="mermaid">
 flowchart TB
     subgraph App["APPLICATION"]
-        Plans["SubscriptionPlan"]
-        SubN["Subscription"]
-        BalanceN["CreditBalance"]
-        Packs["CreditPack"]
-        Counters["FeatureUsageCounter"]
+        Plans["Plan d'abonnement"]
+        SubN["Abonnement"]
+        BalanceN["Solde de crédits"]
+        Packs["Pack de crédits"]
+        Counters["Compteur d'utilisation"]
     end
 
     subgraph Stripe["STRIPE"]
-        Products["Products"]
-        Prices["Prices<br/>monthly + yearly"]
-        Customers["Customers"]
-        Subscriptions["Subscriptions"]
-        Checkout["Checkout Sessions"]
-        Schedules["Subscription Schedules<br/>downgrades"]
+        Products["Produits"]
+        Prices["Prix<br/>mensuel + annuel"]
+        Customers["Clients"]
+        Subscriptions["Abonnements"]
+        Checkout["Sessions de paiement"]
+        Schedules["Programmation<br/>de downgrades"]
     end
 
     subgraph Sync["SYNCHRONISATION"]
-        SyncScript["stripeSync.js"]
-        Webhooks["Webhook Handler<br/>/api/webhooks/stripe"]
-        LogN["StripeWebhookLog<br/>idempotence"]
+        SyncScript["Script de synchro<br/>Stripe"]
+        Webhooks["Gestionnaire Webhooks<br/>Reception evenements"]
+        LogN["Journal Webhooks<br/>idempotence"]
     end
 
-    Plans <-->|"sync products/prices"| SyncScript
-    SyncScript <--> Products
-    SyncScript <--> Prices
+    Plans -->|"synchro produits/prix"| SyncScript
+    SyncScript -->|"synchro produits/prix"| Plans
+    SyncScript --> Products
+    Products --> SyncScript
+    SyncScript --> Prices
+    Prices --> SyncScript
 
     SubN --> Subscriptions
     Packs --> Products
     Checkout --> BalanceN
 
-    Stripe -->|"9 events"| Webhooks
+    Stripe -->|"9 evenements recus"| Webhooks
     Webhooks --> LogN
     Webhooks --> App
 
@@ -183,36 +186,36 @@ flowchart TB
           <div class="diagram-title">Algorithme canUseFeature()</div>
           <div class="mermaid">
 flowchart TD
-    Start["canUseFeature"] --> BalCheck{"Balance < 0 ?"}
-    BalCheck -->|"Oui"| Blocked["BLOQUE : balance negative"]
+    Start["Vérifier l'accès<br/>à la feature"] --> BalCheck{"Solde < 0 ?"}
+    BalCheck -->|"Oui"| Blocked["BLOQUÉ : solde négatif"]
     BalCheck -->|"Non"| ModeCheck{"Mode abonnement ?"}
 
-    ModeCheck -->|"Non - credits-only"| CostCheck{"Cout = 0 ?"}
-    CostCheck -->|"Oui"| FreeOK["AUTORISE : gratuit"]
-    CostCheck -->|"Non"| CredCheck{"Credits >= cout ?"}
-    CredCheck -->|"Oui"| UseCredit["AUTORISE : useCredit=true"]
-    CredCheck -->|"Non"| NoCred["BLOQUE : credits insuffisants"]
+    ModeCheck -->|"Non - credits seuls"| CostCheck{"Coût = 0 ?"}
+    CostCheck -->|"Oui"| FreeOK["AUTORISÉ : gratuit"]
+    CostCheck -->|"Non"| CredCheck{"Crédits >= coût ?"}
+    CredCheck -->|"Oui"| UseCredit["AUTORISÉ : via crédits"]
+    CredCheck -->|"Non"| NoCred["BLOQUÉ : crédits insuffisants"]
 
     ModeCheck -->|"Oui"| SubCheck{"Abonnement actif ?"}
-    SubCheck -->|"Non"| NoSub["BLOQUE"]
-    SubCheck -->|"Oui"| PremCheck{"premiumRequired ?"}
+    SubCheck -->|"Non"| NoSub["BLOQUÉ"]
+    SubCheck -->|"Oui"| PremCheck{"Réservé Premium ?"}
 
     PremCheck -->|"Oui"| IsPrem{"Plan Premium ?"}
-    IsPrem -->|"Oui"| PremOK["AUTORISE : Premium inclus"]
-    IsPrem -->|"Non"| PremBlock["BLOQUE : Premium requis"]
+    IsPrem -->|"Oui"| PremOK["AUTORISÉ : Premium inclus"]
+    IsPrem -->|"Non"| PremBlock["BLOQUÉ : Premium requis"]
 
-    PremCheck -->|"Non"| EnabledCheck{"Feature enabled ?"}
-    EnabledCheck -->|"Non"| CredFallback{"Credits >= cout ?"}
-    CredFallback -->|"Oui"| UseCredit2["AUTORISE : useCredit"]
-    CredFallback -->|"Non"| BlockedFeat["BLOQUE"]
+    PremCheck -->|"Non"| EnabledCheck{"Feature activée ?"}
+    EnabledCheck -->|"Non"| CredFallback{"Crédits >= coût ?"}
+    CredFallback -->|"Oui"| UseCredit2["AUTORISÉ : via crédits"]
+    CredFallback -->|"Non"| BlockedFeat["BLOQUÉ"]
 
-    EnabledCheck -->|"Oui"| LimitCheck{"usageLimit = -1 ?"}
-    LimitCheck -->|"Oui"| Unlimited["AUTORISE : illimite"]
-    LimitCheck -->|"Non"| CounterCheck{"compteur < limite ?"}
-    CounterCheck -->|"Oui"| UnderLimit["AUTORISE : sous la limite"]
-    CounterCheck -->|"Non"| OverLimit{"Credits >= cout ?"}
-    OverLimit -->|"Oui"| UseCredit3["AUTORISE : useCredit"]
-    OverLimit -->|"Non"| LimitReached["BLOQUE : limite atteinte"]
+    EnabledCheck -->|"Oui"| LimitCheck{"Limite illimitée ?"}
+    LimitCheck -->|"Oui"| Unlimited["AUTORISÉ : illimité"]
+    LimitCheck -->|"Non"| CounterCheck{"Compteur < limite ?"}
+    CounterCheck -->|"Oui"| UnderLimit["AUTORISÉ : sous la limite"]
+    CounterCheck -->|"Non"| OverLimit{"Crédits >= coût ?"}
+    OverLimit -->|"Oui"| UseCredit3["AUTORISÉ : via crédits"]
+    OverLimit -->|"Non"| LimitReached["BLOQUÉ : limite atteinte<br/>+ crédits insuffisants"]
 
     style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
     style BalCheck fill:#f59e0b,stroke:#d97706,color:#fff

@@ -41,26 +41,26 @@
           <div class="mermaid">
 sequenceDiagram
     participant Admin as Admin UI
-    participant API as API /settings
-    participant DB as Base de Donn&eacute;es
+    participant API as API Paramètres
+    participant DB as Base de Données
     participant Cache as Caches internes
-    participant SSE as dbEmitter (SSE)
-    participant Clients as Clients connect&eacute;s
+    participant SSE as Notification temps réel
+    participant Clients as Clients connectés
 
-    Admin->>API: PUT /api/admin/settings/[id]
-    API->>DB: UPDATE Setting SET value = ...
+    Admin->>API: Modifier un parametre
+    API->>DB: Mettre a jour le parametre
 
-    alt category = ai_models
-        API->>Cache: Vider cache mod&egrave;les IA
-    else category = pdf_import
+    alt Categorie modeles IA
+        API->>Cache: Vider cache modeles IA
+    else Categorie import PDF
         API->>Cache: Vider cache import PDF
     end
 
-    API->>SSE: emit('settings:updated')
-    SSE-->>Clients: Broadcast SSE &agrave; tous les clients
-    Note over Clients: Refresh automatique<br/>des providers React
+    API->>SSE: Emettre notification de mise a jour
+    SSE-->>Clients: Diffusion a tous les clients
+    Note over Clients: Rafraichissement automatique<br/>des donnees
 
-    API-->>Admin: 200 OK (setting mis &agrave; jour)
+    API-->>Admin: 200 OK (parametre mis a jour)
           </div>
         </div>
 
@@ -295,21 +295,21 @@ GET /api/admin/settings/history?limit=50</code></pre>
           <div class="diagram-title">Hi&eacute;rarchie des composants Settings</div>
           <div class="mermaid">
 graph TB
-    subgraph TabBlock["ONGLET SETTINGS"]
-        ST["SettingsTab"]
-        SH["SettingsHeader<br/>titre, actions"]
-        SN["SettingsNav<br/>navigation categories"]
+    subgraph TabBlock["ONGLET PARAMETRES"]
+        ST["Onglet Paramètres"]
+        SH["En-tête<br/>titre, actions"]
+        SN["Navigation<br/>par catégorie"]
     end
 
     subgraph SectionsBlock["SECTIONS"]
-        SubMode["SettingsSubscriptionMode<br/>mode abonnement/credits"]
-        PdfSettings["PdfImportSettings<br/>OCR, pages max, modele"]
-        OrderSettings["SectionOrderSettings<br/>ordre sections CV"]
-        DangerZone["SettingsDangerZone<br/>maintenance, reset"]
+        SubMode["Mode d'abonnement<br/>abonnement / crédits"]
+        PdfSettings["Import PDF<br/>OCR, pages max, modèle"]
+        OrderSettings["Ordre des sections<br/>dans les CV"]
+        DangerZone["Zone critique<br/>maintenance, réinitialisation"]
     end
 
     subgraph ModalsBlock["MODALES"]
-        MaintModal["MaintenanceConfirmModal<br/>confirmation mode maintenance"]
+        MaintModal["Modale de confirmation<br/>mode maintenance"]
     end
 
     ST --> SH

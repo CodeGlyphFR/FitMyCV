@@ -69,20 +69,20 @@ graph TB
     CheckMode{"Mode actuel ?"}
 
     subgraph Activation["ACTIVATION ABONNEMENT"]
-        EnableReq["POST /api/admin/subscription-mode<br/>enabled: true"]
-        EnableDB["Setting<br/>subscription_mode_enabled = true"]
-        EnableEffect["Affichage plans +<br/>checkout subscription"]
+        EnableReq["Activer le mode abonnement"]
+        EnableDB["Paramètre en base<br/>mode abonnement activé"]
+        EnableEffect["Affichage plans +<br/>paiement par abonnement"]
     end
 
     subgraph Desactivation["DESACTIVATION ABONNEMENT"]
-        DisableReq["POST /api/admin/subscription-mode<br/>enabled: false"]
-        CountPaid{"Compter les abonnes<br/>payants actifs"}
-        Warning["Afficher avertissement :<br/>N abonnes seront impactes"]
-        DisableDB["Setting<br/>subscription_mode_enabled = false"]
-        DisableEffect["Affichage packs<br/>credits uniquement"]
+        DisableReq["Désactiver le mode abonnement"]
+        CountPaid{"Compter les abonnés<br/>payants actifs"}
+        Warning["Afficher avertissement :<br/>N abonnés seront impactés"]
+        DisableDB["Paramètre en base<br/>mode abonnement désactivé"]
+        DisableEffect["Affichage packs<br/>crédits uniquement"]
     end
 
-    SSE["dbEmitter settings:updated<br/>Rafraichissement temps reel"]
+    SSE["Notification temps réel<br/>Rafraîchissement des clients"]
 
     AdminToggle --> CheckMode
     CheckMode -->|"Credits-only vers Abonnement"| EnableReq

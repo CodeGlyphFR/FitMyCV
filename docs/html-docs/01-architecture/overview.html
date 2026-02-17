@@ -96,36 +96,36 @@
           <div class="diagram-title">Vue globale de l'architecture</div>
           <div class="mermaid">
 flowchart TB
-    subgraph Presentation["PRÉSENTATION"]
-        RC["React Components (175+)"]
+    subgraph Presentation["PRESENTATION"]
+        RC["Composants React (175+)"]
         TW["Tailwind CSS 4"]
         FM["Framer Motion"]
     end
 
-    subgraph APILayer["API LAYER"]
-        AR["Next.js API Routes (123)"]
-        subgraph Categories["Catégories"]
-            Auth["Auth & Account (18)"]
-            CV["CV & CVs (15)"]
-            Sub["Subscription & Credits (15)"]
-            Admin["Admin & Analytics (44)"]
-            BT["Background Tasks (7)"]
+    subgraph APILayer["COUCHE API"]
+        AR["Routes API Next.js (123)"]
+        subgraph Categories["CATEGORIES"]
+            Auth["Authentification<br/>et Compte (18)"]
+            CV["Gestion des CV (15)"]
+            Sub["Abonnements<br/>et Crédits (15)"]
+            Admin["Administration<br/>et Statistiques (44)"]
+            BT["Tâches en<br/>arrière-plan (7)"]
             Ext["Extension (5)"]
             Other["Autres (19)"]
         end
     end
 
-    subgraph Business["BUSINESS LOGIC"]
-        subgraph Modules["lib/ modules (34)"]
-            CVC["cv-core"]
-            OAI["openai-core"]
-            FEAT["features/ (5 pipelines)"]
-            SUB["subscription"]
-            BJ["background-jobs"]
+    subgraph Business["LOGIQUE METIER"]
+        subgraph Modules["MODULES METIER (34)"]
+            CVC["Moteur CV"]
+            OAI["Client IA"]
+            FEAT["5 pipelines IA"]
+            SUB["Abonnements"]
+            BJ["Tâches asynchrones"]
         end
     end
 
-    subgraph Data["DATA ACCESS"]
+    subgraph Data["ACCES AUX DONNEES"]
         PR["Prisma ORM"]
         Models["34 modèles"]
     end
@@ -134,7 +134,7 @@ flowchart TB
         PG[(PostgreSQL)]
         OpenAI["OpenAI API"]
         Stripe["Stripe API"]
-        Email["SMTP/Resend"]
+        Email["Service d'emails"]
     end
 
     Presentation --> APILayer
@@ -176,23 +176,23 @@ flowchart TB
           <div class="diagram-title">Flux request/response</div>
           <div class="mermaid">
 sequenceDiagram
-    participant C as Client React
-    participant A as API Routes
-    participant L as lib/ modules
+    participant C as Interface utilisateur
+    participant A as Routes API
+    participant L as Modules métier
     participant P as Prisma
     participant DB as PostgreSQL
     participant E as Services Externes
 
-    C->>A: Request HTTP
-    A->>A: Auth (NextAuth 4)
-    A->>L: Business Logic
-    L->>P: Query
+    C->>A: Requête HTTP
+    A->>A: Authentification
+    A->>L: Logique métier
+    L->>P: Requête
     P->>DB: SQL
-    DB-->>P: Result
-    L->>E: OpenAI/Stripe
-    E-->>L: Response
-    L-->>A: Data
-    A-->>C: JSON Response
+    DB-->>P: Résultat
+    L->>E: OpenAI / Stripe
+    E-->>L: Réponse
+    L-->>A: Données
+    A-->>C: Réponse JSON
           </div>
         </div>
 
@@ -270,31 +270,31 @@ sequenceDiagram
           <div class="diagram-title">Graphe de dépendances</div>
           <div class="mermaid">
 flowchart LR
-    auth --> subscription
-    auth --> email
-    auth --> telemetry
+    auth["Authentification"] --> subscription["Abonnements"]
+    auth --> email["Email"]
+    auth --> telemetry["Télémétrie"]
 
-    cv-core --> settings
-    cv-core --> utils
-    cv-core --> prisma
+    cv-core["Moteur CV"] --> settings["Configuration"]
+    cv-core --> utils["Utilitaires"]
+    cv-core --> prisma["Base de données"]
 
-    features --> openai-core
+    features["Pipelines IA"] --> openai-core["Client IA"]
     features --> cv-core
-    features --> job-offer
-    features --> prompts-shared
+    features --> job-offer["Offres d'emploi"]
+    features --> prompts-shared["Instructions IA<br/>partagées"]
 
     subscription --> settings
-    subscription --> events
+    subscription --> events["Événements"]
     subscription --> prisma
 
-    background-jobs --> subscription
+    background-jobs["Tâches asynchrones"] --> subscription
     background-jobs --> telemetry
     background-jobs --> features
 
     openai-core --> settings
     openai-core --> telemetry
 
-    scoring --> openai-core
+    scoring["Scoring"] --> openai-core
     scoring --> prompts-shared
 
     email --> prisma

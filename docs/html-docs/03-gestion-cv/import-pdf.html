@@ -48,20 +48,20 @@
           <div class="mermaid">
 flowchart TB
     subgraph Input["ENTREE"]
-        PDF["PDF uploade"]
+        PDF["PDF envoyé"]
     end
 
     subgraph Process["TRAITEMENT"]
-        Upload["Upload et Validation<br/>type, taille"]
-        Convert["Conversion images<br/>pdf2pic + sharp"]
-        Vision["GPT-4o Vision<br/>Extraction structuree"]
-        Parse["Parsing JSON<br/>+ sanitization null bytes"]
-        Reconstruct["Reconstruction CV<br/>reconstructCv"]
+        Upload["Envoi et validation<br/>type, taille"]
+        Convert["Conversion en images"]
+        Vision["Extraction par IA<br/>(GPT-4o Vision)"]
+        Parse["Analyse du résultat<br/>et nettoyage"]
+        Reconstruct["Reconstruction<br/>du CV structuré"]
     end
 
     subgraph Output["SORTIE"]
-        CvFile["CvFile cree<br/>+ source enregistree"]
-        ErrorNode["Erreur + Remboursement"]
+        CvFile["CV créé<br/>et source enregistrée"]
+        ErrorNode["Erreur et remboursement"]
     end
 
     PDF --> Upload

@@ -36,29 +36,29 @@
           <div class="mermaid">
 graph TB
     subgraph TriggersBlock["DECLENCHEURS"]
-        AuthTrigger["Authentification<br/>verification, reset, changement"]
-        WelcomeTrigger["Inscription welcome"]
-        PurchaseTrigger["Achat de credits"]
-        RetentionTrigger["Retention inactivite"]
+        AuthTrigger["Authentification<br/>vérification, reset, changement"]
+        WelcomeTrigger["Inscription<br/>bienvenue"]
+        PurchaseTrigger["Achat de crédits"]
+        RetentionTrigger["Rétention<br/>inactivité"]
     end
 
-    subgraph FactoryBlock["FACTORY lib/email/emailSenderFactory.js"]
-        CreateSender["createEmailSender triggerName, config"]
-        LoadTemplate["Charger template DB par trigger"]
-        RenderTpl["Rendre Maily designJson ou htmlContent"]
-        SubstituteVars["Substituer variables nom, url..."]
-        FallbackTpl["Fallback - template HTML hardcode"]
+    subgraph FactoryBlock["FABRIQUE D ENVOI"]
+        CreateSender["Créer l'envoyeur<br/>d'email"]
+        LoadTemplate["Charger le modèle<br/>depuis la base"]
+        RenderTpl["Rendre le modèle<br/>Maily ou HTML"]
+        SubstituteVars["Substituer les variables<br/>nom, url..."]
+        FallbackTpl["Secours - modèle<br/>HTML par défaut"]
     end
 
-    subgraph TransportBlock["TRANSPORT lib/email/transports.js"]
-        ProviderMode["EMAIL_PROVIDER: auto"]
-        SMTPTransport["SMTP OVH nodemailer"]
+    subgraph TransportBlock["TRANSPORT D ENVOI"]
+        ProviderMode["Mode de transport<br/>auto"]
+        SMTPTransport["SMTP OVH"]
         ResendTransport["Resend API"]
-        TransportFallback["Fallback si SMTP echoue"]
+        TransportFallback["Secours si<br/>SMTP échoue"]
     end
 
-    subgraph LoggingBlock["LOGGING"]
-        EmailLogDB["EmailLog en DB"]
+    subgraph LoggingBlock["JOURNALISATION"]
+        EmailLogDB["Journal des emails<br/>en base"]
     end
 
     AuthTrigger --> CreateSender
@@ -66,8 +66,8 @@ graph TB
     PurchaseTrigger --> CreateSender
     RetentionTrigger --> CreateSender
     CreateSender --> LoadTemplate
-    LoadTemplate -->|"Template trouve"| RenderTpl --> SubstituteVars
-    LoadTemplate -->|"Pas de template"| FallbackTpl
+    LoadTemplate -->|"Modele trouve"| RenderTpl --> SubstituteVars
+    LoadTemplate -->|"Pas de modele"| FallbackTpl
     SubstituteVars --> ProviderMode
     FallbackTpl --> ProviderMode
     ProviderMode -->|"Principal"| SMTPTransport

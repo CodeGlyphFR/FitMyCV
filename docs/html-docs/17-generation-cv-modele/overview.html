@@ -81,28 +81,28 @@ flowchart TB
     end
 
     subgraph Common["RESSOURCES COMMUNES"]
-        Schema["getCvSchema()&lt;br/&gt;data/template.json"]
-        Credits["checkOpenAICredits()"]
-        Track["trackOpenAIUsage()"]
+        Schema["Charger le schéma CV<br/>depuis le fichier modèle"]
+        Credits["Vérifier les crédits<br/>OpenAI disponibles"]
+        Track["Enregistrer la<br/>consommation OpenAI"]
     end
 
     subgraph Pipeline1["PIPELINE OFFRE"]
-        Extract1["getOrExtractJobOfferFromUrl()&lt;br/&gt;ou getOrExtractJobOfferFromPdf()"]
-        Format1["formatJobOfferForTemplate()"]
-        Call1["callChatGPT()&lt;br/&gt;system.md + user.md"]
-        Normalize1["normalizeJsonPayload()"]
+        Extract1["Extraire l'offre d'emploi<br/>depuis URL ou PDF"]
+        Format1["Formater l'offre<br/>en texte structuré"]
+        Call1["Appeler l'IA (ChatGPT)<br/>avec les instructions"]
+        Normalize1["Normaliser le JSON<br/>du CV généré"]
     end
 
     subgraph Pipeline2["PIPELINE TITRE"]
-        Validate2["validateJobTitle()&lt;br/&gt;(desactive)"]
-        Call2["OpenAI chat.completions&lt;br/&gt;system.md + user.md"]
-        Parse2["JSON.parse() + validation&lt;br/&gt;header.full_name + current_title"]
+        Validate2["Valider le titre<br/>(désactivé)"]
+        Call2["Appeler l'IA (OpenAI)<br/>avec les instructions"]
+        Parse2["Analyser et valider<br/>le CV généré"]
     end
 
     subgraph Output["RESULTAT"]
-        BGTask["BackgroundTask"]
-        CvJSON["CV JSON complet"]
-        JobLink["Lien JobOffer&lt;br/&gt;(pipeline offre uniquement)"]
+        BGTask["Tâche en<br/>arrière-plan"]
+        CvJSON["CV complet<br/>au format JSON"]
+        JobLink["Lien vers l'offre<br/>(pipeline offre uniquement)"]
     end
 
     URL --> Extract1

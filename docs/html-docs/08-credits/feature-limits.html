@@ -175,37 +175,37 @@ function getCurrentPeriod(subscription) {
           <div class="diagram-title">Algorithme canUseFeature(userId, featureName)</div>
           <div class="mermaid">
 flowchart TD
-    Start["canUseFeature"] --> BalCheck{"balance < 0 ?"}
-    BalCheck -->|"Oui"| Blocked["BLOQUE : balance negative<br/>chargeback"]
-    BalCheck -->|"Non"| ModeCheck{"subscription_mode_enabled ?"}
+    Start["Vérifier l'accès<br/>à la feature"] --> BalCheck{"Solde < 0 ?"}
+    BalCheck -->|"Oui"| Blocked["BLOQUÉ : solde négatif<br/>contestation paiement"]
+    BalCheck -->|"Non"| ModeCheck{"Mode abonnement activé ?"}
 
-    ModeCheck -->|"Non"| CreditsOnly["MODE CREDITS-ONLY"]
-    CreditsOnly --> CostCheck{"cout = 0 ?"}
-    CostCheck -->|"Oui"| FreeOK["AUTORISE : gratuit<br/>useCredit: false"]
-    CostCheck -->|"Non"| CredCheck{"balance >= cout ?"}
-    CredCheck -->|"Oui"| UseCredit["AUTORISE<br/>useCredit: true"]
-    CredCheck -->|"Non"| NoCred["BLOQUE : credits insuffisants"]
+    ModeCheck -->|"Non"| CreditsOnly["MODE CRÉDITS SEULS"]
+    CreditsOnly --> CostCheck{"Coût = 0 ?"}
+    CostCheck -->|"Oui"| FreeOK["AUTORISÉ : gratuit<br/>sans crédit"]
+    CostCheck -->|"Non"| CredCheck{"Solde >= coût ?"}
+    CredCheck -->|"Oui"| UseCredit["AUTORISÉ<br/>via crédits"]
+    CredCheck -->|"Non"| NoCred["BLOQUÉ : crédits insuffisants"]
 
     ModeCheck -->|"Oui"| SubCheck{"Abonnement actif ?"}
-    SubCheck -->|"Non"| NoSub["BLOQUE : pas d abonnement"]
-    SubCheck -->|"Oui"| PremCheck{"premiumRequired ?<br/>cout = 0"}
+    SubCheck -->|"Non"| NoSub["BLOQUÉ : pas d'abonnement"]
+    SubCheck -->|"Oui"| PremCheck{"Réservé Premium ?<br/>coût = 0"}
 
     PremCheck -->|"Oui"| IsPrem{"Plan Premium ?"}
-    IsPrem -->|"Oui"| PremOK["AUTORISE : Premium inclus"]
-    IsPrem -->|"Non"| PremBlock["BLOQUE : Premium requis"]
+    IsPrem -->|"Oui"| PremOK["AUTORISÉ : Premium inclus"]
+    IsPrem -->|"Non"| PremBlock["BLOQUÉ : Premium requis"]
 
-    PremCheck -->|"Non"| EnabledCheck{"Feature isEnabled ?"}
-    EnabledCheck -->|"Non"| CredFallback1{"balance >= cout ?"}
-    CredFallback1 -->|"Oui"| UseCredit2["AUTORISE<br/>useCredit: true"]
-    CredFallback1 -->|"Non"| BlockedFeat["BLOQUE : desactivee<br/>+ credits insuffisants"]
+    PremCheck -->|"Non"| EnabledCheck{"Feature activée ?"}
+    EnabledCheck -->|"Non"| CredFallback1{"Solde >= coût ?"}
+    CredFallback1 -->|"Oui"| UseCredit2["AUTORISÉ<br/>via crédits"]
+    CredFallback1 -->|"Non"| BlockedFeat["BLOQUÉ : désactivée<br/>+ crédits insuffisants"]
 
-    EnabledCheck -->|"Oui"| LimitCheck{"usageLimit = -1 ?"}
-    LimitCheck -->|"Oui"| Unlimited["AUTORISE : illimite"]
-    LimitCheck -->|"Non"| CounterCheck{"compteur < limite ?"}
-    CounterCheck -->|"Oui"| UnderLimit["AUTORISE : sous la limite"]
-    CounterCheck -->|"Non"| OverLimit{"balance >= cout ?"}
-    OverLimit -->|"Oui"| UseCredit3["AUTORISE<br/>useCredit: true"]
-    OverLimit -->|"Non"| LimitReached["BLOQUE : limite atteinte<br/>+ credits insuffisants"]
+    EnabledCheck -->|"Oui"| LimitCheck{"Limite illimitée ?"}
+    LimitCheck -->|"Oui"| Unlimited["AUTORISÉ : illimité"]
+    LimitCheck -->|"Non"| CounterCheck{"Compteur < limite ?"}
+    CounterCheck -->|"Oui"| UnderLimit["AUTORISÉ : sous la limite"]
+    CounterCheck -->|"Non"| OverLimit{"Solde >= coût ?"}
+    OverLimit -->|"Oui"| UseCredit3["AUTORISÉ<br/>via crédits"]
+    OverLimit -->|"Non"| LimitReached["BLOQUÉ : limite atteinte<br/>+ crédits insuffisants"]
 
     style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
     style BalCheck fill:#f59e0b,stroke:#d97706,color:#fff
@@ -259,22 +259,22 @@ flowchart TD
           <div class="diagram-title">Flux incrementFeatureCounter(userId, featureName, metadata)</div>
           <div class="mermaid">
 flowchart TD
-    Start["incrementFeatureCounter"] --> CheckFC["canUseFeature"]
-    CheckFC --> CanUse{"canUse ?"}
-    CanUse -->|"Non"| ErrorN["Retourner erreur<br/>actionRequired, redirectUrl"]
+    Start["Incrémenter le compteur"] --> CheckFC["Vérifier l'accès"]
+    CheckFC --> CanUse{"Accès autorisé ?"}
+    CanUse -->|"Non"| ErrorN["Retourner erreur<br/>action requise, redirection"]
 
-    CanUse -->|"Oui"| UseCreditD{"useCredit ?"}
-    UseCreditD -->|"Oui"| Debit["debitCredit"]
-    Debit --> DebitOK{"Debit OK ?"}
+    CanUse -->|"Oui"| UseCreditD{"Utiliser crédits ?"}
+    UseCreditD -->|"Oui"| Debit["Débiter les crédits"]
+    Debit --> DebitOK{"Débit réussi ?"}
     DebitOK -->|"Non"| DebitError["Retourner erreur"]
-    DebitOK -->|"Oui"| SSECredit["Emettre SSE: credit_used"]
-    SSECredit --> SuccessCredit["Retourner success<br/>usedCredit: true"]
+    DebitOK -->|"Oui"| SSECredit["Émettre événement :<br/>crédit utilisé"]
+    SSECredit --> SuccessCredit["Retourner succès<br/>crédit utilisé"]
 
-    UseCreditD -->|"Non"| CredOnlyFree{"creditsOnlyMode<br/>+ gratuit ?"}
-    CredOnlyFree -->|"Oui"| SkipCounter["Retourner success<br/>usedCredit: false"]
-    CredOnlyFree -->|"Non"| IncrCounter["Incrementer<br/>FeatureUsageCounter"]
-    IncrCounter --> SSECounter["Emettre SSE:<br/>counter_incremented"]
-    SSECounter --> SuccessCounter["Retourner success<br/>usedCredit: false"]
+    UseCreditD -->|"Non"| CredOnlyFree{"Mode crédits seuls<br/>et gratuit ?"}
+    CredOnlyFree -->|"Oui"| SkipCounter["Retourner succès<br/>sans crédit"]
+    CredOnlyFree -->|"Non"| IncrCounter["Incrémenter<br/>le compteur"]
+    IncrCounter --> SSECounter["Émettre événement :<br/>compteur incrémenté"]
+    SSECounter --> SuccessCounter["Retourner succès<br/>sans crédit"]
 
     style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
     style CheckFC fill:#6366f1,stroke:#4f46e5,color:#fff

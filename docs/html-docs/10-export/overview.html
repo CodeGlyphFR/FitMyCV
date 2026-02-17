@@ -35,32 +35,32 @@
           <div class="diagram-title">Flux d'export PDF et DOCX</div>
           <div class="mermaid">
 graph TB
-    subgraph Client["CLIENT - React"]
-        Preview["Previsualisation CV"]
-        SelectSections["Selection sections/items"]
+    subgraph Client["CLIENT"]
+        Preview["Prévisualisation CV"]
+        SelectSections["Sélection des sections"]
         ExportBtn["Bouton Export PDF / DOCX"]
     end
 
-    subgraph Shared["PIPELINE HTML PARTAGE - lib/pdf/"]
-        PrepareData["prepareCvData"]
-        Styles["getExportStyles /<br/>getPreviewStyles"]
-        Sections["generateSectionsHtml"]
-        HTML["HTML complet genere"]
+    subgraph Shared["PIPELINE HTML PARTAGE"]
+        PrepareData["Préparer les données CV"]
+        Styles["Appliquer les styles<br/>export / prévisualisation"]
+        Sections["Générer le HTML<br/>des sections"]
+        HTML["HTML complet généré"]
     end
 
-    subgraph PDFExport["EXPORT PDF - app/api/export-pdf/"]
-        Puppeteer["Puppeteer headless Chrome"]
-        PdfBuffer["Buffer PDF<br/>A4, marges 15mm/12mm"]
+    subgraph PDFExport["EXPORT PDF"]
+        Puppeteer["Conversion via<br/>le navigateur"]
+        PdfBuffer["Fichier PDF<br/>A4, marges 15mm/12mm"]
     end
 
-    subgraph DOCXExport["EXPORT DOCX - app/api/export-word/"]
-        DocxLib["Bibliotheque docx Packer"]
-        DocxBuffer["Buffer DOCX"]
+    subgraph DOCXExport["EXPORT DOCX"]
+        DocxLib["Conversion via<br/>la bibliothèque Word"]
+        DocxBuffer["Fichier DOCX"]
     end
 
     subgraph CreditsBlock["CREDITS"]
-        Debit["incrementFeatureCounter"]
-        Refund["refundCredit"]
+        Debit["Débiter les crédits"]
+        Refund["Rembourser les crédits"]
     end
 
     Client --> ExportBtn

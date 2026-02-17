@@ -38,30 +38,30 @@
           <div class="diagram-title">Flux CRUD des CV</div>
           <div class="mermaid">
 flowchart LR
-    Client["Client - Browser"]
+    Client["Navigateur"]
 
-    subgraph API["API Routes /api/cvs/*"]
-        Create["POST /create"]
-        List["GET /"]
-        ReadRoute["GET /read"]
-        Delete["POST /delete"]
-        DeleteBulk["POST /delete-bulk"]
+    subgraph API["ROUTES API DES CV"]
+        Create["Créer"]
+        List["Lister"]
+        ReadRoute["Lire"]
+        Delete["Supprimer"]
+        DeleteBulk["Supprimer en masse"]
     end
 
-    subgraph Storage["Storage Layer - Prisma"]
-        Write["writeUserCvFile"]
-        ReadFn["readUserCvFile"]
-        ListFn["listUserCvFiles"]
-        DeleteFn["deleteUserCvFile"]
+    subgraph Storage["Couche de stockage"]
+        Write["Écrire un CV"]
+        ReadFn["Lire un CV"]
+        ListFn["Lister les CV"]
+        DeleteFn["Supprimer un CV"]
     end
 
-    DB[("PostgreSQL<br/>CvFile")]
+    DB[("PostgreSQL<br/>Table des CV")]
 
-    Client -->|"full_name, title, email"| Create
+    Client -->|"nom, titre, email"| Create
     Client --> List
-    Client -->|"?file=xxx.json"| ReadRoute
-    Client -->|"file"| Delete
-    Client -->|"files[]"| DeleteBulk
+    Client -->|"nom du fichier"| ReadRoute
+    Client -->|"nom du fichier"| Delete
+    Client -->|"liste de fichiers"| DeleteBulk
 
     Create --> Write
     List --> ListFn

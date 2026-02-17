@@ -47,24 +47,24 @@ flowchart TB
         Next["Next.js 16<br/>App Router"]
         React["React 19"]
         Tailwind["Tailwind CSS 4"]
-        i18n["Custom i18n<br/>(fr, en, de, es)"]
+        i18n["Traduction<br/>(fr, en, de, es)"]
     end
 
     subgraph Backend["BACKEND"]
-        API["API Routes<br/>123 endpoints"]
+        API["Routes API<br/>123 points d'accès"]
         Auth["NextAuth.js 4"]
         Prisma["Prisma 6"]
     end
 
     subgraph External["SERVICES EXTERNES"]
         OpenAI["OpenAI API"]
-        Stripe["Stripe<br/>Payments"]
+        Stripe["Stripe<br/>Paiements"]
         Resend["Resend<br/>Emails"]
     end
 
-    subgraph Data["DONNÉES"]
+    subgraph Data["DONNEES"]
         PG[(PostgreSQL)]
-        CV["CV JSON<br/>en DB"]
+        CV["CV au format JSON<br/>en base"]
     end
 
     Frontend --> Backend

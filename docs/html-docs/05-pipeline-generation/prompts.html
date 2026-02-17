@@ -1017,34 +1017,34 @@ async function processIncludeDirectives(content, useCache) {
           <div class="diagram-title">Cha&icirc;ne d'inclusion des prompts partag&eacute;s</div>
           <div class="mermaid">
 flowchart TD
-    subgraph SharedPrompts["lib/prompts-shared/"]
-        SB["system-base.md<br/>role expert + profils"]
-        CAR["cv-adaptation-rules.md<br/>7 sections de regles"]
-        LP["language-policy.md<br/>politique multilingue"]
-        RF["response-format.md<br/>JSON strict"]
-        JI["json-instructions.md<br/>template JSON CV"]
-        SR["scoring-rules.md<br/>4 categories ponderees"]
+    subgraph SharedPrompts["PROMPTS PARTAGES"]
+        SB["Base système<br/>rôle expert + profils"]
+        CAR["Règles d'adaptation CV<br/>7 sections de règles"]
+        LP["Politique linguistique<br/>gestion multilingue"]
+        RF["Format de réponse<br/>JSON strict"]
+        JI["Instructions JSON<br/>template CV"]
+        SR["Règles de scoring<br/>4 catégories pondérées"]
     end
 
-    subgraph PipelinePrompts["Prompts system du pipeline"]
-        CS["classify-system.md"]
-        BES["batch-experience-system.md"]
-        BPS["batch-project-system.md"]
-        BSS["batch-skills-system.md"]
-        BSU["batch-summary-system.md"]
-        OthersPrompt["autres system prompts"]
+    subgraph PipelinePrompts["PROMPTS SYSTEME DU PIPELINE"]
+        CS["Prompt classification"]
+        BES["Prompt expériences"]
+        BPS["Prompt projets"]
+        BSS["Prompt compétences"]
+        BSU["Prompt résumé"]
+        OthersPrompt["Autres prompts système"]
     end
 
-    SB -->|"INCLUDE"| CS
-    SB -->|"INCLUDE"| BES
-    SB -->|"INCLUDE"| BPS
-    SB -->|"INCLUDE"| BSS
-    SB -->|"INCLUDE"| BSU
-    SB -->|"INCLUDE"| OthersPrompt
+    SB -->|"inclusion"| CS
+    SB -->|"inclusion"| BES
+    SB -->|"inclusion"| BPS
+    SB -->|"inclusion"| BSS
+    SB -->|"inclusion"| BSU
+    SB -->|"inclusion"| OthersPrompt
 
     SB -->|"inclut en cascade"| CAR
-    LP -.->|"inclus selon besoin"| BES
-    LP -.->|"inclus selon besoin"| OthersPrompt
+    LP -.->|"inclus si necessaire"| BES
+    LP -.->|"inclus si necessaire"| OthersPrompt
 
     style SB fill:#0ea5e9,stroke:#0284c7,color:#fff
     style CAR fill:#8b5cf6,stroke:#7c3aed,color:#fff

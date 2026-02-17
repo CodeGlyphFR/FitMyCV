@@ -38,26 +38,23 @@
           <div class="diagram-title">Cycle de vie d'un changement dans le syst&egrave;me de review</div>
           <div class="mermaid">
 graph TD
-    GEN["Generation CV terminee"]
-    GEN --> INIT["initializeReviewState()
-    Chaque modification = pending"]
+    GEN["Génération CV terminée"]
+    GEN --> INIT["Initialiser l'état de review<br/>Chaque modification = en attente"]
 
-    INIT --> REVIEW{"Decisions utilisateur"}
+    INIT --> REVIEW{"Décisions utilisateur"}
 
-    REVIEW -->|"Accepter"| ACC["accepted"]
-    REVIEW -->|"Rejeter"| REJ["rejected"]
-    REVIEW -->|"Accepter tout"| ALLACC["all accepted"]
-    REVIEW -->|"Rejeter tout"| ALLREJ["all rejected"]
+    REVIEW -->|"Accepter"| ACC["Accepté"]
+    REVIEW -->|"Rejeter"| REJ["Rejeté"]
+    REVIEW -->|"Accepter tout"| ALLACC["Tout accepté"]
+    REVIEW -->|"Rejeter tout"| ALLREJ["Tout rejeté"]
 
-    ACC --> API["POST /api/cv/apply-review"]
+    ACC --> API["Appliquer la review"]
     REJ --> API
     ALLACC --> API
     ALLREJ --> API
 
-    API --> APPLY["applySelectiveChanges()
-    Construit le CV final"]
-    APPLY --> VERSION["CvVersion creee
-    origin: review"]
+    API --> APPLY["Appliquer les décisions<br/>Construire le CV final"]
+    APPLY --> VERSION["Nouvelle version créée<br/>Origine : review"]
 
     style GEN fill:#0ea5e9,stroke:#0284c7,color:#fff
     style INIT fill:#8b5cf6,stroke:#7c3aed,color:#fff

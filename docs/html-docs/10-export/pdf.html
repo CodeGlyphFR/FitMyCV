@@ -37,15 +37,15 @@
           <div class="diagram-title">Flux d'export PDF</div>
           <div class="mermaid">
 graph LR
-    Request["POST /api/export-pdf"]
+    Request["Requête d'export PDF"]
     Auth["Authentification"]
-    Credits["incrementFeatureCounter"]
-    Prepare["prepareCvData"]
-    HTML["Generation HTML + CSS"]
-    Puppeteer["Puppeteer setContent"]
-    PDF["page.pdf - Buffer"]
-    Response["Response<br/>application/pdf"]
-    Refund["refundCredit"]
+    Credits["Débiter les crédits"]
+    Prepare["Préparer les données CV"]
+    HTML["Génération HTML + CSS"]
+    Puppeteer["Injecter le HTML<br/>dans le navigateur"]
+    PDF["Générer le fichier PDF"]
+    Response["Réponse<br/>fichier PDF"]
+    Refund["Rembourser les crédits"]
 
     Request --> Auth --> Credits --> Prepare --> HTML --> Puppeteer --> PDF --> Response
     PDF -->|"Erreur"| Refund

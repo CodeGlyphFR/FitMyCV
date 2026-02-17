@@ -62,20 +62,20 @@
           <div class="mermaid">
 graph TB
     subgraph RootProviders["PROVIDERS RACINE"]
-        SP["SessionProvider<br/>NextAuth"]
-        RP["RecaptchaProvider<br/>Google reCAPTCHA"]
-        SetP["SettingsProvider<br/>parametres globaux"]
-        CCP["CreditCostsProvider<br/>couts par feature"]
-        LangP["LanguageProvider<br/>i18n FR/EN"]
-        NotifP["NotificationProvider<br/>toasts"]
-        AdminP["AdminProvider<br/>contexte admin"]
-        OnbP["OnboardingProvider<br/>flux onboarding"]
+        SP["Gestion de la<br/>session utilisateur"]
+        RP["Protection anti-spam<br/>reCAPTCHA"]
+        SetP["Fournisseur de<br/>paramètres globaux"]
+        CCP["Fournisseur des coûts<br/>par fonctionnalité"]
+        LangP["Gestion de la langue<br/>FR / EN"]
+        NotifP["Système de<br/>notifications"]
+        AdminP["Contexte<br/>administration"]
+        OnbP["Gestion du parcours<br/>d'accueil"]
     end
 
     subgraph ConditionalProviders["PROVIDERS CONDITIONNELS authentifie"]
-        RRP["RealtimeRefreshProvider<br/>SSE events"]
-        BTP["BackgroundTasksProvider<br/>file de taches"]
-        PPP["PipelineProgressProvider<br/>progression generation"]
+        RRP["Rafraîchissement en<br/>temps réel (SSE)"]
+        BTP["Gestion des tâches<br/>en arrière-plan"]
+        PPP["Suivi de progression<br/>de la génération"]
     end
 
     SP --> RP
@@ -716,42 +716,42 @@ graph TB
           <div class="mermaid">
 flowchart TB
     subgraph Page["PAGE CV"]
-        CvPage["CvPage (Server Component)<br/>Charge les donn&eacute;es via Prisma"]
+        CvPage["Page CV (composant serveur)<br/>Charge les données du CV"]
     end
 
-    subgraph Context["STATE MANAGEMENT"]
-        CvProvider["CvProvider<br/>(CvContext + useReducer)"]
-        Reducer["cvReducer<br/>(UPDATE_HEADER, ADD_EXPERIENCE,<br/>ADD_SKILL, SAVED, SET_SAVING...)"]
-        AutoSave["useAutoSave<br/>(debounce 2s)"]
+    subgraph Context["GESTION DE L'ETAT"]
+        CvProvider["Fournisseur de<br/>contexte CV"]
+        Reducer["Gestionnaire d'état<br/>du CV (actions de<br/>mise à jour)"]
+        AutoSave["Sauvegarde<br/>automatique (2s)"]
     end
 
-    subgraph Editor["&Eacute;DITEUR"]
-        Sections["Sections &eacute;ditables<br/>(Header, Summary, Experience,<br/>Education, Skills, Languages,<br/>Projects, Extras)"]
+    subgraph Editor["EDITEUR"]
+        Sections["Sections éditables<br/>(En-tête, Résumé, Expériences,<br/>Formation, Compétences,<br/>Langues, Projets, Extras)"]
     end
 
-    subgraph Improvement["AM&Eacute;LIORATION"]
-        Panel["CVImprovementPanel"]
-        Score["MatchScore"]
-        Suggestions["SuggestionsSection"]
+    subgraph Improvement["AMELIORATION"]
+        Panel["Panneau d'amélioration<br/>du CV"]
+        Score["Score de<br/>correspondance"]
+        Suggestions["Suggestions<br/>d'amélioration"]
     end
 
     subgraph Review["REVUE IA"]
-        ReviewP["ReviewProvider"]
-        Highlights["ChangeHighlight"]
-        Diff["InlineDiff"]
-        Actions["ReviewActions"]
+        ReviewP["Gestionnaire de<br/>revue des modifications"]
+        Highlights["Mise en surbrillance<br/>des modifications"]
+        Diff["Comparaison<br/>avant / après"]
+        Actions["Actions de revue<br/>(accepter / rejeter)"]
     end
 
-    subgraph TopBarCV["TOPBAR CV"]
-        TB["TopBar"]
-        Modals["Modales<br/>(Export, Import, G&eacute;n&eacute;ration)"]
+    subgraph TopBarCV["BARRE DE NAVIGATION CV"]
+        TB["Barre de<br/>navigation"]
+        Modals["Fenêtres modales<br/>(Export, Import, Génération)"]
     end
 
     CvPage --> CvProvider
     CvProvider --> Reducer
     CvProvider --> Editor
     CvProvider --> AutoSave
-    AutoSave -->|"PUT /api/cv/[id]"| CvPage
+    AutoSave -->|"Sauvegarde via API"| CvPage
     Editor --> Sections
     CvProvider --> Improvement
     Improvement --> Panel

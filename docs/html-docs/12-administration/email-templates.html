@@ -41,23 +41,23 @@
           <div class="mermaid">
 graph LR
     subgraph EventBlock["EVENEMENT"]
-        UserAction["Action utilisateur<br/>inscription, generation CV,<br/>reset password..."]
+        UserAction["Action utilisateur<br/>inscription, génération CV,<br/>réinitialisation mot de passe..."]
     end
 
-    subgraph TriggerBlock["TRIGGER"]
-        ET[("EmailTrigger<br/>name, variables,<br/>category, isSystem")]
+    subgraph TriggerBlock["DECLENCHEUR"]
+        ET[("Déclencheur email<br/>nom, variables,<br/>catégorie, système")]
     end
 
-    subgraph TemplateBlock["TEMPLATE"]
-        ActiveTpl["Template Actif<br/>isActive: true"]
-        InactiveTpl1["Template v2<br/>inactif"]
-        InactiveTpl2["Template v3<br/>inactif"]
+    subgraph TemplateBlock["MODELE"]
+        ActiveTpl["Modèle actif<br/>en service"]
+        InactiveTpl1["Modèle v2<br/>inactif"]
+        InactiveTpl2["Modèle v3<br/>inactif"]
     end
 
     subgraph SendBlock["ENVOI"]
-        InjectVars["Injection variables<br/>user.name, app.url..."]
+        InjectVars["Injection des variables<br/>nom utilisateur, URL..."]
         MailProvider{{"SMTP ou Resend"}}
-        MailLog[("EmailLog<br/>status, provider,<br/>recipientEmail")]
+        MailLog[("Journal des envois<br/>statut, fournisseur,<br/>destinataire")]
     end
 
     UserAction --> ET
@@ -434,21 +434,21 @@ graph LR
           <div class="mermaid">
 sequenceDiagram
     participant Admin as Admin UI
-    participant API as POST /activate
-    participant Prisma as Prisma Transaction
-    participant DB as Base de Donn&eacute;es
+    participant API as Activation
+    participant Prisma as Transaction
+    participant DB as Base de Données
 
-    Admin->>API: POST /email-templates/[id]/activate
-    API->>Prisma: D&eacute;marrer transaction
+    Admin->>API: Activer le modele
+    API->>Prisma: Demarrer la transaction
 
-    Prisma->>DB: UPDATE EmailTemplate<br/>SET isActive = false<br/>WHERE triggerId = X
-    Note over DB: D&eacute;sactive TOUS les templates<br/>du m&ecirc;me trigger
+    Prisma->>DB: Desactiver tous les modeles<br/>du meme declencheur
+    Note over DB: Desactive TOUS les modeles<br/>du meme declencheur
 
-    Prisma->>DB: UPDATE EmailTemplate<br/>SET isActive = true<br/>WHERE id = [id]
-    Note over DB: Active le template demand&eacute;
+    Prisma->>DB: Activer le modele demande
+    Note over DB: Active le modele demande
 
-    Prisma-->>API: Transaction commit
-    API-->>Admin: 200 OK (template activ&eacute;)
+    Prisma-->>API: Valider la transaction
+    API-->>Admin: 200 OK (modele active)
           </div>
         </div>
 

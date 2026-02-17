@@ -48,29 +48,29 @@ flowchart TB
     end
 
     subgraph Fetch["RECUPERATION"]
-        SimpleFetch["Simple HTTP Fetch"]
-        PuppeteerNode["Puppeteer + Stealth"]
-        PdfParse["pdf-parse<br/>texte"]
+        SimpleFetch["Requête HTTP simple"]
+        PuppeteerNode["Navigation navigateur<br/>avec anti-détection"]
+        PdfParse["Extraction du texte<br/>depuis le PDF"]
     end
 
     subgraph Extract["EXTRACTION IA"]
-        OpenAI["OpenAI Structured Outputs"]
-        Schema["jobOfferExtractionSchema.json"]
-        LangDetect["Detection langue"]
+        OpenAI["Sortie structurée OpenAI"]
+        Schema["Schéma d'extraction<br/>JSON structuré"]
+        LangDetect["Détection de la langue"]
     end
 
     subgraph CacheLayer["CACHE"]
         Normalize["Normalisation URL"]
-        HashPdf["Hash SHA256 PDF"]
-        Dedup["Deduplication<br/>unique userId+sourceValue"]
+        HashPdf["Empreinte SHA256<br/>du contenu PDF"]
+        Dedup["Déduplication<br/>par utilisateur et source"]
     end
 
     subgraph Storage["STOCKAGE"]
-        JobOffer["JobOffer<br/>content JSON"]
+        JobOffer["Offre d'emploi<br/>contenu JSON structuré"]
     end
 
     subgraph Usage["UTILISATION"]
-        Generation["Pipeline Generation CV"]
+        Generation["Pipeline Génération CV"]
         Optimization["Pipeline Optimisation CV"]
     end
 

@@ -42,25 +42,25 @@
           <div class="mermaid">
 flowchart LR
     subgraph Server["Serveur Next.js"]
-        API["API Routes<br/>(mutations Prisma)"]
-        PWE["prismaWithEvents.js<br/>(wrappers)"]
-        Emitter["dbEmitter.js<br/>(EventEmitter singleton)"]
-        Stream["GET /api/events/stream<br/>(SSE endpoint)"]
+        API["Routes API<br/>(modifications base)"]
+        PWE["Couche base de données<br/>avec événements"]
+        Emitter["Émetteur d'événements<br/>(instance unique)"]
+        Stream["Flux d'événements<br/>temps réel"]
     end
 
     subgraph Client["Client React"]
-        Hook["useRealtimeSync<br/>(EventSource)"]
+        Hook["Synchronisation<br/>temps réel"]
         Components["Composants React"]
-        WindowEvents["window.dispatchEvent<br/>(CustomEvent)"]
+        WindowEvents["Événements navigateur<br/>(notifications)"]
     end
 
-    API -->|"create/update"| PWE
-    PWE -->|"emit()"| Emitter
-    Emitter -->|"on()"| Stream
-    Stream -->|"SSE text/event-stream"| Hook
-    Hook -->|"callbacks"| Components
-    Hook -->|"dispatchEvent"| WindowEvents
-    WindowEvents -->|"addEventListener"| Components
+    API -->|"Creer / modifier"| PWE
+    PWE -->|"Emettre"| Emitter
+    Emitter -->|"Ecouter"| Stream
+    Stream -->|"Flux temps reel"| Hook
+    Hook -->|"Notifications"| Components
+    Hook -->|"Diffuser"| WindowEvents
+    WindowEvents -->|"Ecouter"| Components
 
     style API fill:#6366f1,stroke:#4f46e5,color:#fff
     style PWE fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -319,34 +319,34 @@ export const dynamic = 'force-dynamic'; // Pas de cache</code></pre>
           <div class="diagram-title">Cycle de vie d'une connexion SSE</div>
           <div class="mermaid">
 sequenceDiagram
-    participant C as Client (EventSource)
-    participant S as GET /api/events/stream
-    participant E as dbEmitter
-    participant A as API Routes
+    participant C as Client (navigateur)
+    participant S as Serveur temps reel
+    participant E as Emetteur d'evenements
+    participant A as Routes API
 
-    C->>S: GET /api/events/stream
-    S->>S: auth() - vérifier session
-    S->>S: Créer ReadableStream
-    S-->>C: Response (text/event-stream)
-    S->>E: on('task:updated', handler)
-    S->>E: on('cv:updated', handler)
-    S->>E: on('credits:updated', handler)
-    Note over S,E: +12 autres événements
-    S-->>C: event: connected
+    C->>S: Ouvrir le flux temps reel
+    S->>S: Verifier l'authentification
+    S->>S: Ouvrir le flux de donnees
+    S-->>C: Flux temps reel etabli
+    S->>E: Ecouter les mises a jour de taches
+    S->>E: Ecouter les mises a jour de CVs
+    S->>E: Ecouter les mises a jour de credits
+    Note over S,E: +12 autres evenements
+    S-->>C: Confirmation de connexion
 
-    loop Keep-alive (30s)
-        S-->>C: : keep-alive
+    loop Signal de maintien (30s)
+        S-->>C: Signal de maintien
     end
 
-    A->>E: emitTaskUpdate(taskId, userId, data)
-    E->>S: handler({taskId, userId, data})
-    S->>S: Filtrer par userId
-    S-->>C: event: task:updated\ndata: {...}
+    A->>E: Emettre mise a jour tache
+    E->>S: Transmettre l'evenement
+    S->>S: Filtrer par utilisateur
+    S-->>C: Evenement : tache mise a jour
 
-    C->>S: Fermeture (abort signal)
-    S->>E: off() - désabonner tous les handlers
-    S->>S: clearInterval(keepAlive)
-    S->>S: controller.close()
+    C->>S: Fermer la connexion
+    S->>E: Se desabonner des evenements
+    S->>S: Arreter le signal de maintien
+    S->>S: Fermer le flux
           </div>
         </div>
 

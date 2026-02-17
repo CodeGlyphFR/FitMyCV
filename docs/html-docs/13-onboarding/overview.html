@@ -35,36 +35,36 @@
           <div class="diagram-title">Flux d'onboarding</div>
           <div class="mermaid">
 graph TB
-    subgraph ClientBlock["CLIENT React"]
-        Hook["useOnboarding hook"]
+    subgraph ClientBlock["CLIENT"]
+        Hook["Hook d'onboarding"]
         OnbModal["Modal / Carousel"]
         TooltipGuide["Tooltip guide"]
         UserActions["Actions utilisateur"]
     end
 
-    subgraph APIBlock["API /api/user/onboarding/"]
-        GetState["GET - Lire etat"]
-        PutState["PUT - Mettre a jour etat"]
-        PatchState["PATCH - Mise a jour partielle"]
-        PostAction["POST - Actions complete/skip/reset"]
-        MemCache["Cache en memoire TTL 1000ms"]
-        AntiRegress["Protection anti-regression 409"]
+    subgraph APIBlock["API ONBOARDING"]
+        GetState["Lire l'état"]
+        PutState["Mettre à jour l'état"]
+        PatchState["Mise à jour partielle"]
+        PostAction["Actions terminer,<br/>passer, réinitialiser"]
+        MemCache["Cache en mémoire<br/>durée 1 seconde"]
+        AntiRegress["Protection anti-régression"]
     end
 
-    subgraph StateBlock["ETAT lib/onboarding/"]
-        Config["onboardingConfig.js - Timings, API"]
-        Constants["onboardingConstants.js - 9 etapes"]
-        StepsFactory["onboardingSteps.js - Factory i18n"]
-        StateLib["onboardingState.js - Mutations"]
+    subgraph StateBlock["ETAT ET CONFIGURATION"]
+        Config["Configuration - Délais, API"]
+        Constants["Constantes - 9 étapes"]
+        StepsFactory["Fabrique d'étapes i18n"]
+        StateLib["Gestion d'état - Mutations"]
     end
 
     subgraph DBBlock["BASE DE DONNEES"]
-        UserDB["User.onboardingState JSON"]
+        UserDB["État onboarding<br/>en JSON utilisateur"]
     end
 
     subgraph SSEBlock["TEMPS REEL"]
-        SSEEmitter["dbEmitter.emit onboarding:updated"]
-        SSEStream["SSE /api/events/stream"]
+        SSEEmitter["Notification temps réel<br/>onboarding mis à jour"]
+        SSEStream["Flux d'événements SSE"]
     end
 
     Hook --> GetState

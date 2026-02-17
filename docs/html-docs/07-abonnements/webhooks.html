@@ -114,21 +114,21 @@
           <div class="diagram-title">Cha&icirc;ne de webhooks pour achat de cr&eacute;dits</div>
           <div class="mermaid">
 sequenceDiagram
-    participant CS as checkout.session.completed
-    participant PI as payment_intent.succeeded
-    participant CH as charge.succeeded
+    participant CS as Paiement terminé
+    participant PI as Intention de paiement réussie
+    participant CH as Charge réussie
 
-    Note over CS: PRIORITAIRE : Attribution cr&eacute;dits<br/>(m&eacute;tadonn&eacute;es compl&egrave;tes)
-    CS->>CS: grantCredits(userId, creditAmount)
-    CS->>CS: V&eacute;rification stripePaymentIntentId unique
+    Note over CS: PRIORITAIRE : Attribution crédits<br/>(métadonnées complètes)
+    CS->>CS: Attribuer les crédits
+    CS->>CS: Vérifier l'unicité du paiement
 
-    Note over PI: FALLBACK : Si checkout n'a pas trait&eacute;
-    PI->>PI: V&eacute;rifier si transaction existe d&eacute;j&agrave;
-    PI->>PI: Si non : grantCredits() (fallback)
+    Note over PI: SECOURS : Si paiement non traité
+    PI->>PI: Vérifier si transaction existe déjà
+    PI->>PI: Attribuer les crédits si absent
 
-    Note over CH: FACTURE : billing_details GARANTIS
-    CH->>CH: V&eacute;rifier/cr&eacute;er transaction si absente
-    CH->>CH: createInvoiceForCreditPurchase()
+    Note over CH: FACTURE : infos facturation GARANTIES
+    CH->>CH: Vérifier ou créer la transaction
+    CH->>CH: Créer la facture d'achat de crédits
     CH->>CH: Envoyer email confirmation
           </div>
         </div>

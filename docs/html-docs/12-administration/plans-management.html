@@ -265,29 +265,29 @@
           <div class="mermaid">
 graph TB
     subgraph AdminAction["ACTION ADMIN"]
-        CreatePlan["Creer / Modifier plan"]
+        CreatePlan["Créer / Modifier plan"]
     end
 
-    subgraph SyncBlock["syncStripeProductsInternal"]
+    subgraph SyncBlock["SYNCHRONISATION STRIPE"]
         CheckPlan{"Plan gratuit ?"}
-        FindProduct["Chercher Product Stripe<br/>par stripeProductId"]
-        CreateProduct["Creer Product Stripe"]
-        CheckPriceM{"Price mensuel<br/>a jour ?"}
-        CheckPriceY{"Price annuel<br/>a jour ?"}
-        CreatePriceM["Creer Price mensuel"]
-        CreatePriceY["Creer Price annuel"]
-        ArchiveOld["Archiver ancien Price"]
-        SaveIds["Sauvegarder IDs Stripe<br/>en base"]
+        FindProduct["Chercher le produit Stripe<br/>par identifiant"]
+        CreateProduct["Créer le produit Stripe"]
+        CheckPriceM{"Tarif mensuel<br/>à jour ?"}
+        CheckPriceY{"Tarif annuel<br/>à jour ?"}
+        CreatePriceM["Créer le tarif mensuel"]
+        CreatePriceY["Créer le tarif annuel"]
+        ArchiveOld["Archiver l'ancien tarif"]
+        SaveIds["Sauvegarder les identifiants<br/>Stripe en base"]
     end
 
     subgraph StripeBlock["STRIPE"]
-        StripeProduct["Product"]
-        StripePriceM["Price monthly"]
-        StripePriceY["Price yearly"]
+        StripeProduct["Produit"]
+        StripePriceM["Tarif mensuel"]
+        StripePriceY["Tarif annuel"]
     end
 
     CreatePlan --> CheckPlan
-    CheckPlan -->|"Oui"| SkipPlan["Ignore"]
+    CheckPlan -->|"Oui"| SkipPlan["Ignoré"]
     CheckPlan -->|"Non"| FindProduct
     FindProduct -->|"Existe"| CheckPriceM
     FindProduct -->|"N existe pas"| CreateProduct

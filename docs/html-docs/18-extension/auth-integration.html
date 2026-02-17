@@ -81,23 +81,23 @@
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant POP as Popup (login.js)
-    participant API as POST /api/auth/extension-token
-    participant DB as Prisma (User)
+    participant POP as Popup de connexion
+    participant API as API d'authentification
+    participant DB as Base de donnees
 
-    U->>POP: Saisit email + password
-    POP->>API: POST { email, password }
-    API->>DB: findUnique({ email })
-    DB-->>API: User { id, passwordHash, emailVerified }
-    API->>API: bcrypt.compare(password, hash)
+    U->>POP: Saisit email + mot de passe
+    POP->>API: Envoie email + mot de passe
+    API->>DB: Recherche l'utilisateur par email
+    DB-->>API: Donnees de l'utilisateur
+    API->>API: Verifie le mot de passe
 
-    alt Authentification réussie
-        API->>API: signExtensionToken(userId)
-        API-->>POP: { success: true, token, user: { name, email } }
-        POP->>POP: storage.local.set({ fitmycv_token, fitmycv_user })
-        POP->>POP: showMainView()
-    else Échec
-        API-->>POP: { error: "errors.api.auth.invalidCredentials" }
+    alt Authentification reussie
+        API->>API: Genere un jeton d authentification
+        API-->>POP: Jeton + infos utilisateur
+        POP->>POP: Stocke le jeton en local
+        POP->>POP: Affiche la vue principale
+    else Echec
+        API-->>POP: Erreur : identifiants invalides
         POP->>POP: Affiche message d'erreur traduit
     end
           </div>
@@ -143,28 +143,28 @@ sequenceDiagram
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant POP as Popup (login.js)
+    participant POP as Popup de connexion
     participant TAB as Onglet navigateur
-    participant SAAS as SaaS /extension-auth
+    participant SAAS as Page d'authentification SaaS
     participant OAUTH as Google/GitHub OAuth
-    participant AR as auth-receiver.js
-    participant SW as Service Worker
+    participant AR as Recepteur d authentification
+    participant SW as Service en arriere-plan
 
     U->>POP: Clic "Continuer avec Google"
-    POP->>TAB: browser.tabs.create({ url: "/extension-auth" })
-    TAB->>SAAS: Charge la page /extension-auth
-    SAAS->>OAUTH: Redirige vers OAuth provider
-    U->>OAUTH: Autorise l'accès
-    OAUTH-->>SAAS: Callback avec auth code
-    SAAS->>SAAS: Crée/met à jour session NextAuth
-    SAAS->>SAAS: GET /api/auth/extension-token/from-session
-    Note over SAAS: Génère JWT extension depuis la session active
-    SAAS->>TAB: postMessage({ type: 'FITMYCV_EXTENSION_AUTH', token, user })
-    TAB->>AR: window.message event
-    AR->>AR: Valide format JWT (3 parts)
-    AR->>AR: storage.local.set({ fitmycv_token, fitmycv_user })
-    AR->>SW: sendMessage({ type: 'OAUTH_LOGIN_SUCCESS' })
-    Note over POP: Au prochain open, le popup détecte le token et affiche la vue principale
+    POP->>TAB: Ouvre un onglet d'authentification
+    TAB->>SAAS: Charge la page d'authentification
+    SAAS->>OAUTH: Redirige vers le fournisseur OAuth
+    U->>OAUTH: Autorise l'acces
+    OAUTH-->>SAAS: Retourne le code d'autorisation
+    SAAS->>SAAS: Cree ou met a jour la session
+    SAAS->>SAAS: Genere un jeton depuis la session
+    Note over SAAS: Jeton genere depuis la session active
+    SAAS->>TAB: Transmet le jeton a l onglet
+    TAB->>AR: Evenement message recu
+    AR->>AR: Valide le format du jeton
+    AR->>AR: Stocke le jeton en local
+    AR->>SW: Notifie la connexion reussie
+    Note over POP: A la prochaine ouverture, le popup detecte le jeton et affiche la vue principale
           </div>
         </div>
 
@@ -453,39 +453,39 @@ async function apiFetch(path, options = {}) {
           <div class="diagram-title">Soumission, polling et réception du CV généré</div>
           <div class="mermaid">
 sequenceDiagram
-    participant POP as Popup (offer-list.js)
-    participant API as SaaS API
-    participant DB as Base de données
-    participant JQ as Job Queue
+    participant POP as Popup (liste d'offres)
+    participant API as API SaaS
+    participant DB as Base de donnees
+    participant JQ as File d'attente
     participant SW as Service Worker
 
-    POP->>POP: Crée tâches temporaires (analyzing)
-    POP->>POP: Retire offres du picklist
-    POP->>POP: Affiche progression immédiate
+    POP->>POP: Cree des taches temporaires (analyse)
+    POP->>POP: Retire les offres de la selection
+    POP->>POP: Affiche la progression immediate
 
-    POP->>API: POST /api/ext/background-tasks/generate-cv-from-content
-    API->>DB: incrementFeatureCounter (débit crédits)
-    API->>DB: Crée CvGenerationTask + CvGenerationOffer
-    API->>DB: Crée BackgroundTask (status: queued)
-    API->>JQ: enqueueJob(startSingleOfferGeneration)
-    API-->>POP: { tasks: [{ taskId, offerId }] }
+    POP->>API: Soumet les offres pour generation
+    API->>DB: Debite les credits
+    API->>DB: Cree les taches de generation
+    API->>DB: Cree la tache en file d'attente
+    API->>JQ: Ajoute la tache a la file
+    API-->>POP: Retourne les IDs des taches creees
 
-    POP->>POP: Remplace tâches temp → IDs réels
-    POP->>SW: START_POLLING
+    POP->>POP: Met a jour avec les vrais IDs
+    POP->>SW: Demarre la surveillance des taches
 
-    loop Toutes les 30s (alarm MV3)
-        SW->>API: GET /api/ext/background-tasks/sync?deviceId=X&since=T
-        API-->>SW: { tasks: [{ status: "running", currentStep: "generation" }] }
-        SW->>SW: Merge dans storage.local
+    loop Toutes les 30s (arriere-plan)
+        SW->>API: Verifie l'etat des taches
+        API-->>SW: Retourne la progression des taches
+        SW->>SW: Met a jour le stockage local
     end
 
     loop Toutes les 5s (popup ouvert)
-        POP->>API: GET /api/ext/background-tasks/sync
-        API-->>POP: { tasks: [{ status: "completed", cvFile: "..." }] }
-        POP->>POP: Affiche ✓ terminé + lien vers SaaS
+        POP->>API: Verifie l'etat des taches
+        API-->>POP: Tache terminee avec le CV genere
+        POP->>POP: Affiche termine + lien vers le SaaS
     end
 
-    Note over POP: Clic sur tâche complétée → cookie cvFile → ouvre SaaS
+    Note over POP: Clic sur tache terminee ouvre le SaaS avec le CV
           </div>
         </div>
 
@@ -514,19 +514,19 @@ sequenceDiagram
           <div class="diagram-title">Gestion de l'expiration du token</div>
           <div class="mermaid">
 flowchart TD
-    REQ["Requête API"] --> FRESH["ensureTokenFresh()"]
-    FRESH -->|"expire dans < 24h"| REFRESH["refreshToken()"]
-    FRESH -->|"token OK"| FETCH["fetch()"]
-    REFRESH -->|"succès"| FETCH
-    REFRESH -->|"échec"| FETCH
-    FETCH -->|"200 OK"| OK["✓ Réponse"]
-    FETCH -->|"401"| RETRY["Tentative refresh"]
-    RETRY -->|"refresh OK"| REFETCH["Re-fetch()"]
-    RETRY -->|"refresh échoué"| CLEAR["clearToken()"]
+    REQ["Requête API"] --> FRESH["Vérifier la validité<br/>du jeton"]
+    FRESH -->|"expire dans moins de 24h"| REFRESH["Renouveler<br/>le jeton"]
+    FRESH -->|"jeton valide"| FETCH["Envoyer la requête"]
+    REFRESH -->|"succes"| FETCH
+    REFRESH -->|"echec"| FETCH
+    FETCH -->|"200 OK"| OK["Réponse OK"]
+    FETCH -->|"401"| RETRY["Tenter un<br/>renouvellement"]
+    RETRY -->|"renouvellement OK"| REFETCH["Renvoyer<br/>la requête"]
+    RETRY -->|"renouvellement echoue"| CLEAR["Supprimer<br/>le jeton"]
     REFETCH -->|"200 OK"| OK
     REFETCH -->|"401"| CLEAR
-    CLEAR --> EXPIRED["AuthError: Session expirée"]
-    EXPIRED --> LOGIN["Retour vue login"]
+    CLEAR --> EXPIRED["Erreur : session<br/>expirée"]
+    EXPIRED --> LOGIN["Retour à la<br/>page de connexion"]
     style REQ fill:#0ea5e9,stroke:#0284c7,color:#fff
     style FRESH fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style REFRESH fill:#f59e0b,stroke:#d97706,color:#fff

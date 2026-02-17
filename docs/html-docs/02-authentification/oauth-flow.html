@@ -59,19 +59,19 @@ sequenceDiagram
     P->>F: Access token + profil utilisateur
 
     alt Nouvel utilisateur
-        F->>DB: Créer User (emailVerified: auto)
-        F->>DB: Créer Account (provider link)
-        Note over F: Event createUser déclenché
-        F->>F: assignDefaultPlan()
-        F->>F: sendWelcomeEmail()
-        F->>F: Initialiser onboardingState
+        F->>DB: Créer l'utilisateur (email vérifié auto)
+        F->>DB: Créer le lien avec le fournisseur
+        Note over F: Événement de création déclenché
+        F->>F: Attribuer le plan par défaut
+        F->>F: Envoyer l'email de bienvenue
+        F->>F: Initialiser l'accueil utilisateur
     else Utilisateur existant
-        F->>DB: Mettre à jour Account
+        F->>DB: Mettre à jour le lien fournisseur
     end
 
-    F->>F: Callback signIn vérifie maintenance + registration
-    F->>DB: Update lastLoginAt
-    F->>F: Générer JWT session (7 jours)
+    F->>F: Vérifier le mode maintenance et les inscriptions
+    F->>DB: Mettre à jour la date de connexion
+    F->>F: Créer la session sécurisée (7 jours)
     F->>U: Session créée, redirection /
           </div>
         </div>
@@ -211,17 +211,17 @@ events: {
           <div class="diagram-title">Logique de blocage OAuth dans signIn</div>
           <div class="mermaid">
 flowchart TD
-    A["signIn callback"] --> B{"registration_enabled<br/>= '0' ?"}
-    B -->|Oui| C{"User existe<br/>en DB ?"}
+    A["Vérification à la connexion"] --> B{"Inscriptions<br/>désactivées ?"}
+    B -->|Oui| C{"L'utilisateur existe<br/>en base ?"}
     C -->|Non| D["BLOQUER<br/>(nouvel utilisateur)"]
-    C -->|Oui| E{"Créé < 60s<br/>et pas de password ?"}
-    E -->|Oui| F["Supprimer user<br/>+ BLOQUER"]
+    C -->|Oui| E{"Créé < 60s<br/>et sans mot de passe ?"}
+    E -->|Oui| F["Supprimer l'utilisateur<br/>+ BLOQUER"]
     E -->|Non| G["AUTORISER<br/>(utilisateur existant)"]
-    B -->|Non| H{"maintenance_enabled<br/>= '1' ?"}
-    H -->|Oui| I{"User est ADMIN ?"}
+    B -->|Non| H{"Mode maintenance<br/>activé ?"}
+    H -->|Oui| I{"L'utilisateur est<br/>administrateur ?"}
     I -->|Oui| G
-    I -->|Non| J{"Nouvel user<br/>(< 60s) ?"}
-    J -->|Oui| K["Supprimer user<br/>+ BLOQUER"]
+    I -->|Non| J{"Nouvel utilisateur<br/>(< 60s) ?"}
+    J -->|Oui| K["Supprimer l'utilisateur<br/>+ BLOQUER"]
     J -->|Non| L["BLOQUER"]
     H -->|Non| G
 
@@ -259,31 +259,31 @@ flowchart TD
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant F as FitMyCV (/account)
-    participant API as API link-oauth
+    participant F as FitMyCV (Compte)
+    participant API as API liaison OAuth
     participant P as Provider OAuth
-    participant CB as Callback link/[provider]
+    participant CB as Retour liaison
 
     U->>F: Clic "Lier Google/GitHub/Apple"
-    F->>API: POST /api/account/link-oauth {provider, recaptchaToken}
+    F->>API: Lier un fournisseur OAuth
     API->>API: Vérifier reCAPTCHA + session
-    API->>API: Vérifier provider pas déjà lié
-    API->>API: Générer state token (nonce + userId + exp 10min)
-    API->>API: Stocker state en cookie httpOnly
-    API->>F: { authUrl }
+    API->>API: Vérifier que le fournisseur n'est pas déjà lié
+    API->>API: Générer un jeton de sécurité (10 min)
+    API->>API: Stocker le jeton en cookie sécurisé
+    API->>F: URL d'autorisation
     F->>P: Redirection vers OAuth
     P->>U: Page de consentement
     U->>P: Autorise
-    P->>CB: GET /api/auth/callback/link/[provider]?code=xxx&state=yyy
-    CB->>CB: Valider state vs cookie (CSRF)
-    CB->>CB: Supprimer cookie immédiatement
+    P->>CB: Retour avec code d'autorisation
+    CB->>CB: Valider le jeton de sécurité
+    CB->>CB: Supprimer le cookie immédiatement
     CB->>CB: Vérifier session + expiration
-    CB->>P: Échanger code contre token
-    CB->>P: Récupérer profil utilisateur
-    CB->>CB: Vérifier email match (FitMyCV == OAuth)
-    CB->>CB: Vérifier provider pas déjà lié à un autre user
-    CB->>DB: CREATE Account (provider link)
-    CB->>U: Redirect /account?linkSuccess=true
+    CB->>P: Échanger le code contre un jeton d'accès
+    CB->>P: Récupérer le profil utilisateur
+    CB->>CB: Vérifier la correspondance des emails
+    CB->>CB: Vérifier que le fournisseur n'est pas déjà lié
+    CB->>DB: Créer le lien avec le fournisseur
+    CB->>U: Redirection vers le compte (succès)
           </div>
         </div>
 

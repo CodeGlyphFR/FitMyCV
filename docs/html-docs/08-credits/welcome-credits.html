@@ -70,24 +70,24 @@
           <div class="diagram-title">Flux assignDefaultPlan() &agrave; l'inscription</div>
           <div class="mermaid">
 flowchart TD
-    Start["assignDefaultPlan"] --> ModeCheck{"subscription_mode_enabled ?"}
+    Start["Attribuer le plan<br/>par défaut"] --> ModeCheck{"Mode abonnement<br/>activé ?"}
 
-    ModeCheck -->|"false"| CreditsOnly["MODE CREDITS-ONLY"]
-    CreditsOnly --> GetWelcome["getNumericSettingValue"]
-    GetWelcome --> BalCheck{"CreditBalance<br/>existe deja ?"}
-    BalCheck -->|"Oui"| SkipCredits["Ignorer - balance existante"]
-    BalCheck -->|"Non"| CreateBalance["Creer CreditBalance<br/>balance = welcomeCredits"]
-    CreateBalance --> WelcomeCheck{"welcomeCredits > 0 ?"}
-    WelcomeCheck -->|"Oui"| CreateTx["Creer CreditTransaction<br/>type: gift, source: welcome_bonus"]
-    WelcomeCheck -->|"Non"| DoneN["Termine"]
+    ModeCheck -->|"Non"| CreditsOnly["MODE CRÉDITS"]
+    CreditsOnly --> GetWelcome["Récupérer la valeur<br/>du paramètre"]
+    GetWelcome --> BalCheck{"Solde de crédits<br/>existe déjà ?"}
+    BalCheck -->|"Oui"| SkipCredits["Ignorer - solde existant"]
+    BalCheck -->|"Non"| CreateBalance["Créer le solde<br/>avec crédits bienvenue"]
+    CreateBalance --> WelcomeCheck{"Crédits bienvenue > 0 ?"}
+    WelcomeCheck -->|"Oui"| CreateTx["Créer la transaction<br/>type : cadeau"]
+    WelcomeCheck -->|"Non"| DoneN["Terminé"]
     CreateTx --> DoneN
 
-    ModeCheck -->|"true"| SubMode["MODE ABONNEMENT"]
-    SubMode --> FindFree["Trouver plan Gratuit<br/>priceMonthly=0, priceYearly=0"]
-    FindFree --> SubCheck{"Subscription<br/>existe deja ?"}
+    ModeCheck -->|"Oui"| SubMode["MODE ABONNEMENT"]
+    SubMode --> FindFree["Trouver le plan gratuit<br/>(prix = 0)"]
+    FindFree --> SubCheck{"Abonnement<br/>existe déjà ?"}
     SubCheck -->|"Oui"| SkipSub["Ignorer - abonnement existant"]
-    SubCheck -->|"Non"| CreateSub["Creer Subscription<br/>plan Gratuit, status: active"]
-    CreateSub --> CreateBal0["Creer CreditBalance<br/>balance = 0"]
+    SubCheck -->|"Non"| CreateSub["Créer l'abonnement<br/>plan Gratuit, actif"]
+    CreateSub --> CreateBal0["Créer le solde<br/>à 0 crédits"]
     CreateBal0 --> DoneN
 
     style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
@@ -231,23 +231,23 @@ await prisma.creditBalance.create({
 sequenceDiagram
     participant U as Utilisateur
     participant NA as NextAuth
-    participant DB as Base de donnees
-    participant AP as assignDefaultPlan
+    participant DB as Base de données
+    participant AP as Attribution du plan
 
-    U->>NA: Premiere connexion - OAuth ou email
+    U->>NA: Première connexion - OAuth ou email
 
     rect rgb(240, 249, 255)
-    Note over NA,DB: Evenement createUser - nouvel utilisateur uniquement
-    NA->>DB: Creer le User
-    NA->>AP: assignDefaultPlan - user.id
-    AP->>DB: Creer Subscription ou CreditBalance
+    Note over NA,DB: Création utilisateur - nouvel utilisateur
+    NA->>DB: Créer l'utilisateur
+    NA->>AP: Attribuer le plan par défaut
+    AP->>DB: Créer l'abonnement ou le solde
     end
 
     rect rgb(240, 255, 240)
-    Note over NA,DB: Callback signIn - a chaque connexion
-    NA->>AP: assignDefaultPlan - user.id
-    Note right of AP: Idempotent : ignore si deja fait
-    AP-->>NA: success: true
+    Note over NA,DB: Rappel connexion - à chaque connexion
+    NA->>AP: Attribuer le plan par défaut
+    Note right of AP: Ignoré si déjà fait
+    AP-->>NA: Succès
     end
           </div>
         </div>

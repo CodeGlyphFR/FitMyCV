@@ -41,27 +41,27 @@
           <div class="mermaid">
 graph TB
     subgraph Calls["APPELS API"]
-        FeatureIA["Feature IA<br/>generation, import, scoring"]
-        APICall["Appel OpenAI API"]
+        FeatureIA["Fonctionnalité IA<br/>génération, import, scoring"]
+        APICall["Appel API OpenAI"]
     end
 
     subgraph Logging["JOURNALISATION"]
-        OAICall[("OpenAICall<br/>userId, model, tokens,<br/>estimatedCost, duration")]
-        OAIUsage[("OpenAIUsage<br/>agregation journaliere<br/>par user+feature+model")]
+        OAICall[("Détail par appel<br/>utilisateur, modèle, tokens,<br/>coût estimé, durée")]
+        OAIUsage[("Agrégation journalière<br/>par utilisateur, fonctionnalité<br/>et modèle")]
     end
 
     subgraph Pricing["TARIFICATION"]
-        OAIPricing[("OpenAIPricing<br/>inputPrice, outputPrice,<br/>cachePrice, priority")]
-        PriorityMode{"Mode Priorite<br/>actif ?"}
+        OAIPricing[("Tarification<br/>prix entrée, sortie,<br/>cache, priorité")]
+        PriorityMode{"Mode Priorité<br/>actif ?"}
     end
 
     subgraph Alerts["ALERTES"]
-        AlertConfig[("OpenAIAlert<br/>type, threshold,<br/>enabled")]
-        Triggered["Alertes Declenchees<br/>actualValue vs threshold"]
+        AlertConfig[("Configuration alertes<br/>type, seuil,<br/>activée")]
+        Triggered["Alertes déclenchées<br/>valeur réelle vs seuil"]
     end
 
     subgraph BalanceBlock["SOLDE COMPTE"]
-        BalanceAPI["API OpenAI<br/>dashboard/billing"]
+        BalanceAPI["API OpenAI<br/>facturation"]
         BalanceCache["Cache 5 min"]
     end
 
@@ -381,25 +381,25 @@ graph TB
           <div class="diagram-title">Pipeline de calcul du co&ucirc;t estim&eacute; d'un appel</div>
           <div class="mermaid">
 sequenceDiagram
-    participant F as Feature IA
-    participant API as OpenAI API
-    participant Log as Logger
-    participant P as OpenAIPricing
-    participant U as OpenAIUsage
-    participant C as OpenAICall
+    participant F as Fonctionnalité IA
+    participant API as API OpenAI
+    participant Log as Journaliseur
+    participant P as Tarification
+    participant U as Agrégation
+    participant C as Détail appel
 
-    F->>API: Appel compl&eacute;tion (model, messages)
-    API-->>F: R&eacute;ponse + usage (tokens)
+    F->>API: Appel completion (modele, messages)
+    API-->>F: Reponse + utilisation (tokens)
 
-    F->>P: R&eacute;cup&eacute;rer tarif pour le mod&egrave;le
-    P-->>F: inputPrice, outputPrice, cachePrice
+    F->>P: Recuperer tarif pour le modele
+    P-->>F: Prix entree, sortie, cache
 
-    F->>Log: Calculer estimatedCost
-    Note over Log: cost = (promptTokens * inputPrice<br/>+ cachedTokens * cachePrice<br/>+ completionTokens * outputPrice)<br/>/ 1 000 000
+    F->>Log: Calculer le cout estime
+    Note over Log: cout = (tokens entree * prix entree<br/>+ tokens cache * prix cache<br/>+ tokens sortie * prix sortie)<br/>/ 1 000 000
 
-    Log->>C: Cr&eacute;er OpenAICall (d&eacute;tail)
-    Log->>U: Upsert OpenAIUsage (agr&eacute;gation)
-    Note over U: Incr&eacute;menter tokens,<br/>cost et callsCount
+    Log->>C: Creer le detail de l appel
+    Log->>U: Mettre a jour l agregation
+    Note over U: Incrementer tokens,<br/>cout et compteur d appels
           </div>
         </div>
 

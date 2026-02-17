@@ -38,15 +38,15 @@
           <div class="mermaid">
 graph TB
     subgraph SaaS["Application SaaS (Next.js)"]
-        LOCALES["locales/<br/>fr/ en/ es/ de/<br/>(10 fichiers JSON par langue)"]
-        CVH["cvLanguageHelper.js<br/>(traducteur côté serveur)"]
-        SKILL["skillLevels.js<br/>(niveaux multi-langues)"]
-        CLIENT["Composants React<br/>(useTranslation hook)"]
+        LOCALES["Fichiers de traduction<br/>FR / EN / ES / DE<br/>(10 fichiers par langue)"]
+        CVH["Traducteur de CV<br/>(côté serveur)"]
+        SKILL["Niveaux de compétence<br/>(multi-langues)"]
+        CLIENT["Composants React<br/>(traductions)"]
     end
 
     subgraph EXT["Extension Navigateur"]
-        I18N["lib/i18n.js<br/>(module i18n léger)"]
-        EXT_LOCALES["locales/<br/>fr.json en.json es.json de.json"]
+        I18N["Module de traduction<br/>(extension)"]
+        EXT_LOCALES["Fichiers de traduction<br/>FR / EN / ES / DE"]
     end
 
     LOCALES --> CVH
@@ -54,7 +54,7 @@ graph TB
     SKILL --> CVH
     SKILL --> CLIENT
     EXT_LOCALES --> I18N
-    I18N --> POPUP["Popup UI"]
+    I18N --> POPUP["Interface popup"]
 
     style LOCALES fill:#14b8a6,stroke:#0d9488,color:#fff
     style CVH fill:#8b5cf6,stroke:#7c3aed,color:#fff
@@ -412,29 +412,29 @@ getLocalizedLabel('senior', t);    // → "Expert" (normalise d'abord en 5)</cod
           <div class="diagram-title">Flux i18n de l'extension</div>
           <div class="mermaid">
 sequenceDiagram
-    participant P as Popup
-    participant I as i18n.js
-    participant S as browser.storage
-    participant F as locales/*.json
+    participant P as Interface popup
+    participant I as Module de traduction
+    participant S as Stockage navigateur
+    participant F as Fichiers de traduction
 
-    P->>I: initI18n()
-    I->>S: get(fitmycv_language)
-    alt Langue sauvegardée
+    P->>I: Initialiser les traductions
+    I->>S: Lire la langue sauvegardee
+    alt Langue sauvegardee
         S-->>I: "fr"
-    else Pas de préférence
-        I->>I: navigator.language → "fr"
+    else Pas de preference
+        I->>I: Detecter la langue du navigateur
     end
-    I->>F: fetch(locales/fr.json)
-    F-->>I: { header: {...}, login: {...} }
-    I-->>P: Prêt
+    I->>F: Charger les traductions francaises
+    F-->>I: Traductions chargees
+    I-->>P: Pret
 
-    P->>I: t('header.credits', { credits: 5 })
+    P->>I: Traduire "credits" (5)
     I-->>P: "5 credits"
 
-    P->>I: setLang('en')
-    I->>S: set(fitmycv_language, 'en')
-    I->>F: fetch(locales/en.json)
-    I->>P: onLangChange callback
+    P->>I: Changer en anglais
+    I->>S: Sauvegarder la langue
+    I->>F: Charger les traductions anglaises
+    I->>P: Notifier du changement
           </div>
         </div>
 
@@ -558,15 +558,15 @@ t('emptyState.welcome', { firstName: 'Jean' });
           <div class="diagram-title">Résolution d'une traduction côté serveur (pipeline CV)</div>
           <div class="mermaid">
 graph LR
-    A["Pipeline CV<br/>cvLanguage: 'en'"] --> B["getTranslatorForCvLanguage('en')"]
-    B --> C["Fusionne 10 fichiers JSON<br/>en/*.json"]
-    C --> D["t('cvSections.experience')"]
+    A["Pipeline CV<br/>(langue : anglais)"] --> B["Créer le traducteur<br/>pour l'anglais"]
+    B --> C["Fusionner les fichiers<br/>de traduction"]
+    C --> D["Traduire la section<br/>Expérience"]
     D --> E["'Experience'"]
 
-    F["normalizeToNumber('maîtrise')"] --> G["5"]
-    G --> H["getLevelKey(5)"]
+    F["Normaliser le niveau<br/>'maîtrise'"] --> G["5"]
+    G --> H["Trouver la clé<br/>du niveau 5"]
     H --> I["'expert'"]
-    I --> J["t('skillLevels.expert')"]
+    I --> J["Traduire le niveau<br/>'expert'"]
     J --> K["'Expert'"]
 
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff

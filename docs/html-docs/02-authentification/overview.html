@@ -44,39 +44,39 @@
           <div class="mermaid">
 flowchart TB
     subgraph Client["CLIENT"]
-        Login["Page /auth<br/>(Login/Register)"]
-        ExtPage["Page /extension-auth"]
-        Account["Page /account"]
+        Login["Page de connexion<br/>et d'inscription"]
+        ExtPage["Page d'authentification<br/>extension"]
+        Account["Page du compte"]
     end
 
     subgraph NextAuth["NEXTAUTH.JS v4"]
-        Providers["Providers<br/>(conditionnels)"]
-        Callbacks["Callbacks<br/>(jwt, session, signIn)"]
-        Events["Events<br/>(createUser)"]
+        Providers["Fournisseurs d'identité<br/>(conditionnels)"]
+        Callbacks["Points de contrôle<br/>(token, session, connexion)"]
+        Events["Événements<br/>(création utilisateur)"]
     end
 
-    subgraph Providers_Detail["PROVIDERS"]
-        Creds["Credentials<br/>(Email/Password)"]
+    subgraph Providers_Detail["FOURNISSEURS D'IDENTITE"]
+        Creds["Identifiants<br/>(Email / Mot de passe)"]
         Google["Google OAuth"]
         GitHub["GitHub OAuth"]
         Apple["Apple Sign-In"]
     end
 
-    subgraph ExtAuth["EXTENSION AUTH"]
-        ExtToken["JWT Extension<br/>(HS256, 7j)"]
-        ExtMiddleware["withExtensionAuth"]
+    subgraph ExtAuth["AUTH EXTENSION"]
+        ExtToken["Jeton d'accès extension<br/>(valide 7 jours)"]
+        ExtMiddleware["Vérification d'accès<br/>extension"]
     end
 
     subgraph Storage["STOCKAGE"]
         DB[(PostgreSQL<br/>via Prisma)]
-        JWT["JWT Session<br/>(7 jours)"]
+        JWT["Session sécurisée<br/>(7 jours)"]
     end
 
-    subgraph Security["SÉCURITÉ"]
+    subgraph Security["SECURITE"]
         ReCaptcha["reCAPTCHA v3"]
-        PasswordPolicy["Password Policy"]
-        XSS["XSS Sanitization"]
-        CSRF["CSRF Protection"]
+        PasswordPolicy["Politique de<br/>mot de passe"]
+        XSS["Protection contre<br/>les injections"]
+        CSRF["Protection contre<br/>la falsification"]
     end
 
     Login --> NextAuth
@@ -299,17 +299,17 @@ export function AuthButton() {
           <div class="mermaid">
 flowchart LR
     subgraph Login["Connexion"]
-        A["Email/Password"] -->|POST /api/auth/extension-token| B["JWT Extension<br/>(7 jours)"]
-        C["Session Web"] -->|GET .../from-session| B
+        A["Email /<br/>Mot de passe"] -->|"Connexion par identifiants"| B["Jeton d'accès<br/>(7 jours)"]
+        C["Session Web"] -->|"Depuis la session web"| B
     end
 
     subgraph Usage["Utilisation"]
-        B -->|Authorization: Bearer| D["withExtensionAuth"]
-        D --> E["API Routes /api/ext/*"]
+        B -->|"Envoi du jeton"| D["Vérification du jeton"]
+        D --> E["API de l'extension"]
     end
 
     subgraph Refresh["Renouvellement"]
-        B -->|POST .../refresh| F["Nouveau JWT<br/>(7 jours)"]
+        B -->|"Renouvellement"| F["Nouveau jeton<br/>(7 jours)"]
     end
 
     style A fill:#0ea5e9,stroke:#0284c7,color:#fff

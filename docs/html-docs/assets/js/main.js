@@ -1015,6 +1015,31 @@ function getMermaidTheme() {
   };
 }
 
+// Ajuste la taille des SVG Mermaid après rendu :
+// - Utilise la largeur naturelle du diagramme au lieu de 100%
+// - Cap à max-width: 100% pour éviter les débordements
+function adjustMermaidSvgSizes() {
+  document.querySelectorAll('.mermaid svg').forEach(svg => {
+    const inlineMaxWidth = svg.style.maxWidth;
+    if (inlineMaxWidth && inlineMaxWidth !== '100%') {
+      // Utiliser la largeur naturelle calculée par Mermaid
+      svg.style.width = inlineMaxWidth;
+      svg.style.maxWidth = '100%';
+    } else {
+      // Fallback : lire le viewBox pour déterminer la largeur naturelle
+      const viewBox = svg.getAttribute('viewBox');
+      if (viewBox) {
+        const parts = viewBox.split(/[\s,]+/);
+        const vbWidth = parseFloat(parts[2]);
+        if (vbWidth && vbWidth > 0) {
+          svg.style.width = vbWidth + 'px';
+          svg.style.maxWidth = '100%';
+        }
+      }
+    }
+  });
+}
+
 function initMermaid() {
   if (typeof mermaid !== 'undefined') {
     // IMPORTANT: Stocker le code original AVANT tout rendu
@@ -1036,8 +1061,10 @@ function initMermaid() {
       }
     });
 
-    // Rendre manuellement les diagrammes
-    mermaid.run();
+    // Rendre manuellement les diagrammes puis ajuster les tailles
+    mermaid.run().then(() => {
+      adjustMermaidSvgSizes();
+    }).catch(() => {});
   }
 }
 
@@ -1063,7 +1090,9 @@ function reinitMermaid() {
       el.removeAttribute('data-processed');
       el.innerHTML = code;
     });
-    mermaid.run();
+    mermaid.run().then(() => {
+      adjustMermaidSvgSizes();
+    }).catch(() => {});
   }
 }
 
@@ -1111,6 +1140,7 @@ function initDiagramZoom() {
     let panX = 0;
     let panY = 0;
     let isDragging = false;
+    let hasDragged = false;
     let dragStartX = 0;
     let dragStartY = 0;
     let panStartX = 0;
@@ -1128,9 +1158,18 @@ function initDiagramZoom() {
       const svg = content.querySelector('svg');
       if (!svg) return;
 
-      const svgRect = svg.getBoundingClientRect();
-      const svgW = svgRect.width / scale;
-      const svgH = svgRect.height / scale;
+      // Utiliser les dimensions du viewBox pour un calcul fiable
+      const viewBox = svg.getAttribute('viewBox');
+      let svgW, svgH;
+      if (viewBox) {
+        const parts = viewBox.split(/[\s,]+/);
+        svgW = parseFloat(parts[2]);
+        svgH = parseFloat(parts[3]);
+      } else {
+        svgW = parseFloat(svg.getAttribute('width')) || 800;
+        svgH = parseFloat(svg.getAttribute('height')) || 400;
+      }
+
       const vpW = viewport.clientWidth;
       const vpH = viewport.clientHeight;
       const padding = 60;
@@ -1179,6 +1218,7 @@ function initDiagramZoom() {
     viewport.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       isDragging = true;
+      hasDragged = false;
       dragStartX = e.clientX;
       dragStartY = e.clientY;
       panStartX = panX;
@@ -1189,14 +1229,28 @@ function initDiagramZoom() {
 
     window.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
-      panX = panStartX + (e.clientX - dragStartX);
-      panY = panStartY + (e.clientY - dragStartY);
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      // Marquer comme drag si mouvement > 5px
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        hasDragged = true;
+      }
+      panX = panStartX + dx;
+      panY = panStartY + dy;
       updateTransform();
     });
 
     window.addEventListener('mouseup', () => {
       isDragging = false;
       viewport.classList.remove('dragging');
+    });
+
+    // Sécurité : arrêter le drag si la souris quitte la fenêtre
+    viewport.addEventListener('mouseleave', () => {
+      if (isDragging) {
+        isDragging = false;
+        viewport.classList.remove('dragging');
+      }
     });
 
     // Touch support (pinch zoom + pan)
@@ -1269,10 +1323,13 @@ function initDiagramZoom() {
 
     lightbox.querySelector('.diagram-lightbox-close').addEventListener('click', closeLightbox);
 
-    // Close on click background (not on the SVG itself)
+    // Close on click background — uniquement si c'est un vrai clic (pas un drag)
     viewport.addEventListener('click', (e) => {
-      // Only close if it was a simple click (no drag movement)
-      if (e.target === viewport) closeLightbox();
+      if (hasDragged) {
+        hasDragged = false;
+        return;
+      }
+      closeLightbox();
     });
 
     document.addEventListener('keydown', (e) => {
@@ -1311,8 +1368,10 @@ function initDiagramZoom() {
       lightbox.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      // Fit après que le SVG soit rendu
-      requestAnimationFrame(() => fitToScreen());
+      // Fit après que le SVG soit rendu (double RAF pour laisser le layout se stabiliser)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => fitToScreen());
+      });
     };
   }
 

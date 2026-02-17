@@ -326,17 +326,17 @@ export async function refundCredit(userId, originalTransactionId,
           <div class="diagram-title">Flux de remboursement avec idempotence</div>
           <div class="mermaid">
 flowchart TD
-    Start["refundCredit - userId, txId"] --> PreCheck{"Transaction deja<br/>remboursee ?<br/>hors transaction"}
-    PreCheck -->|"Oui"| AlreadyDone["Retourner success + alreadyRefunded"]
-    PreCheck -->|"Non"| StartTx["Demarrer $transaction"]
-    StartTx --> FindTx["Recuperer transaction originale"]
-    FindTx --> Validate{"Validations :<br/>- Existe ?<br/>- Meme userId ?<br/>- refunded = false ?<br/>- amount &lt; 0 ?"}
+    Start["Rembourser un crédit"] --> PreCheck{"Transaction déjà<br/>remboursée ?<br/>vérification rapide"}
+    PreCheck -->|"Oui"| AlreadyDone["Retourner succès<br/>déjà remboursé"]
+    PreCheck -->|"Non"| StartTx["Démarrer la transaction<br/>atomique"]
+    StartTx --> FindTx["Récupérer la transaction<br/>originale"]
+    FindTx --> Validate{"Validations :<br/>- Existe ?<br/>- Même utilisateur ?<br/>- Non remboursée ?<br/>- Montant négatif ?"}
     Validate -->|"Echec"| ErrorN["Retourner erreur"]
-    Validate -->|"OK"| CreateRefund["Creer CreditTransaction<br/>type: refund, amount: +N"]
-    CreateRefund --> MarkRefunded["Marquer originale :<br/>refunded = true"]
-    MarkRefunded --> UpdateBal["Incrementer balance<br/>+ totalRefunded"]
-    UpdateBal --> EmitSSE["dbEmitter.emitCreditsUpdate"]
-    EmitSSE --> DoneN["Retourner success"]
+    Validate -->|"OK"| CreateRefund["Créer la transaction<br/>de remboursement"]
+    CreateRefund --> MarkRefunded["Marquer l'originale<br/>comme remboursée"]
+    MarkRefunded --> UpdateBal["Incrémenter le solde<br/>et total remboursé"]
+    UpdateBal --> EmitSSE["Émettre événement<br/>mise à jour crédits"]
+    EmitSSE --> DoneN["Retourner succès"]
 
     style Start fill:#0ea5e9,stroke:#0284c7,color:#fff
     style PreCheck fill:#f59e0b,stroke:#d97706,color:#fff

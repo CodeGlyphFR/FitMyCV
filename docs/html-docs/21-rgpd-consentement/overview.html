@@ -42,34 +42,34 @@
           <div class="mermaid">
 flowchart TB
     subgraph Client["Client (Navigateur)"]
-        Banner["Banner de Consentement"]
-        ConsentJS["lib/cookies/consent.js"]
-        Registry["lib/cookies/registry.js"]
-        BC["BroadcastChannel<br/>(sync multi-onglets)"]
+        Banner["Bannière de<br/>consentement"]
+        ConsentJS["Gestion du<br/>consentement"]
+        Registry["Registre des<br/>cookies"]
+        BC["Synchronisation<br/>multi-onglets"]
     end
 
     subgraph Server["Serveur (Next.js API)"]
-        LogAPI["POST /api/consent/log"]
-        HistoryAPI["GET /api/consent/history"]
-        ConsentLogger["lib/cookies/consentLogger.js"]
-        Prisma["Prisma Client"]
+        LogAPI["Enregistrer le<br/>consentement"]
+        HistoryAPI["Historique des<br/>consentements"]
+        ConsentLogger["Journal d'audit<br/>du consentement"]
+        Prisma["Client base<br/>de données"]
     end
 
     subgraph CRON["Jobs CRON"]
-        RetentionAPI["POST /api/cron/data-retention"]
-        DataRetention["lib/background-jobs/dataRetention.js"]
+        RetentionAPI["Lancer la rétention<br/>des données"]
+        DataRetention["Jobs de rétention<br/>automatisés"]
     end
 
     subgraph DB["PostgreSQL"]
-        ConsentLog["Table ConsentLog"]
-        EmailLog["Table EmailLog"]
-        User["Table User"]
+        ConsentLog["Historique du<br/>consentement"]
+        EmailLog["Historique des<br/>emails"]
+        User["Utilisateurs"]
     end
 
     Banner --> ConsentJS
     ConsentJS --> Registry
     ConsentJS --> BC
-    ConsentJS -->|"fetch POST"| LogAPI
+    ConsentJS -->|"Enregistrer"| LogAPI
     LogAPI --> ConsentLogger
     HistoryAPI --> ConsentLogger
     ConsentLogger --> Prisma
@@ -209,37 +209,37 @@ export const CONSENT_COOKIE_NAME = 'cookie_consent';</code></pre>
           <div class="mermaid">
 sequenceDiagram
     participant U as Utilisateur
-    participant B as Banner Cookie
-    participant C as consent.js
-    participant BC as BroadcastChannel
-    participant API as POST /api/consent/log
-    participant DB as ConsentLog (PostgreSQL)
+    participant B as Bannière Cookie
+    participant C as Gestion consentement
+    participant BC as Sync multi-onglets
+    participant API as API consentement
+    participant DB as Base de données
 
     U->>B: Visite le site
-    B->>C: getConsent()
-    C-->>B: null (pas de cookie ou expiré)
+    B->>C: Lire le consentement
+    C-->>B: Aucun consentement trouve
     B->>U: Affiche la bannière
 
     alt Accepter tout
         U->>B: Clic "Accepter tout"
-        B->>C: acceptAllCookies()
-        C->>C: saveConsent({necessary: true, analytics: true})
+        B->>C: Accepter tous les cookies
+        C->>C: Sauvegarder (tout accepte)
     else Refuser tout
         U->>B: Clic "Refuser"
-        B->>C: rejectAllCookies()
-        C->>C: revokeAllNonEssentialCookies()
-        C->>C: saveConsent({necessary: true, analytics: false})
+        B->>C: Refuser les cookies non essentiels
+        C->>C: Supprimer les cookies non essentiels
+        C->>C: Sauvegarder (refus analytiques)
     else Personnaliser
         U->>B: Clic "Personnaliser"
-        B->>U: Affiche les catégories
-        U->>B: Sélectionne les catégories
-        B->>C: saveConsent(custom)
+        B->>U: Affiche les categories
+        U->>B: Selectionne les categories
+        B->>C: Sauvegarder les preferences
     end
 
-    C->>C: Écrire cookie (SameSite=Lax, Secure en HTTPS)
-    C->>BC: postMessage({type: 'consent-updated'})
-    C->>API: fetch POST (non-bloquant)
-    API->>DB: prisma.consentLog.create()
+    C->>C: Ecrire le cookie de consentement
+    C->>BC: Notifier les autres onglets
+    C->>API: Enregistrer en base (non-bloquant)
+    API->>DB: Creer l'entree d'audit
           </div>
         </div>
 
@@ -547,18 +547,18 @@ const response = await fetch('/api/consent/history?limit=10');
           <div class="diagram-title">Jobs de rétention des données</div>
           <div class="mermaid">
 flowchart LR
-    CRON["CRON Scheduler"] -->|"POST + Bearer CRON_SECRET"| API["api/cron/data-retention"]
-    API --> Runner["runAllDataRetentionJobs()"]
+    CRON["Planificateur<br/>CRON"] -->|"Appel securise"| API["Point d'entrée<br/>rétention des données"]
+    API --> Runner["Lancer toutes les<br/>tâches de rétention"]
 
-    Runner --> J1["cleanupEmailLogs()"]
-    Runner --> J2["cleanupConsentLogs()"]
-    Runner --> J3["notifyInactiveAccounts()"]
-    Runner --> J4["cleanupInactiveAccounts()"]
+    Runner --> J1["Nettoyer les logs<br/>d'emails"]
+    Runner --> J2["Nettoyer les logs<br/>de consentement"]
+    Runner --> J3["Avertir les comptes<br/>inactifs"]
+    Runner --> J4["Supprimer les comptes<br/>inactifs"]
 
-    J1 -->|"> 12 mois"| EmailLog["EmailLog DELETE"]
-    J2 -->|"> 6 mois"| ConsentLog["ConsentLog DELETE"]
+    J1 -->|"Anciens > 12 mois"| EmailLog["Supprimer les logs<br/>d'emails"]
+    J2 -->|"Anciens > 6 mois"| ConsentLog["Supprimer les logs<br/>de consentement"]
     J3 -->|"35 mois inactif"| Email["Email d'avertissement"]
-    J4 -->|"> 3 ans"| UserDel["User DELETE complet"]
+    J4 -->|"Inactif > 3 ans"| UserDel["Supprimer le compte<br/>complètement"]
 
     style CRON fill:#0ea5e9,stroke:#0284c7,color:#fff
     style API fill:#6366f1,stroke:#4f46e5,color:#fff
