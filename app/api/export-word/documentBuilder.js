@@ -265,7 +265,7 @@ function generateExperienceSection(experience, section_titles, language, selecti
           ...(exp.start_date || exp.end_date ? [
             new TextRun({ text: '  ', size: 24 }),
             new TextRun({
-              text: `${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language)}`,
+              text: `${formatDate(exp.start_date, language)} – ${formatDate(exp.end_date, language) || getTranslation(language, "cvSections.present")}`,
               size: 20,
               color: "666666"
             })
