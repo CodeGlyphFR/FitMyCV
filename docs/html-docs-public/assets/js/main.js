@@ -8,135 +8,21 @@
 // ========================================
 
 const searchIndex = [
-  // Accueil
-  { title: "Accueil", path: "index.html", section: "Documentation", keywords: "accueil home documentation fitmycv" },
-
-  // Architecture
-  { title: "Vue d'ensemble", path: "01-architecture/overview.html", section: "Architecture", keywords: "architecture vue ensemble stack next.js react prisma" },
-  { title: "Stack technologique", path: "01-architecture/tech-stack.html", section: "Architecture", keywords: "stack next.js react tailwind prisma openai stripe" },
-  { title: "Base de données", path: "01-architecture/database.html", section: "Architecture", keywords: "database prisma postgresql modèles relations" },
-  { title: "Patterns architecturaux", path: "01-architecture/patterns.html", section: "Architecture", keywords: "patterns feature authorization background jobs versioning" },
-
-  // Authentification
-  { title: "Authentification", path: "02-authentification/overview.html", section: "Authentification", keywords: "auth login oauth google github apple credentials" },
-  { title: "OAuth Flow", path: "02-authentification/oauth-flow.html", section: "Authentification", keywords: "oauth google github apple social login" },
-  { title: "Credentials Flow", path: "02-authentification/credentials-flow.html", section: "Authentification", keywords: "email password bcrypt credentials" },
-  { title: "Vérification Email", path: "02-authentification/email-verification.html", section: "Authentification", keywords: "email verification token" },
-
-  // Gestion CV
-  { title: "Gestion des CV", path: "03-gestion-cv/overview.html", section: "Gestion CV", keywords: "cv gestion crud création édition" },
-  { title: "CRUD CV", path: "03-gestion-cv/crud.html", section: "Gestion CV", keywords: "create read update delete cv" },
-  { title: "Versioning", path: "03-gestion-cv/versioning.html", section: "Gestion CV", keywords: "version historique restauration rollback" },
-  { title: "Import PDF", path: "03-gestion-cv/import-pdf.html", section: "Gestion CV", keywords: "import pdf extraction vision gpt-4o" },
-  { title: "Structure CV JSON", path: "03-gestion-cv/structure-cv.html", section: "Gestion CV", keywords: "json structure header experience skills" },
-
-  // Offres emploi
-  { title: "Extraction Offres", path: "04-offres-emploi/overview.html", section: "Offres Emploi", keywords: "offre emploi extraction job offer" },
-  { title: "Extraction URL", path: "04-offres-emploi/extraction-url.html", section: "Offres Emploi", keywords: "url scraping puppeteer linkedin indeed" },
-  { title: "Extraction PDF", path: "04-offres-emploi/extraction-pdf.html", section: "Offres Emploi", keywords: "pdf extraction parsing" },
-
-  // Pipeline Génération
-  { title: "Pipeline Génération CV", path: "05-pipeline-generation/overview.html", section: "Pipeline Génération", keywords: "pipeline génération cv adaptation ia openai" },
-  { title: "Orchestrateur", path: "05-pipeline-generation/orchestrator.html", section: "Pipeline Génération", keywords: "orchestrator task runner phases" },
-  { title: "Phase Classification", path: "05-pipeline-generation/phase-classification.html", section: "Pipeline Génération", keywords: "classification keep remove move_to_projects" },
-  { title: "Phase Batches", path: "05-pipeline-generation/phase-batches.html", section: "Pipeline Génération", keywords: "batch experience project skills summary extras" },
-  { title: "Phase Recomposition", path: "05-pipeline-generation/phase-recompose.html", section: "Pipeline Génération", keywords: "recompose assemblage final cv" },
-  { title: "Prompts IA", path: "05-pipeline-generation/prompts.html", section: "Pipeline Génération", keywords: "prompts système user openai gpt" },
-  { title: "Schemas I/O", path: "05-pipeline-generation/schemas-io.html", section: "Pipeline Génération", keywords: "schemas json input output structured" },
-
-  // Pipeline Optimisation
-  { title: "Pipeline Optimisation", path: "06-pipeline-optimisation/overview.html", section: "Pipeline Optimisation", keywords: "pipeline optimisation amélioration cv" },
-  { title: "Scoring Match", path: "06-pipeline-optimisation/scoring.html", section: "Pipeline Optimisation", keywords: "score matching cv offre pourcentage" },
-  { title: "Suggestions IA", path: "06-pipeline-optimisation/suggestions.html", section: "Pipeline Optimisation", keywords: "suggestions amélioration ia recommandations" },
-  { title: "Application Modifications", path: "06-pipeline-optimisation/application.html", section: "Pipeline Optimisation", keywords: "modifications application stages" },
-  { title: "Système Review", path: "06-pipeline-optimisation/review-system.html", section: "Pipeline Optimisation", keywords: "review accept reject pending changes" },
-
-  // CV Modèle
-  { title: "Génération CV Modèle", path: "17-generation-cv-modele/overview.html", section: "CV Modèle", keywords: "cv modèle template génération fictif" },
-  { title: "Depuis Offre d'Emploi", path: "17-generation-cv-modele/template-from-offer.html", section: "CV Modèle", keywords: "cv modèle offre emploi url pdf extraction" },
-  { title: "Depuis Titre de Poste", path: "17-generation-cv-modele/template-from-job-title.html", section: "CV Modèle", keywords: "cv modèle titre poste job title génération" },
-
-  // Abonnements
-  { title: "Système Abonnements", path: "07-abonnements/overview.html", section: "Abonnements", keywords: "abonnement subscription stripe billing" },
-  { title: "Modèles Économiques", path: "07-abonnements/business-models.html", section: "Abonnements", keywords: "modèle économique abonnement crédits" },
-  { title: "Plans Stripe", path: "07-abonnements/plans-stripe.html", section: "Abonnements", keywords: "plans free pro premium stripe" },
-  { title: "Checkout Flow", path: "07-abonnements/checkout-flow.html", section: "Abonnements", keywords: "checkout paiement stripe session" },
-  { title: "Webhooks Stripe", path: "07-abonnements/webhooks.html", section: "Abonnements", keywords: "webhooks stripe events signature" },
-
-  // Crédits
-  { title: "Système Crédits", path: "08-credits/overview.html", section: "Crédits", keywords: "crédits balance transaction" },
-  { title: "Crédits Bienvenue", path: "08-credits/welcome-credits.html", section: "Crédits", keywords: "crédits bienvenue inscription welcome" },
-  { title: "Débit et Remboursement", path: "08-credits/debit-refund.html", section: "Crédits", keywords: "débit refund remboursement transaction" },
-  { title: "Limites Features", path: "08-credits/feature-limits.html", section: "Crédits", keywords: "limites features compteurs mensuels" },
-
-  // Background Jobs
-  { title: "Background Jobs", path: "09-background-jobs/overview.html", section: "Background Jobs", keywords: "jobs queue tâches asynchrone" },
-  { title: "Types de Tâches", path: "09-background-jobs/task-types.html", section: "Background Jobs", keywords: "task types generation import translate" },
-  { title: "Concurrence", path: "09-background-jobs/concurrency.html", section: "Background Jobs", keywords: "concurrence parallèle limite queue" },
-
-  // Export
-  { title: "Export CV", path: "10-export/overview.html", section: "Export", keywords: "export cv pdf docx" },
-  { title: "Export PDF", path: "10-export/pdf.html", section: "Export", keywords: "pdf puppeteer export" },
-  { title: "Export DOCX", path: "10-export/docx.html", section: "Export", keywords: "docx word export" },
-
-  // Traduction
-  { title: "Traduction CV", path: "11-traduction/overview.html", section: "Traduction", keywords: "traduction cv langue multilingue" },
-
-  // Administration
-  { title: "Administration", path: "12-administration/overview.html", section: "Administration", keywords: "admin dashboard administration" },
-  { title: "Gestion Utilisateurs", path: "12-administration/users.html", section: "Administration", keywords: "utilisateurs users gestion admin" },
-  { title: "Mode Abonnement", path: "12-administration/subscription-mode.html", section: "Administration", keywords: "mode abonnement crédits switch" },
-  { title: "Gestion Plans", path: "12-administration/plans-management.html", section: "Administration", keywords: "plans gestion création modification" },
-  { title: "Packs Crédits", path: "12-administration/credit-packs.html", section: "Administration", keywords: "packs crédits prix quantité" },
-  { title: "Monitoring OpenAI", path: "12-administration/openai-monitoring.html", section: "Administration", keywords: "openai monitoring coûts tokens alertes" },
-  { title: "Templates Email", path: "12-administration/email-templates.html", section: "Administration", keywords: "email templates triggers" },
-  { title: "Paramètres Système", path: "12-administration/settings.html", section: "Administration", keywords: "settings paramètres configuration" },
-
-  // Onboarding
-  { title: "Onboarding", path: "13-onboarding/overview.html", section: "Onboarding", keywords: "onboarding parcours guidé" },
-
-  // Email
-  { title: "Système Email", path: "14-email/overview.html", section: "Email", keywords: "email smtp resend envoi" },
-  { title: "Templates", path: "14-email/templates.html", section: "Email", keywords: "templates email triggers" },
-
-  // API
-  { title: "Référence API", path: "15-api-reference/overview.html", section: "API", keywords: "api endpoints routes" },
-  { title: "Endpoints Publics", path: "15-api-reference/public.html", section: "API", keywords: "api public endpoints" },
-  { title: "Endpoints Authentifiés", path: "15-api-reference/authenticated.html", section: "API", keywords: "api authentifié endpoints" },
-  { title: "Endpoints Admin", path: "15-api-reference/admin.html", section: "API", keywords: "api admin endpoints" },
-
-  // Composants
-  { title: "Composants React", path: "16-composants/overview.html", section: "Composants", keywords: "composants react ui components" },
-
-  // Extension Navigateur
-  { title: "Extension Navigateur", path: "18-extension/overview.html", section: "Extension Navigateur", keywords: "extension navigateur chrome firefox manifest v3 vite service worker content script popup détection extraction readability turndown" },
-  { title: "Auth & Intégration SaaS", path: "18-extension/auth-integration.html", section: "Extension Navigateur", keywords: "authentification jwt extension token refresh withExtensionAuth credentials oauth polling sync" },
-  { title: "Détection & Extraction Offres", path: "18-extension/detection-extraction.html", section: "Extension Navigateur", keywords: "détection extraction offres emploi json-ld dom scoring readability markdown sélecteurs css job boards linkedin indeed glassdoor" },
-  { title: "Interface Popup", path: "18-extension/popup-ui.html", section: "Extension Navigateur", keywords: "popup interface dark mode vues login cv-selector offer-list progress routing i18n crédits" },
-
-  // Déploiement
-  { title: "Déploiement & Infrastructure", path: "19-deploiement/overview.html", section: "Déploiement", keywords: "docker dockerfile multi-stage github actions ci cd pre-prod staging production versioning bump puppeteer chromium health check" },
-
-  // Middleware & Sécurité
-  { title: "Middleware & Sécurité", path: "20-middleware-securite/overview.html", section: "Middleware & Sécurité", keywords: "proxy cors extension rate limiting security headers csp hsts email verification cleanup" },
-
-  // RGPD
-  { title: "RGPD & Consentement", path: "21-rgpd-consentement/overview.html", section: "RGPD & Consentement", keywords: "rgpd consentement cookies analytics broadcastchannel storage revocation registre consentlog audit rétention données suppression compte" },
-
-  // SSE
-  { title: "Événements SSE", path: "22-evenements-sse/overview.html", section: "Événements SSE", keywords: "sse server-sent events dbemitter eventemitter prisma temps réel realtime userealtimesync hook broadcast" },
-
-  // i18n
-  { title: "Internationalisation (i18n)", path: "23-i18n/overview.html", section: "Internationalisation", keywords: "i18n internationalisation langues locales json traductions fr en es de compétences cv extension" },
-
-  // Sécurité Code
-  { title: "Sécurité du Code", path: "24-securite-code/overview.html", section: "Sécurité du Code", keywords: "sécurité filevalidation magic numbers mime xss sanitisation securelogger masquage pii escape html whitelist upload validation" },
-
-  // Scripts
-  { title: "Scripts d'Automatisation", path: "25-scripts-automatisation/overview.html", section: "Scripts d'Automatisation", keywords: "scripts bash node versioning bump-version conventional commits migrations données run-data-migrations stripe sync export email templates" },
-
-  // API Extension
-  { title: "Endpoints Extension", path: "15-api-reference/extension.html", section: "API", keywords: "api ext extension endpoints jwt bearer authentication refresh generate-cv task sync background-tasks credits balance cvs polling" }
+  { title: "Accueil", path: "index.html", section: "Documentation", keywords: "accueil home documentation fitmycv saas" },
+  { title: "Vue d'ensemble & Architecture", path: "01-vue-ensemble.html", section: "Architecture", keywords: "architecture monolithe modulaire couches next.js react prisma versioning ci/cd domaines pipelines" },
+  { title: "Pipeline Adaptation CV", path: "02-pipeline-adaptation.html", section: "Intelligence Artificielle", keywords: "pipeline adaptation cv ia batches parallèles cache hiérarchie anti-hallucination 10 étapes" },
+  { title: "Pipeline Optimisation & Scoring", path: "03-pipeline-optimisation.html", section: "Intelligence Artificielle", keywords: "pipeline optimisation scoring suggestions dimensions adéquation compétences manquantes" },
+  { title: "Extension Navigateur", path: "04-extension-navigateur.html", section: "Fonctionnalités", keywords: "extension chrome firefox manifest v3 détection extraction offres emploi linkedin indeed apec" },
+  { title: "Sécurité & Protection des Données", path: "05-securite-protection.html", section: "Sécurité", keywords: "sécurité owasp rgpd protection données masquage injection xss rate limiting defense en profondeur" },
+  { title: "Authentification & Comptes", path: "06-authentification.html", section: "Sécurité", keywords: "authentification oauth google github apple email mot de passe session token vérification" },
+  { title: "Gestion des CV", path: "07-gestion-cv.html", section: "Fonctionnalités", keywords: "cv gestion import pdf export word versioning traduction multilingue scoring" },
+  { title: "Extraction d'Offres d'Emploi", path: "08-extraction-offres.html", section: "Fonctionnalités", keywords: "extraction offres emploi url pdf extension scraping ia déduplication empreinte" },
+  { title: "Monétisation & Abonnements", path: "09-monetisation.html", section: "Monétisation", keywords: "monétisation abonnements crédits stripe plans tarification remboursement quotas" },
+  { title: "Génération de CV depuis Zéro", path: "10-generation-zero.html", section: "Intelligence Artificielle", keywords: "génération cv zéro ia titre poste offre emploi template fictif catégories" },
+  { title: "Modèle de Données", path: "11-modele-donnees.html", section: "Architecture", keywords: "modèle données entités domaines prisma postgresql relations stack technologique" },
+  { title: "Expérience Utilisateur", path: "12-experience-utilisateur.html", section: "UX", keywords: "expérience utilisateur onboarding sse events temps réel sauvegarde automatique éditeur" },
+  { title: "Internationalisation", path: "13-internationalisation.html", section: "UX", keywords: "internationalisation i18n langues fr en es de traductions compétences cv extension" },
+  { title: "Administration & Monitoring", path: "14-administration.html", section: "Administration", keywords: "administration monitoring dashboard kpi coûts ia paramètres dynamiques alertes déploiement" },
 ];
 
 // ========================================
@@ -626,6 +512,8 @@ function getRelativeNavPath(targetPath) {
     cleanPath = cleanPath.split('/api/admin/docs/')[1] || '';
   } else if (cleanPath.includes('/html-docs/')) {
     cleanPath = cleanPath.split('/html-docs/')[1] || '';
+  } else if (cleanPath.includes('/docs/')) {
+    cleanPath = cleanPath.split('/docs/')[1] || '';
   }
   // Enlever le slash initial si présent
   cleanPath = cleanPath.replace(/^\//, '');
