@@ -109,10 +109,10 @@ sequenceDiagram
     participant F as FitMyCV
     participant E as Service d'emails
 
-    U->>F: 1. Remplit le formulaire (nom, email, mot de passe)
-    F->>F: 2. Vérification anti-bot + validation du mot de passe
-    F->>F: 3. Création du compte (email non vérifié)
-    F->>E: 4. Envoi de l'email de vérification (lien valide 24h)
+    U->>F: 1. Remplit le formulaire<br/>(nom, email, mot de passe)
+    F->>F: 2. Vérification anti-bot<br/>+ validation du mot de passe
+    F->>F: 3. Création du compte<br/>(email non vérifié)
+    F->>E: 4. Envoi de l'email<br/>de vérification (lien valide 24h)
     E->>U: 5. Clic sur le lien de vérification
     U->>F: 6. Email vérifié, connexion automatique sécurisée
     Note over F: Plan gratuit attribué + email de bienvenue
