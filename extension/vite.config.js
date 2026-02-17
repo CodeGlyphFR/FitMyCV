@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import webExtension from 'vite-plugin-web-extension';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { cpSync, existsSync, mkdirSync } from 'fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const browser = process.env.TARGET_BROWSER || 'chrome';
@@ -31,6 +31,23 @@ function copyStaticAssets(outDir) {
   };
 }
 
+// For Firefox: remove service_worker from background, keep only scripts
+function firefoxManifestTransform(outDir, targetBrowser) {
+  return {
+    name: 'firefox-manifest-transform',
+    closeBundle() {
+      if (targetBrowser !== 'firefox') return;
+      const manifestPath = resolve(outDir, 'manifest.json');
+      if (!existsSync(manifestPath)) return;
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+      if (manifest.background?.service_worker) {
+        delete manifest.background.service_worker;
+      }
+      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    },
+  };
+}
+
 const outDir = resolve(__dirname, `dist/${browser}`);
 
 export default defineConfig({
@@ -52,5 +69,6 @@ export default defineConfig({
       browser,
     }),
     copyStaticAssets(outDir),
+    firefoxManifestTransform(outDir, browser),
   ],
 });
