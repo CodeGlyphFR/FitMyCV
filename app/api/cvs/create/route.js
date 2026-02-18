@@ -20,7 +20,12 @@ export async function POST(req){
 
     const userId = session.user.id;
 
-    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    // Vérification reCAPTCHA (obligatoire en production)
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
+      if (!recaptchaToken) {
+        return AuthErrors.recaptchaFailed();
+      }
+    }
     if (recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
         callerName: 'create-cv',

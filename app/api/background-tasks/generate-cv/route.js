@@ -17,7 +17,7 @@ import prisma from '@/lib/prisma';
 import { CommonErrors, apiError } from '@/lib/api/apiErrors';
 import { registerTaskTypeStart, enqueueJob } from '@/lib/background-jobs/jobQueue';
 import { startSingleOfferGeneration } from '@/lib/features/cv-adaptation';
-import { incrementFeatureCounter, refundFeatureUsage } from '@/lib/subscription/featureUsage';
+import { incrementFeatureCounter, refundFeatureUsage, rollbackPreTaskUsage } from '@/lib/subscription/featureUsage';
 import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
 import { validateUploadedFile, sanitizeFilename } from '@/lib/security/fileValidation';
 
@@ -181,11 +181,9 @@ export async function POST(request) {
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation');
 
       if (!usageResult.success) {
-        // Rembourser les crédits déjà débités
+        // Rembourser les crédits/compteurs déjà débités (pré-task)
         for (const prev of usageResults) {
-          if (prev.transactionId) {
-            await refundFeatureUsage(prev.transactionId);
-          }
+          await rollbackPreTaskUsage(userId, prev);
         }
 
         return NextResponse.json({

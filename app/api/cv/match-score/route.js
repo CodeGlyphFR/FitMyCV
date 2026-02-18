@@ -82,7 +82,6 @@ export async function POST(request) {
       // IMPORTANT: En cas d'erreur, on retourne SANS incrémenter le compteur
       return NextResponse.json({
         error: "Failed to calculate match score",
-        details: error.message
       }, { status: 500 });
     }
 

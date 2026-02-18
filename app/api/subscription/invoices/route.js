@@ -208,7 +208,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[Invoices] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la récupération des factures' },
+      { error: 'Erreur lors de la récupération des factures' },
       { status: 500 }
     );
   }

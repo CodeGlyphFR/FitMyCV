@@ -47,7 +47,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Billing Portal] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la création de la session' },
+      { error: 'Erreur lors de la création de la session' },
       { status: 500 }
     );
   }

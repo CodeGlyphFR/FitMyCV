@@ -213,7 +213,7 @@ export async function POST(request) {
           subscriptionId: sub.id,
           stripeSubscriptionId: sub.stripeSubscriptionId,
           userEmail: sub.user?.email,
-          error: error.message,
+          error: 'Erreur lors de l\'annulation',
         });
         console.error(`[Cancel All] Failed to cancel ${sub.stripeSubscriptionId}:`, error.message);
       }

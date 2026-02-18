@@ -90,7 +90,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Subscription Cancel] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de l\'annulation' },
+      { error: 'Erreur lors de l\'annulation' },
       { status: 500 }
     );
   }

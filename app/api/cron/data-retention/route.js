@@ -24,8 +24,12 @@ export async function POST(request) {
     );
   }
 
+  // Comparaison constant-time pour éviter les attaques par timing
+  const crypto = await import('crypto');
   const expectedAuth = `Bearer ${cronSecret}`;
-  if (authHeader !== expectedAuth) {
+  const expectedBuf = Buffer.from(expectedAuth);
+  const receivedBuf = Buffer.from(authHeader || '');
+  if (expectedBuf.length !== receivedBuf.length || !crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
     console.warn('[cron/data-retention] Tentative non autorisée');
     return Response.json(
       { error: 'Unauthorized' },
@@ -45,7 +49,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[cron/data-retention] Erreur:', error);
     return Response.json(
-      { error: 'Internal server error', message: error.message },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

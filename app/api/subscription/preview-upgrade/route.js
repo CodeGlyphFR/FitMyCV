@@ -166,7 +166,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Preview Upgrade] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors du calcul du prorata' },
+      { error: 'Erreur lors du calcul du prorata' },
       { status: 500 }
     );
   }

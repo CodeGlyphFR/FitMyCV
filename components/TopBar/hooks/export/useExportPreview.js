@@ -21,6 +21,8 @@ export function useExportPreview({
   // Écouter les messages de l'iframe de preview pour recevoir les éléments de saut de page
   useEffect(() => {
     const handleMessage = (event) => {
+      // Valider l'origine pour éviter l'injection de données par des iframes tierces
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'pageBreakElements') {
         setPageBreakElements(event.data.elements || []);
       }

@@ -89,7 +89,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Webhook] Signature invalide:', error.message);
     return NextResponse.json(
-      { error: `Webhook signature invalide: ${error.message}` },
+      { error: 'Webhook signature invalide' },
       { status: 400 }
     );
   }
@@ -184,7 +184,7 @@ export async function POST(request) {
     });
 
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Internal webhook processing error' },
       { status: 500 }
     );
   }

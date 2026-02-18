@@ -19,7 +19,7 @@ import { withExtensionAuth } from '@/lib/api/withExtensionAuth';
 import prisma from '@/lib/prisma';
 import { registerTaskTypeStart, enqueueJob } from '@/lib/background-jobs/jobQueue';
 import { startSingleOfferGeneration } from '@/lib/features/cv-adaptation';
-import { incrementFeatureCounter, refundFeatureUsage } from '@/lib/subscription/featureUsage';
+import { incrementFeatureCounter, refundFeatureUsage, rollbackPreTaskUsage } from '@/lib/subscription/featureUsage';
 import { ExtensionErrors, CommonErrors } from '@/lib/api/apiErrors';
 import { normalizeJobUrl } from '@/lib/utils/normalizeJobUrl';
 
@@ -71,11 +71,9 @@ export const POST = withExtensionAuth(async (request, { userId }) => {
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation');
 
       if (!usageResult.success) {
-        // Refund previously debited credits
+        // Rembourser les crédits/compteurs déjà débités (pré-task)
         for (const prev of usageResults) {
-          if (prev.transactionId) {
-            await refundFeatureUsage(prev.transactionId);
-          }
+          await rollbackPreTaskUsage(userId, prev);
         }
 
         return NextResponse.json({
@@ -93,12 +91,10 @@ export const POST = withExtensionAuth(async (request, { userId }) => {
     try {
       createdTasks = await createTasksForOffers(offers, usageResults, userId, cvFile, deviceId, totalOffers, userInterfaceLanguage);
     } catch (taskError) {
-      // Refund all debited credits if task creation fails
+      // Refund all debited credits/counters if task creation fails
       console.error('[generate-cv-from-content] Task creation failed, refunding credits:', taskError.message);
       for (const prev of usageResults) {
-        if (prev.transactionId) {
-          try { await refundFeatureUsage(prev.transactionId); } catch { /* best effort */ }
-        }
+        try { await rollbackPreTaskUsage(userId, prev); } catch { /* best effort */ }
       }
       throw taskError;
     }

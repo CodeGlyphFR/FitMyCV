@@ -31,7 +31,12 @@ export async function POST(request) {
     const body = await request.json();
     const { cvFile, isAutomatic = false, taskId, deviceId, recaptchaToken } = body;
 
-    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    // Vérification reCAPTCHA (obligatoire en production)
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
+      if (!recaptchaToken) {
+        return AuthErrors.recaptchaFailed();
+      }
+    }
     if (recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
         callerName: 'calculate-match-score',

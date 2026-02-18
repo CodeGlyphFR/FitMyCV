@@ -38,14 +38,17 @@ function setCorsHeaders(response, origin) {
 // Rate limiting store (in-memory, consider Redis for production)
 const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+// IMPORTANT: Les entrées PLUS spécifiques doivent être AVANT les moins spécifiques
+// car la première correspondance startsWith() est utilisée
 const RATE_LIMIT_MAX_REQUESTS = {
+  '/api/auth/extension-token': 10, // Extension login (avant /api/ext/)
   '/api/auth/register': 5,
   '/api/auth/signin': 10,
+  '/api/auth/request-reset': 5, // Password reset
   '/api/admin/users': 60, // Limite plus haute pour l'admin des utilisateurs
   '/api/admin': 40, // Augmenté pour les autres routes admin
   '/api/ext/background-tasks/sync': 120, // Extension polling
   '/api/ext/': 60, // Extension API routes
-  '/api/auth/extension-token': 10, // Extension login
   '/api/background-tasks/sync': 120, // Polling fréquent + événements temps réel
   '/api/background-tasks': 30, // Autres endpoints de création de tâches
   '/api/feedback': 10,
@@ -226,16 +229,20 @@ export async function proxy(request) {
     // Content Security Policy
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://editor.unlayer.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com", // Next.js + reCAPTCHA + Unlayer + Mermaid/Prism (docs)
+      // unsafe-eval uniquement en dev (HMR/Fast Refresh) — inutile en production avec App Router
+      `script-src 'self'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} 'unsafe-inline' https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com", // Tailwind + Google Fonts + Prism (docs)
       "img-src 'self' data: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      `connect-src ${connectSrcSources.join(' ')} https://editor.unlayer.com https://api.unlayer.com`,
-      "frame-src 'self' https://www.google.com https://editor.unlayer.com", // reCAPTCHA + Unlayer frames + Admin docs
+      `connect-src ${connectSrcSources.join(' ')}`,
+      "frame-src 'self' https://www.google.com", // reCAPTCHA iframe
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; '),
+
+    // Isolation cross-origin embedder (protection Spectre, mode permissif pour CDNs)
+    'Cross-Origin-Embedder-Policy': 'credentialless',
   };
 
   // Ajouter HSTS en production uniquement

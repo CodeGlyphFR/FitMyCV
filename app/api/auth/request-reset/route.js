@@ -10,7 +10,12 @@ export async function POST(request) {
   try {
     const { email, recaptchaToken } = await request.json();
 
-    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    // Vérification reCAPTCHA (obligatoire en production)
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
+      if (!recaptchaToken) {
+        return AuthErrors.recaptchaFailed();
+      }
+    }
     if (recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
         callerName: 'request-reset',
@@ -33,9 +38,10 @@ export async function POST(request) {
     // Créer le token de réinitialisation
     const result = await createPasswordResetToken(normalizedEmail);
 
-    // Si l'utilisateur est OAuth uniquement
+    // Si l'utilisateur est OAuth uniquement, ne PAS révéler cette information
+    // (prévention d'énumération de comptes OAuth)
     if (!result.success && result.error === 'oauth_only') {
-      return AuthErrors.oauthOnly();
+      // Tomber dans la réponse générique ci-dessous
     }
 
     // Si le token a été créé avec succès et qu'on a un userId

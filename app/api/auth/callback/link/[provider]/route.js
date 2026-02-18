@@ -252,12 +252,19 @@ async function fetchUserProfile(provider, tokenResponse, config) {
       throw new Error("No id_token from Apple");
     }
 
-    // Décoder le JWT (sans vérification car on fait confiance à Apple)
-    const payload = JSON.parse(
-      Buffer.from(idToken.split(".")[1], "base64").toString()
-    );
-
-    return { id: payload.sub, email: payload.email, name: null };
+    // Vérifier le JWT Apple cryptographiquement avec les clés publiques Apple
+    try {
+      const { createRemoteJWKSet, jwtVerify } = await import('jose');
+      const APPLE_JWKS = createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys'));
+      const { payload } = await jwtVerify(idToken, APPLE_JWKS, {
+        issuer: 'https://appleid.apple.com',
+        audience: process.env.APPLE_CLIENT_ID,
+      });
+      return { id: payload.sub, email: payload.email, name: null };
+    } catch (verifyError) {
+      logger.context('link-callback', 'error', 'Apple JWT verification failed:', verifyError);
+      throw new Error("Apple id_token verification failed");
+    }
   }
 
   throw new Error(`Unknown provider: ${provider}`);

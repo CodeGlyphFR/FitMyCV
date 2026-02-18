@@ -82,7 +82,7 @@ export async function DELETE(request) {
   } catch (error) {
     console.error('[Admin] Error deleting telemetry data:', error);
     return NextResponse.json(
-      { error: 'Failed to delete telemetry data', details: error.message },
+      { error: 'Failed to delete telemetry data' },
       { status: 500 }
     );
   }

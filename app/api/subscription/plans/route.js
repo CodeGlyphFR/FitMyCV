@@ -32,7 +32,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[Subscription Plans] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la récupération des plans' },
+      { error: 'Erreur lors de la récupération des plans' },
       { status: 500 }
     );
   }

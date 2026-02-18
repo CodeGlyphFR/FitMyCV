@@ -380,7 +380,7 @@ function getPageBreakScript() {
         window.parent.postMessage({
           type: 'pageBreakElements',
           elements: pageBreakElements
-        }, '*');
+        }, window.location.origin);
       }
 
       // Add visual indicators

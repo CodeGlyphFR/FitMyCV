@@ -92,7 +92,7 @@ export async function POST(request) {
         '--no-first-run',
         '--no-zygote',
         '--disable-gpu',
-        '--disable-web-security',
+        // '--disable-web-security', // Retiré pour sécurité (non nécessaire pour le rendu HTML statique)
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
