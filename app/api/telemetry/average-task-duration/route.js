@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import {
   TASK_TYPE_TO_FEATURES,
@@ -19,6 +20,10 @@ import {
  */
 export async function GET(request) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
     const taskType = searchParams.get('taskType');
     const model = searchParams.get('model');

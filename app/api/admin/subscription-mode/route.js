@@ -88,7 +88,7 @@ export async function POST(request) {
       },
     });
 
-    console.log(`[Subscription Mode API] Mode abonnement ${enabled ? 'activé' : 'désactivé'} par ${session.user.email}`);
+    console.log(`[Subscription Mode API] Mode abonnement ${enabled ? 'activé' : 'désactivé'} par user ${session.user.id}`);
 
     return NextResponse.json({
       success: true,

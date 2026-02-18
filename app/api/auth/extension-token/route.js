@@ -83,7 +83,7 @@ export async function POST(request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, name: true, email: true, passwordHash: true, emailVerified: true, role: true },
+      select: { id: true, name: true, email: true, passwordHash: true, emailVerified: true, role: true, tokenVersion: true },
     });
 
     // Generic error to avoid revealing which field is wrong
@@ -123,6 +123,7 @@ export async function POST(request) {
     const token = await signExtensionToken(user.id, {
       name: user.name,
       email: user.email,
+      tokenVersion: user.tokenVersion,
     });
 
     return Response.json({

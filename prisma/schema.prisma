@@ -21,6 +21,7 @@ model User {
   onboardingState          Json?                                  // État complet onboarding (UNIQUE source de vérité)
   privacyPolicyAcceptedAt  DateTime?                              // Date d'acceptation de la politique de confidentialité
   lastLoginAt              DateTime?                              // Dernière connexion (pour détection comptes inactifs)
+  tokenVersion             Int                   @default(0)      // Incrémenté au changement de mot de passe pour invalider les sessions/tokens
   createdAt                DateTime              @default(now())
   updatedAt                DateTime              @updatedAt
   accounts               Account[]
@@ -716,4 +717,16 @@ model ExportTemplate {
 
   @@unique([userId, name])
   @@index([userId])
+}
+
+// ============================================
+// Data Migrations Tracking
+// ============================================
+
+model DataMigration {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  appliedAt DateTime @default(now()) @map("applied_at")
+
+  @@map("_data_migrations")
 }

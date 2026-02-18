@@ -118,7 +118,7 @@ export async function POST(request) {
       const link = links[i];
 
       // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
-      const linkTaskId = `task_template_link_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+      const linkTaskId = `task_template_link_${now}_${i}_${crypto.randomUUID().slice(0, 9)}`;
 
       // Vérifier les limites ET incrémenter le compteur/débiter le crédit
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', { taskId: linkTaskId });
@@ -192,7 +192,7 @@ export async function POST(request) {
       const upload = savedUploads[i];
 
       // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
-      const attachmentTaskId = `task_template_file_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+      const attachmentTaskId = `task_template_file_${now}_${i}_${crypto.randomUUID().slice(0, 9)}`;
 
       // Vérifier les limites ET incrémenter le compteur/débiter le crédit
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', { taskId: attachmentTaskId });

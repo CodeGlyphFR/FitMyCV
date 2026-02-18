@@ -205,7 +205,7 @@ export async function POST(request) {
         });
 
         results.success++;
-        console.log(`[Cancel All] Subscription ${sub.stripeSubscriptionId} canceled for user ${sub.user?.email}`);
+        console.log(`[Cancel All] Subscription ${sub.stripeSubscriptionId} canceled for user ${sub.userId}`);
 
       } catch (error) {
         results.failed++;

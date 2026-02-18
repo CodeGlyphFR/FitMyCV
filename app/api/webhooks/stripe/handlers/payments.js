@@ -202,7 +202,7 @@ export async function handleChargeSucceeded(charge) {
         invoiceUrl,
       });
 
-      console.log(`[Webhook] ✅ Email purchase_credits envoyé à ${user.email}`);
+      console.log(`[Webhook] ✅ Email purchase_credits envoyé à user ${userId}`);
     }
   } catch (emailError) {
     // Ne pas bloquer le webhook si l'email échoue

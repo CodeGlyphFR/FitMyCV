@@ -20,7 +20,7 @@ export async function DELETE(request) {
       );
     }
 
-    console.log(`[Admin] Deleting all telemetry data requested by user: ${session.user.email}`);
+    console.log(`[Admin] Deleting all telemetry data requested by user: ${session.user.id}`);
 
     // Delete data from all telemetry tables
     // Note: Order matters for CV generation tables due to foreign key constraints

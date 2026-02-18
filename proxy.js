@@ -15,9 +15,14 @@ const EXTRA_ORIGINS = (process.env.EXTENSION_ALLOWED_ORIGINS || '')
 function isAllowedExtensionOrigin(origin) {
   if (!origin) return false;
   if (process.env.NODE_ENV !== 'production') {
+    // En dev, accepter toutes les extensions Chrome/Firefox
     return EXTENSION_ORIGIN_PATTERNS.some(p => p.test(origin));
   }
-  if (EXTRA_ORIGINS.includes(origin)) return true;
+  // En production, seuls les IDs d'extension configurés dans EXTENSION_ALLOWED_ORIGINS sont autorisés
+  if (EXTRA_ORIGINS.length > 0) {
+    return EXTRA_ORIGINS.includes(origin);
+  }
+  // Fallback: si aucune origin configurée, accepter toutes les extensions (rétrocompatibilité)
   return EXTENSION_ORIGIN_PATTERNS.some(p => p.test(origin));
 }
 
@@ -47,6 +52,10 @@ const RATE_LIMIT_MAX_REQUESTS = {
   '/api/auth/request-reset': 5, // Password reset
   '/api/admin/users': 60, // Limite plus haute pour l'admin des utilisateurs
   '/api/admin': 40, // Augmenté pour les autres routes admin
+  '/api/cv/improve': 10,                 // Endpoint IA (coûteux)
+  '/api/cv/match-score': 15,              // Endpoint IA scoring
+  '/api/background-tasks/generate-cv': 10, // Génération CV IA
+  '/api/background-tasks/translate-cv': 10, // Traduction CV IA
   '/api/ext/background-tasks/sync': 120, // Extension polling
   '/api/ext/': 60, // Extension API routes
   '/api/background-tasks/sync': 120, // Polling fréquent + événements temps réel
@@ -229,8 +238,8 @@ export async function proxy(request) {
     // Content Security Policy
     'Content-Security-Policy': [
       "default-src 'self'",
-      // unsafe-eval uniquement en dev (HMR/Fast Refresh) — inutile en production avec App Router
-      `script-src 'self'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} 'unsafe-inline' https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com`,
+      // unsafe-eval et unsafe-inline uniquement en dev (HMR/Fast Refresh) — inutile en production avec App Router
+      `script-src 'self'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval' 'unsafe-inline'" : ''} https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com", // Tailwind + Google Fonts + Prism (docs)
       "img-src 'self' data: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
@@ -255,10 +264,21 @@ export async function proxy(request) {
     response.headers.set(key, value);
   });
 
-  // Ajouter les headers de rate limiting
+  // Ajouter les headers de rate limiting (réutiliser le résultat du check précédent)
+  // Note: le check a déjà été fait plus haut, on recalcule juste le remaining sans incrémenter
   if (pathname.startsWith('/api/')) {
-    const rateLimit = checkRateLimit(ip, pathname);
-    response.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
+    const key = getRateLimitKey(ip, pathname);
+    const record = rateLimitStore.get(key);
+    if (record) {
+      let maxRequests = RATE_LIMIT_MAX_REQUESTS.default;
+      for (const [path, limit] of Object.entries(RATE_LIMIT_MAX_REQUESTS)) {
+        if (path !== 'default' && pathname.startsWith(path)) {
+          maxRequests = limit;
+          break;
+        }
+      }
+      response.headers.set('X-RateLimit-Remaining', String(Math.max(0, maxRequests - record.count)));
+    }
   }
 
   // Ajouter les headers CORS pour les routes extension

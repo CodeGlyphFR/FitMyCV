@@ -30,11 +30,29 @@ function sanitizeLinks(raw) {
 }
 
 /**
- * Valide le format d'une URL
+ * Valide le format d'une URL et bloque les URLs internes/privées (SSRF protection)
  */
 function isValidUrl(string) {
   try {
-    new URL(string);
+    const url = new URL(string);
+    // Bloquer les protocoles non-HTTP
+    if (!['http:', 'https:'].includes(url.protocol)) return false;
+    const hostname = url.hostname.toLowerCase();
+    // Bloquer les IPs privées et localhost
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '[::1]' ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.') ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('169.254.') ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal')
+    ) {
+      return false;
+    }
     return true;
   } catch {
     return false;
@@ -111,7 +129,12 @@ export async function POST(request) {
     const userInterfaceLanguage = formData.get('userInterfaceLanguage') || 'fr';
     const files = formData.getAll('files').filter(Boolean);
 
-    // Vérification reCAPTCHA
+    // Vérification reCAPTCHA (obligatoire en production)
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
+      if (!recaptchaToken) {
+        return apiError('errors.auth.recaptchaFailed', { status: 403 });
+      }
+    }
     if (recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
         callerName: 'generate-cv',

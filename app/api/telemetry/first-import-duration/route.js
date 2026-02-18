@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 
 /**
@@ -7,6 +8,10 @@ import prisma from '@/lib/prisma';
  */
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
     // Calculate average duration from OpenAICall for first_import_pdf
     const result = await prisma.openAICall.aggregate({
       where: {

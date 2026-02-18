@@ -105,8 +105,10 @@ export async function POST(request) {
     exp: Date.now() + 10 * 60 * 1000, // Expire dans 10 minutes
   };
 
-  // Encoder le state en base64
-  const state = Buffer.from(JSON.stringify(stateData)).toString("base64url");
+  // Encoder le state en base64 et signer avec HMAC pour empêcher la falsification
+  const statePayload = Buffer.from(JSON.stringify(stateData)).toString("base64url");
+  const hmac = crypto.createHmac("sha256", process.env.NEXTAUTH_SECRET).update(statePayload).digest("hex");
+  const state = `${statePayload}.${hmac}`;
 
   // Stocker le state dans un cookie sécurisé (pour vérification au callback)
   const cookieStore = await cookies();

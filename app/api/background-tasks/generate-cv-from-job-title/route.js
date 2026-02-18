@@ -52,7 +52,7 @@ export async function POST(request) {
 
     // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
     const timestamp = Date.now();
-    const taskId = `task_job_title_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
+    const taskId = `task_job_title_${timestamp}_${crypto.randomUUID().slice(0, 9)}`;
 
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
     const usageResult = await incrementFeatureCounter(userId, 'generate_from_job_title', { taskId });

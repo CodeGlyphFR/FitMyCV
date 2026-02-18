@@ -61,7 +61,7 @@ export async function POST(request) {
     // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
     const taskIdentifier = typeof taskId === "string" && taskId.trim()
       ? taskId.trim()
-      : `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      : `task_${Date.now()}_${crypto.randomUUID().slice(0, 9)}`;
 
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
     const usageResult = await incrementFeatureCounter(userId, 'translate_cv', { taskId: taskIdentifier });

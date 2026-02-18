@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
 import logger from "@/lib/security/secureLogger";
+import { encrypt } from "@/lib/security/tokenEncryption";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -62,10 +64,24 @@ export async function GET(request, { params }) {
     return NextResponse.redirect(`${baseUrl}/account?linkError=invalid_state&provider=${provider}`);
   }
 
+  // Vérifier la signature HMAC du state
+  const dotIndex = state.lastIndexOf(".");
+  if (dotIndex === -1) {
+    logger.context('link-callback', 'warn', 'State missing HMAC signature');
+    return NextResponse.redirect(`${baseUrl}/account?linkError=invalid_state&provider=${provider}`);
+  }
+  const statePayload = state.slice(0, dotIndex);
+  const stateHmac = state.slice(dotIndex + 1);
+  const expectedHmac = crypto.createHmac("sha256", process.env.NEXTAUTH_SECRET).update(statePayload).digest("hex");
+  if (!crypto.timingSafeEqual(Buffer.from(stateHmac, "hex"), Buffer.from(expectedHmac, "hex"))) {
+    logger.context('link-callback', 'warn', 'State HMAC verification failed - possible tampering');
+    return NextResponse.redirect(`${baseUrl}/account?linkError=invalid_state&provider=${provider}`);
+  }
+
   // Décoder et valider le state
   let stateData;
   try {
-    stateData = JSON.parse(Buffer.from(state, "base64url").toString());
+    stateData = JSON.parse(Buffer.from(statePayload, "base64url").toString());
   } catch {
     return NextResponse.redirect(`${baseUrl}/account?linkError=invalid_state&provider=${provider}`);
   }
@@ -146,21 +162,21 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Créer le lien OAuth
+    // Créer le lien OAuth (tokens chiffrés en DB)
     await prisma.account.create({
       data: {
         userId: session.user.id,
         type: "oauth",
         provider,
         providerAccountId: String(profile.id),
-        access_token: tokenResponse.access_token,
-        refresh_token: tokenResponse.refresh_token || null,
+        access_token: encrypt(tokenResponse.access_token),
+        refresh_token: tokenResponse.refresh_token ? encrypt(tokenResponse.refresh_token) : null,
         expires_at: tokenResponse.expires_in
           ? Math.floor(Date.now() / 1000) + tokenResponse.expires_in
           : null,
         token_type: tokenResponse.token_type || null,
         scope: tokenResponse.scope || null,
-        id_token: tokenResponse.id_token || null,
+        id_token: tokenResponse.id_token ? encrypt(tokenResponse.id_token) : null,
       },
     });
 

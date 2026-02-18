@@ -217,7 +217,7 @@ export async function POST(request) {
     console.error('[API /cv/apply-review] Error:', error);
     return apiError({
       error: 'apply_review_error',
-      message: error.message || 'Failed to apply review',
+      message: 'Failed to apply review',
       status: 500,
     });
   }
