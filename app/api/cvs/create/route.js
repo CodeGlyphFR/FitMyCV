@@ -103,7 +103,7 @@ const response = NextResponse.json({ ok:true, file });
 response.cookies.set('cvFile', file, {
   path: '/',
   maxAge: 31536000, // 1 an
-  httpOnly: false,
+  httpOnly: true,
   sameSite: 'lax'
 });
 return response;

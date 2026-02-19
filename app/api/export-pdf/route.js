@@ -6,6 +6,7 @@ import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { refundCredit } from "@/lib/subscription/credits";
 import { CommonErrors, CvErrors, OtherErrors } from "@/lib/api/apiErrors";
+import { secureError } from "@/lib/security/secureLogger";
 import {
   getTranslation,
   prepareCvData,
@@ -147,13 +148,14 @@ export async function POST(request) {
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${asciiSafe}.pdf"; filename*=UTF-8''${encoded}.pdf`
+        'Content-Disposition': `attachment; filename="${asciiSafe}.pdf"; filename*=UTF-8''${encoded}.pdf`,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       }
     });
 
   } catch (error) {
-    console.error("Erreur lors de la génération PDF:", error);
-    console.error("Stack trace:", error.stack);
+    secureError('[PDF Export] Erreur lors de la génération PDF:', error);
 
     if (creditUsed && creditTransactionId && userId) {
       try {

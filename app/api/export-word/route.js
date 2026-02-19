@@ -6,6 +6,7 @@ import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { refundCredit } from "@/lib/subscription/credits";
 import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
+import { secureError } from "@/lib/security/secureLogger";
 import { generateWordDocument } from "./documentBuilder";
 
 /**
@@ -112,13 +113,14 @@ export async function POST(request) {
     return new NextResponse(docxBuffer, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename="${asciiSafe}.docx"; filename*=UTF-8''${encoded}.docx`
+        'Content-Disposition': `attachment; filename="${asciiSafe}.docx"; filename*=UTF-8''${encoded}.docx`,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       }
     });
 
   } catch (error) {
-    console.error("Erreur lors de la génération Word:", error);
-    console.error("Stack trace:", error.stack);
+    secureError('[Word Export] Erreur lors de la génération Word:', error);
 
     if (creditUsed && creditTransactionId && userId) {
       try {

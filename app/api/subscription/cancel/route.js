@@ -8,6 +8,7 @@ import { auth } from '@/lib/auth/session';
 import { cancelSubscription } from '@/lib/subscription/subscriptions';
 import prisma from '@/lib/prisma';
 import stripe from '@/lib/stripe';
+import { secureLog, secureError } from '@/lib/security/secureLogger';
 
 export async function POST(request) {
   try {
@@ -46,10 +47,10 @@ export async function POST(request) {
         if (stripeSubscription.schedule) {
           try {
             await stripe.subscriptionSchedules.release(stripeSubscription.schedule);
-            console.log(`[Subscription Cancel] Schedule ${stripeSubscription.schedule} libéré avant annulation`);
+            secureLog(`[Subscription Cancel] Schedule ${stripeSubscription.schedule} libéré avant annulation`);
           } catch (scheduleError) {
             // Log l'erreur mais continue (le schedule expirera de toute façon à la fin de période)
-            console.error('[Subscription Cancel] Erreur libération schedule:', scheduleError);
+            secureError('[Subscription Cancel] Erreur libération schedule:', scheduleError);
           }
         }
 
@@ -64,7 +65,7 @@ export async function POST(request) {
           });
         }
       } catch (stripeError) {
-        console.error('[Subscription Cancel] Erreur Stripe:', stripeError);
+        secureError('[Subscription Cancel] Erreur Stripe:', stripeError);
         // Continuer quand même l'annulation en local
       }
     }
@@ -88,7 +89,7 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('[Subscription Cancel] Erreur:', error);
+    secureError('[Subscription Cancel] Erreur:', error);
     return NextResponse.json(
       { error: 'Erreur lors de l\'annulation' },
       { status: 500 }

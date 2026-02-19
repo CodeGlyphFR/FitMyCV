@@ -4,6 +4,15 @@ import React from "react";
 import { Loader2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 
+/** Renders text allowing only <strong> tags as React elements, escaping everything else */
+function renderSafeMarkup(text) {
+  if (!text || typeof text !== 'string' || !text.includes('<strong>')) return text;
+  return text.split(/(<strong>.*?<\/strong>)/g).map((part, i) => {
+    const match = part.match(/^<strong>(.*?)<\/strong>$/);
+    return match ? <strong key={i}>{match[1]}</strong> : part;
+  });
+}
+
 /**
  * Modal de confirmation d'upgrade
  */
@@ -107,11 +116,9 @@ export default function UpgradeModal({
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
                 <p className="text-sm text-blue-300 flex items-start gap-2">
                   <span>ℹ️</span>
-                  <span dangerouslySetInnerHTML={{
-                    __html: t('subscription.comparison.upgradeModal.stayYearly', {
+                  <span>{renderSafeMarkup(t('subscription.comparison.upgradeModal.stayYearly', {
                       date: new Date(subscription?.currentPeriodEnd).toLocaleDateString(locale, dateOptions)
-                    })
-                  }} />
+                    }))}</span>
                 </p>
               </div>
             )}

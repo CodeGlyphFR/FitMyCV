@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import stripe from '@/lib/stripe';
+import { secureLog, secureError } from '@/lib/security/secureLogger';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,7 @@ export async function GET(request) {
 
     // Si pas de customer Stripe ou customer local, tenter de récupérer depuis les PaymentIntents
     if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
-      console.log('[Invoices] Customer ID local ou manquant, tentative de récupération depuis PaymentIntents');
+      secureLog('[Invoices] Customer ID local ou manquant, tentative de récupération depuis PaymentIntents');
 
       // Récupérer un PaymentIntent de l'utilisateur pour extraire le customer
       const creditTransaction = await prisma.creditTransaction.findFirst({
@@ -53,7 +54,7 @@ export async function GET(request) {
 
           if (paymentIntent.customer) {
             stripeCustomerId = paymentIntent.customer;
-            console.log('[Invoices] Customer Stripe trouvé:', stripeCustomerId);
+            secureLog('[Invoices] Customer Stripe trouvé:', stripeCustomerId);
 
             // Mettre à jour la subscription si elle existe
             if (subscription) {
@@ -70,7 +71,7 @@ export async function GET(request) {
             });
           }
         } catch (error) {
-          console.error('[Invoices] Erreur lors de la récupération du PaymentIntent:', error);
+          secureError('[Invoices] Erreur lors de la récupération du PaymentIntent:', error);
         }
       }
     }
@@ -80,7 +81,7 @@ export async function GET(request) {
 
     // Fallback 3 : Chercher dans la table User (pour les utilisateurs qui ont acheté des crédits mais n'ont jamais eu d'abonnement)
     if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
-      console.log('[Invoices] Tentative de récupération depuis table User');
+      secureLog('[Invoices] Tentative de récupération depuis table User');
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -89,7 +90,7 @@ export async function GET(request) {
 
       if (user?.stripeCustomerId && !user.stripeCustomerId.startsWith('local_')) {
         stripeCustomerId = user.stripeCustomerId;
-        console.log('[Invoices] Customer Stripe trouvé dans User:', stripeCustomerId);
+        secureLog('[Invoices] Customer Stripe trouvé dans User:', stripeCustomerId);
 
         // Mettre à jour la subscription pour la prochaine fois (s'il y a une subscription)
         const existingSub = await prisma.subscription.findUnique({
@@ -102,14 +103,14 @@ export async function GET(request) {
             where: { userId },
             data: { stripeCustomerId },
           });
-          console.log('[Invoices] Subscription mise à jour avec customer Stripe');
+          secureLog('[Invoices] Subscription mise à jour avec customer Stripe');
         }
       }
     }
 
     // Si toujours pas de customer Stripe valide, retourner tableau vide
     if (!stripeCustomerId || stripeCustomerId.startsWith('local_')) {
-      console.log('[Invoices] Aucun customer Stripe valide trouvé');
+      secureLog('[Invoices] Aucun customer Stripe valide trouvé');
       return NextResponse.json({
         invoices: [],
       });
@@ -125,7 +126,7 @@ export async function GET(request) {
         limit: 50, // Les 50 dernières factures
       });
     } catch (error) {
-      console.error('[Invoices] Erreur lors de la récupération des invoices:', error.message);
+      secureError('[Invoices] Erreur lors de la récupération des invoices:', error.message);
     }
 
     // Récupérer les PaymentIntents (paiements one-time pour packs de crédits)
@@ -135,7 +136,7 @@ export async function GET(request) {
         limit: 50,
       });
     } catch (error) {
-      console.error('[Invoices] Erreur lors de la récupération des PaymentIntents:', error.message);
+      secureError('[Invoices] Erreur lors de la récupération des PaymentIntents:', error.message);
     }
 
     // Formater les factures (abonnements ET crédits)
@@ -192,7 +193,7 @@ export async function GET(request) {
       // On inverse le signe pour avoir un montant positif
       creditBalance = customer.balance < 0 ? Math.abs(customer.balance) / 100 : 0;
     } catch (error) {
-      console.error('[Invoices] Erreur lors de la récupération du customer balance:', error);
+      secureError('[Invoices] Erreur lors de la récupération du customer balance:', error);
       // On continue sans balance si erreur
     }
 
@@ -206,7 +207,7 @@ export async function GET(request) {
     });
 
   } catch (error) {
-    console.error('[Invoices] Erreur:', error);
+    secureError('[Invoices] Erreur:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la récupération des factures' },
       { status: 500 }

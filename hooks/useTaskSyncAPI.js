@@ -13,7 +13,7 @@ export function useTaskSyncAPI(_tasks, setTasks, _abortControllers, options = {}
 
     let deviceId = localStorage.getItem('device_id')
     if (!deviceId) {
-      deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      deviceId = `device_${Date.now()}_${crypto.randomUUID().slice(0, 9)}`
       localStorage.setItem('device_id', deviceId)
     }
 

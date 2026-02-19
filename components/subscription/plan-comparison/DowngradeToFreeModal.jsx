@@ -3,6 +3,15 @@
 import React from "react";
 import Modal from "@/components/ui/Modal";
 
+/** Renders text allowing only <strong> tags as React elements, escaping everything else */
+function renderSafeMarkup(text) {
+  if (!text || typeof text !== 'string' || !text.includes('<strong>')) return text;
+  return text.split(/(<strong>.*?<\/strong>)/g).map((part, i) => {
+    const match = part.match(/^<strong>(.*?)<\/strong>$/);
+    return match ? <strong key={i}>{match[1]}</strong> : part;
+  });
+}
+
 /**
  * Modal de confirmation de downgrade vers le plan Gratuit
  */
@@ -47,11 +56,9 @@ export default function DowngradeToFreeModal({
         <ul className="space-y-2 text-white/80">
           <li className="flex items-start gap-2">
             <span className="text-emerald-400 mt-0.5">•</span>
-            <span dangerouslySetInnerHTML={{
-              __html: t('subscription.comparison.downgradeToFreeModal.keepAccessUntil', {
+            <span>{renderSafeMarkup(t('subscription.comparison.downgradeToFreeModal.keepAccessUntil', {
                 date: effectiveDate.toLocaleDateString(locale, dateOptions)
-              })
-            }} />
+              }))}</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-emerald-400 mt-0.5">•</span>
@@ -63,9 +70,7 @@ export default function DowngradeToFreeModal({
           </li>
           <li className="flex items-start gap-2">
             <span className="text-emerald-400 mt-0.5">•</span>
-            <span dangerouslySetInnerHTML={{
-              __html: t('subscription.comparison.downgradeToFreeModal.switchToFree', 'Vous passerez au plan <strong>Gratuit</strong> après cette date')
-            }} />
+            <span>{renderSafeMarkup(t('subscription.comparison.downgradeToFreeModal.switchToFree', 'Vous passerez au plan <strong>Gratuit</strong> après cette date'))}</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-emerald-400 mt-0.5">•</span>

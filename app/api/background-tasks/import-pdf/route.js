@@ -104,7 +104,7 @@ export async function POST(request) {
     const userId = session.user.id;
 
     // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
-    const taskIdentifier = typeof taskId === "string" && taskId.trim() ? taskId.trim() : `task_${Date.now()}_${crypto.randomUUID().slice(0, 9)}`;
+    const taskIdentifier = typeof taskId === "string" && taskId.trim() ? taskId.trim() : `task_${Date.now()}_${crypto.randomUUID()}`;
 
     // Vérifier les limites ET incrémenter le compteur/débiter le crédit
     const usageResult = await incrementFeatureCounter(userId, 'import_pdf', { taskId: taskIdentifier });

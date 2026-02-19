@@ -22,8 +22,9 @@ function isAllowedExtensionOrigin(origin) {
   if (EXTRA_ORIGINS.length > 0) {
     return EXTRA_ORIGINS.includes(origin);
   }
-  // Fallback: si aucune origin configurée, accepter toutes les extensions (rétrocompatibilité)
-  return EXTENSION_ORIGIN_PATTERNS.some(p => p.test(origin));
+  // H2: En production, refuser par défaut si aucune extension n'est configurée
+  console.warn('[CORS] No EXTENSION_ALLOWED_ORIGINS configured — rejecting extension request');
+  return false;
 }
 
 function isExtensionRoute(pathname) {
@@ -106,6 +107,7 @@ function checkRateLimit(ip, pathname) {
     allowed: record.count <= maxRequests,
     remaining: Math.max(0, maxRequests - record.count),
     resetTime: record.resetTime,
+    maxRequests,
   };
 }
 
@@ -185,12 +187,28 @@ export async function proxy(request) {
           status: 429,
           headers: {
             'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)),
-            'X-RateLimit-Limit': String(RATE_LIMIT_MAX_REQUESTS.default),
+            'X-RateLimit-Limit': String(rateLimit.maxRequests),
             'X-RateLimit-Remaining': String(rateLimit.remaining),
             'X-RateLimit-Reset': String(rateLimit.resetTime),
           },
         }
       );
+    }
+
+    // M4: Valider Content-Type pour les requêtes JSON sur routes API
+    if (['POST', 'PUT', 'PATCH'].includes(request.method)) {
+      const contentType = request.headers.get('content-type');
+      // Autoriser: pas de content-type (certains clients), JSON, form-data (uploads), form-urlencoded (NextAuth)
+      const isAcceptable = !contentType ||
+        contentType.includes('application/json') ||
+        contentType.includes('multipart/form-data') ||
+        contentType.includes('application/x-www-form-urlencoded');
+      if (!isAcceptable) {
+        return NextResponse.json(
+          { error: 'Unsupported Media Type' },
+          { status: 415 }
+        );
+      }
     }
   }
 
@@ -264,8 +282,7 @@ export async function proxy(request) {
     response.headers.set(key, value);
   });
 
-  // Ajouter les headers de rate limiting (réutiliser le résultat du check précédent)
-  // Note: le check a déjà été fait plus haut, on recalcule juste le remaining sans incrémenter
+  // L3: Headers rate-limit complets sur les réponses API
   if (pathname.startsWith('/api/')) {
     const key = getRateLimitKey(ip, pathname);
     const record = rateLimitStore.get(key);
@@ -277,7 +294,9 @@ export async function proxy(request) {
           break;
         }
       }
+      response.headers.set('X-RateLimit-Limit', String(maxRequests));
       response.headers.set('X-RateLimit-Remaining', String(Math.max(0, maxRequests - record.count)));
+      response.headers.set('X-RateLimit-Reset', String(record.resetTime));
     }
   }
 
