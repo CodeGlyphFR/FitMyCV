@@ -104,7 +104,8 @@ response.cookies.set('cvFile', file, {
   path: '/',
   maxAge: 31536000, // 1 an
   httpOnly: true,
-  sameSite: 'lax'
+  sameSite: 'lax',
+  secure: process.env.NODE_ENV === 'production'
 });
 return response;
   }catch(e){ return CvErrors.createError(); }
