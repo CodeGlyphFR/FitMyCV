@@ -216,7 +216,7 @@
       "pricePerCredit": "i.e. {price}€ per credit",
       "buyButton": "Buy",
       "redirecting": "Redirecting...",
-      "securePayment": "Secure payment via Stripe • Permanent credits",
+      "securePayment": "Secure payment via Stripe • Prices excl. tax • Permanent credits",
       "loading": "Loading...",
       "errors": {
         "checkoutError": "Error creating checkout session",

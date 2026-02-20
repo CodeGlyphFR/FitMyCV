@@ -14,7 +14,7 @@ import prisma from '@/lib/prisma';
  * @param {string} transactionId - ID de la CreditTransaction à mettre à jour
  * @returns {Promise<string|null>} - ID de la facture créée ou null en cas d'erreur
  */
-export async function createInvoiceForCreditPurchase({ customer, amount, currency, creditAmount, userId, paymentIntent }, transactionId) {
+export async function createInvoiceForCreditPurchase({ customer, amount, currency, creditAmount, userId, paymentIntent, stripePriceId }, transactionId) {
   try {
     // Récupérer les billing details depuis le PaymentIntent (TOUJOURS disponibles dans payment_intent.succeeded)
     const billingDetails = paymentIntent.charges?.data?.[0]?.billing_details;
@@ -45,12 +45,22 @@ export async function createInvoiceForCreditPurchase({ customer, amount, currenc
     });
     console.log(`[Webhook] ✓ Customer ${customer} mis à jour avec billing details (nom: ${billingDetails.name || 'N/A'}, adresse: présente)`);
 
+    // Récupérer les tax IDs du compte Stripe (numéro de TVA, etc.)
+    let accountTaxIds = [];
+    try {
+      const taxIds = await stripe.taxIds.list({ limit: 10 });
+      accountTaxIds = taxIds.data.map(t => t.id);
+    } catch (taxIdError) {
+      console.warn('[Webhook] Impossible de récupérer les tax IDs du compte:', taxIdError.message);
+    }
+
     // Créer un draft invoice
     // L'Invoice hérite automatiquement des billing details du Customer mis à jour ci-dessus
     const invoiceParams = {
       customer: customer,
       auto_advance: false, // Ne pas envoyer automatiquement
       collection_method: 'charge_automatically',
+      automatic_tax: { enabled: true },
       description: `Achat de ${creditAmount} crédits FitMyCV.io`,
       metadata: {
         userId: userId,
@@ -59,6 +69,18 @@ export async function createInvoiceForCreditPurchase({ customer, amount, currenc
         source: 'credit_pack_purchase',
       },
     };
+
+    // Ajouter les tax IDs du compte (numéro de TVA intracommunautaire, etc.)
+    if (accountTaxIds.length > 0) {
+      invoiceParams.account_tax_ids = accountTaxIds;
+    }
+
+    // Ajouter le SIREN en champ personnalisé (mention légale obligatoire en France)
+    if (process.env.STRIPE_BUSINESS_SIREN) {
+      invoiceParams.custom_fields = [
+        { name: 'SIREN', value: process.env.STRIPE_BUSINESS_SIREN },
+      ];
+    }
 
     // Appliquer le modèle de rendu de facture si configuré
     if (process.env.STRIPE_INVOICE_TEMPLATE_ID) {
@@ -80,14 +102,24 @@ export async function createInvoiceForCreditPurchase({ customer, amount, currenc
       }
     }
 
-    // Ajouter l'item à la facture
-    await stripe.invoiceItems.create({
-      customer: customer,
-      invoice: invoice.id,
-      amount: amount,
-      currency: currency,
-      description: `Pack de ${creditAmount} crédits`,
-    });
+    // Ajouter l'item à la facture (utiliser le price Stripe pour hériter du tax_behavior)
+    if (stripePriceId) {
+      await stripe.invoiceItems.create({
+        customer: customer,
+        invoice: invoice.id,
+        price: stripePriceId,
+        quantity: 1,
+      });
+    } else {
+      // Fallback: montant brut si pas de price ID (anciens achats)
+      await stripe.invoiceItems.create({
+        customer: customer,
+        invoice: invoice.id,
+        amount: amount,
+        currency: currency,
+        description: `Pack de ${creditAmount} crédits`,
+      });
+    }
 
     // Finaliser la facture (génère le PDF immédiatement)
     const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
