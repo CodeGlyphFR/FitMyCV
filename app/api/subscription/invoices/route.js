@@ -141,7 +141,9 @@ export async function GET(request) {
     // Formater les factures (abonnements ET crédits)
     const formattedInvoices = invoices.data.map(invoice => {
       // Différencier les factures de crédits des abonnements via metadata
-      const isCreditPurchase = invoice.metadata?.source === 'credit_pack_purchase';
+      // Supporte les deux formats : ancien (source) et nouveau (type via invoice_creation)
+      const isCreditPurchase = invoice.metadata?.type === 'credit_purchase'
+        || invoice.metadata?.source === 'credit_pack_purchase';
 
       return {
         id: invoice.id,
@@ -158,10 +160,11 @@ export async function GET(request) {
     });
 
     // Créer un Set des PaymentIntent IDs qui ont déjà une Invoice associée
+    // Supporte les deux sources : metadata (ancien) et payment_intent (invoice_creation)
     const paymentIntentsWithInvoice = new Set(
       invoices.data
-        .filter(inv => inv.metadata?.paymentIntentId)
-        .map(inv => inv.metadata.paymentIntentId)
+        .filter(inv => inv.payment_intent || inv.metadata?.paymentIntentId)
+        .map(inv => inv.payment_intent || inv.metadata.paymentIntentId)
     );
 
     // Formater les PaymentIntents (packs de crédits)

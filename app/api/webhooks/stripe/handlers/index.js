@@ -5,6 +5,6 @@
 
 export { handleSubscriptionUpdate, handleSubscriptionDeleted } from './subscriptions.js';
 export { handleCheckoutCompleted } from './checkout.js';
-export { handlePaymentSuccess, handleChargeSucceeded } from './payments.js';
+export { handlePaymentSuccess } from './payments.js';
 export { handleInvoicePaid, handleInvoicePaymentFailed } from './invoices.js';
 export { handleChargeDispute } from './disputes.js';
