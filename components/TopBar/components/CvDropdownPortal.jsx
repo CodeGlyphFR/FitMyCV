@@ -92,7 +92,7 @@ export default function CvDropdownPortal({
                       : ""
                   } ${
                     isRecentlyGenerated
-                      ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse"
+                      ? "bg-emerald-500/30 border border-emerald-400 shadow-[0_0_15px_rgba(52,211.1.4.0.4)] animate-pulse"
                       : isOnboardingStep4Cv
                       ? "bg-emerald-500/20"
                       : ""
