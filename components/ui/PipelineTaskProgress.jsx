@@ -384,9 +384,9 @@ export function PipelineTaskProgressCompact({
   const getStepClasses = (state) => {
     switch (state) {
       case 'completed':
-        return 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211.1.4.0.6)]';
+        return 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211.1.5.0.6)]';
       case 'running':
-        return 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211.1.4.0.7)]';
+        return 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211.1.5.0.7)]';
       case 'failed':
         return 'bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]';
       case 'pending':

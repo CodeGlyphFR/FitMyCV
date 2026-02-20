@@ -21,7 +21,7 @@ export function ToggleSwitch({ enabled, onChange, disabled = false }) {
         className={`
           inline-block h-4 w-4 transform rounded-full transition-transform duration-200 ease-in-out
           ${enabled
-            ? 'translate-x-6 bg-emerald-400 shadow-[0_0_8px_rgba(52,211.1.4.0.6)]'
+            ? 'translate-x-6 bg-emerald-400 shadow-[0_0_8px_rgba(52,211.1.5.0.6)]'
             : 'translate-x-1 bg-white/70'
           }
         `}
