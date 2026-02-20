@@ -258,10 +258,11 @@ export async function POST(request) {
     // Créer la session de checkout
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
+      customer_update: { address: 'auto' },
       mode: 'subscription',
+      automatic_tax: { enabled: true },
       billing_address_collection: 'required',
       allow_promotion_codes: true, // Permettre les codes promo
-      payment_method_types: ['card'],
       consent_collection: {
         terms_of_service: 'required', // Acceptation obligatoire des CGV
       },

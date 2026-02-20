@@ -135,7 +135,7 @@ export default function CreditPacksCards({ onPurchaseSuccess }) {
 
               {/* Price */}
               <div className="text-center mb-3">
-                <div className="text-xl font-bold text-white">{pack.price}€</div>
+                <div className="text-xl font-bold text-white">{pack.price}€ <span className="text-xs font-normal text-white/60">HT</span></div>
               </div>
 
               {/* CTA Button */}
