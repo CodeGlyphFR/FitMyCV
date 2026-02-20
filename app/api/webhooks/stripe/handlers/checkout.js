@@ -90,7 +90,7 @@ export async function handleCheckoutCompleted(session) {
 
   if (paymentIntentId) {
     console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout.session.completed)`);
-    console.log(`[Webhook] → La facture sera créée dans charge.succeeded (billing details garantis disponibles)`);
+    console.log(`[Webhook] → La facture sera créée automatiquement par Stripe (invoice_creation)`);
   } else {
     console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout gratuit, coupon 100%)`);
     console.log(`[Webhook] → Pas de facture à créer (paiement à 0€)`);
