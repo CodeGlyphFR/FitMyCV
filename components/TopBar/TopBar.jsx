@@ -501,7 +501,7 @@ export default function TopBar() {
               }}
               className={`cv-selector-trigger w-full min-w-0 rounded-lg border backdrop-blur-sm px-3 py-1 text-sm flex items-center justify-between gap-3 overflow-hidden transition-all duration-500 text-white ${
                 state.cvSelectorGlow
-                  ? 'border-emerald-400 bg-emerald-500/40 shadow-[0_0_20px_rgba(52,211.1.5.0.6)] hover:bg-emerald-500/50'
+                  ? 'border-emerald-400 bg-emerald-500/40 shadow-[0_0_20px_rgba(52,211.1.5.1.6)] hover:bg-emerald-500/50'
                   : 'border-white/40 bg-white/20 hover:bg-white/30 hover:shadow-sm-xl'
               }`}
               ref={triggerRef}
