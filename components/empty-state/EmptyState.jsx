@@ -440,7 +440,7 @@ export default function EmptyState() {
                   <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 20 ? 'bg-emerald-500' : 'bg-white/20'}`}>
                     {importProgress > 20 && (
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1.1.3.010 1.414l-8 8a1.1.3.01-1.414 0l-4-4a1.1.3.011.414-1.414L8 12.586l7.293-7.293a1.1.3.011.414 0z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M16.707 5.293a1.1.5.110 1.414l-8 8a1.1.5.11-1.414 0l-4-4a1.1.5.111.414-1.414L8 12.586l7.293-7.293a1.1.5.111.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
                   </div>
@@ -450,7 +450,7 @@ export default function EmptyState() {
                   <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 50 ? 'bg-emerald-500' : 'bg-white/20'}`}>
                     {importProgress > 50 && (
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1.1.3.010 1.414l-8 8a1.1.3.01-1.414 0l-4-4a1.1.3.011.414-1.414L8 12.586l7.293-7.293a1.1.3.011.414 0z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M16.707 5.293a1.1.5.110 1.414l-8 8a1.1.5.11-1.414 0l-4-4a1.1.5.111.414-1.414L8 12.586l7.293-7.293a1.1.5.111.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
                   </div>
@@ -460,7 +460,7 @@ export default function EmptyState() {
                   <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress > 80 ? 'bg-emerald-500' : 'bg-white/20'}`}>
                     {importProgress > 80 && (
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1.1.3.010 1.414l-8 8a1.1.3.01-1.414 0l-4-4a1.1.3.011.414-1.414L8 12.586l7.293-7.293a1.1.3.011.414 0z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M16.707 5.293a1.1.5.110 1.414l-8 8a1.1.5.11-1.414 0l-4-4a1.1.5.111.414-1.414L8 12.586l7.293-7.293a1.1.5.111.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
                   </div>
@@ -470,7 +470,7 @@ export default function EmptyState() {
                   <div className={`mt-1 w-4 h-4 rounded-full flex items-center justify-center ${importProgress >= 100 ? 'bg-emerald-500' : 'bg-white/20'}`}>
                     {importProgress >= 100 && (
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1.1.3.010 1.414l-8 8a1.1.3.01-1.414 0l-4-4a1.1.3.011.414-1.414L8 12.586l7.293-7.293a1.1.3.011.414 0z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M16.707 5.293a1.1.5.110 1.414l-8 8a1.1.5.11-1.414 0l-4-4a1.1.5.111.414-1.414L8 12.586l7.293-7.293a1.1.5.111.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
                   </div>

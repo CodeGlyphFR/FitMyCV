@@ -6,30 +6,19 @@
  * - customer.subscription.created/updated/deleted (abonnements)
  * - checkout.session.completed (achat crédits - attribution crédits)
  * - payment_intent.succeeded (achat crédits - fallback attribution)
- * - charge.succeeded (achat crédits - CRÉATION FACTURES)
- * - invoice.paid (renouvellement abonnement)
+ * - invoice.paid (renouvellement abonnement + facture crédits auto-créée)
  * - invoice.payment_failed (échec paiement abonnement)
  * - charge.dispute.created (chargebacks)
  *
  * Workflow achats de crédits :
- * 1. checkout.session.completed : Attribution des crédits (métadonnées complètes)
+ * 1. checkout.session.completed : Attribution des crédits
  * 2. payment_intent.succeeded : Fallback attribution si checkout raté
- * 3. charge.succeeded : Création de la facture (billing_details GARANTIS disponibles)
- *
- * IMPORTANT: Les factures de crédits sont créées dans charge.succeeded car :
- * - C'est le SEUL webhook où Stripe GARANTIT que billing_details est disponible
- * - checkout.session.completed arrive trop tôt (charges pas encore créées)
- * - payment_intent.succeeded arrive trop tôt aussi (charges pas encore créées)
- * - charge.succeeded arrive APRÈS la création de la charge avec billing_details complets
- *
- * Protection contre duplication :
- * - Vérification si événement déjà traité (via StripeWebhookLog)
- * - Contrainte unique sur stripePaymentIntentId (CreditTransaction)
- * - Gestion des erreurs de contrainte unique (race condition)
+ * 3. invoice.paid : Stripe crée la facture automatiquement (via invoice_creation),
+ *    on stocke l'ID facture et on envoie l'email de confirmation
  *
  * Factures :
  * - Abonnements : factures générées automatiquement par Stripe
- * - Crédits : factures créées programmatiquement dans charge.succeeded
+ * - Crédits : factures générées automatiquement par Stripe (invoice_creation sur checkout)
  *
  * Chargebacks :
  * - Crédits : retrait du montant (balance peut devenir négative)
@@ -46,7 +35,6 @@ import {
   handleSubscriptionDeleted,
   handleCheckoutCompleted,
   handlePaymentSuccess,
-  handleChargeSucceeded,
   handleInvoicePaid,
   handleInvoicePaymentFailed,
   handleChargeDispute,
@@ -141,10 +129,6 @@ export async function POST(request) {
 
       case 'payment_intent.succeeded':
         await handlePaymentSuccess(event.data.object);
-        break;
-
-      case 'charge.succeeded':
-        await handleChargeSucceeded(event.data.object);
         break;
 
       case 'invoice.paid':

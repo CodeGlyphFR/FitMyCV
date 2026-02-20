@@ -1,5 +1,7 @@
 /**
  * Stripe webhook handlers for payment events
+ * IMPORTANT: C'est ici que les factures de crédits sont créées (PAS dans checkout.session.completed)
+ * car les charges avec billing_details sont garanties disponibles dans ce webhook
  */
 
 import stripe from '@/lib/stripe';

@@ -85,7 +85,25 @@ export async function POST(request) {
       });
     }
 
+    // Préparer les champs personnalisés pour la facture (SIREN obligatoire en France)
+    const invoiceCustomFields = [];
+    if (process.env.STRIPE_BUSINESS_SIREN) {
+      invoiceCustomFields.push({ name: 'SIREN', value: process.env.STRIPE_BUSINESS_SIREN });
+    }
+
+    // Récupérer les tax IDs du compte (numéro de TVA intracommunautaire)
+    let accountTaxIds;
+    try {
+      const taxIds = await stripe.taxIds.list({ limit: 10 });
+      if (taxIds.data.length > 0) {
+        accountTaxIds = taxIds.data.map(t => t.id);
+      }
+    } catch (taxIdError) {
+      console.warn('[Checkout Credits] Impossible de récupérer les tax IDs:', taxIdError.message);
+    }
+
     // Créer la session de checkout
+    // Stripe gère automatiquement la création de la facture via invoice_creation
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       customer_update: { address: 'auto' },
@@ -107,6 +125,24 @@ export async function POST(request) {
           quantity: 1,
         },
       ],
+      // Stripe crée automatiquement une facture finalisée après paiement
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          description: `Achat de ${pack.creditAmount} crédits FitMyCV.io`,
+          metadata: {
+            userId,
+            packId: packId.toString(),
+            creditAmount: pack.creditAmount.toString(),
+            type: 'credit_purchase',
+          },
+          ...(invoiceCustomFields.length > 0 && { custom_fields: invoiceCustomFields }),
+          ...(accountTaxIds && { account_tax_ids: accountTaxIds }),
+          ...(process.env.STRIPE_INVOICE_TEMPLATE_ID && {
+            rendering: { template: process.env.STRIPE_INVOICE_TEMPLATE_ID },
+          }),
+        },
+      },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account/subscriptions?credits_success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account/subscriptions?credits_canceled=true`,
       metadata: {

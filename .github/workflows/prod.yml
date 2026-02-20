@@ -26,10 +26,13 @@ jobs:
           NEW_VERSION=$(node -p "require('./package.json').version")
           git add .
           git commit -m "chore(release): v$NEW_VERSION [skip ci]"
+          git tag -d "v$NEW_VERSION" 2>/dev/null || true
+          git push origin ":refs/tags/v$NEW_VERSION" 2>/dev/null || true
           git tag "v$NEW_VERSION"
           git push origin main --tags
 
       - name: Sync Dev Branch
+        if: contains(github.event.head_commit.message, 'from CodeGlyphFR/dev')
         run: |
           git checkout dev
           git merge main

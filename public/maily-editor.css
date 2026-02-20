@@ -496,7 +496,7 @@
       font-size: 2.25em;
       margin-top: 0;
       margin-bottom: 0.8888889em;
-      line-height: 1.1.3.011;
+      line-height: 1.1.5.111;
     }
     :where(h1 strong):not(:where([class~=not-prose], [class~=not-prose] *)) {
       font-weight: 900;
