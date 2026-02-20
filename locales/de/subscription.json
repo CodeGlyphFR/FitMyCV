@@ -216,7 +216,7 @@
       "pricePerCredit": "d.h. {price}€ pro Credit",
       "buyButton": "Kaufen",
       "redirecting": "Weiterleitung...",
-      "securePayment": "Sichere Zahlung über Stripe • Dauerhafte Credits",
+      "securePayment": "Sichere Zahlung über Stripe • Preise zzgl. MwSt. • Dauerhafte Credits",
       "loading": "Laden...",
       "errors": {
         "checkoutError": "Fehler beim Erstellen der Checkout-Sitzung",

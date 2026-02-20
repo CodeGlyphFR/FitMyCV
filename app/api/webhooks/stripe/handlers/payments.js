@@ -94,10 +94,21 @@ export async function handleChargeSucceeded(charge) {
 
   const userId = paymentIntent.metadata?.userId;
   const creditAmount = parseInt(paymentIntent.metadata?.creditAmount, 10);
+  const packId = paymentIntent.metadata?.packId ? parseInt(paymentIntent.metadata.packId, 10) : null;
 
   if (!userId || !creditAmount) {
     console.error('[Webhook] Métadonnées manquantes dans charge.succeeded');
     return;
+  }
+
+  // Récupérer le stripePriceId du pack pour la facture (tax_behavior inclus)
+  let stripePriceId = null;
+  if (packId) {
+    const pack = await prisma.creditPack.findUnique({
+      where: { id: packId },
+      select: { stripePriceId: true },
+    });
+    stripePriceId = pack?.stripePriceId;
   }
 
   // Vérifier si la transaction existe (peut ne pas exister si charge.succeeded arrive avant checkout.session)
@@ -165,6 +176,7 @@ export async function handleChargeSucceeded(charge) {
     creditAmount,
     userId,
     paymentIntent: paymentIntentWithCharge,
+    stripePriceId,
   }, existingTransaction.id);
 
   // Vérifier que la facture a bien été créée
