@@ -366,7 +366,7 @@ export default function Education(props){
           </ModalSection>
 
           <ModalSection title={t("cvSections.period")} icon={Calendar}>
-            <div className="flex flex-wrap items-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-2">
               <FormField label={t("cvSections.placeholders.experienceStartShort")} className="flex-1 min-w-[140px]">
                 <MonthPicker
                   placeholder={t("cvSections.placeholders.dateFormat")}
@@ -454,7 +454,7 @@ export default function Education(props){
           </ModalSection>
 
           <ModalSection title={t("cvSections.period")} icon={Calendar}>
-            <div className="flex flex-wrap items-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-2">
               <FormField label={t("cvSections.placeholders.experienceStartShort")} className="flex-1 min-w-[140px]">
                 <MonthPicker
                   placeholder={t("cvSections.placeholders.dateFormat")}
