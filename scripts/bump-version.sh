@@ -70,11 +70,13 @@ console.log('✅ package.json → v' + v);
 
 # 2. Scan dynamique et remplacement dans les autres fichiers
 EXCLUDE_DIRS=("--exclude-dir=.git" "--exclude-dir=node_modules" "--exclude-dir=.next" "--exclude-dir=dist" "--exclude-dir=_work")
-FILES_TO_UPDATE=$(grep -rl "${EXCLUDE_DIRS[@]}" "$OLD_VERSION" . || true)
+INCLUDE_EXTS=("--include=*.md" "--include=*.html" "--include=*.json" "--include=*.txt" "--include=*.yml" "--include=*.yaml" "--include=*.sh" "--include=*.js" "--include=*.jsx" "--include=*.ts" "--include=*.tsx" "--include=*.css")
+FILES_TO_UPDATE=$(grep -Frl "${EXCLUDE_DIRS[@]}" "${INCLUDE_EXTS[@]}" "$OLD_VERSION" . || true)
 
+ESCAPED_OLD=$(printf '%s' "$OLD_VERSION" | sed 's/[.]/\\./g')
 for FILE in $FILES_TO_UPDATE; do
     if [[ "$FILE" != *"package.json"* && "$FILE" != *"package-lock.json"* ]]; then
         echo "Updating: $FILE"
-        sed -i "s/$OLD_VERSION/$NEW_VERSION/g" "$FILE"
+        sed -i "s/$ESCAPED_OLD/$NEW_VERSION/g" "$FILE"
     fi
 done
