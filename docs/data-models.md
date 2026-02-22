@@ -1,6 +1,6 @@
 # Modèles de Données - FitMyCV.io
 
-> Documentation des 34 modèles Prisma organisés par domaine fonctionnel
+> Documentation des 33 modèles Prisma organisés par domaine fonctionnel
 
 ---
 
@@ -14,7 +14,7 @@
 | Tâches Background | 1 | Queue tâches asynchrones |
 | Abonnements & Crédits | 8 | Stripe, plans, transactions |
 | Email | 3 | Templates, triggers, logs |
-| OpenAI & Coûts | 4 | Usage IA, pricing, alertes |
+| OpenAI & Coûts | 3 | Usage IA, pricing |
 | Télémétrie & Feedback | 5 | Analytics, consentement |
 | Configuration | 1 | Paramètres dynamiques |
 
@@ -608,21 +608,6 @@ Usage agrégé OpenAI par utilisateur/feature/jour.
 
 ---
 
-### OpenAIAlert
-
-Alertes de monitoring OpenAI (seuils).
-
-| Champ | Type | Description |
-|-------|------|-------------|
-| `id` | String (cuid) | Identifiant unique |
-| `type` | String | Type alerte |
-| `threshold` | Float | Seuil déclenchement |
-| `enabled` | Boolean | Alerte activée |
-| `name` | String | Nom alerte |
-| `description` | String? | Description |
-
----
-
 ### OpenAICall
 
 Log détaillé de chaque appel OpenAI.
@@ -794,7 +779,7 @@ User ─────────────────────────
                                                                        │
 EmailTrigger ─── 1:N ─── EmailTemplate ─── 1:N ─── EmailLog           │
                                                                        │
-Standalone: Setting, OpenAIPricing, OpenAIAlert, CreditPack,          │
+Standalone: Setting, OpenAIPricing, CreditPack,                        │
             StripeWebhookLog, EmailVerificationToken, AutoSignInToken, │
             EmailChangeRequest                                         │
 ```

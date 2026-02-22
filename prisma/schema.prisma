@@ -50,13 +50,11 @@ model Account {
   provider                 String
   providerAccountId        String
   refresh_token            String?
-  refresh_token_expires_in Int?
   access_token             String?
   expires_at               Int?
   token_type               String?
   scope                    String?
   id_token                 String?
-  session_state            String?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
   user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -90,7 +88,6 @@ model CvFile {
   optimiseStatus         String?            @default("idle")
   optimiseUpdatedAt      DateTime?
   createdWithCredit      Boolean            @default(false)
-  creditUsedAt           DateTime?
   creditTransactionId    String?            @unique
   blocked                Boolean            @default(false)
   blockedAt              DateTime?
@@ -362,20 +359,6 @@ model OpenAIPricing {
 
   @@index([modelName])
   @@index([isActive])
-}
-
-model OpenAIAlert {
-  id          String   @id @default(cuid())
-  type        String
-  threshold   Float
-  enabled     Boolean  @default(true)
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([type])
-  @@index([enabled])
 }
 
 model OpenAICall {

@@ -22,7 +22,7 @@
 
 ### [Documentation](https://app.fitmycv.io/docs)
 
-Architecture · 113 endpoints API · 34 modèles de données · 138 composants React
+Architecture · 113 endpoints API · 33 modèles de données · 138 composants React
 
 </div>
 
@@ -141,7 +141,6 @@ Chaque appel OpenAI est tracé individuellement et agrégé quotidiennement :
 - **Par appel** (`OpenAICall`) : tokens prompt / completion / cached, coût, modèle, feature, durée
 - **Agrégat journalier** (`OpenAIUsage`) : userId × feature × modèle, avec économies de cache
 - **Référentiel de prix** (`OpenAIPricing`) : tarifs standard + priority tier par modèle
-- **Alertes sur seuils** (`OpenAIAlert`) : dépense quotidienne / mensuelle, par utilisateur ou globale
 - **Stratégie de cache** : warmup de prompt, délai inter-batch pour propagation, `reasoning_effort: low` sur les tâches batch
 
 **Ce que ça démontre** : la maîtrise des coûts et la capacité à instrumenter un système IA pour le suivre et l'optimiser en continu.
@@ -155,7 +154,7 @@ Au-delà de l'IA, le projet couvre l'ensemble du spectre SaaS :
 | Couche | Technologies | Périmètre |
 |--------|-------------|-----------|
 | **Frontend** | Next.js 16 (App Router), React 19, Tailwind CSS 4 | 138 composants |
-| **Backend** | Next.js API Routes, Prisma 6, PostgreSQL | 113 endpoints, 34 modèles |
+| **Backend** | Next.js API Routes, Prisma 6, PostgreSQL | 113 endpoints, 33 modèles |
 | **IA** | OpenAI API — GPT-4.1, GPT-4o, o4-mini, GPT-4.1-mini (Vision) | 2 pipelines, 12 phases |
 | **Auth** | NextAuth.js — email/password, Google, GitHub, Apple OAuth | JWT, sessions 7j |
 | **Paiements** | Stripe | Crédits à la carte, sans abonnement |

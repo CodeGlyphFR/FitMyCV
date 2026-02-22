@@ -141,7 +141,6 @@ Every OpenAI call is tracked individually and aggregated daily:
 - **Per call** (`OpenAICall`): prompt / completion / cached tokens, cost, model, feature, duration
 - **Daily aggregate** (`OpenAIUsage`): userId × feature × model, with cache savings
 - **Pricing reference** (`OpenAIPricing`): standard + priority tier pricing per model
-- **Threshold alerts** (`OpenAIAlert`): daily / monthly spend, per-user or global
 - **Caching strategy**: prompt warmup, inter-batch delay for propagation, `reasoning_effort: low` on batch tasks
 
 **What this demonstrates**: cost awareness and the ability to instrument an AI system for ongoing monitoring and optimization.
@@ -155,7 +154,7 @@ Beyond AI, the project covers the entire SaaS spectrum:
 | Layer | Technologies | Scope |
 |-------|-------------|-------|
 | **Frontend** | Next.js 16 (App Router), React 19, Tailwind CSS 4 | 138 components |
-| **Backend** | Next.js API Routes, Prisma 6, PostgreSQL | 113 endpoints, 34 models |
+| **Backend** | Next.js API Routes, Prisma 6, PostgreSQL | 113 endpoints, 33 models |
 | **AI** | OpenAI API — GPT-4.1, GPT-4o, o4-mini, GPT-4.1-mini (Vision) | 2 pipelines, 12 phases |
 | **Auth** | NextAuth.js — email/password, Google, GitHub, Apple OAuth | JWT, 7-day sessions |
 | **Payments** | Stripe | À la carte credits, no subscription |

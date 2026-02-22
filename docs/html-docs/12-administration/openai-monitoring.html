@@ -320,19 +320,6 @@ graph TB
   updatedAt                   DateTime @updatedAt
 }</code></pre>
 
-        <h3>OpenAIAlert</h3>
-
-        <pre><code class="language-javascript">model OpenAIAlert {
-  id          String   @id @default(cuid())
-  type        String   // user_daily, user_monthly, global_daily, global_monthly, feature_daily
-  threshold   Float    // Seuil en USD
-  enabled     Boolean  @default(true)
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}</code></pre>
-
         <h3>OpenAIUsage (Agr&eacute;gation Journali&egrave;re)</h3>
 
         <pre><code class="language-javascript">model OpenAIUsage {
