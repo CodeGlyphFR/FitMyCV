@@ -73,7 +73,7 @@ export default function CvGeneratorModal({
           <button
             type="button"
             onClick={onOpenExtensionTutorial}
-            className="w-full flex items-center gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-2.5 text-left transition-colors group"
+            className="w-full hidden md:flex items-center gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-2.5 text-left transition-colors group"
           >
             <img src="/icons/extension-brain.png" alt="" className="w-8 h-8 shrink-0" />
             <div className="flex-1 min-w-0">
