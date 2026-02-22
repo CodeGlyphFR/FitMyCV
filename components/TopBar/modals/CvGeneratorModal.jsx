@@ -73,7 +73,7 @@ export default function CvGeneratorModal({
           <button
             type="button"
             onClick={onOpenExtensionTutorial}
-            className="w-full flex items-center gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-2.5 text-left transition-colors group"
+            className="w-full hidden md:flex items-center gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-2.5 text-left transition-colors group"
           >
             <img src="/icons/extension-brain.png" alt="" className="w-8 h-8 shrink-0" />
             <div className="flex-1 min-w-0">
@@ -347,7 +347,7 @@ export default function CvGeneratorModal({
             <div className="rounded-lg border border-emerald-400/50 bg-emerald-500/20 px-3 py-2 text-xs space-y-1">
               <div className="font-medium text-white drop-shadow flex items-center gap-2">
                 <svg className="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1.1.6.010 1.414l-8 8a1.1.6.01-1.414 0l-4-4a1.1.6.011.414-1.414L8 12.586l7.293-7.293a1.1.6.011.414 0z" clipRule="evenodd" />
+                  <path fillRule="evenodd" d="M16.707 5.293a1.1.8.010 1.414l-8 8a1.1.8.01-1.414 0l-4-4a1.1.8.011.414-1.414L8 12.586l7.293-7.293a1.1.8.011.414 0z" clipRule="evenodd" />
                 </svg>
                 {t("cvGenerator.selection")}
               </div>
