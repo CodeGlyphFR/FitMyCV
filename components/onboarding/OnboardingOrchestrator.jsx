@@ -134,18 +134,47 @@ export default function OnboardingOrchestrator() {
   useEffect(() => { if (currentStep !== 9) step9ModalShownRef.current = false; }, [currentStep]);
 
   // ========== STEP 1 PHASE A: TOOLTIP VISIBLE → BLOCK CLICKS (EXCEPT X) / RESTORED → SHOW MODAL ==========
+  // Pour un CV vide (pas d'expériences), l'élément cible n'existe pas encore.
+  // On "pause" le step : l'UI reste interactive, l'utilisateur peut ajouter des expériences.
+  // Dès que l'élément apparaît, le click-blocking et le tooltip s'activent normalement.
+  const [step1TargetReady, setStep1TargetReady] = useState(false);
+
   useEffect(() => {
     if (currentStep !== 1 || step1ModalShownRef.current) return;
 
     // Tooltip already closed (restoration) — show modal directly
     if (tooltipClosed) {
       step1ModalShownRef.current = true;
+      setStep1TargetReady(true);
       setModalOpen(true);
       setCurrentScreen(0);
       return;
     }
 
-    // Tooltip visible — block all clicks except the close button
+    // Vérifier si l'élément cible existe déjà (CV importé avec expériences)
+    if (document.querySelector('[data-onboarding="edit-experience"]')) {
+      setStep1TargetReady(true);
+    } else {
+      setStep1TargetReady(false);
+    }
+
+    // Observer le DOM pour détecter l'apparition de l'élément cible
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[data-onboarding="edit-experience"]')) {
+        setStep1TargetReady(true);
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
+  }, [currentStep, tooltipClosed]);
+
+  // Click-blocking activé uniquement quand l'élément cible est prêt
+  useEffect(() => {
+    if (currentStep !== 1 || step1ModalShownRef.current || tooltipClosed || !step1TargetReady) return;
+
     const handleClick = (e) => {
       if (step1ModalShownRef.current) return;
       if (e.target.closest('[data-onboarding-tooltip-close]')) return;
@@ -155,7 +184,7 @@ export default function OnboardingOrchestrator() {
 
     document.addEventListener('click', handleClick, { capture: true });
     return () => document.removeEventListener('click', handleClick, { capture: true });
-  }, [currentStep, tooltipClosed]);
+  }, [currentStep, tooltipClosed, step1TargetReady]);
 
   // ========== STEP 1 PHASE B: AFTER MODAL CLOSED → WATCH KEBAB INTERACTION → COMPLETE STEP ==========
   useEffect(() => {
@@ -610,12 +639,12 @@ export default function OnboardingOrchestrator() {
     return showForStep9 ? (
       <>
         <OnboardingHighlight
-          show={!modalOpen && currentStep === step.id}
+          show={!modalOpen && currentStep === step.id && (currentStep !== 1 || step1TargetReady)}
           blurEnabled={!tooltipClosed}
           targetSelector={step.targetSelector}
           additionalCutoutSelector={currentStep === 1 ? '[data-onboarding-edit-kebab]' : undefined}
         />
-        {currentStep === 1 && (
+        {currentStep === 1 && step1TargetReady && (
           <OnboardingMultiHighlight
             selector="[data-onboarding-edit-kebab]"
             excludeSelector='[data-onboarding="edit-experience"]'
@@ -624,7 +653,7 @@ export default function OnboardingOrchestrator() {
           />
         )}
         <OnboardingTooltip
-          show={!modalOpen && !tooltipClosed}
+          show={!modalOpen && !tooltipClosed && (currentStep !== 1 || step1TargetReady)}
           targetSelector={step.targetSelector}
           content={step.tooltip.content}
           position={step.tooltip.position}
