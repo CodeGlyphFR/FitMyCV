@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { DateTime } from "luxon";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
 import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv-core/storage";
@@ -60,7 +61,7 @@ export async function POST(req){
     };
     await ensureUserCvDir(userId);
     const existingFiles = await listUserCvFiles(userId).catch(() => []);
-    let baseName = String(Date.now());
+    let baseName = DateTime.now().toFormat('yyyyMMddHHmmssSSS');
     var file = baseName+".json";
     while (existingFiles.includes(file)){
       baseName = String(Number(baseName) + 1);
