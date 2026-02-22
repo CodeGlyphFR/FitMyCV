@@ -238,7 +238,10 @@ browser.runtime.onMessage.addListener((message, sender) => {
 
     case 'OAUTH_LOGIN_SUCCESS':
       // Token was stored by auth-receiver content script
-      // Nothing else needed — popup will read from storage on next open
+      // Close the OAuth tab after a brief delay so the user sees the success state
+      if (sender?.tab?.id) {
+        setTimeout(() => browser.tabs.remove(sender.tab.id).catch(() => {}), 1500);
+      }
       return;
 
     case 'GET_STATE':

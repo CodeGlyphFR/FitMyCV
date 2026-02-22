@@ -178,7 +178,7 @@ export async function proxy(request) {
     const rateLimit = checkRateLimit(ip, pathname);
 
     if (!rateLimit.allowed) {
-      return NextResponse.json(
+      const rateLimitResponse = NextResponse.json(
         {
           error: 'Trop de requêtes. Veuillez réessayer plus tard.',
           retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
@@ -193,6 +193,14 @@ export async function proxy(request) {
           },
         }
       );
+      // Ajouter les headers CORS pour les routes extension (sinon réponse illisible cross-origin)
+      if (isExtensionRoute(pathname)) {
+        const origin = request.headers.get('origin');
+        if (isAllowedExtensionOrigin(origin)) {
+          setCorsHeaders(rateLimitResponse, origin);
+        }
+      }
+      return rateLimitResponse;
     }
 
     // M4: Valider Content-Type pour les requêtes JSON sur routes API
@@ -204,10 +212,17 @@ export async function proxy(request) {
         contentType.includes('multipart/form-data') ||
         contentType.includes('application/x-www-form-urlencoded');
       if (!isAcceptable) {
-        return NextResponse.json(
+        const mediaTypeResponse = NextResponse.json(
           { error: 'Unsupported Media Type' },
           { status: 415 }
         );
+        if (isExtensionRoute(pathname)) {
+          const origin = request.headers.get('origin');
+          if (isAllowedExtensionOrigin(origin)) {
+            setCorsHeaders(mediaTypeResponse, origin);
+          }
+        }
+        return mediaTypeResponse;
       }
     }
   }

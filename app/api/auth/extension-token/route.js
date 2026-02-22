@@ -77,8 +77,7 @@ export async function POST(request) {
     // Vérifier le lockout avant toute opération coûteuse (bcrypt)
     if (isAccountLocked(email)) {
       logger.context('extension-auth', 'warn', `Account locked due to too many failed attempts: ${email}`);
-      return ExtensionErrors.tooManyAttempts?.() ||
-        Response.json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' }, { status: 429 });
+      return ExtensionErrors.tooManyAttempts();
     }
 
     const user = await prisma.user.findUnique({
@@ -98,8 +97,7 @@ export async function POST(request) {
       const attempt = checkAndRecordAttempt(email, false);
       logger.context('extension-auth', 'warn', `Failed login attempt (wrong password): ${email}`);
       if (attempt.locked) {
-        return ExtensionErrors.tooManyAttempts?.() ||
-          Response.json({ error: 'Trop de tentatives. Réessayez dans 15 minutes.' }, { status: 429 });
+        return ExtensionErrors.tooManyAttempts();
       }
       return ExtensionErrors.invalidCredentials();
     }

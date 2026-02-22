@@ -34,7 +34,8 @@ export default function ResetPasswordPage() {
         const data = await res.json();
 
         if (!data.valid) {
-          setError(data.error || t("auth.resetPasswordPage.errors.linkInvalid"));
+          const translated = data.error ? t(data.error) : null;
+          setError(translated && translated !== data.error ? translated : t("auth.resetPasswordPage.errors.linkInvalid"));
         }
       } catch (err) {
         console.error('Erreur lors de la vérification du token:', err);
@@ -83,7 +84,8 @@ export default function ResetPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || t("auth.resetPasswordPage.errors.generic"));
+        const translated = data.error ? t(data.error) : null;
+        setError(translated && translated !== data.error ? translated : t("auth.resetPasswordPage.errors.generic"));
         setLoading(false);
         return;
       }

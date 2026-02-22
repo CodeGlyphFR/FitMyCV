@@ -1,23 +1,41 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+const ALLOWED_PROVIDERS = ['google', 'github'];
 
 export default function ExtensionAuthPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
-  const [state, setState] = useState('loading'); // loading | success | error
+  const searchParams = useSearchParams();
+  const provider = searchParams.get('provider');
+  const [state, setState] = useState('loading'); // loading | redirecting | success | error
 
   useEffect(() => {
     if (status === 'loading') return;
 
+    // If a specific provider is requested, force fresh OAuth with that provider
+    // Sign out any existing session first to avoid account linking
+    if (provider && ALLOWED_PROVIDERS.includes(provider)) {
+      setState('redirecting');
+      (async () => {
+        if (status === 'authenticated') {
+          await signOut({ redirect: false });
+        }
+        signIn(provider, { callbackUrl: '/extension-auth' });
+      })();
+      return;
+    }
+
+    // No provider specified — use existing session or redirect to login
     if (status === 'unauthenticated') {
       router.replace('/auth?callbackUrl=/extension-auth');
       return;
     }
 
-    // Authenticated — fetch extension token
+    // Authenticated (no provider param = returning from OAuth callback) — fetch extension token
     async function fetchToken() {
       try {
         const res = await fetch('/api/auth/extension-token/from-session');
@@ -42,9 +60,9 @@ export default function ExtensionAuthPage() {
     }
 
     fetchToken();
-  }, [status, router]);
+  }, [status, router, provider]);
 
-  if (status === 'loading' || state === 'loading') {
+  if (state === 'redirecting' || status === 'loading' || state === 'loading') {
     return (
       <div style={styles.container}>
         <div style={styles.card}>

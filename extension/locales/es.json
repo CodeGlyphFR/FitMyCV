@@ -70,6 +70,7 @@
   "errors": {
     "sessionExpired": "Sesion expirada",
     "invalidCredentials": "Correo o contrasena incorrectos",
+    "tooManyAttempts": "Demasiados intentos. Intentalo de nuevo en 15 minutos.",
     "emailNotVerified": "Correo no verificado. Revisa tu bandeja de entrada.",
     "emailAndPasswordRequired": "Correo y contrasena requeridos",
     "tokenRequired": "Sesion requerida",

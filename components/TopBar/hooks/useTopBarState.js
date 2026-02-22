@@ -62,10 +62,18 @@ export function useTopBarState(language) {
   const lastSelectedRef = React.useRef(null);
   const lastSelectedMetaRef = React.useRef(null);
 
-  // Initialiser lastSelectedRef depuis localStorage/cookie au montage
-  // pour restaurer le CV sélectionné après un refresh de page
+  // Initialiser lastSelectedRef depuis URL param / localStorage / cookie au montage
+  // Priorité : URL param (navigation depuis extension) > localStorage > cookie
   React.useEffect(() => {
     if (lastSelectedRef.current) return; // déjà initialisé
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const cvParam = params.get("cvFile");
+      if (cvParam) {
+        lastSelectedRef.current = cvParam;
+        return;
+      }
+    } catch (_e) {}
     try {
       const stored = localStorage.getItem("admin:cv");
       if (stored) {

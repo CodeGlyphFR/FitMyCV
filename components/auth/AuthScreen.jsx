@@ -163,7 +163,11 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
       });
 
       if (result?.error){
-        setError(t("auth.errors.invalidCredentials"));
+        if (result.error === "AccountLocked") {
+          setError(t("auth.errors.accountLocked"));
+        } else {
+          setError(t("auth.errors.invalidCredentials"));
+        }
         setLoading(false);
         return;
       }
