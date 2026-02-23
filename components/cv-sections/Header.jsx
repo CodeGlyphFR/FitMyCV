@@ -200,8 +200,32 @@ export default function Header(props){
     };
 
     // Écouter les changements de métadonnées (status, score, etc.)
+    // Applique le score DIRECTEMENT depuis les données SSE au lieu de re-fetcher.
+    // L'event SSE cv:updated contient les données exactes écrites par updateCvFile
+    // (matchScore, matchScoreStatus, scoreBreakdown, etc.)
+    // Sur mobile, le re-fetch HTTP échoue à cause du timing avec router.refresh().
     const handleRealtimeCvMetadataUpdate = (event) => {
       if (!cvValidatedRef.current) return;
+      const eventData = event.detail?.data;
+      if (eventData) {
+        // Appliquer le status immédiatement (inprogress → spinner, idle → score)
+        if (eventData.matchScoreStatus) {
+          setMatchScoreStatus(eventData.matchScoreStatus);
+        }
+        // Appliquer le score directement si présent dans les données SSE
+        if (eventData.matchScore !== undefined) {
+          setMatchScore(eventData.matchScore);
+          setScoreBefore(eventData.scoreBefore ?? null);
+          setHasScoreBreakdown(!!eventData.scoreBreakdown);
+          if (eventData.matchScoreStatus !== 'inprogress') {
+            setIsLoadingMatchScore(false);
+          }
+        }
+        if (eventData.optimiseStatus !== undefined) {
+          setOptimiseStatus(eventData.optimiseStatus);
+        }
+      }
+      // Fetch en backup pour les champs non présents dans l'event (hasJobOffer, etc.)
       debouncedFetchMatchScore();
     };
 
