@@ -169,16 +169,17 @@ export function useRealtimeSync(options = {}) {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        const es = eventSourceRef.current;
-        if (!es || es.readyState === EventSource.CLOSED) {
-          // SSE mort → reconnexion immédiate sans attendre le timeout de 5s
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = null;
-          }
-          eventSourceRef.current = null;
-          connect();
+        // iOS Safari laisse le SSE en état zombie (readyState OPEN mais connexion morte)
+        // Forcer la reconnexion à chaque retour en foreground
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
         }
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          eventSourceRef.current = null;
+        }
+        connect();
       }
     };
 
