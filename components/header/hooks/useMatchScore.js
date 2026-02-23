@@ -27,17 +27,13 @@ export function useMatchScore({ currentVersion }) {
 
   // Ref pour tracker la version en cours de fetch (éviter race conditions)
   const fetchVersionRef = useRef(currentVersion);
-  const abortControllerRef = useRef(null);
+  // Fetch-id counter : laisse toutes les requêtes compléter mais n'applique
+  // que le résultat de la plus récente (élimine les problèmes d'AbortController sur mobile)
+  const fetchIdRef = useRef(0);
 
   const fetchMatchScore = useCallback(async () => {
-    // Annuler la requête précédente si elle existe
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Créer un nouveau AbortController pour cette requête
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
+    // Incrémenter le counter — seul le résultat du fetch le plus récent sera appliqué
+    const thisFetchId = ++fetchIdRef.current;
 
     // Capturer la version au moment de l'appel
     const versionAtFetchStart = currentVersion;
@@ -49,7 +45,7 @@ export function useMatchScore({ currentVersion }) {
       const cookies = document.cookie.split(';');
       const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
       if (!cvFileCookie) {
-        setIsLoadingMatchScore(false);
+        if (fetchIdRef.current === thisFetchId) setIsLoadingMatchScore(false);
         return;
       }
 
@@ -66,8 +62,10 @@ export function useMatchScore({ currentVersion }) {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
         },
-        signal: abortController.signal
       });
+
+      // Ignorer si un fetch plus récent a été lancé entre-temps
+      if (fetchIdRef.current !== thisFetchId) return;
 
       if (!response.ok) {
         setIsLoadingMatchScore(false);
@@ -75,6 +73,9 @@ export function useMatchScore({ currentVersion }) {
       }
 
       const data = await response.json();
+
+      // Re-vérifier après le parsing JSON (un autre fetch a pu être lancé pendant le parse)
+      if (fetchIdRef.current !== thisFetchId) return;
 
       // Vérifier que le CV ET la version n'ont pas changé entre temps
       const updatedCookies = document.cookie.split(';');
@@ -108,10 +109,8 @@ export function useMatchScore({ currentVersion }) {
         setIsLoadingMatchScore(false);
       }
     } catch (error) {
-      // Ignorer les erreurs d'abort (changement de version rapide)
-      if (error.name === 'AbortError') {
-        return;
-      }
+      // Ignorer les erreurs si un fetch plus récent est en cours
+      if (fetchIdRef.current !== thisFetchId) return;
       setIsLoadingMatchScore(false);
     }
   }, [currentVersion]);
@@ -177,12 +176,10 @@ export function useMatchScore({ currentVersion }) {
     }
   }, [t, addNotification, localDeviceId, executeRecaptcha]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount : invalider le fetch-id pour que les requêtes en vol soient ignorées
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      fetchIdRef.current++;
     };
   }, []);
 

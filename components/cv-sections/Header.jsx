@@ -176,17 +176,33 @@ export default function Header(props){
     fetchMatchScore();
   }, [currentVersion, fetchMatchScore]);
 
+  // Refs pour accéder aux valeurs courantes dans les listeners (évite closures stales)
+  const matchScoreStatusRef = React.useRef(matchScoreStatus);
+  matchScoreStatusRef.current = matchScoreStatus;
+  const isLoadingMatchScoreRef = React.useRef(isLoadingMatchScore);
+  isLoadingMatchScoreRef.current = isLoadingMatchScore;
+
   // Écouter les événements de synchronisation temps réel
   React.useEffect(() => {
+    // Debounce pour coaliser les events SSE cv:updated et cv:metadata:updated
+    // qui arrivent quasi-simultanément (évite les fetchMatchScore concurrents sur mobile)
+    let realtimeFetchTimeout = null;
+    const debouncedFetchMatchScore = () => {
+      if (realtimeFetchTimeout) clearTimeout(realtimeFetchTimeout);
+      realtimeFetchTimeout = setTimeout(() => {
+        fetchMatchScore();
+      }, 150);
+    };
+
     const handleRealtimeCvUpdate = (event) => {
       if (!cvValidatedRef.current) return;
-      fetchMatchScore();
+      debouncedFetchMatchScore();
     };
 
     // Écouter les changements de métadonnées (status, score, etc.)
     const handleRealtimeCvMetadataUpdate = (event) => {
       if (!cvValidatedRef.current) return;
-      fetchMatchScore();
+      debouncedFetchMatchScore();
     };
 
     // WORKAROUND iOS: Forcer le refresh si MatchScore détecte une incohérence
@@ -232,20 +248,36 @@ export default function Header(props){
       }
     };
 
+    // Visibilitychange : quand l'utilisateur revient sur l'onglet (surtout mobile),
+    // le SSE peut avoir été coupé et les events perdus → re-fetch le score
+    let visibilityTimeout = null;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!cvValidatedRef.current) return;
+      // Re-fetch seulement si un calcul était en cours ou si le loading est bloqué
+      if (matchScoreStatusRef.current === 'inprogress' || isLoadingMatchScoreRef.current) {
+        visibilityTimeout = setTimeout(() => fetchMatchScore(), 500);
+      }
+    };
+
     window.addEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
     window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
     window.addEventListener('matchscore:force-refresh', handleForceRefresh);
     window.addEventListener('cv:selected', handleCvSelected);
     window.addEventListener('tokens:updated', handleTokensUpdated);
     window.addEventListener('task:completed', handleTaskCompleted);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      if (realtimeFetchTimeout) clearTimeout(realtimeFetchTimeout);
+      if (visibilityTimeout) clearTimeout(visibilityTimeout);
       window.removeEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
       window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
       window.removeEventListener('matchscore:force-refresh', handleForceRefresh);
       window.removeEventListener('cv:selected', handleCvSelected);
       window.removeEventListener('tokens:updated', handleTokensUpdated);
       window.removeEventListener('task:completed', handleTaskCompleted);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails, isJobOfferModalOpen, jobOfferDetails, fetchJobOfferDetails]);
 

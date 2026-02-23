@@ -165,8 +165,27 @@ export function useRealtimeSync(options = {}) {
   // Se connecter au montage et se déconnecter au démontage
   useEffect(() => {
     connect();
-    return disconnect;
-  }, [connect, disconnect]);
+
+    // Reconnecter le SSE quand l'utilisateur revient sur l'onglet (surtout mobile).
+    // Sur mobile, le navigateur peut couper la connexion SSE lors d'un changement
+    // d'onglet ou de suspension réseau. Sans cela, les events sont perdus.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && enabled && isAuthenticated) {
+        const es = eventSourceRef.current;
+        if (!es || es.readyState !== EventSource.OPEN) {
+          disconnect();
+          connect();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      disconnect();
+    };
+  }, [connect, disconnect, enabled, isAuthenticated]);
 
   return {
     connected,
