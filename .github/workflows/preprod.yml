@@ -110,6 +110,21 @@ jobs:
           docker logs fitmycv-preview --tail 50
           exit 1
 
+      - name: Resolve Failed Migrations
+        run: |
+          echo "🔍 Checking for failed migrations..."
+          FAILED=$(psql -t -A -d fitmycv_release -c "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL;" 2>/dev/null || true)
+          if [ -n "$FAILED" ]; then
+            echo "⚠️ Found failed migrations, resolving:"
+            echo "$FAILED" | while read -r name; do
+              [ -z "$name" ] && continue
+              echo "  Rolling back: $name"
+              docker exec fitmycv-preview npx prisma migrate resolve --rolled-back "$name"
+            done
+          else
+            echo "✅ No failed migrations"
+          fi
+
       - name: Run Database Migrations
         run: |
           echo "🔄 Running Prisma migrations..."
