@@ -232,23 +232,12 @@ export default function Header(props){
       }
     };
 
-    // Fix iOS Safari : refetch du score au retour en foreground si encore en loading
-    // (le SSE peut avoir été coupé en arrière-plan → task:completed jamais reçu)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && cvValidatedRef.current) {
-        if (matchScoreStatus === 'inprogress' || isLoadingMatchScore) {
-          fetchMatchScore();
-        }
-      }
-    };
-
     window.addEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
     window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
     window.addEventListener('matchscore:force-refresh', handleForceRefresh);
     window.addEventListener('cv:selected', handleCvSelected);
     window.addEventListener('tokens:updated', handleTokensUpdated);
     window.addEventListener('task:completed', handleTaskCompleted);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
@@ -257,9 +246,8 @@ export default function Header(props){
       window.removeEventListener('cv:selected', handleCvSelected);
       window.removeEventListener('tokens:updated', handleTokensUpdated);
       window.removeEventListener('task:completed', handleTaskCompleted);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails, isJobOfferModalOpen, jobOfferDetails, fetchJobOfferDetails, matchScoreStatus, isLoadingMatchScore]);
+  }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails, isJobOfferModalOpen, jobOfferDetails, fetchJobOfferDetails]);
 
 
   // Si le CV est vide (pas de header), ne pas afficher le composant

@@ -118,7 +118,7 @@ export default function MatchScore({
   // Détecter si on est vraiment en train de charger (score ou optimisation)
   const isActuallyLoading = (status === "loading" || isLoading || isRefreshing || optimiseStatus === "inprogress");
   const isStuckLoading = score !== null && !isLoading && status !== "loading" && !isRefreshing && optimiseStatus !== "inprogress";
-  const shouldShowLoading = (isActuallyLoading || isDelayedLoading) && !isStuckLoading;
+  const shouldShowLoading = (isActuallyLoading && !isStuckLoading) || isDelayedLoading;
 
 
   // Afficher le composant uniquement si le CV a une offre d'emploi associée ET si la feature est activée

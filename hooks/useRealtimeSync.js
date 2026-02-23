@@ -163,32 +163,9 @@ export function useRealtimeSync(options = {}) {
   }, [connect, disconnect]);
 
   // Se connecter au montage et se déconnecter au démontage
-  // + reconnexion immédiate au retour en foreground (fix iOS Safari qui coupe le SSE en arrière-plan)
   useEffect(() => {
     connect();
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // iOS Safari laisse le SSE en état zombie (readyState OPEN mais connexion morte)
-        // Forcer la reconnexion à chaque retour en foreground
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = null;
-        }
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close();
-          eventSourceRef.current = null;
-        }
-        connect();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      disconnect();
-    };
+    return disconnect;
   }, [connect, disconnect]);
 
   return {
