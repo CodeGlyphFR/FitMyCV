@@ -177,6 +177,18 @@ export function useMatchScore({ currentVersion }) {
     }
   }, [t, addNotification, localDeviceId, executeRecaptcha]);
 
+  // Polling fallback : quand le calcul est en cours, vérifier périodiquement
+  // Contourne les problèmes de SSE sur iOS Safari (connexion zombie, visibilitychange non fiable)
+  useEffect(() => {
+    if (matchScoreStatus !== 'inprogress') return;
+
+    const interval = setInterval(() => {
+      fetchMatchScore();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [matchScoreStatus, fetchMatchScore]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
