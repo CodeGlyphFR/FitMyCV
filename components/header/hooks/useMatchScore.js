@@ -183,6 +183,57 @@ export function useMatchScore({ currentVersion }) {
     };
   }, []);
 
+  // Polling autonome : quand le calcul est en cours, interroger l'API
+  // directement toutes les 3s avec son propre fetch (bypass fetchIdRef).
+  // Sur mobile, le SSE tombe silencieusement et les 9 autres callers de
+  // fetchMatchScore() se cannibalisent via le fetchIdRef counter.
+  useEffect(() => {
+    if (matchScoreStatus !== 'inprogress') return;
+
+    let active = true;
+
+    const poll = async () => {
+      try {
+        const cookies = document.cookie.split(';');
+        const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+        if (!cvFileCookie || !active) return;
+
+        const file = decodeURIComponent(cvFileCookie.split('=')[1]);
+        const res = await fetch(
+          `/api/cv/match-score?file=${encodeURIComponent(file)}&_=${Date.now()}`,
+          { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } }
+        );
+
+        if (!active || !res.ok) return;
+        const data = await res.json();
+        if (!active) return;
+
+        const status = data.status || 'idle';
+        // Appliquer uniquement quand le score est prêt (pas pendant inprogress)
+        if (status !== 'inprogress' && data.score != null) {
+          // Invalider les fetchMatchScore() en vol pour éviter qu'ils n'écrasent
+          fetchIdRef.current++;
+          setMatchScore(data.score);
+          setScoreBefore(data.scoreBefore || null);
+          setMatchScoreStatus(status);
+          setOptimiseStatus(data.optimiseStatus || 'idle');
+          setHasJobOffer(data.hasJobOffer || false);
+          setHasScoreBreakdown(data.hasScoreBreakdown || false);
+          setIsLoadingMatchScore(false);
+        }
+      } catch {
+        // Silencieux — le prochain tick réessaiera
+      }
+    };
+
+    const pollInterval = setInterval(poll, 3000);
+
+    return () => {
+      active = false;
+      clearInterval(pollInterval);
+    };
+  }, [matchScoreStatus]);
+
   return {
     matchScore,
     scoreBefore,
