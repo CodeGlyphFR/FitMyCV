@@ -231,12 +231,14 @@ select:-moz-autofill:focus {
   filter: none !important;
 }
 
-/* Styles spécifiques pour les champs glassmorphisme (avec backdrop-blur-sm) */
+/* Styles spécifiques pour les champs glassmorphisme (dark background + white text) */
+/* Le rgba semi-transparent ne suffit pas : Chrome peint son propre fond autofill SOUS le box-shadow,
+   donc il faut un fond opaque sombre pour masquer le jaune/blanc natif du navigateur. */
 .backdrop-blur-sm:-webkit-autofill,
 .backdrop-blur-sm:-webkit-autofill:hover,
 .backdrop-blur-sm:-webkit-autofill:focus,
 .backdrop-blur-sm:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.2) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px rgb(30, 41, 59) inset !important;
   -webkit-text-fill-color: white !important;
   transition: background-color 5000s ease-in-out 0s !important;
   caret-color: white !important;
@@ -247,7 +249,7 @@ select:-moz-autofill:focus {
 .backdrop-blur-sm:-moz-autofill,
 .backdrop-blur-sm:-moz-autofill:hover,
 .backdrop-blur-sm:-moz-autofill:focus {
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: rgb(30, 41, 59) !important;
   color: white !important;
   filter: none !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
