@@ -177,17 +177,50 @@ export function useMatchScore({ currentVersion }) {
     }
   }, [t, addNotification, localDeviceId, executeRecaptcha]);
 
-  // Polling fallback : quand le calcul est en cours, vérifier périodiquement
-  // Contourne les problèmes de SSE sur iOS Safari (connexion zombie, visibilitychange non fiable)
+  // Polling fallback : fetch dédié sans abort controller
+  // fetchMatchScore() abort la requête précédente à chaque appel, ce qui empêche
+  // le score d'arriver sur les réseaux mobiles lents (> 3s de latence)
+  const pollingInFlightRef = useRef(false);
+
   useEffect(() => {
     if (matchScoreStatus !== 'inprogress') return;
 
-    const interval = setInterval(() => {
-      fetchMatchScore();
-    }, 3000);
+    const poll = async () => {
+      if (pollingInFlightRef.current) return;
+      pollingInFlightRef.current = true;
 
+      try {
+        const cookies = document.cookie.split(';');
+        const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+        if (!cvFileCookie) return;
+
+        const file = decodeURIComponent(cvFileCookie.split('=')[1]);
+        const res = await fetch(
+          `/api/cv/match-score?file=${encodeURIComponent(file)}&_=${Date.now()}`,
+          { cache: 'no-store' }
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.status && data.status !== 'inprogress') {
+          setMatchScore(data.score);
+          setScoreBefore(data.scoreBefore || null);
+          setMatchScoreStatus(data.status || 'idle');
+          setOptimiseStatus(data.optimiseStatus || 'idle');
+          setHasJobOffer(data.hasJobOffer || false);
+          setHasScoreBreakdown(data.hasScoreBreakdown || false);
+          setIsLoadingMatchScore(false);
+        }
+      } catch {
+        // Ignorer silencieusement — le prochain poll réessaiera
+      } finally {
+        pollingInFlightRef.current = false;
+      }
+    };
+
+    const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
-  }, [matchScoreStatus, fetchMatchScore]);
+  }, [matchScoreStatus]);
 
   // Cleanup on unmount
   useEffect(() => {
