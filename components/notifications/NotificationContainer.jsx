@@ -59,7 +59,7 @@ function NotificationItem({ notification, onRemove, t }) {
     >
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1">
-          <div className="text-sm font-medium mb-2">{message}</div>
+          <div className="text-sm font-medium mb-2 break-words">{message}</div>
           {redirectUrl && (
             <button
               onClick={handleActionClick}
