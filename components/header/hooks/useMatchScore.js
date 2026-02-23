@@ -5,6 +5,7 @@ import { useNotifications } from "@/components/notifications/NotificationProvide
 import { useBackgroundTasks } from "@/components/providers/BackgroundTasksProvider";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 /**
  * Hook for managing match score state and fetching
@@ -13,6 +14,7 @@ export function useMatchScore({ currentVersion }) {
   const { t } = useLanguage();
   const { localDeviceId } = useBackgroundTasks();
   const { addNotification } = useNotifications();
+  const { executeRecaptcha } = useRecaptcha();
 
   const [matchScore, setMatchScore] = useState(null);
   const [scoreBefore, setScoreBefore] = useState(null);
@@ -129,6 +131,9 @@ export function useMatchScore({ currentVersion }) {
 
       const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
 
+      // Obtenir le token reCAPTCHA
+      const recaptchaToken = await executeRecaptcha('calculate_match_score');
+
       // Envoyer la requête pour lancer le calcul
       const response = await fetch("/api/background-tasks/calculate-match-score", {
         method: "POST",
@@ -137,6 +142,7 @@ export function useMatchScore({ currentVersion }) {
           cvFile: currentFile,
           isAutomatic: false,
           deviceId: localDeviceId,
+          recaptchaToken,
         }),
       });
 
@@ -169,7 +175,7 @@ export function useMatchScore({ currentVersion }) {
 
       addNotification(notification);
     }
-  }, [t, addNotification, localDeviceId]);
+  }, [t, addNotification, localDeviceId, executeRecaptcha]);
 
   // Cleanup on unmount
   useEffect(() => {
