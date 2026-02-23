@@ -105,14 +105,14 @@ module.exports = async (prisma) => {
       });
     }
 
-    // e. BackgroundTask.result (JSON) — traiter en batch
+    // e. BackgroundTask.result (String contenant du JSON) — traiter en batch
     // Récupérer toutes les BackgroundTask qui contiennent un ancien filename dans result
     const oldFilenames = mapping.map(m => m.oldFilename);
     const tasksWithResult = await tx.backgroundTask.findMany({
       where: {
         result: { not: null },
         OR: oldFilenames.map(f => ({
-          result: { path: [], string_contains: f },
+          result: { contains: f },
         })),
       },
       select: { id: true, result: true },
@@ -125,7 +125,7 @@ module.exports = async (prisma) => {
       const filenameMap = new Map(mapping.map(m => [m.oldFilename, m.newFilename]));
 
       for (const task of tasksWithResult) {
-        let resultStr = JSON.stringify(task.result);
+        let resultStr = task.result;
         let changed = false;
 
         for (const [oldFn, newFn] of filenameMap) {
@@ -138,7 +138,7 @@ module.exports = async (prisma) => {
         if (changed) {
           await tx.backgroundTask.update({
             where: { id: task.id },
-            data: { result: JSON.parse(resultStr) },
+            data: { result: resultStr },
           });
         }
       }
