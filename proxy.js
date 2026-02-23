@@ -271,8 +271,9 @@ export async function proxy(request) {
     // Content Security Policy
     'Content-Security-Policy': [
       "default-src 'self'",
-      // unsafe-eval et unsafe-inline uniquement en dev (HMR/Fast Refresh) — inutile en production avec App Router
-      `script-src 'self'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval' 'unsafe-inline'" : ''} https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com`,
+      // unsafe-inline nécessaire : Next.js App Router injecte des scripts inline pour le streaming RSC (self.__next_f.push)
+      // unsafe-eval uniquement en dev (HMR/Fast Refresh)
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com", // Tailwind + Google Fonts + Prism (docs)
       "img-src 'self' data: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
