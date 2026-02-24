@@ -105,6 +105,21 @@ export default function OnboardingHighlight({
     };
   }, [additionalCutoutSelector, targetSelector, show, blurEnabled]);
 
+  // Détecter si l'élément cible est dans le scroll-container (CV) ou dans la TopBar
+  // Les rings dans le scroll-container passent derrière la TopBar (z-[10000])
+  // Les rings dans la TopBar restent au-dessus (z-[10001])
+  const [isInScrollArea, setIsInScrollArea] = useState(false);
+
+  useEffect(() => {
+    if (!targetSelector || !show) return;
+    const el = document.querySelector(targetSelector);
+    if (el) {
+      setIsInScrollArea(el.closest('#scroll-container') !== null);
+    }
+  }, [targetSelector, show]);
+
+  const ringsZIndex = isInScrollArea ? 'z-[10000]' : 'z-[10001]';
+
   const rect = useMemo(() => {
     if (!bounds) return null;
 
@@ -171,20 +186,27 @@ export default function OnboardingHighlight({
     backdropStyle.WebkitMaskComposite = webkitCompositeValues;
   }
 
-  const highlightContent = (
+  // Séparer backdrop (z-[10001], au-dessus de la TopBar) et rings/glow (z-[10000], en-dessous)
+  // Ainsi les rings passent derrière la TopBar au scroll, mais le backdrop blur la couvre
+  const backdropContent = blurEnabled ? (
     <div
       className="fixed inset-0 z-[10001] pointer-events-none"
       role="presentation"
       aria-hidden="true"
     >
-      {/* Backdrop avec blur - masqué aux positions des boutons avec un fondu circulaire doux */}
-      {blurEnabled && (
-        <div
-          className="absolute inset-0 pointer-events-auto"
-          style={backdropStyle}
-        />
-      )}
+      <div
+        className="absolute inset-0 pointer-events-auto"
+        style={backdropStyle}
+      />
+    </div>
+  ) : null;
 
+  const ringsContent = (
+    <div
+      className={`fixed inset-0 ${ringsZIndex} pointer-events-none`}
+      role="presentation"
+      aria-hidden="true"
+    >
       {/* Ring pulsant vert autour de l'élément principal */}
       <div
         className="absolute pointer-events-none animate-pulse-ring-onboarding"
@@ -245,7 +267,12 @@ export default function OnboardingHighlight({
     </div>
   );
 
-  return typeof window !== 'undefined'
-    ? createPortal(highlightContent, document.body)
-    : null;
+  if (typeof window === 'undefined') return null;
+
+  return (
+    <>
+      {backdropContent && createPortal(backdropContent, document.body)}
+      {createPortal(ringsContent, document.body)}
+    </>
+  );
 }
