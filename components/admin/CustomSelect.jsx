@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 export function CustomSelect({ value, onChange, options, className = '', placeholder = '' }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,32 +55,7 @@ export function CustomSelect({ value, onChange, options, className = '', placeho
   }, [isOpen]);
 
   // Bloquer le scroll du body quand le dropdown est ouvert
-  useEffect(() => {
-    if (!isOpen) return;
-
-    // Sauvegarder la position de scroll actuelle
-    const scrollY = window.scrollY;
-
-    // Calculer la largeur de la scrollbar
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    // Bloquer le scroll du body et compenser la disparition de la scrollbar
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-
-    return () => {
-      // Restaurer le scroll du body
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      window.scrollTo(0, scrollY);
-    };
-  }, [isOpen]);
+  useScrollLock(isOpen);
 
   return (
     <>

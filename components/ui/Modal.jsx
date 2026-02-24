@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 export default function Modal({
   open,
@@ -31,32 +32,8 @@ export default function Modal({
     default: "max-w-lg"
   }[size] || "max-w-lg";
 
-  // Désactiver le scroll quand la modal est ouverte (pattern body fixed, aligné avec OnboardingModal)
-  React.useEffect(() => {
-    if (open && mounted) {
-      const scrollY = window.scrollY;
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-
-      return () => {
-        const currentTop = parseInt(document.body.style.top || '0', 10);
-        const restoreY = Math.abs(currentTop);
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.paddingRight = '';
-        window.scrollTo(0, restoreY);
-      };
-    }
-  }, [open, mounted]);
+  // Désactiver le scroll quand la modal est ouverte
+  useScrollLock(open && mounted);
 
   // Gestion du focus initial et restauration
   React.useEffect(() => {

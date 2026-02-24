@@ -416,15 +416,8 @@ export default function TopBar() {
   if (status === "loading") {
     return (
       <div
-        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
-        style={{
-          paddingTop: 'env(safe-area-inset-top)',
-          WebkitBackfaceVisibility: 'hidden',
-          backfaceVisibility: 'hidden',
-          WebkitTransform: 'translate3d(0, 0, 0)',
-          transform: 'translate3d(0, 0, 0)',
-          pointerEvents: 'auto'
-        }}
+        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="w-full p-3 flex items-center justify-between">
           <span className="text-sm font-medium text-white drop-shadow-lg">{t("topbar.loading")}</span>
@@ -443,15 +436,8 @@ export default function TopBar() {
     return (
       <div
         ref={barRef}
-        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
-        style={{
-          paddingTop: 'env(safe-area-inset-top)',
-          WebkitBackfaceVisibility: 'hidden',
-          backfaceVisibility: 'hidden',
-          WebkitTransform: 'translate3d(0, 0, 0)',
-          transform: 'translate3d(0, 0, 0)',
-          pointerEvents: 'auto'
-        }}
+        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="w-full p-3 flex items-center justify-between">
           <span className="text-sm font-medium text-white/60 animate-pulse drop-shadow-lg">
@@ -466,15 +452,8 @@ export default function TopBar() {
     <>
       <div
         ref={barRef}
-        className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
-        style={{
-          paddingTop: 'env(safe-area-inset-top)',
-          WebkitBackfaceVisibility: 'hidden',
-          backfaceVisibility: 'hidden',
-          WebkitTransform: 'translate3d(0, 0, 0)',
-          transform: 'translate3d(0, 0, 0)',
-          pointerEvents: 'auto'
-        }}
+        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="w-full p-3 flex flex-wrap md:flex-nowrap items-center gap-x-2 gap-y-2 sm:gap-3">
           {/* User Icon */}

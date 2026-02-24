@@ -7,6 +7,7 @@ import { Sparkles, HelpCircle, Rocket, X, Check } from 'lucide-react';
 import TipBox from '@/components/ui/TipBox';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -253,33 +254,7 @@ export default function WelcomeModal({
   );
 
   // Gestion du scroll body
-  useEffect(() => {
-    if (!open) return;
-
-    const scrollY = window.scrollY;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-    document.body.style.touchAction = 'none';
-
-    return () => {
-      const currentTop = parseInt(document.body.style.top || '0', 10);
-      const restoreY = Math.abs(currentTop);
-
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      document.body.style.touchAction = '';
-
-      window.scrollTo(0, restoreY);
-    };
-  }, [open]);
+  useScrollLock(open);
 
   // Gestion clavier
   useEffect(() => {

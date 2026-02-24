@@ -17,11 +17,13 @@ export default function CookieRegistry() {
   ];
 
   const toggleCategory = (category) => {
-    scrollPositionRef.current = window.scrollY;
+    const container = document.getElementById('scroll-container');
+    scrollPositionRef.current = container ? container.scrollTop : window.scrollY;
     setExpandedCategory(expandedCategory === category ? null : category);
     // Restaurer la position après le re-render
     requestAnimationFrame(() => {
-      window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
+      if (container) container.scrollTop = scrollPositionRef.current;
+      else window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
     });
   };
 

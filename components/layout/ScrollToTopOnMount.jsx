@@ -12,8 +12,10 @@ export default function ScrollToTopOnMount() {
     if (typeof window !== 'undefined') {
       const shouldScroll = sessionStorage.getItem('scrollToTop');
       if (shouldScroll === 'true') {
-        // Scroller en haut
-        window.scrollTo(0, 0);
+        // Scroller en haut (scroll container ou fallback window)
+        const container = document.getElementById('scroll-container');
+        if (container) container.scrollTop = 0;
+        else window.scrollTo(0, 0);
         // Nettoyer le flag
         sessionStorage.removeItem('scrollToTop');
       }

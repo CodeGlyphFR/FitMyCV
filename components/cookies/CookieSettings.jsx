@@ -42,7 +42,9 @@ export default function CookieSettings() {
   useEffect(() => {
     if (saved && scrollPositionRef.current > 0) {
       requestAnimationFrame(() => {
-        window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
+        const container = document.getElementById('scroll-container');
+        if (container) container.scrollTop = scrollPositionRef.current;
+        else window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
       });
     }
   }, [saved]);
@@ -70,7 +72,8 @@ export default function CookieSettings() {
   };
 
   const handleAcceptAll = () => {
-    scrollPositionRef.current = window.scrollY;
+    const container = document.getElementById('scroll-container');
+    scrollPositionRef.current = container ? container.scrollTop : window.scrollY;
     const allAccepted = acceptAllCookies();
     setPreferences(allAccepted);
     setConsent(allAccepted);
@@ -79,7 +82,8 @@ export default function CookieSettings() {
   };
 
   const handleRejectAll = () => {
-    scrollPositionRef.current = window.scrollY;
+    const container = document.getElementById('scroll-container');
+    scrollPositionRef.current = container ? container.scrollTop : window.scrollY;
     const allRejected = rejectAllCookies();
     setPreferences(allRejected);
     setConsent(allRejected);
@@ -88,7 +92,8 @@ export default function CookieSettings() {
   };
 
   const handleReset = () => {
-    scrollPositionRef.current = window.scrollY;
+    const container = document.getElementById('scroll-container');
+    scrollPositionRef.current = container ? container.scrollTop : window.scrollY;
     clearConsent();
     setConsent(null);
     setPreferences(DEFAULT_CONSENT);

@@ -9,7 +9,6 @@ const oswald = Oswald({
   display: "swap",
 });
 import ConditionalTopBar from "@/components/layout/ConditionalTopBar";
-import ConditionalTopBarSpacer from "@/components/layout/ConditionalTopBarSpacer";
 import ConditionalFooter from "@/components/layout/ConditionalFooter";
 import ConditionalMainWrapper from "@/components/layout/ConditionalMainWrapper";
 import CookieBanner from "@/components/cookies/CookieBanner";
@@ -193,7 +192,7 @@ export default async function RootLayout(props){
           }
         `}} />
       </head>
-      <body className="min-h-screen antialiased flex flex-col">
+      <body className="h-screen antialiased flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
         {/* Initial loading overlay - CSS pur, visible IMMÉDIATEMENT */}
         <div id="initial-loading-overlay">
           <div className="spinner-container">
@@ -207,11 +206,9 @@ export default async function RootLayout(props){
 
         <RootProviders session={session} initialSettings={initialSettings}>
           <GlobalBackground />
-          <div className="relative z-10 flex flex-col min-h-screen">
-            {/* TopBar en position fixed */}
-            <ConditionalTopBar />
-            {/* Spacer pour compenser la TopBar retirée du flux */}
-            <ConditionalTopBarSpacer />
+          {/* TopBar dans le flux normal (pas position:fixed) — évite le bug WebKit #160953 */}
+          <ConditionalTopBar />
+          <div id="scroll-container" className="relative z-10 flex-1 overflow-y-auto min-h-0">
             <ConditionalMainWrapper
               footerPlaceholder={
                 <div className="footer-placeholder h-[56px]">
