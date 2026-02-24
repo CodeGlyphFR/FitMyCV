@@ -265,6 +265,10 @@ export async function POST(request) {
           createdAt: BigInt(Date.now() + taskIndex),
           shouldUpdateCvList: true,
           deviceId,
+          creditUsed: usageResult.usedCredit,
+          creditTransactionId: usageResult.transactionId || null,
+          featureName: usageResult.featureName || null,
+          featureCounterPeriodStart: usageResult.periodStart || null,
           payload: JSON.stringify({
             taskId: task.id,
             offerId: offer.id,
@@ -328,6 +332,10 @@ export async function POST(request) {
           createdAt: BigInt(Date.now() + taskIndex),
           shouldUpdateCvList: true,
           deviceId,
+          creditUsed: usageResult.usedCredit,
+          creditTransactionId: usageResult.transactionId || null,
+          featureName: usageResult.featureName || null,
+          featureCounterPeriodStart: usageResult.periodStart || null,
           payload: JSON.stringify({
             taskId: task.id,
             offerId: offer.id,
