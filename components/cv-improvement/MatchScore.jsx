@@ -26,73 +26,43 @@ export default function MatchScore({
   const [isHovered, setIsHovered] = React.useState(false);
   const [showSuccessEffect, setShowSuccessEffect] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
-  const [isDelayedLoading, setIsDelayedLoading] = React.useState(false);
   const prevStatusRef = React.useRef(status);
   const prevCvFileRef = React.useRef(currentCvFile);
   const isRefreshingRef = React.useRef(false);
   const prevScoreRef = React.useRef(score);
-  const prevOptimizeButtonReadyRef = React.useRef(isOptimizeButtonReady);
-  const delayTimeoutRef = React.useRef(null);
 
   // Réinitialiser les états visuels lors d'un changement de CV
   React.useEffect(() => {
     if (prevCvFileRef.current !== currentCvFile) {
       setIsHovered(false);
       setShowSuccessEffect(false);
-      setIsDelayedLoading(false);
-      if (delayTimeoutRef.current) {
-        clearTimeout(delayTimeoutRef.current);
-        delayTimeoutRef.current = null;
-      }
       prevCvFileRef.current = currentCvFile;
     }
   }, [currentCvFile]);
 
-  // Gérer l'animation qui continue jusqu'à ce que le bouton Optimiser soit disponible
+  // Forcer la sortie du hover quand le chargement commence (fix iOS)
   React.useEffect(() => {
     const wasIdle = prevStatusRef.current === "idle" || prevStatusRef.current === null;
     const isNowLoading = status === "loading" || status === "inprogress";
-    const wasLoading = prevStatusRef.current === "loading" || prevStatusRef.current === "inprogress";
-    const isNowIdle = status === "idle" || status === null;
 
-    // Si on commence à charger, forcer la sortie du hover (fix iOS)
     if (wasIdle && isNowLoading) {
       setIsHovered(false);
-      // Activer l'animation prolongée
-      setIsDelayedLoading(true);
     }
 
-    // Si le status passe à idle mais qu'on est en delayed loading
-    if (wasLoading && isNowIdle && !isLoading && !isRefreshing) {
-      // isDelayedLoading reste à true jusqu'à ce que hasScoreBreakdown devienne true
-    }
-
-    // Mettre à jour la ref pour la prochaine fois
     prevStatusRef.current = status;
-  }, [status, isLoading, isRefreshing]);
+  }, [status]);
 
-  // Arrêter l'animation quand le bouton Optimiser devient actif (visible ET cliquable)
-  React.useEffect(() => {
-    const wasNotReady = !prevOptimizeButtonReadyRef.current;
-    const isNowReady = isOptimizeButtonReady;
-
-    if (wasNotReady && isNowReady && isDelayedLoading) {
-      setIsDelayedLoading(false);
-    }
-
-    prevOptimizeButtonReadyRef.current = isOptimizeButtonReady;
-  }, [isOptimizeButtonReady, isDelayedLoading]);
-
-  // Effet de succès quand le score est calculé (détection de transition score null -> score valide)
+  // Effet de succès quand le score change (pas au chargement initial)
   React.useEffect(() => {
     const hasValidScore = score !== null && score !== undefined;
     const scoreChanged = prevScoreRef.current !== score;
+    // Anneau vert uniquement au changement de score (recalcul), pas au chargement initial
+    const isScoreChange = hasValidScore && scoreChanged && prevScoreRef.current !== null;
 
-    if (hasValidScore && scoreChanged) {
+    if (isScoreChange) {
       setShowSuccessEffect(true);
       const timer = setTimeout(() => setShowSuccessEffect(false), 1000);
 
-      // Déclencher un événement pour notifier que le score a été mis à jour
       window.dispatchEvent(new CustomEvent('score:updated', {
         detail: { cvFile: currentCvFile, score, status }
       }));
@@ -100,12 +70,19 @@ export default function MatchScore({
       prevScoreRef.current = score;
       return () => clearTimeout(timer);
     }
+
+    // Toujours tracker le score courant (y compris le chargement initial)
+    if (hasValidScore && scoreChanged) {
+      prevScoreRef.current = score;
+    }
   }, [status, score, currentCvFile]);
 
   // Détecter si on est vraiment en train de charger (score ou optimisation)
+  // Note: isLoading (fetchMatchScore en cours) est ignoré quand on a déjà un score,
+  // pour éviter que les backup fetches ne flashent le score existant
   const isActuallyLoading = (status === "loading" || isLoading || isRefreshing || optimiseStatus === "inprogress");
-  const isStuckLoading = score !== null && !isLoading && status !== "loading" && !isRefreshing && optimiseStatus !== "inprogress";
-  const shouldShowLoading = (isActuallyLoading && !isStuckLoading) || isDelayedLoading;
+  const isStuckLoading = score !== null && status !== "loading" && !isRefreshing && optimiseStatus !== "inprogress";
+  const shouldShowLoading = isActuallyLoading && !isStuckLoading;
 
 
   // Afficher le composant uniquement si le CV a une offre d'emploi associée ET si la feature est activée

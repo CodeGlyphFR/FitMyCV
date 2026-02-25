@@ -196,13 +196,7 @@ export default function Header(props){
 
     const handleRealtimeCvUpdate = (event) => {
       if (!cvValidatedRef.current) return;
-      // Ne pas re-fetcher si l'event contient déjà le score complet
-      // (handleRealtimeCvMetadataUpdate l'applique directement depuis les données SSE)
-      const eventData = event.detail?.data;
-      const hasCompleteScore = eventData?.matchScore !== undefined && eventData?.matchScoreStatus !== 'inprogress';
-      if (!hasCompleteScore) {
-        debouncedFetchMatchScore();
-      }
+      debouncedFetchMatchScore();
     };
 
     // Écouter les changements de métadonnées (status, score, etc.)
@@ -231,18 +225,8 @@ export default function Header(props){
           setOptimiseStatus(eventData.optimiseStatus);
         }
       }
-      // Fetch de backup uniquement si le SSE ne contient pas le score complet
-      // Quand le score EST présent et status !== inprogress, les données SSE suffisent
-      const hasCompleteScore = eventData?.matchScore !== undefined && eventData?.matchScoreStatus !== 'inprogress';
-      if (hasCompleteScore) {
-        // Annuler le debounce en attente de handleRealtimeCvUpdate
-        if (realtimeFetchTimeout) {
-          clearTimeout(realtimeFetchTimeout);
-          realtimeFetchTimeout = null;
-        }
-      } else {
-        debouncedFetchMatchScore();
-      }
+      // Fetch de backup pour les champs non présents dans l'event SSE (hasJobOffer, hasScoreBreakdown, etc.)
+      debouncedFetchMatchScore();
     };
 
     // Écouter les changements de CV pour recharger les infos de source
