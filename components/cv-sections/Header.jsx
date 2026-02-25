@@ -196,7 +196,13 @@ export default function Header(props){
 
     const handleRealtimeCvUpdate = (event) => {
       if (!cvValidatedRef.current) return;
-      debouncedFetchMatchScore();
+      // Ne pas re-fetcher si l'event contient déjà le score complet
+      // (handleRealtimeCvMetadataUpdate l'applique directement depuis les données SSE)
+      const eventData = event.detail?.data;
+      const hasCompleteScore = eventData?.matchScore !== undefined && eventData?.matchScoreStatus !== 'inprogress';
+      if (!hasCompleteScore) {
+        debouncedFetchMatchScore();
+      }
     };
 
     // Écouter les changements de métadonnées (status, score, etc.)
@@ -237,12 +243,6 @@ export default function Header(props){
       } else {
         debouncedFetchMatchScore();
       }
-    };
-
-    // WORKAROUND iOS: Forcer le refresh si MatchScore détecte une incohérence
-    const handleForceRefresh = (event) => {
-      if (!cvValidatedRef.current) return;
-      fetchMatchScore();
     };
 
     // Écouter les changements de CV pour recharger les infos de source
@@ -297,7 +297,6 @@ export default function Header(props){
 
     window.addEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
     window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
-    window.addEventListener('matchscore:force-refresh', handleForceRefresh);
     window.addEventListener('cv:selected', handleCvSelected);
     window.addEventListener('tokens:updated', handleTokensUpdated);
     window.addEventListener('task:completed', handleTaskCompleted);
@@ -308,7 +307,6 @@ export default function Header(props){
       if (visibilityTimeout) clearTimeout(visibilityTimeout);
       window.removeEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
       window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
-      window.removeEventListener('matchscore:force-refresh', handleForceRefresh);
       window.removeEventListener('cv:selected', handleCvSelected);
       window.removeEventListener('tokens:updated', handleTokensUpdated);
       window.removeEventListener('task:completed', handleTaskCompleted);

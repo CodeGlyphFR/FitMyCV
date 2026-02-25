@@ -83,20 +83,6 @@ export default function MatchScore({
     prevOptimizeButtonReadyRef.current = isOptimizeButtonReady;
   }, [isOptimizeButtonReady, isDelayedLoading]);
 
-  // WORKAROUND iOS: Forcer le re-render si on détecte un score valide alors qu'on est en loading
-  React.useEffect(() => {
-    if (score !== null && score !== prevScoreRef.current && (status === 'loading' || isLoading)) {
-
-      // Déclencher un événement pour forcer le parent à se rafraîchir
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('matchscore:force-refresh', {
-          detail: { score, cvFile: currentCvFile }
-        }));
-      }
-    }
-    prevScoreRef.current = score;
-  }, [score, status, isLoading, currentCvFile]);
-
   // Effet de succès quand le score est calculé (détection de transition score null -> score valide)
   React.useEffect(() => {
     const hasValidScore = score !== null && score !== undefined;
@@ -111,6 +97,7 @@ export default function MatchScore({
         detail: { cvFile: currentCvFile, score, status }
       }));
 
+      prevScoreRef.current = score;
       return () => clearTimeout(timer);
     }
   }, [status, score, currentCvFile]);
@@ -256,7 +243,8 @@ export default function MatchScore({
           className={`
             absolute inset-0 flex flex-col items-center justify-center rounded-full
             transition-all duration-300
-            ${shouldShowLoading || (isHovered && !isDisabled) || (score === null && status !== "error" && !isDisabled) ? "blur-sm" : "blur-0"}
+            ${shouldShowLoading ? "opacity-0" : "opacity-100"}
+            ${!shouldShowLoading && ((isHovered && !isDisabled) || (score === null && status !== "error" && !isDisabled)) ? "blur-sm" : "blur-0"}
           `}
         >
           {score !== null && (
