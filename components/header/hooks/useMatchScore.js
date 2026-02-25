@@ -20,7 +20,7 @@ export function useMatchScore({ currentVersion }) {
   const [scoreBefore, setScoreBefore] = useState(null);
   const [matchScoreStatus, setMatchScoreStatus] = useState("idle");
   const [optimiseStatus, setOptimiseStatus] = useState("idle");
-  const [isLoadingMatchScore, setIsLoadingMatchScore] = useState(false);
+  const [isLoadingMatchScore, setIsLoadingMatchScore] = useState(true);
   const [currentCvFile, setCurrentCvFile] = useState(null);
   const [hasJobOffer, setHasJobOffer] = useState(false);
   const [hasScoreBreakdown, setHasScoreBreakdown] = useState(false);
