@@ -226,7 +226,9 @@ export function useGeneratorModal({
 
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
-      formData.append("recaptchaToken", recaptchaToken);
+      if (recaptchaToken) {
+        formData.append("recaptchaToken", recaptchaToken);
+      }
       formData.append("userInterfaceLanguage", interfaceLanguage || "fr");
 
       if (!isTemplateCreation) {
@@ -333,7 +335,7 @@ export function useGeneratorModal({
 
       const notification = {
         type: "error",
-        message: error?.message || t("cvGenerator.notifications.error"),
+        message: error?.message ? t(error.message) : t("cvGenerator.notifications.error"),
         duration: 10000,
       };
 

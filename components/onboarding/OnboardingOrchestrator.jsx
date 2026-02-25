@@ -89,13 +89,18 @@ export default function OnboardingOrchestrator() {
     if (onboardingState.step4?.cvGenerated) setCvGenerated(true);
     if (onboardingState.step4?.cvFilename) setGeneratedCvFilename(onboardingState.step4.cvFilename);
 
+    // Ne jamais écraser un ref à false s'il est déjà true dans la session.
+    // Les refs trackent "le modal a été montré dans cette session", ce qui est un fait
+    // irréversible. Les remettre à false causerait des bugs (ex: Phase B du step 1
+    // ne s'active pas car le ref est reset par un changement d'onboardingState non lié).
+    // Le reset à false est géré par les effects de sortie de step (ex: currentStep !== 1).
     if (onboardingState.modals) {
-      step1ModalShownRef.current = onboardingState.modals.step1?.completed || false;
-      step2ModalShownRef.current = onboardingState.modals.step2?.completed || false;
-      step5ModalShownRef.current = onboardingState.modals.step5?.completed || false;
-      step7ModalShownRef.current = onboardingState.modals.step7?.completed || false;
-      step8ModalShownRef.current = onboardingState.modals.step8?.completed || false;
-      step9ModalShownRef.current = onboardingState.modals.step9?.completed || false;
+      if (onboardingState.modals.step1?.completed) step1ModalShownRef.current = true;
+      if (onboardingState.modals.step2?.completed) step2ModalShownRef.current = true;
+      if (onboardingState.modals.step5?.completed) step5ModalShownRef.current = true;
+      if (onboardingState.modals.step7?.completed) step7ModalShownRef.current = true;
+      if (onboardingState.modals.step8?.completed) step8ModalShownRef.current = true;
+      if (onboardingState.modals.step9?.completed) step9ModalShownRef.current = true;
     }
   }, [onboardingState]);
 
@@ -579,7 +584,11 @@ export default function OnboardingOrchestrator() {
     setTooltipClosed(true);
 
     // Actions spécifiques par étape (même si fermé par X)
-    // Step 1: ne pas compléter ici — l'utilisateur doit d'abord interagir avec un kebab
+    // Step 1: persister que le modal a été vu (pour éviter qu'il se réouvre au refresh),
+    // mais ne PAS compléter le step — l'utilisateur doit d'abord interagir avec un kebab.
+    if (currentStep === 1) {
+      try { await markModalCompleted('step1'); } catch (e) { /* continue */ }
+    }
     if (currentStep === 2) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR), MODAL_ANIMATION_DELAY);
     }

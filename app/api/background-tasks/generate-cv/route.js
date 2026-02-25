@@ -132,7 +132,7 @@ export async function POST(request) {
     // Vérification reCAPTCHA (obligatoire en production)
     if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
       if (!recaptchaToken) {
-        return apiError('errors.auth.recaptchaFailed', { status: 403 });
+        return apiError('errors.api.auth.recaptchaFailed', { status: 403 });
       }
     }
     if (recaptchaToken) {
@@ -142,7 +142,7 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return apiError('errors.auth.recaptchaFailed', { status: 403 });
+        return apiError('errors.api.auth.recaptchaFailed', { status: 403 });
       }
     }
 
