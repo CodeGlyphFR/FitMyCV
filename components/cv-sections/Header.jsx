@@ -225,8 +225,18 @@ export default function Header(props){
           setOptimiseStatus(eventData.optimiseStatus);
         }
       }
-      // Fetch en backup pour les champs non présents dans l'event (hasJobOffer, etc.)
-      debouncedFetchMatchScore();
+      // Fetch de backup uniquement si le SSE ne contient pas le score complet
+      // Quand le score EST présent et status !== inprogress, les données SSE suffisent
+      const hasCompleteScore = eventData?.matchScore !== undefined && eventData?.matchScoreStatus !== 'inprogress';
+      if (hasCompleteScore) {
+        // Annuler le debounce en attente de handleRealtimeCvUpdate
+        if (realtimeFetchTimeout) {
+          clearTimeout(realtimeFetchTimeout);
+          realtimeFetchTimeout = null;
+        }
+      } else {
+        debouncedFetchMatchScore();
+      }
     };
 
     // WORKAROUND iOS: Forcer le refresh si MatchScore détecte une incohérence
@@ -265,10 +275,11 @@ export default function Header(props){
     const handleTaskCompleted = (event) => {
       const task = event.detail?.task;
       if (task?.type === 'calculate-match-score') {
-        // Délai pour laisser le temps à updateCvFile de persister le score en DB
-        // Le task:completed SSE arrive via BackgroundTask.status, mais le score
-        // est écrit séparément via updateCvFile dans handleResult
-        setTimeout(() => fetchMatchScore(), 500);
+        // Ne fetch que si le SSE n'a pas encore livré le score
+        // (évite un fetch redondant qui fait clignoter l'état de chargement sur mobile)
+        if (matchScoreStatusRef.current === 'inprogress') {
+          setTimeout(() => fetchMatchScore(), 500);
+        }
       }
     };
 
