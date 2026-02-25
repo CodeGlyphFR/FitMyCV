@@ -163,7 +163,7 @@ export default function ExportPdfModal({
               type="button"
               onClick={exportPdf}
               disabled={isExporting || !filename.trim()}
-              className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
             >
               {isExporting && (
                 <svg

@@ -215,10 +215,22 @@ function getPageBreakScript() {
 
         const pageWidthPx = pageWrapper.offsetWidth;
         const originalHeight = pageWrapper.offsetHeight;
-        const minMargin = 20;
-        const availableWidth = window.innerWidth - (minMargin * 2);
 
-        if (availableWidth < pageWidthPx * 0.98) {
+        // Mesurer la vraie largeur disponible via l'iframe element (same-origin srcDoc)
+        let containerWidth;
+        try {
+          containerWidth = window.frameElement
+            ? window.frameElement.clientWidth
+            : document.documentElement.clientWidth;
+        } catch (e) {
+          containerWidth = document.documentElement.clientWidth;
+        }
+
+        const bodyPadding = parseFloat(getComputedStyle(document.body).paddingLeft) +
+                            parseFloat(getComputedStyle(document.body).paddingRight);
+        const availableWidth = containerWidth - bodyPadding;
+
+        if (availableWidth < pageWidthPx) {
           const scale = availableWidth / pageWidthPx;
           pageWrapper.style.transform = 'scale(' + scale + ')';
           const visualHeight = originalHeight * scale;

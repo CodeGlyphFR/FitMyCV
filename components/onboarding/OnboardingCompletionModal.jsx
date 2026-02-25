@@ -237,11 +237,11 @@ export default function OnboardingCompletionModal({
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-full mx-2 md:mx-4 md:max-w-2xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-full mx-2 md:mx-4 md:max-w-2xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div>
+        <div className="flex-shrink-0">
           {/* Titre et boutons */}
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
@@ -298,7 +298,7 @@ export default function OnboardingCompletionModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative overflow-x-hidden overflow-y-auto flex-1 min-h-0" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               key={currentScreen}
@@ -411,7 +411,7 @@ export default function OnboardingCompletionModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10">
+        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10 flex-shrink-0">
           {/* Bouton Précédent (gauche, masqué au premier écran) */}
           {currentScreen > 0 ? (
             <button
