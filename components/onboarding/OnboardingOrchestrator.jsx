@@ -207,6 +207,10 @@ export default function OnboardingOrchestrator() {
   useEffect(() => {
     if (currentStep !== 1 || modalOpen || !step1ModalShownRef.current) return;
 
+    // Activer les highlights kebab (nécessaire au refresh : Phase A sort tôt
+    // quand le modal est déjà complété et ne set jamais step1TargetReady).
+    setStep1TargetReady(true);
+
     let menuWasSeen = false;
     let timeoutId = null;
 
