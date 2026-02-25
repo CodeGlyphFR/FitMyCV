@@ -69,6 +69,7 @@ export default function OnboardingOrchestrator() {
   const step7ReviewHandledRef = useRef(false);
   const step8ModalShownRef = useRef(false);
   const step9ModalShownRef = useRef(false);
+  const celebrateAndCompleteRef = useRef(null);
 
   // Debounced persistence
   const { queueUpdate } = useDebouncedPersist(updateOnboardingState);
@@ -78,6 +79,8 @@ export default function OnboardingOrchestrator() {
     triggerStepCelebration();
     setTimeout(() => markStepComplete(step), STEP_CELEBRATION_DURATION);
   }, [markStepComplete]);
+
+  useEffect(() => { celebrateAndCompleteRef.current = celebrateAndComplete; }, [celebrateAndComplete]);
 
   // ========== RESTORATION DES ÉTATS ==========
   useEffect(() => {
@@ -106,6 +109,15 @@ export default function OnboardingOrchestrator() {
   // ========== TOOLTIP LOGIC ==========
   useEffect(() => {
     if (!isOnboardingStateLoaded(onboardingState)) {
+      setTooltipClosed(false);
+      return;
+    }
+
+    // Step 0 (welcome modal) n'a pas de tooltip dans l'orchestrateur.
+    // Éviter de calculer tooltipClosed pour step 0, sinon la complétion
+    // du welcome modal met tooltipClosed=true, et cette valeur stale
+    // fait sauter le tooltip du step 1 lors de la transition 0→1.
+    if (currentStep === 0) {
       setTooltipClosed(false);
       return;
     }
@@ -201,7 +213,7 @@ export default function OnboardingOrchestrator() {
 
       if (menuWasSeen && menus.length === 0 && dialogs.length === 0) {
         observer.disconnect();
-        timeoutId = setTimeout(() => celebrateAndComplete(1), 300);
+        timeoutId = setTimeout(() => celebrateAndCompleteRef.current(1), 300);
       }
     };
 
@@ -212,7 +224,7 @@ export default function OnboardingOrchestrator() {
       observer.disconnect();
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [currentStep, modalOpen, celebrateAndComplete]);
+  }, [currentStep, modalOpen]);
 
   // Step 1 validation is now handled in handleModalComplete (editing is always active)
 
