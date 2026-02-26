@@ -111,6 +111,18 @@ export default function OnboardingOrchestrator() {
     });
   }, [cvGenerated, generatedCvFilename, queueUpdate]);
 
+  // ========== SCROLL TO TOP AVANT TOOLTIP ==========
+  // Quand on change de step, scroller le conteneur CV vers le haut pour que
+  // le tooltip et l'élément cible soient toujours visibles à l'écran.
+  useEffect(() => {
+    if (currentStep <= 0) return;
+
+    const container = document.getElementById('scroll-container');
+    if (container) {
+      container.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep]);
+
   // ========== TOOLTIP LOGIC ==========
   useEffect(() => {
     if (!isOnboardingStateLoaded(onboardingState)) {
