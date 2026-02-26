@@ -40,6 +40,7 @@ export async function GET(request) {
     const statusFilter = searchParams.get('status') || 'all';
     const stepFilter = searchParams.get('step');
     const search = searchParams.get('search') || '';
+    const searchTerm = search.trim().toLowerCase();
     const sortBy = searchParams.get('sortBy') || 'newest';
 
     // Ordre de tri
@@ -77,8 +78,6 @@ export async function GET(request) {
     });
 
     // Transformer les utilisateurs avec leur statut calculé
-    const searchTerm = search.trim().toLowerCase();
-
     let processedUsers = allUsers.map(user => {
       const state = user.onboardingState;
       const status = determineUserStatus(state);
@@ -113,15 +112,6 @@ export async function GET(request) {
         stuckDays,
       };
     });
-
-    // Filtrer par recherche
-    if (searchTerm) {
-      processedUsers = processedUsers.filter(user => {
-        const nameMatch = user.name?.toLowerCase().includes(searchTerm);
-        const emailMatch = user.email?.toLowerCase().includes(searchTerm);
-        return nameMatch || emailMatch;
-      });
-    }
 
     // Filtrer par statut
     if (statusFilter !== 'all') {

@@ -3,6 +3,7 @@ import { verifyToken, deleteVerificationToken, markEmailAsVerified } from '@/lib
 import prisma from '@/lib/prisma';
 import logger from '@/lib/security/secureLogger';
 import { CommonErrors, AuthErrors } from '@/lib/api/apiErrors';
+import { trackServerEvent } from '@/lib/analytics/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,6 +36,9 @@ export async function GET(request) {
       where: { id: verification.userId },
       select: { id: true, email: true, name: true },
     });
+
+    // Tracking PostHog — Email vérifié (lien email)
+    trackServerEvent(user.id, 'email_verified', { method: 'email_link' });
 
     logger.context('verify-email', 'info', `Email vérifié avec succès pour user ${verification.userId}`);
 

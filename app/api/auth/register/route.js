@@ -9,6 +9,7 @@ import { assignDefaultPlan } from "@/lib/subscription/subscriptions";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { DEFAULT_ONBOARDING_STATE } from "@/lib/onboarding/onboardingState";
 import { CommonErrors, AuthErrors } from "@/lib/api/apiErrors";
+import { trackServerEvent } from "@/lib/analytics/posthog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,6 +114,11 @@ export async function POST(request){
       onboardingState: DEFAULT_ONBOARDING_STATE, // Initialiser l'état d'onboarding complet
       privacyPolicyAcceptedAt: new Date(), // Date d'acceptation de la politique de confidentialité
     },
+  });
+
+  // Tracking PostHog — Compte créé
+  trackServerEvent(user.id, 'user_signed_up', {
+    $set: { email: normalizedEmail, name: cleanName },
   });
 
   // Attribuer le plan Gratuit par défaut
