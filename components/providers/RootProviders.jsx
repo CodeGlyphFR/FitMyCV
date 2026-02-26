@@ -13,6 +13,7 @@ import { SettingsProvider } from "@/lib/settings/SettingsContext";
 import { CreditCostsProvider } from "@/lib/creditCosts/CreditCostsContext";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import RecaptchaProvider from "@/components/providers/RecaptchaProvider";
+import PostHogProvider from "@/components/providers/PostHogProvider";
 import OnboardingProvider from "@/components/onboarding/OnboardingProvider";
 import PipelineProgressProvider from "@/components/providers/PipelineProgressProvider";
 
@@ -22,6 +23,7 @@ export default function RootProviders({ session, initialSettings, children }){
 
   return (
     <SessionProvider session={session}>
+      <PostHogProvider>
       <RecaptchaProvider>
         <SettingsProvider initialSettings={initialSettings}>
         <CreditCostsProvider>
@@ -53,6 +55,7 @@ export default function RootProviders({ session, initialSettings, children }){
         </CreditCostsProvider>
       </SettingsProvider>
       </RecaptchaProvider>
+      </PostHogProvider>
     </SessionProvider>
   );
 }
