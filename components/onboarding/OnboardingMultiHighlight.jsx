@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
  *
  * Utilisé pour highlighter tous les boutons kebab du CV pendant l'onboarding step 1.
  * Rend uniquement les anneaux (ring + glow), sans backdrop blur.
- * Les animations CSS sont fournies par OnboardingHighlight (rendu en parallèle).
+ * Les animations CSS sont incluses directement (composant autonome).
  *
  * @param {string} selector - Sélecteur CSS pour trouver tous les éléments à highlighter
  * @param {string} excludeSelector - Sélecteur CSS des éléments à exclure (évite le double ring)
@@ -99,7 +99,7 @@ export default function OnboardingMultiHighlight({
   if (!show || rects.length === 0) return null;
 
   const content = (
-    <div className="fixed inset-0 z-[10001] pointer-events-none" role="presentation" aria-hidden="true">
+    <div className="fixed inset-0 z-[10000] pointer-events-none" role="presentation" aria-hidden="true">
       {rects.map((rect, i) => (
         <Fragment key={i}>
           {/* Ring pulsant vert */}
@@ -127,6 +127,39 @@ export default function OnboardingMultiHighlight({
           />
         </Fragment>
       ))}
+
+      {/* Animations CSS autonomes — ne dépend plus de OnboardingHighlight */}
+      <style jsx global>{`
+        @keyframes pulse-ring-onboarding {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8),
+                        inset 0 0 0 3px rgba(16, 185, 129, 1);
+          }
+          50% {
+            box-shadow: 0 0 0 10px rgba(16, 185, 129, 0),
+                        inset 0 0 0 3px rgba(52, 211, 153, 1);
+          }
+        }
+
+        @keyframes glow-pulse-onboarding {
+          0%, 100% {
+            opacity: 0.7;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.03);
+          }
+        }
+
+        .animate-pulse-ring-onboarding {
+          animation: pulse-ring-onboarding 1.8s ease-in-out infinite;
+        }
+
+        .animate-glow-pulse-onboarding {
+          animation: glow-pulse-onboarding 1.8s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 

@@ -69,6 +69,7 @@ export default function OnboardingOrchestrator() {
   const step7ReviewHandledRef = useRef(false);
   const step8ModalShownRef = useRef(false);
   const step9ModalShownRef = useRef(false);
+  const celebrateAndCompleteRef = useRef(null);
 
   // Debounced persistence
   const { queueUpdate } = useDebouncedPersist(updateOnboardingState);
@@ -79,6 +80,8 @@ export default function OnboardingOrchestrator() {
     setTimeout(() => markStepComplete(step), STEP_CELEBRATION_DURATION);
   }, [markStepComplete]);
 
+  useEffect(() => { celebrateAndCompleteRef.current = celebrateAndComplete; }, [celebrateAndComplete]);
+
   // ========== RESTORATION DES ÉTATS ==========
   useEffect(() => {
     if (!isOnboardingStateLoaded(onboardingState)) return;
@@ -86,13 +89,18 @@ export default function OnboardingOrchestrator() {
     if (onboardingState.step4?.cvGenerated) setCvGenerated(true);
     if (onboardingState.step4?.cvFilename) setGeneratedCvFilename(onboardingState.step4.cvFilename);
 
+    // Ne jamais écraser un ref à false s'il est déjà true dans la session.
+    // Les refs trackent "le modal a été montré dans cette session", ce qui est un fait
+    // irréversible. Les remettre à false causerait des bugs (ex: Phase B du step 1
+    // ne s'active pas car le ref est reset par un changement d'onboardingState non lié).
+    // Le reset à false est géré par les effects de sortie de step (ex: currentStep !== 1).
     if (onboardingState.modals) {
-      step1ModalShownRef.current = onboardingState.modals.step1?.completed || false;
-      step2ModalShownRef.current = onboardingState.modals.step2?.completed || false;
-      step5ModalShownRef.current = onboardingState.modals.step5?.completed || false;
-      step7ModalShownRef.current = onboardingState.modals.step7?.completed || false;
-      step8ModalShownRef.current = onboardingState.modals.step8?.completed || false;
-      step9ModalShownRef.current = onboardingState.modals.step9?.completed || false;
+      if (onboardingState.modals.step1?.completed) step1ModalShownRef.current = true;
+      if (onboardingState.modals.step2?.completed) step2ModalShownRef.current = true;
+      if (onboardingState.modals.step5?.completed) step5ModalShownRef.current = true;
+      if (onboardingState.modals.step7?.completed) step7ModalShownRef.current = true;
+      if (onboardingState.modals.step8?.completed) step8ModalShownRef.current = true;
+      if (onboardingState.modals.step9?.completed) step9ModalShownRef.current = true;
     }
   }, [onboardingState]);
 
@@ -103,9 +111,30 @@ export default function OnboardingOrchestrator() {
     });
   }, [cvGenerated, generatedCvFilename, queueUpdate]);
 
+  // ========== SCROLL TO TOP AVANT TOOLTIP ==========
+  // Quand on change de step, scroller le conteneur CV vers le haut pour que
+  // le tooltip et l'élément cible soient toujours visibles à l'écran.
+  useEffect(() => {
+    if (currentStep <= 0) return;
+
+    const container = document.getElementById('scroll-container');
+    if (container) {
+      container.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep]);
+
   // ========== TOOLTIP LOGIC ==========
   useEffect(() => {
     if (!isOnboardingStateLoaded(onboardingState)) {
+      setTooltipClosed(false);
+      return;
+    }
+
+    // Step 0 (welcome modal) n'a pas de tooltip dans l'orchestrateur.
+    // Éviter de calculer tooltipClosed pour step 0, sinon la complétion
+    // du welcome modal met tooltipClosed=true, et cette valeur stale
+    // fait sauter le tooltip du step 1 lors de la transition 0→1.
+    if (currentStep === 0) {
       setTooltipClosed(false);
       return;
     }
@@ -190,6 +219,10 @@ export default function OnboardingOrchestrator() {
   useEffect(() => {
     if (currentStep !== 1 || modalOpen || !step1ModalShownRef.current) return;
 
+    // Activer les highlights kebab (nécessaire au refresh : Phase A sort tôt
+    // quand le modal est déjà complété et ne set jamais step1TargetReady).
+    setStep1TargetReady(true);
+
     let menuWasSeen = false;
     let timeoutId = null;
 
@@ -201,7 +234,7 @@ export default function OnboardingOrchestrator() {
 
       if (menuWasSeen && menus.length === 0 && dialogs.length === 0) {
         observer.disconnect();
-        timeoutId = setTimeout(() => celebrateAndComplete(1), 300);
+        timeoutId = setTimeout(() => celebrateAndCompleteRef.current(1), 300);
       }
     };
 
@@ -212,7 +245,7 @@ export default function OnboardingOrchestrator() {
       observer.disconnect();
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [currentStep, modalOpen, celebrateAndComplete]);
+  }, [currentStep, modalOpen]);
 
   // Step 1 validation is now handled in handleModalComplete (editing is always active)
 
@@ -433,23 +466,33 @@ export default function OnboardingOrchestrator() {
 
     // Phase 2: quand la tâche d'optimisation se termine, on ne complète PAS tout de suite.
     // On attend que l'utilisateur ait reviewé toutes les modifications.
+    // On poll le DOM pendant 10s pour laisser le temps au router.refresh() de rendre
+    // les éléments de review. Si aucun pending n'apparaît après le timeout,
+    // on arrête le polling sans compléter — le highlight reste actif.
     const handleTaskCompleted = (event) => {
       if (isCleanedUp || step7ReviewHandledRef.current) return;
       const task = event.detail?.task;
       if (isImprovementTask(task)) {
-        // Attendre un délai pour laisser le DOM se mettre à jour avec les review items
-        setTimeout(() => {
-          if (isCleanedUp || step7ReviewHandledRef.current) return;
-          const pendingElements = document.querySelectorAll('[data-review-change-pending]');
-          if (pendingElements.length === 0) {
-            // Cas edge : pas de modifications → compléter immédiatement
-            step7ReviewHandledRef.current = true;
-            celebrateAndComplete(7);
-          } else {
-            // Des modifications existent → attendre les reviews
-            setOptimizationTaskDone(true);
+        let pollAttempts = 0;
+        const maxPollAttempts = 20; // 20 × 500ms = 10s
+
+        const pollForPending = setInterval(() => {
+          if (isCleanedUp || step7ReviewHandledRef.current) {
+            clearInterval(pollForPending);
+            return;
           }
-        }, 1000);
+
+          const pendingElements = document.querySelectorAll('[data-review-change-pending]');
+          if (pendingElements.length > 0) {
+            // Des modifications existent → attendre les reviews
+            clearInterval(pollForPending);
+            setOptimizationTaskDone(true);
+          } else if (++pollAttempts >= maxPollAttempts) {
+            // Timeout sans modifications → ne PAS compléter le step.
+            // Le highlight reste actif pour relancer l'optimisation.
+            clearInterval(pollForPending);
+          }
+        }, 500);
       }
     };
 
@@ -567,7 +610,11 @@ export default function OnboardingOrchestrator() {
     setTooltipClosed(true);
 
     // Actions spécifiques par étape (même si fermé par X)
-    // Step 1: ne pas compléter ici — l'utilisateur doit d'abord interagir avec un kebab
+    // Step 1: persister que le modal a été vu (pour éviter qu'il se réouvre au refresh),
+    // mais ne PAS compléter le step — l'utilisateur doit d'abord interagir avec un kebab.
+    if (currentStep === 1) {
+      try { await markModalCompleted('step1'); } catch (e) { /* continue */ }
+    }
     if (currentStep === 2) {
       setTimeout(() => emitOnboardingEvent(ONBOARDING_EVENTS.OPEN_GENERATOR), MODAL_ANIMATION_DELAY);
     }
@@ -670,9 +717,7 @@ export default function OnboardingOrchestrator() {
           onPrev={handleModalPrev}
           onJumpTo={handleModalJumpTo}
           onComplete={handleModalComplete}
-          onSkip={handleModalSkip}
           onClose={handleCloseModal}
-          showSkipButton={true}
           size="large"
         />
         {currentStep === 9 && (

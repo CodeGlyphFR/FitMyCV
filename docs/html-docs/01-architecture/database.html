@@ -34,7 +34,7 @@
 
         <h1>Base de Données</h1>
         <p class="lead">
-          FitMyCV.io utilise PostgreSQL via Prisma 6 ORM avec 34 modèles de données organisés en 9 domaines fonctionnels.
+          FitMyCV.io utilise PostgreSQL via Prisma 6 ORM avec 33 modèles de données organisés en 9 domaines fonctionnels.
         </p>
 
         <h2>Schéma Relationnel</h2>
@@ -345,7 +345,7 @@ flowchart TB
           </tbody>
         </table>
 
-        <h3>6. OpenAI Monitoring (4 modèles)</h3>
+        <h3>6. OpenAI Monitoring (3 modèles)</h3>
 
         <table>
           <thead>
@@ -370,11 +370,6 @@ flowchart TB
               <td><code>OpenAIPricing</code></td>
               <td>Grille tarifaire par modèle (standard + priority)</td>
               <td>modelName, inputPricePerMToken, outputPricePerMToken, cachePricePerMToken, isActive</td>
-            </tr>
-            <tr>
-              <td><code>OpenAIAlert</code></td>
-              <td>Configuration alertes de coûts</td>
-              <td>type, threshold, enabled, name, description</td>
             </tr>
           </tbody>
         </table>

@@ -200,6 +200,11 @@ export function useExportDownload({
           window.dispatchEvent(new Event('credits-updated'));
         }
       }, 100);
+
+      setTimeout(() => {
+        console.log('[useExportDownload] Émission événement EXPORT_CLICKED pour onboarding (Word)');
+        emitOnboardingEvent(ONBOARDING_EVENTS.EXPORT_CLICKED);
+      }, 300);
     } catch (error) {
       console.error('[useExportDownload] Erreur catch générale Word:', error);
       setIsExportingWord(false);

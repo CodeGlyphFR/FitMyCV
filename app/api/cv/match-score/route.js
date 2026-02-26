@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/session";
 import prisma from "@/lib/prisma";
 import { readUserCvFile } from "@/lib/cv-core/storage";
 import { calculateMatchScoreWithAnalysis } from "@/lib/scoring/service";
+import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 
 export async function POST(request) {
   const session = await auth();
@@ -61,6 +62,16 @@ export async function POST(request) {
       return NextResponse.json({ error: "Failed to read CV file" }, { status: 500 });
     }
 
+    // Vérifier les crédits/limites avant le calcul
+    const usageResult = await incrementFeatureCounter(userId, 'match_score');
+    if (!usageResult.success) {
+      return NextResponse.json({
+        error: usageResult.error,
+        actionRequired: usageResult.actionRequired,
+        redirectUrl: usageResult.redirectUrl,
+      }, { status: 403 });
+    }
+
     // Calculer le score de match avec GPT (sans worker, en direct)
     console.log("[match-score] Calcul du score de match pour", cvFile);
     console.log("[match-score] Source de l'offre:", jobOfferIdentifier);
@@ -82,7 +93,6 @@ export async function POST(request) {
       // IMPORTANT: En cas d'erreur, on retourne SANS incrémenter le compteur
       return NextResponse.json({
         error: "Failed to calculate match score",
-        details: error.message
       }, { status: 500 });
     }
 

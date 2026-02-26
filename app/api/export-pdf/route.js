@@ -6,6 +6,7 @@ import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { refundCredit } from "@/lib/subscription/credits";
 import { CommonErrors, CvErrors, OtherErrors } from "@/lib/api/apiErrors";
+import { secureLog, secureError } from "@/lib/security/secureLogger";
 import {
   getTranslation,
   prepareCvData,
@@ -18,7 +19,7 @@ import {
 } from "@/lib/pdf";
 
 export async function POST(request) {
-  console.log('[PDF Export] Request received');
+  secureLog('[PDF Export] Request received');
   const startTime = Date.now();
 
   let creditTransactionId = null;
@@ -67,15 +68,15 @@ export async function POST(request) {
       const cvResult = await readUserCvFileWithMeta(session.user.id, filename);
       cvData = cvResult.content;
       cvLanguage = cvResult.language || language || cvData?.language || 'fr';
-      console.log('[PDF Export] CV loaded successfully for user:', session.user.id);
+      secureLog('[PDF Export] CV loaded successfully for user:', session.user.id);
     } catch (error) {
-      console.error('[PDF Export] Error loading CV:', error);
+      secureError('[PDF Export] Error loading CV:', error);
       if (creditUsed && creditTransactionId) {
         try {
           await refundCredit(session.user.id, creditTransactionId, 'CV introuvable lors de l\'export');
-          console.log('[PDF Export] Crédit remboursé suite à CV introuvable');
+          secureLog('[PDF Export] Crédit remboursé suite à CV introuvable');
         } catch (refundError) {
-          console.error('[PDF Export] Erreur lors du remboursement:', refundError);
+          secureError('[PDF Export] Erreur lors du remboursement:', refundError);
         }
       }
       return CvErrors.notFound();
@@ -92,7 +93,7 @@ export async function POST(request) {
         '--no-first-run',
         '--no-zygote',
         '--disable-gpu',
-        '--disable-web-security',
+        // '--disable-web-security', // Retiré pour sécurité (non nécessaire pour le rendu HTML statique)
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
@@ -137,7 +138,7 @@ export async function POST(request) {
         status: 'success',
       });
     } catch (trackError) {
-      console.error('[PDF Export] Erreur tracking télémétrie:', trackError);
+      secureError('[PDF Export] Erreur tracking télémétrie:', trackError);
     }
 
     // Return PDF
@@ -147,20 +148,21 @@ export async function POST(request) {
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${asciiSafe}.pdf"; filename*=UTF-8''${encoded}.pdf`
+        'Content-Disposition': `attachment; filename="${asciiSafe}.pdf"; filename*=UTF-8''${encoded}.pdf`,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       }
     });
 
   } catch (error) {
-    console.error("Erreur lors de la génération PDF:", error);
-    console.error("Stack trace:", error.stack);
+    secureError('[PDF Export] Erreur lors de la génération PDF:', error);
 
     if (creditUsed && creditTransactionId && userId) {
       try {
         await refundCredit(userId, creditTransactionId, `Échec export PDF: ${error.message}`);
-        console.log('[PDF Export] Crédit remboursé suite à erreur:', error.message);
+        secureLog('[PDF Export] Crédit remboursé suite à erreur:', error.message);
       } catch (refundError) {
-        console.error('[PDF Export] Erreur lors du remboursement:', refundError);
+        secureError('[PDF Export] Erreur lors du remboursement:', refundError);
       }
     }
 
@@ -178,7 +180,7 @@ export async function POST(request) {
         });
       }
     } catch (trackError) {
-      console.error('[PDF Export] Erreur tracking télémétrie:', trackError);
+      secureError('[PDF Export] Erreur tracking télémétrie:', trackError);
     }
 
     return OtherErrors.exportPdfFailed();

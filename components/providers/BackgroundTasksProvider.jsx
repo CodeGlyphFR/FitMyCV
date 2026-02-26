@@ -222,7 +222,7 @@ export default function BackgroundTasksProvider({ children }) {
 
   const addOptimisticTask = useCallback((taskData) => {
     const optimisticTask = {
-      id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `temp_${Date.now()}_${crypto.randomUUID().slice(0, 9)}`,
       status: 'queued',
       createdAt: Date.now(),
       updatedAt: Date.now(),

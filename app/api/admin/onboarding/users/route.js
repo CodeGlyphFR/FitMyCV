@@ -54,8 +54,18 @@ export async function GET(request) {
         break;
     }
 
-    // Récupérer tous les utilisateurs avec onboardingState
+    // Construire le where clause pour filtrer au niveau DB si possible
+    const whereClause = {};
+    if (searchTerm) {
+      whereClause.OR = [
+        { name: { contains: searchTerm, mode: 'insensitive' } },
+        { email: { contains: searchTerm, mode: 'insensitive' } },
+      ];
+    }
+
+    // Récupérer les utilisateurs avec onboardingState (avec recherche DB)
     const allUsers = await prisma.user.findMany({
+      where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
       orderBy,
       select: {
         id: true,

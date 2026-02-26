@@ -57,6 +57,7 @@
       "updateButton": "Actualizar contraseña",
       "updating": "Actualizando...",
       "success": "¡Contraseña actualizada con éxito!",
+      "successReconnect": "Contraseña actualizada. Reconexión necesaria...",
       "passwordStrength": {
         "label": "Seguridad de la contraseña",
         "weak": "Débil",

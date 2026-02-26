@@ -54,12 +54,12 @@ function NotificationItem({ notification, onRemove, t }) {
 
   return (
     <div
-      className={`${styles.bg} ${styles.text} p-4 rounded-xl shadow-2xl mb-2 min-w-80 max-w-96 ${animationClass} ${!redirectUrl ? 'cursor-pointer hover:scale-[1.02]' : ''} transition-all duration-200`}
+      className={`${styles.bg} ${styles.text} p-4 rounded-xl shadow-2xl mb-2 min-w-80 max-w-96 overflow-hidden ${animationClass} ${!redirectUrl ? 'cursor-pointer hover:scale-[1.02]' : ''} transition-all duration-200`}
       onClick={!redirectUrl ? () => onRemove(id) : undefined}
     >
       <div className="flex justify-between items-start gap-3">
-        <div className="flex-1">
-          <div className="text-sm font-medium mb-2">{message}</div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium mb-2 break-words">{message}</div>
           {redirectUrl && (
             <button
               onClick={handleActionClick}

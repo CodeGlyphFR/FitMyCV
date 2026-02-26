@@ -34,12 +34,12 @@ export async function POST(request) {
     }
 
     // Hasher le nouveau mot de passe
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
 
-    // Mettre à jour le mot de passe de l'utilisateur
+    // Mettre à jour le mot de passe et incrémenter tokenVersion (invalide toutes les sessions/tokens)
     await prisma.user.update({
       where: { id: tokenResult.userId },
-      data: { passwordHash },
+      data: { passwordHash, tokenVersion: { increment: 1 } },
     });
 
     // Supprimer le token de réinitialisation

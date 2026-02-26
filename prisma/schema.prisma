@@ -21,6 +21,7 @@ model User {
   onboardingState          Json?                                  // État complet onboarding (UNIQUE source de vérité)
   privacyPolicyAcceptedAt  DateTime?                              // Date d'acceptation de la politique de confidentialité
   lastLoginAt              DateTime?                              // Dernière connexion (pour détection comptes inactifs)
+  tokenVersion             Int                   @default(0)      // Incrémenté au changement de mot de passe pour invalider les sessions/tokens
   createdAt                DateTime              @default(now())
   updatedAt                DateTime              @updatedAt
   accounts               Account[]
@@ -49,13 +50,11 @@ model Account {
   provider                 String
   providerAccountId        String
   refresh_token            String?
-  refresh_token_expires_in Int?
   access_token             String?
   expires_at               Int?
   token_type               String?
   scope                    String?
   id_token                 String?
-  session_state            String?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
   user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -89,7 +88,6 @@ model CvFile {
   optimiseStatus         String?            @default("idle")
   optimiseUpdatedAt      DateTime?
   createdWithCredit      Boolean            @default(false)
-  creditUsedAt           DateTime?
   creditTransactionId    String?            @unique
   blocked                Boolean            @default(false)
   blockedAt              DateTime?
@@ -361,20 +359,6 @@ model OpenAIPricing {
 
   @@index([modelName])
   @@index([isActive])
-}
-
-model OpenAIAlert {
-  id          String   @id @default(cuid())
-  type        String
-  threshold   Float
-  enabled     Boolean  @default(true)
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([type])
-  @@index([enabled])
 }
 
 model OpenAICall {
@@ -716,4 +700,16 @@ model ExportTemplate {
 
   @@unique([userId, name])
   @@index([userId])
+}
+
+// ============================================
+// Data Migrations Tracking
+// ============================================
+
+model DataMigration {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  appliedAt DateTime @default(now()) @map("applied_at")
+
+  @@map("_data_migrations")
 }

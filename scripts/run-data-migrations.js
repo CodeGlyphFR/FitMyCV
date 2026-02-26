@@ -4,14 +4,8 @@ const path = require('path');
 const prisma = new PrismaClient();
 
 async function run() {
-  // 1. Création de la table de suivi si elle n'existe pas
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS "_data_migrations" (
-      "id" SERIAL PRIMARY KEY,
-      "name" TEXT UNIQUE NOT NULL,
-      "applied_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+  // 1. La table _data_migrations est maintenant gérée par Prisma (modèle DataMigration)
+  // Plus besoin de CREATE TABLE IF NOT EXISTS
 
   const migrationDir = path.join(__dirname, '../prisma/data-migrations');
   

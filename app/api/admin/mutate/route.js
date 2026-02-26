@@ -10,7 +10,8 @@ import { trackCvEdit } from "@/lib/telemetry/server";
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 function parsePath(p){ var out=[]; var re=/([^\[.]+)|\[(\d+)\]/g; var m; while((m=re.exec(p))!==null){ if(m[1]!=null) out.push(m[1]); else if(m[2]!=null) out.push(Number(m[2])); } return out; }
 function getByPath(obj, arr){ var cur=obj; for(var i=0;i<arr.length;i++){ if(cur==null) return undefined; cur=cur[arr[i]]; } return cur; }
-function setByPath(obj, arr, value){ var cur=obj; for(var i=0;i<arr.length-1;i++){ var k=arr[i]; if(cur[k]==null) cur[k] = (typeof arr[i+1]==="number")? []:{}; cur=cur[k]; } cur[arr[arr.length-1]] = value; }
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+function setByPath(obj, arr, value){ if(arr.some(k => DANGEROUS_KEYS.has(String(k)))) throw new Error('Chemin interdit'); var cur=obj; for(var i=0;i<arr.length-1;i++){ var k=arr[i]; if(cur[k]==null) cur[k] = (typeof arr[i+1]==="number")? []:{}; cur=cur[k]; } cur[arr[arr.length-1]] = value; }
 export async function POST(req){
   try{
     const session = await auth();
@@ -134,5 +135,9 @@ export async function POST(req){
     }
 
     return NextResponse.json({ ok:true });
-  }catch(e){ return NextResponse.json({ error:(e&&e.message)||"Erreur inconnue"},{ status:500 }); }
+  }catch(e){
+    if (e?.message === 'Chemin interdit') return NextResponse.json({ error: 'Chemin interdit' }, { status: 400 });
+    console.error('[mutate] Error:', e);
+    return NextResponse.json({ error: 'Erreur interne' }, { status: 500 });
+  }
 }

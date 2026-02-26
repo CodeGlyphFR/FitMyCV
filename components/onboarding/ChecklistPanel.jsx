@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useOnboardingSteps } from '@/lib/onboarding/useOnboardingSteps';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -27,6 +28,8 @@ export default function ChecklistPanel() {
     skipOnboarding,
   } = useOnboarding();
 
+  const [confirmingSkip, setConfirmingSkip] = useState(false);
+
   // Détection mobile (< 768px)
   const [isMobile, setIsMobile] = useState(false);
 
@@ -51,13 +54,15 @@ export default function ChecklistPanel() {
   const currentStepData = ONBOARDING_STEPS[currentStep - 1];
 
   /**
-   * Handler skip avec confirmation
+   * Handler skip avec confirmation modale
    */
   const handleSkip = () => {
-    const confirmed = confirm(t('onboarding.common.checklist.confirmSkip'));
-    if (confirmed) {
-      skipOnboarding();
-    }
+    setConfirmingSkip(true);
+  };
+
+  const handleConfirmSkip = () => {
+    setConfirmingSkip(false);
+    skipOnboarding();
   };
 
   /**
@@ -134,6 +139,7 @@ export default function ChecklistPanel() {
   const isMobileCollapsed = isMobile && !checklistExpanded;
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, scale: 0.95, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -289,5 +295,45 @@ export default function ChecklistPanel() {
       )}
 
     </motion.div>
+
+    {/* Portal : overlay de confirmation skip */}
+    {typeof window !== 'undefined' && createPortal(
+      <AnimatePresence>
+        {confirmingSkip && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[10002] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <div className="p-5 md:p-6 bg-[rgb(2,6,23)] border border-white/20 rounded-xl shadow-2xl max-w-sm w-full">
+              <h3 className="text-base md:text-lg font-bold text-white mb-3">
+                {t('onboarding.common.checklist.skipTutorial')}
+              </h3>
+              <p className="text-sm text-white/70 mb-5 leading-relaxed">
+                {t('onboarding.common.checklist.confirmSkip')}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmingSkip(false)}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  {t('onboarding.common.buttons.continueTutorial')}
+                </button>
+                <button
+                  onClick={handleConfirmSkip}
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-500/80 hover:bg-red-500 rounded-lg transition-colors"
+                >
+                  {t('onboarding.common.buttons.confirmSkip')}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body
+    )}
+    </>
   );
 }

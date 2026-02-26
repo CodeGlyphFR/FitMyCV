@@ -6,9 +6,32 @@
    GPU OPTIMIZATION - Désactive will-change excessif
    =========================================== */
 
-/* Désactiver will-change qui force les layers GPU */
-* {
+/* Désactiver will-change qui force les layers GPU (sauf fixed-button-layer) */
+*:not(.fixed-button-layer) {
   will-change: auto !important;
+}
+
+/* GPU promotion pour les boutons fixes qui ont besoin de recovery iOS */
+.fixed-button-layer {
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* iOS file picker recovery: masquer puis restaurer les boutons fixes */
+body.ios-recovering .fixed-button-layer {
+  display: none !important;
+}
+
+body.ios-fadein .fixed-button-layer {
+  animation: ios-recover-fadein 200ms ease-out;
+}
+
+@keyframes ios-recover-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Optimisations LCP - Chargement critique */
@@ -60,10 +83,17 @@
 
 /* Empêcher le CLS du main */
 main {
-  min-height: calc(100vh - 116px); /* 60px topbar + 56px footer */
+  min-height: calc(100vh - 56px); /* 56px footer — topbar est dans le flux normal */
 }
 
-@media print { @page{ size:A4; margin:12mm } .no-print{ display:none!important } .page{ break-inside:avoid } a[href]:after{ content:""!important } }
+@media print {
+  @page { size: A4; margin: 12mm; }
+  .no-print { display: none !important; }
+  .page { break-inside: avoid; }
+  a[href]:after { content: "" !important; }
+  body { height: auto !important; overflow: visible !important; }
+  #scroll-container { overflow: visible !important; height: auto !important; }
+}
 
 
 /* Prevent iOS zoom on input focus */
@@ -231,12 +261,14 @@ select:-moz-autofill:focus {
   filter: none !important;
 }
 
-/* Styles spécifiques pour les champs glassmorphisme (avec backdrop-blur-sm) */
+/* Styles spécifiques pour les champs glassmorphisme (dark background + white text) */
+/* Le rgba semi-transparent ne suffit pas : Chrome peint son propre fond autofill SOUS le box-shadow,
+   donc il faut un fond opaque sombre pour masquer le jaune/blanc natif du navigateur. */
 .backdrop-blur-sm:-webkit-autofill,
 .backdrop-blur-sm:-webkit-autofill:hover,
 .backdrop-blur-sm:-webkit-autofill:focus,
 .backdrop-blur-sm:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.2) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px rgb(30, 41, 59) inset !important;
   -webkit-text-fill-color: white !important;
   transition: background-color 5000s ease-in-out 0s !important;
   caret-color: white !important;
@@ -247,7 +279,7 @@ select:-moz-autofill:focus {
 .backdrop-blur-sm:-moz-autofill,
 .backdrop-blur-sm:-moz-autofill:hover,
 .backdrop-blur-sm:-moz-autofill:focus {
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: rgb(30, 41, 59) !important;
   color: white !important;
   filter: none !important;
   border-color: rgba(255, 255, 255, 0.4) !important;

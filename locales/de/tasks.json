@@ -75,7 +75,8 @@
       "jobTitleCreationCompleted": "Lebenslauf für \"{title}\" erfolgreich erstellt",
       "improvementCompleted": "Lebenslauf mit {count} Änderung(en) verbessert",
       "improvementReplacedCompleted": "Lebenslauf mit {count} Verbesserung(en) ersetzt",
-      "matchScoreDetailedCompleted": "Match-Score berechnet: {score}/100 mit {suggestions} Vorschlag/Vorschlägen"
+      "matchScoreDetailedCompleted": "Match-Score berechnet: {score}/100 mit {suggestions} Vorschlag/Vorschlägen",
+      "improvementNoChanges": "Ihr Lebenslauf ist bereits für dieses Angebot optimiert"
     },
     "errors": {
       "noJobOfferDetected": "Keine Stellenanzeige erkannt: {source}",

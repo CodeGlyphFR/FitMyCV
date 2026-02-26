@@ -57,6 +57,7 @@
       "updateButton": "Update password",
       "updating": "Updating...",
       "success": "Password updated successfully!",
+      "successReconnect": "Password updated. Signing you out...",
       "passwordStrength": {
         "label": "Password strength",
         "weak": "Weak",

@@ -10,6 +10,7 @@ import { scheduleCreateTemplateCvJob } from "@/lib/features/template-generation/
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { CommonErrors, AuthErrors, BackgroundErrors } from "@/lib/api/apiErrors";
+import { validateUploadedFile, sanitizeFilename } from "@/lib/security/fileValidation";
 
 function sanitizeLinks(raw) {
   if (!Array.isArray(raw)) return [];
@@ -26,19 +27,30 @@ async function saveUploads(files) {
 
   const uploadDir = await fs.mkdtemp(path.join(os.tmpdir(), "cv-template-uploads-"));
   const saved = [];
+  const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10 MB
 
   for (const file of files) {
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    // Validation : vérifier type MIME et taille
+    const validation = await validateUploadedFile(file, {
+      allowedTypes: ['application/pdf'],
+      maxSize: MAX_UPLOAD_SIZE,
+    });
+
+    if (!validation.valid) {
+      console.warn(`[create-template-cv] Fichier rejeté (${file.name}): ${validation.error}`);
+      continue; // Ignorer les fichiers invalides
+    }
+
+    const buffer = validation.buffer;
     const originalName = file.name || `offre-${saved.length + 1}`;
-    const safeName = originalName.replace(/[^a-z0-9_.-]/gi, "_");
-    const targetPath = path.join(uploadDir, safeName || `offre-${saved.length + 1}`);
+    const safeName = sanitizeFilename(originalName);
+    const targetPath = path.join(uploadDir, safeName);
     await fs.writeFile(targetPath, buffer);
     saved.push({
       path: targetPath,
       name: originalName,
       size: buffer.length,
-      type: file.type || "application/octet-stream",
+      type: file.type || "application/pdf",
     });
   }
 
@@ -58,7 +70,12 @@ export async function POST(request) {
     const deviceId = formData.get("deviceId") || "unknown-device";
     const recaptchaToken = formData.get("recaptchaToken");
 
-    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    // Vérification reCAPTCHA (obligatoire en production)
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
+      if (!recaptchaToken) {
+        return AuthErrors.recaptchaFailed();
+      }
+    }
     if (recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
         callerName: 'create-template-cv',
@@ -101,7 +118,7 @@ export async function POST(request) {
       const link = links[i];
 
       // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
-      const linkTaskId = `task_template_link_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+      const linkTaskId = `task_template_link_${now}_${i}_${crypto.randomUUID().slice(0, 9)}`;
 
       // Vérifier les limites ET incrémenter le compteur/débiter le crédit
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', { taskId: linkTaskId });
@@ -175,7 +192,7 @@ export async function POST(request) {
       const upload = savedUploads[i];
 
       // Générer le taskId AVANT le débit pour pouvoir le lier à la transaction
-      const attachmentTaskId = `task_template_file_${now}_${i}_${Math.random().toString(36).substr(2, 9)}`;
+      const attachmentTaskId = `task_template_file_${now}_${i}_${crypto.randomUUID().slice(0, 9)}`;
 
       // Vérifier les limites ET incrémenter le compteur/débiter le crédit
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation', { taskId: attachmentTaskId });

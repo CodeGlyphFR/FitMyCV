@@ -39,7 +39,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[Credits Transactions] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la récupération de l\'historique' },
+      { error: 'Erreur lors de la récupération de l\'historique' },
       { status: 500 }
     );
   }

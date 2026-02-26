@@ -8,7 +8,9 @@
         "understood": "Got it",
         "understoodExclaim": "Got it!",
         "start": "Start!",
-        "close": "Close"
+        "close": "Close",
+        "confirmSkip": "Yes, skip",
+        "continueTutorial": "Continue tutorial"
       },
       "aria": {
         "closeModal": "Close modal",
@@ -25,7 +27,7 @@
         "inProgress": "In progress",
         "skipTutorial": "Skip tutorial",
         "completed": "Tutorial completed!",
-        "confirmSkip": "Are you sure you want to skip the tutorial? You can restart it from settings.",
+        "confirmSkip": "Are you sure you want to skip the tutorial? You can restart it from your Account page.",
         "progressLabel": "Tutorial progress"
       }
     },

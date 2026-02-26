@@ -216,9 +216,9 @@ export async function DELETE(request) {
       },
     });
 
-    // Supprimer le lien de l'historique
-    await prisma.linkHistory.delete({
-      where: { id: linkId },
+    // Supprimer le lien de l'historique (avec userId pour sécurité)
+    await prisma.linkHistory.deleteMany({
+      where: { id: linkId, userId },
     });
 
     return NextResponse.json({ success: true });

@@ -8,7 +8,9 @@
         "understood": "Verstanden",
         "understoodExclaim": "Verstanden!",
         "start": "Starten!",
-        "close": "Schließen"
+        "close": "Schließen",
+        "confirmSkip": "Ja, überspringen",
+        "continueTutorial": "Tutorial fortsetzen"
       },
       "aria": {
         "closeModal": "Modal schließen",
@@ -25,7 +27,7 @@
         "inProgress": "In Bearbeitung",
         "skipTutorial": "Tutorial überspringen",
         "completed": "Tutorial abgeschlossen!",
-        "confirmSkip": "Sind Sie sicher, dass Sie das Tutorial überspringen möchten? Sie können es in den Einstellungen neu starten.",
+        "confirmSkip": "Sind Sie sicher, dass Sie das Tutorial überspringen möchten? Sie können es über Ihre Kontoseite neu starten.",
         "progressLabel": "Tutorial-Fortschritt"
       }
     },

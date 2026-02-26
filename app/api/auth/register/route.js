@@ -19,7 +19,12 @@ export async function POST(request){
 
   const { firstName, lastName, name, email, password, recaptchaToken, privacyPolicyAccepted } = body;
 
-  // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+  // Vérification reCAPTCHA (obligatoire en production)
+  if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
+    if (!recaptchaToken) {
+      return AuthErrors.recaptchaFailed();
+    }
+  }
   if (recaptchaToken) {
     const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
       callerName: 'register',
@@ -97,7 +102,7 @@ export async function POST(request){
     return AuthErrors.accountCreateFailed();
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, 12);
 
   const user = await prisma.user.create({
     data: {

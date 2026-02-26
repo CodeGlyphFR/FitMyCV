@@ -67,7 +67,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Cancel Downgrade] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de l\'annulation du downgrade' },
+      { error: 'Erreur lors de l\'annulation du downgrade' },
       { status: 500 }
     );
   }

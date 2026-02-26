@@ -34,13 +34,13 @@ export function initLogin(onLoginSuccess) {
     browser.tabs.create({ url: `${API_BASE}/auth?mode=register` });
   });
 
-  // OAuth buttons — open extension-auth page
+  // OAuth buttons — open extension-auth page with specific provider
   document.getElementById('btn-oauth-google').addEventListener('click', () => {
-    browser.tabs.create({ url: `${API_BASE}/extension-auth` });
+    browser.tabs.create({ url: `${API_BASE}/extension-auth?provider=google` });
   });
 
   document.getElementById('btn-oauth-github').addEventListener('click', () => {
-    browser.tabs.create({ url: `${API_BASE}/extension-auth` });
+    browser.tabs.create({ url: `${API_BASE}/extension-auth?provider=github` });
   });
 
   form.addEventListener('submit', async (e) => {

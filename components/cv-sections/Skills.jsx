@@ -269,6 +269,7 @@ export default function Skills(props){
                             { icon: Pencil, label: t("common.edit"), onClick: () => setOpenHard(true) },
                             ...(hasHard ? [{ icon: Trash2, label: t("common.deleteAll"), onClick: () => mutate({ op:"set", path:"skills.hard_skills", value: [] }), danger: true }] : [])
                           ]}
+                          dataOnboarding="edit-experience"
                         />
                       )}
                     </div>

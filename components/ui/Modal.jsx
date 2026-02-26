@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 export default function Modal({
   open,
@@ -19,7 +20,6 @@ export default function Modal({
 }){
   const { t } = useLanguage();
   const [mounted, setMounted] = React.useState(false);
-  const scrollYRef = React.useRef(0);
   const modalRef = React.useRef(null);
   const previousFocusRef = React.useRef(null);
 
@@ -33,38 +33,7 @@ export default function Modal({
   }[size] || "max-w-lg";
 
   // Désactiver le scroll quand la modal est ouverte
-  React.useEffect(() => {
-    if (open && mounted) {
-      // Capturer la position de scroll dans une ref
-      scrollYRef.current = window.scrollY;
-
-      // Bloquer le scroll avec overflow
-      const originalOverflow = document.body.style.overflow;
-      const originalPaddingRight = document.body.style.paddingRight;
-
-      // Calculer la largeur de la scrollbar pour éviter le layout shift
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-      document.body.style.overflow = 'hidden';
-      if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-      }
-
-      return () => {
-        // Restaurer les styles
-        document.body.style.overflow = originalOverflow;
-        document.body.style.paddingRight = originalPaddingRight;
-
-        // Restaurer la position de scroll
-        window.scrollTo(0, scrollYRef.current);
-
-        // Forcer un reflow pour s'assurer que tout est bien restauré
-        requestAnimationFrame(() => {
-          document.body.offsetHeight; // Force reflow
-        });
-      };
-    }
-  }, [open, mounted]);
+  useScrollLock(open && mounted);
 
   // Gestion du focus initial et restauration
   React.useEffect(() => {

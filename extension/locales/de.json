@@ -70,6 +70,7 @@
   "errors": {
     "sessionExpired": "Sitzung abgelaufen",
     "invalidCredentials": "E-Mail oder Passwort falsch",
+    "tooManyAttempts": "Zu viele Versuche. Bitte versuchen Sie es in 15 Minuten erneut.",
     "emailNotVerified": "E-Mail nicht verifiziert. Prufen Sie Ihren Posteingang.",
     "emailAndPasswordRequired": "E-Mail und Passwort erforderlich",
     "tokenRequired": "Sitzung erforderlich",

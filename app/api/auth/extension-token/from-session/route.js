@@ -9,6 +9,7 @@
 import { auth } from '@/lib/auth/session';
 import { signExtensionToken } from '@/lib/auth/extensionToken';
 import { CommonErrors } from '@/lib/api/apiErrors';
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
@@ -18,9 +19,16 @@ export async function GET() {
       return CommonErrors.notAuthenticated();
     }
 
+    // Fetch tokenVersion from DB (not available in session)
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { tokenVersion: true },
+    });
+
     const token = await signExtensionToken(session.user.id, {
       name: session.user.name,
       email: session.user.email,
+      tokenVersion: dbUser?.tokenVersion ?? 0,
     });
 
     return Response.json({

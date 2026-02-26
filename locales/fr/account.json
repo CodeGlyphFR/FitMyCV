@@ -57,6 +57,7 @@
       "updateButton": "Mettre à jour le mot de passe",
       "updating": "Mise à jour...",
       "success": "Mot de passe mis à jour avec succès !",
+      "successReconnect": "Mot de passe mis à jour. Reconnexion nécessaire...",
       "passwordStrength": {
         "label": "Force du mot de passe",
         "weak": "Faible",

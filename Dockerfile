@@ -80,6 +80,15 @@ COPY --from=builder /app/scripts ./scripts
 # 5. Full package.json (needed for npm run scripts)
 COPY --from=builder /app/package.json ./package.json
 
+# Créer un utilisateur non-root pour la sécurité
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Next.js a besoin d'écrire dans .next/cache au runtime (images, fetch cache)
+RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next/cache
+
+USER nextjs
+
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"

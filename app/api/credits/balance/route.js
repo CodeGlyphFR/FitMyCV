@@ -29,7 +29,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[Credits Balance] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la récupération de la balance' },
+      { error: 'Erreur lors de la récupération de la balance' },
       { status: 500 }
     );
   }

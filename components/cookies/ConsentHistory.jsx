@@ -110,11 +110,13 @@ export default function ConsentHistory() {
     <div className="mt-8 bg-white/15 backdrop-blur-xl rounded-lg shadow-2xl">
       <button
         onClick={() => {
-          scrollPositionRef.current = window.scrollY;
+          const container = document.getElementById('scroll-container');
+          scrollPositionRef.current = container ? container.scrollTop : window.scrollY;
           setExpanded(!expanded);
           // Restaurer la position après le re-render
           requestAnimationFrame(() => {
-            window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
+            if (container) container.scrollTop = scrollPositionRef.current;
+            else window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' });
           });
         }}
         className="w-full flex items-center justify-between p-6 hover:bg-white/10 transition-all duration-200"

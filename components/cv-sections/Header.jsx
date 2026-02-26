@@ -176,23 +176,57 @@ export default function Header(props){
     fetchMatchScore();
   }, [currentVersion, fetchMatchScore]);
 
+  // Refs pour accéder aux valeurs courantes dans les listeners (évite closures stales)
+  const matchScoreStatusRef = React.useRef(matchScoreStatus);
+  matchScoreStatusRef.current = matchScoreStatus;
+  const isLoadingMatchScoreRef = React.useRef(isLoadingMatchScore);
+  isLoadingMatchScoreRef.current = isLoadingMatchScore;
+
   // Écouter les événements de synchronisation temps réel
   React.useEffect(() => {
+    // Debounce pour coaliser les events SSE cv:updated et cv:metadata:updated
+    // qui arrivent quasi-simultanément (évite les fetchMatchScore concurrents sur mobile)
+    let realtimeFetchTimeout = null;
+    const debouncedFetchMatchScore = () => {
+      if (realtimeFetchTimeout) clearTimeout(realtimeFetchTimeout);
+      realtimeFetchTimeout = setTimeout(() => {
+        fetchMatchScore();
+      }, 150);
+    };
+
     const handleRealtimeCvUpdate = (event) => {
       if (!cvValidatedRef.current) return;
-      fetchMatchScore();
+      debouncedFetchMatchScore();
     };
 
     // Écouter les changements de métadonnées (status, score, etc.)
+    // Applique le score DIRECTEMENT depuis les données SSE au lieu de re-fetcher.
+    // L'event SSE cv:updated contient les données exactes écrites par updateCvFile
+    // (matchScore, matchScoreStatus, scoreBreakdown, etc.)
+    // Sur mobile, le re-fetch HTTP échoue à cause du timing avec router.refresh().
     const handleRealtimeCvMetadataUpdate = (event) => {
       if (!cvValidatedRef.current) return;
-      fetchMatchScore();
-    };
-
-    // WORKAROUND iOS: Forcer le refresh si MatchScore détecte une incohérence
-    const handleForceRefresh = (event) => {
-      if (!cvValidatedRef.current) return;
-      fetchMatchScore();
+      const eventData = event.detail?.data;
+      if (eventData) {
+        // Appliquer le status immédiatement (inprogress → spinner, idle → score)
+        if (eventData.matchScoreStatus) {
+          setMatchScoreStatus(eventData.matchScoreStatus);
+        }
+        // Appliquer le score directement si présent dans les données SSE
+        if (eventData.matchScore !== undefined) {
+          setMatchScore(eventData.matchScore);
+          setScoreBefore(eventData.scoreBefore ?? null);
+          setHasScoreBreakdown(!!eventData.scoreBreakdown);
+          if (eventData.matchScoreStatus !== 'inprogress') {
+            setIsLoadingMatchScore(false);
+          }
+        }
+        if (eventData.optimiseStatus !== undefined) {
+          setOptimiseStatus(eventData.optimiseStatus);
+        }
+      }
+      // Fetch de backup pour les champs non présents dans l'event SSE (hasJobOffer, hasScoreBreakdown, etc.)
+      debouncedFetchMatchScore();
     };
 
     // Écouter les changements de CV pour recharger les infos de source
@@ -225,27 +259,42 @@ export default function Header(props){
     const handleTaskCompleted = (event) => {
       const task = event.detail?.task;
       if (task?.type === 'calculate-match-score') {
-        // Délai pour laisser le temps à updateCvFile de persister le score en DB
-        // Le task:completed SSE arrive via BackgroundTask.status, mais le score
-        // est écrit séparément via updateCvFile dans handleResult
-        setTimeout(() => fetchMatchScore(), 500);
+        // Ne fetch que si le SSE n'a pas encore livré le score
+        // (évite un fetch redondant qui fait clignoter l'état de chargement sur mobile)
+        if (matchScoreStatusRef.current === 'inprogress') {
+          setTimeout(() => fetchMatchScore(), 500);
+        }
+      }
+    };
+
+    // Visibilitychange : quand l'utilisateur revient sur l'onglet (surtout mobile),
+    // le SSE peut avoir été coupé et les events perdus → re-fetch le score
+    let visibilityTimeout = null;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!cvValidatedRef.current) return;
+      // Re-fetch seulement si un calcul était en cours ou si le loading est bloqué
+      if (matchScoreStatusRef.current === 'inprogress' || isLoadingMatchScoreRef.current) {
+        visibilityTimeout = setTimeout(() => fetchMatchScore(), 500);
       }
     };
 
     window.addEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
     window.addEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
-    window.addEventListener('matchscore:force-refresh', handleForceRefresh);
     window.addEventListener('cv:selected', handleCvSelected);
     window.addEventListener('tokens:updated', handleTokensUpdated);
     window.addEventListener('task:completed', handleTaskCompleted);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      if (realtimeFetchTimeout) clearTimeout(realtimeFetchTimeout);
+      if (visibilityTimeout) clearTimeout(visibilityTimeout);
       window.removeEventListener('realtime:cv:updated', handleRealtimeCvUpdate);
       window.removeEventListener('realtime:cv:metadata:updated', handleRealtimeCvMetadataUpdate);
-      window.removeEventListener('matchscore:force-refresh', handleForceRefresh);
       window.removeEventListener('cv:selected', handleCvSelected);
       window.removeEventListener('tokens:updated', handleTokensUpdated);
       window.removeEventListener('task:completed', handleTaskCompleted);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchMatchScore, fetchSourceInfo, resetJobOfferDetails, isJobOfferModalOpen, jobOfferDetails, fetchJobOfferDetails]);
 

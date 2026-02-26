@@ -15,10 +15,16 @@ const EXTRA_ORIGINS = (process.env.EXTENSION_ALLOWED_ORIGINS || '')
 function isAllowedExtensionOrigin(origin) {
   if (!origin) return false;
   if (process.env.NODE_ENV !== 'production') {
+    // En dev, accepter toutes les extensions Chrome/Firefox
     return EXTENSION_ORIGIN_PATTERNS.some(p => p.test(origin));
   }
-  if (EXTRA_ORIGINS.includes(origin)) return true;
-  return EXTENSION_ORIGIN_PATTERNS.some(p => p.test(origin));
+  // En production, seuls les IDs d'extension configurés dans EXTENSION_ALLOWED_ORIGINS sont autorisés
+  if (EXTRA_ORIGINS.length > 0) {
+    return EXTRA_ORIGINS.includes(origin);
+  }
+  // H2: En production, refuser par défaut si aucune extension n'est configurée
+  console.warn('[CORS] No EXTENSION_ALLOWED_ORIGINS configured — rejecting extension request');
+  return false;
 }
 
 function isExtensionRoute(pathname) {
@@ -38,14 +44,21 @@ function setCorsHeaders(response, origin) {
 // Rate limiting store (in-memory, consider Redis for production)
 const rateLimitStore = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+// IMPORTANT: Les entrées PLUS spécifiques doivent être AVANT les moins spécifiques
+// car la première correspondance startsWith() est utilisée
 const RATE_LIMIT_MAX_REQUESTS = {
+  '/api/auth/extension-token': 10, // Extension login (avant /api/ext/)
   '/api/auth/register': 5,
   '/api/auth/signin': 10,
+  '/api/auth/request-reset': 5, // Password reset
   '/api/admin/users': 60, // Limite plus haute pour l'admin des utilisateurs
   '/api/admin': 40, // Augmenté pour les autres routes admin
+  '/api/cv/improve': 10,                 // Endpoint IA (coûteux)
+  '/api/cv/match-score': 15,              // Endpoint IA scoring
+  '/api/background-tasks/generate-cv': 10, // Génération CV IA
+  '/api/background-tasks/translate-cv': 10, // Traduction CV IA
   '/api/ext/background-tasks/sync': 120, // Extension polling
   '/api/ext/': 60, // Extension API routes
-  '/api/auth/extension-token': 10, // Extension login
   '/api/background-tasks/sync': 120, // Polling fréquent + événements temps réel
   '/api/background-tasks': 30, // Autres endpoints de création de tâches
   '/api/feedback': 10,
@@ -94,6 +107,7 @@ function checkRateLimit(ip, pathname) {
     allowed: record.count <= maxRequests,
     remaining: Math.max(0, maxRequests - record.count),
     resetTime: record.resetTime,
+    maxRequests,
   };
 }
 
@@ -164,7 +178,7 @@ export async function proxy(request) {
     const rateLimit = checkRateLimit(ip, pathname);
 
     if (!rateLimit.allowed) {
-      return NextResponse.json(
+      const rateLimitResponse = NextResponse.json(
         {
           error: 'Trop de requêtes. Veuillez réessayer plus tard.',
           retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
@@ -173,12 +187,43 @@ export async function proxy(request) {
           status: 429,
           headers: {
             'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)),
-            'X-RateLimit-Limit': String(RATE_LIMIT_MAX_REQUESTS.default),
+            'X-RateLimit-Limit': String(rateLimit.maxRequests),
             'X-RateLimit-Remaining': String(rateLimit.remaining),
             'X-RateLimit-Reset': String(rateLimit.resetTime),
           },
         }
       );
+      // Ajouter les headers CORS pour les routes extension (sinon réponse illisible cross-origin)
+      if (isExtensionRoute(pathname)) {
+        const origin = request.headers.get('origin');
+        if (isAllowedExtensionOrigin(origin)) {
+          setCorsHeaders(rateLimitResponse, origin);
+        }
+      }
+      return rateLimitResponse;
+    }
+
+    // M4: Valider Content-Type pour les requêtes JSON sur routes API
+    if (['POST', 'PUT', 'PATCH'].includes(request.method)) {
+      const contentType = request.headers.get('content-type');
+      // Autoriser: pas de content-type (certains clients), JSON, form-data (uploads), form-urlencoded (NextAuth)
+      const isAcceptable = !contentType ||
+        contentType.includes('application/json') ||
+        contentType.includes('multipart/form-data') ||
+        contentType.includes('application/x-www-form-urlencoded');
+      if (!isAcceptable) {
+        const mediaTypeResponse = NextResponse.json(
+          { error: 'Unsupported Media Type' },
+          { status: 415 }
+        );
+        if (isExtensionRoute(pathname)) {
+          const origin = request.headers.get('origin');
+          if (isAllowedExtensionOrigin(origin)) {
+            setCorsHeaders(mediaTypeResponse, origin);
+          }
+        }
+        return mediaTypeResponse;
+      }
     }
   }
 
@@ -226,16 +271,21 @@ export async function proxy(request) {
     // Content Security Policy
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://editor.unlayer.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com", // Next.js + reCAPTCHA + Unlayer + Mermaid/Prism (docs)
+      // unsafe-inline nécessaire : Next.js App Router injecte des scripts inline pour le streaming RSC (self.__next_f.push)
+      // unsafe-eval uniquement en dev (HMR/Fast Refresh)
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com", // Tailwind + Google Fonts + Prism (docs)
       "img-src 'self' data: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      `connect-src ${connectSrcSources.join(' ')} https://editor.unlayer.com https://api.unlayer.com`,
-      "frame-src 'self' https://www.google.com https://editor.unlayer.com", // reCAPTCHA + Unlayer frames + Admin docs
+      `connect-src ${connectSrcSources.join(' ')}`,
+      "frame-src 'self' https://www.google.com", // reCAPTCHA iframe
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; '),
+
+    // Isolation cross-origin embedder (protection Spectre, mode permissif pour CDNs)
+    'Cross-Origin-Embedder-Policy': 'credentialless',
   };
 
   // Ajouter HSTS en production uniquement
@@ -248,10 +298,22 @@ export async function proxy(request) {
     response.headers.set(key, value);
   });
 
-  // Ajouter les headers de rate limiting
+  // L3: Headers rate-limit complets sur les réponses API
   if (pathname.startsWith('/api/')) {
-    const rateLimit = checkRateLimit(ip, pathname);
-    response.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
+    const key = getRateLimitKey(ip, pathname);
+    const record = rateLimitStore.get(key);
+    if (record) {
+      let maxRequests = RATE_LIMIT_MAX_REQUESTS.default;
+      for (const [path, limit] of Object.entries(RATE_LIMIT_MAX_REQUESTS)) {
+        if (path !== 'default' && pathname.startsWith(path)) {
+          maxRequests = limit;
+          break;
+        }
+      }
+      response.headers.set('X-RateLimit-Limit', String(maxRequests));
+      response.headers.set('X-RateLimit-Remaining', String(Math.max(0, maxRequests - record.count)));
+      response.headers.set('X-RateLimit-Reset', String(record.resetTime));
+    }
   }
 
   // Ajouter les headers CORS pour les routes extension

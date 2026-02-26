@@ -6,7 +6,7 @@ Instructions pour Claude Code sur le repository FitMyCV.io.
 
 **FitMyCV.io** - Application SaaS de génération de CV optimisés par IA.
 - **Stack** : Next.js 16 (App Router) + React 19 + Tailwind CSS 4.
-- **Database** : PostgreSQL via Prisma 6 (34 modèles).
+- **Database** : PostgreSQL via Prisma 6 (33 modèles).
 - **Infrastructure** : Déploiement automatisé via Docker et GitHub Actions sur runner auto-hébergé.
 
 ## Commandes Essentielles

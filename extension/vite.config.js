@@ -31,17 +31,19 @@ function copyStaticAssets(outDir) {
   };
 }
 
-// For Firefox: remove service_worker from background, keep only scripts
-function firefoxManifestTransform(outDir, targetBrowser) {
+// Chrome: remove background.scripts (MV2 only), keep service_worker
+// Firefox: remove background.service_worker, keep scripts
+function browserManifestTransform(outDir, targetBrowser) {
   return {
-    name: 'firefox-manifest-transform',
+    name: 'browser-manifest-transform',
     closeBundle() {
-      if (targetBrowser !== 'firefox') return;
       const manifestPath = resolve(outDir, 'manifest.json');
       if (!existsSync(manifestPath)) return;
       const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-      if (manifest.background?.service_worker) {
-        delete manifest.background.service_worker;
+      if (targetBrowser === 'firefox') {
+        delete manifest.background?.service_worker;
+      } else {
+        delete manifest.background?.scripts;
       }
       writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     },
@@ -69,6 +71,6 @@ export default defineConfig({
       browser,
     }),
     copyStaticAssets(outDir),
-    firefoxManifestTransform(outDir, browser),
+    browserManifestTransform(outDir, browser),
   ],
 });

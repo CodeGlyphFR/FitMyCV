@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { DateTime } from "luxon";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth/session";
 import { ensureUserCvDir, listUserCvFiles, writeUserCvFile } from "@/lib/cv-core/storage";
@@ -20,7 +21,12 @@ export async function POST(req){
 
     const userId = session.user.id;
 
-    // Vérification reCAPTCHA (optionnelle pour compatibilité, mais recommandée)
+    // Vérification reCAPTCHA (obligatoire en production)
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
+      if (!recaptchaToken) {
+        return AuthErrors.recaptchaFailed();
+      }
+    }
     if (recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
         callerName: 'create-cv',
@@ -55,7 +61,7 @@ export async function POST(req){
     };
     await ensureUserCvDir(userId);
     const existingFiles = await listUserCvFiles(userId).catch(() => []);
-    let baseName = String(Date.now());
+    let baseName = DateTime.now().toFormat('yyyyMMddHHmmssSSS');
     var file = baseName+".json";
     while (existingFiles.includes(file)){
       baseName = String(Number(baseName) + 1);
@@ -98,8 +104,8 @@ const response = NextResponse.json({ ok:true, file });
 response.cookies.set('cvFile', file, {
   path: '/',
   maxAge: 31536000, // 1 an
-  httpOnly: false,
-  sameSite: 'lax'
+  sameSite: 'lax',
+  secure: process.env.NODE_ENV === 'production'
 });
 return response;
   }catch(e){ return CvErrors.createError(); }

@@ -31,7 +31,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[Subscription Current] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la récupération de l\'abonnement' },
+      { error: 'Erreur lors de la récupération de l\'abonnement' },
       { status: 500 }
     );
   }

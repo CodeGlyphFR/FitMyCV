@@ -168,7 +168,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
       } catch (_err) {}
 
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("cv:list:changed"));
+        window.dispatchEvent(new CustomEvent("cv:list:changed", { detail: { file: data.file } }));
         window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: data.file } }));
         window.dispatchEvent(new Event("credits-updated"));
       }
@@ -268,10 +268,15 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     }
 
     try {
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
+      const recaptchaToken = await executeRecaptcha('generate_from_job_title');
+      // Ne pas bloquer si null - le serveur décidera
+
       const formData = new FormData();
       formData.append("jobTitle", jobTitle);
       const languageNames = { fr: 'français', en: 'anglais', es: 'espagnol', de: 'allemand' };
       formData.append("language", languageNames[language] || 'français');
+      formData.append("recaptchaToken", recaptchaToken || '');
       if (localDeviceId) {
         formData.append("deviceId", localDeviceId);
       }
@@ -329,7 +334,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
       const notification = {
         type: "error",
-        message: error?.message || t("jobTitleGenerator.notifications.error"),
+        message: error?.message ? t(error.message) : t("jobTitleGenerator.notifications.error"),
         duration: 10000,
       };
 

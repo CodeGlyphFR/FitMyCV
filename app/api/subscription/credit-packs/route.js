@@ -29,7 +29,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[Credit Packs] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la récupération des packs' },
+      { error: 'Erreur lors de la récupération des packs' },
       { status: 500 }
     );
   }

@@ -8,7 +8,9 @@
         "understood": "Entendido",
         "understoodExclaim": "¡Entendido!",
         "start": "¡Comenzar!",
-        "close": "Cerrar"
+        "close": "Cerrar",
+        "confirmSkip": "Sí, saltar",
+        "continueTutorial": "Continuar el tutorial"
       },
       "aria": {
         "closeModal": "Cerrar modal",
@@ -25,7 +27,7 @@
         "inProgress": "En progreso",
         "skipTutorial": "Saltar tutorial",
         "completed": "¡Tutorial completado!",
-        "confirmSkip": "¿Estás seguro de que quieres saltar el tutorial? Puedes reiniciarlo desde la configuración.",
+        "confirmSkip": "¿Estás seguro de que quieres saltar el tutorial? Puedes reiniciarlo desde tu página Mi cuenta.",
         "progressLabel": "Progreso del tutorial"
       }
     },

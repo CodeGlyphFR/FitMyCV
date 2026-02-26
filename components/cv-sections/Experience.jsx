@@ -310,7 +310,6 @@ export default function Experience(props){
                       { icon: Pencil, label: t("common.edit"), onClick: () => openEdit(i) },
                       { icon: Trash2, label: t("common.delete"), onClick: () => setDelIndex(e._originalIndex ?? i), danger: true }
                     ]}
-                    {...(i === 0 ? { dataOnboarding: "edit-experience" } : {})}
                   />
                 )}
               </div>

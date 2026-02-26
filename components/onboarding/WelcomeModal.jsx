@@ -7,6 +7,7 @@ import { Sparkles, HelpCircle, Rocket, X, Check } from 'lucide-react';
 import TipBox from '@/components/ui/TipBox';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -192,6 +193,7 @@ export default function WelcomeModal({
   const [direction, setDirection] = useState(0);
   const [isMorphing, setIsMorphing] = useState(false);
   const [morphTransform, setMorphTransform] = useState({ x: 0, y: 0 });
+  const [confirmingSkip, setConfirmingSkip] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
   // Générer les écrans traduits
@@ -203,6 +205,7 @@ export default function WelcomeModal({
       setCurrentScreen(0);
       setDirection(0);
       setIsMorphing(false);
+      setConfirmingSkip(false);
     }
   }, [open]);
 
@@ -253,33 +256,7 @@ export default function WelcomeModal({
   );
 
   // Gestion du scroll body
-  useEffect(() => {
-    if (!open) return;
-
-    const scrollY = window.scrollY;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-    document.body.style.touchAction = 'none';
-
-    return () => {
-      const currentTop = parseInt(document.body.style.top || '0', 10);
-      const restoreY = Math.abs(currentTop);
-
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      document.body.style.touchAction = '';
-
-      window.scrollTo(0, restoreY);
-    };
-  }, [open]);
+  useScrollLock(open);
 
   // Gestion clavier
   useEffect(() => {
@@ -396,10 +373,10 @@ export default function WelcomeModal({
 
             {/* Boutons alignés à droite */}
             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              {/* Bouton Passer - skip TOUT le tutoriel */}
+              {/* Bouton Passer - skip TOUT le tutoriel (avec confirmation) */}
               {onSkip && (
                 <button
-                  onClick={onSkip}
+                  onClick={() => setConfirmingSkip(true)}
                   className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
                 >
                   {t('onboarding.common.buttons.skip')}
@@ -605,6 +582,42 @@ export default function WelcomeModal({
             ))}
           </motion.div>
         </div>
+
+        {/* Overlay de confirmation skip */}
+        <AnimatePresence>
+          {confirmingSkip && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl"
+            >
+              <div className="mx-4 md:mx-8 p-5 md:p-6 bg-[rgb(2,6,23)] border border-white/20 rounded-xl shadow-2xl max-w-sm w-full">
+                <h3 className="text-base md:text-lg font-bold text-white mb-3">
+                  {t('onboarding.common.checklist.skipTutorial')}
+                </h3>
+                <p className="text-sm text-white/70 mb-5 leading-relaxed">
+                  {t('onboarding.common.checklist.confirmSkip')}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmingSkip(false)}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    {t('onboarding.common.buttons.continueTutorial')}
+                  </button>
+                  <button
+                    onClick={onSkip}
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-500/80 hover:bg-red-500 rounded-lg transition-colors"
+                  >
+                    {t('onboarding.common.buttons.confirmSkip')}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Footer */}
         <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10">

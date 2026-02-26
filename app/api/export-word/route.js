@@ -6,6 +6,7 @@ import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
 import { refundCredit } from "@/lib/subscription/credits";
 import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
+import { secureLog, secureError } from "@/lib/security/secureLogger";
 import { generateWordDocument } from "./documentBuilder";
 
 /**
@@ -24,7 +25,7 @@ function sanitizeFilenameForHeader(filename) {
 }
 
 export async function POST(request) {
-  console.log('[Word Export] Request received');
+  secureLog('[Word Export] Request received');
   const startTime = Date.now();
 
   let creditTransactionId = null;
@@ -72,24 +73,24 @@ export async function POST(request) {
       const cvResult = await readUserCvFileWithMeta(session.user.id, filename);
       cvData = cvResult.content;
       cvLanguage = cvResult.language || language || cvData?.language || 'fr';
-      console.log('[Word Export] CV loaded successfully for user:', session.user.id);
+      secureLog('[Word Export] CV loaded successfully for user:', session.user.id);
     } catch (error) {
-      console.error('[Word Export] Error loading CV:', error);
+      secureError('[Word Export] Error loading CV:', error);
       if (creditUsed && creditTransactionId) {
         try {
           await refundCredit(session.user.id, creditTransactionId, 'CV introuvable lors de l\'export');
         } catch (refundError) {
-          console.error('[Word Export] Erreur lors du remboursement:', refundError);
+          secureError('[Word Export] Erreur lors du remboursement:', refundError);
         }
       }
       return CvErrors.notFound();
     }
 
     // Générer le document Word
-    console.log('[Word Export] Generating DOCX...');
+    secureLog('[Word Export] Generating DOCX...');
     const doc = generateWordDocument(cvData, cvLanguage, selections, sectionsOrder);
     const docxBuffer = await Packer.toBuffer(doc);
-    console.log('[Word Export] DOCX generated, buffer size:', docxBuffer.length);
+    secureLog('[Word Export] DOCX generated, buffer size:', docxBuffer.length);
 
     // Tracking
     const duration = Date.now() - startTime;
@@ -103,7 +104,7 @@ export async function POST(request) {
         format: 'word'
       });
     } catch (trackError) {
-      console.error('[Word Export] Erreur tracking télémétrie:', trackError);
+      secureError('[Word Export] Erreur tracking télémétrie:', trackError);
     }
 
     const wordFilename = customFilename || filename.replace('.json', '');
@@ -112,19 +113,20 @@ export async function POST(request) {
     return new NextResponse(docxBuffer, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename="${asciiSafe}.docx"; filename*=UTF-8''${encoded}.docx`
+        'Content-Disposition': `attachment; filename="${asciiSafe}.docx"; filename*=UTF-8''${encoded}.docx`,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       }
     });
 
   } catch (error) {
-    console.error("Erreur lors de la génération Word:", error);
-    console.error("Stack trace:", error.stack);
+    secureError('[Word Export] Erreur lors de la génération Word:', error);
 
     if (creditUsed && creditTransactionId && userId) {
       try {
         await refundCredit(userId, creditTransactionId, `Échec export Word: ${error.message}`);
       } catch (refundError) {
-        console.error('[Word Export] Erreur lors du remboursement:', refundError);
+        secureError('[Word Export] Erreur lors du remboursement:', refundError);
       }
     }
 
@@ -143,7 +145,7 @@ export async function POST(request) {
         });
       }
     } catch (trackError) {
-      console.error('[Word Export] Erreur tracking télémétrie:', trackError);
+      secureError('[Word Export] Erreur tracking télémétrie:', trackError);
     }
 
     return NextResponse.json(

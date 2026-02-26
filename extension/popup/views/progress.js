@@ -171,7 +171,6 @@ async function renderTasks(container) {
         let targetUrl = apiBase;
         if (task.cvFile) {
           try {
-            const url = new URL(apiBase);
             // Ne PAS spécifier domain → crée un cookie host-only,
             // compatible avec document.cookie côté SaaS (sinon double cookie)
             await browser.cookies.set({
@@ -182,9 +181,10 @@ async function renderTasks(container) {
               expirationDate: Math.floor(Date.now() / 1000) + 31536000,
             });
           } catch {
-            // Fallback: pass cvFile as URL parameter if cookies API unavailable
-            targetUrl = `${apiBase}?cvFile=${encodeURIComponent(task.cvFile)}`;
+            // Cookie API indisponible — le URL param suffira
           }
+          // Toujours passer cvFile en URL param pour synchroniser le sélecteur TopBar
+          targetUrl = `${apiBase}?cvFile=${encodeURIComponent(task.cvFile)}`;
         }
         browser.tabs.create({ url: targetUrl });
       });

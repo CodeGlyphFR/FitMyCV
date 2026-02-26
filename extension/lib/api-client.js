@@ -63,6 +63,7 @@ import { t } from './i18n.js';
 
 const ERROR_KEY_MAP = {
   'errors.api.auth.invalidCredentials': 'errors.invalidCredentials',
+  'errors.api.auth.tooManyAttempts': 'errors.tooManyAttempts',
   'errors.api.auth.emailNotVerified': 'errors.emailNotVerified',
   'errors.api.auth.emailAndPasswordRequired': 'errors.emailAndPasswordRequired',
   'errors.api.auth.tokenRequired': 'errors.tokenRequired',
@@ -190,7 +191,14 @@ export async function login(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(response.status === 429
+      ? resolveErrorMessage('errors.api.auth.tooManyAttempts')
+      : resolveErrorMessage('errors.api.common.serverError'));
+  }
 
   if (!response.ok || !data.success) {
     throw new Error(resolveErrorMessage(data.error || 'Login failed'));

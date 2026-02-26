@@ -55,7 +55,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Subscription Reactivate] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors de la réactivation' },
+      { error: 'Erreur lors de la réactivation' },
       { status: 500 }
     );
   }

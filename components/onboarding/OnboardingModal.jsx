@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronRight, X, Pencil, Check } from 'lucide-react';
 import TipBox from '@/components/ui/TipBox';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -32,9 +33,7 @@ import {
  * - onNext: function - Callback pour passer à l'écran suivant
  * - onPrev: function - Callback pour passer à l'écran précédent
  * - onComplete: function - Callback quand le modal est complété
- * - onSkip: function - Callback pour skip le modal
  * - onClose: function - Callback pour fermer le modal
- * - showSkipButton: boolean - Afficher le bouton "Passer"
  * - disableEscapeKey: boolean - Désactiver la fermeture avec Escape
  * - disableBackdropClick: boolean - Désactiver la fermeture avec clic backdrop
  * - size: string - Taille du modal ('default' | 'large')
@@ -52,9 +51,7 @@ export default function OnboardingModal({
   onPrev,
   onJumpTo, // NEW: Direct jump to specific screen
   onComplete,
-  onSkip,
   onClose,
-  showSkipButton = true,
   disableEscapeKey = false,
   disableBackdropClick = false,
   size = 'large',
@@ -84,33 +81,7 @@ export default function OnboardingModal({
   }, [currentScreen, onPrev]);
 
   // Gestion du scroll body (prévenir scroll chaining)
-  useEffect(() => {
-    if (!open) return;
-
-    const scrollY = window.scrollY;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.style.paddingRight = `${scrollbarWidth}px`; // Prevent layout shift
-    document.body.style.touchAction = 'none'; // iOS fix
-
-    return () => {
-      const currentTop = parseInt(document.body.style.top || '0', 10);
-      const restoreY = Math.abs(currentTop);
-
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      document.body.style.touchAction = '';
-
-      window.scrollTo(0, restoreY);
-    };
-  }, [open]);
+  useScrollLock(open);
 
   // Gestion clavier (Escape, ArrowLeft, ArrowRight)
   useEffect(() => {
@@ -140,10 +111,6 @@ export default function OnboardingModal({
     if (e.target === e.currentTarget && !disableBackdropClick && onClose) {
       onClose();
     }
-  };
-
-  const handleSkip = () => {
-    if (onSkip) onSkip();
   };
 
   // Handler bullet click (jump to specific slide)
@@ -235,19 +202,8 @@ export default function OnboardingModal({
               </div>
             </div>
 
-            {/* Boutons alignés à droite */}
-            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              {/* Bouton Passer */}
-              {showSkipButton && onSkip && (
-                <button
-                  onClick={onSkip}
-                  className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
-                >
-                  {t('onboarding.common.buttons.skip')}
-                </button>
-              )}
-
-              {/* X Button - Allows user to exit mid-tutorial (different from WelcomeModal where X advances) */}
+            {/* Bouton fermer (X) */}
+            <div className="flex items-center ml-2 flex-shrink-0">
               {onClose && (
                 <button
                   onClick={onClose}

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { signOut } from 'next-auth/react';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 /**
@@ -46,10 +47,14 @@ export function usePasswordSettings() {
         setPasswordError(payload?.error || t('account.security.errors.updateFailed'));
         return;
       }
-      setPasswordMessage(t('account.security.success'));
+      setPasswordMessage(t('account.security.successReconnect'));
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+
+      // Déconnecter après un court délai pour que l'utilisateur voie le message
+      // Le tokenVersion incrémenté invalide aussi toutes les autres sessions
+      setTimeout(() => signOut({ callbackUrl: '/auth' }), 2000);
     } catch (error) {
       console.error(error);
       setPasswordError(t('account.security.errors.unexpected'));

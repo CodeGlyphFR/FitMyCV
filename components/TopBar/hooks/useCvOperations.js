@@ -176,7 +176,7 @@ export function useCvOperations({
         const pending = pendingReloadRef.current;
         pendingReloadRef.current = null;
         // Utiliser setTimeout pour éviter la récursion synchrone
-        setTimeout(() => reload(pending), 0);
+        setTimeout(() => reload(pending, { immediate: true }), 0);
       }
     }
   }, [isAuthenticated, setCurrentFile, titleCacheRef, lastSelectedRef, lastSelectedMetaRef, setRawItems, setCurrent]);
@@ -198,7 +198,7 @@ export function useCvOperations({
     setIconRefreshKey(Date.now());
 
     router.refresh();
-    await reload(file);
+    await reload(file, { immediate: true });
 
     if (typeof window !== "undefined") {
       setTimeout(() => {

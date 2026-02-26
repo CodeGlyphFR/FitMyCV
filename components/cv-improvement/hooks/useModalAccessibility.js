@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 /**
  * Hook pour gérer l'accessibilité du modal (scroll, focus trap, Escape)
@@ -8,37 +9,10 @@ import { useEffect, useRef } from 'react';
  */
 export function useModalAccessibility(isOpen, mounted, onClose) {
   const modalRef = useRef(null);
-  const scrollYRef = useRef(0);
   const previousFocusRef = useRef(null);
 
   // Gestion du scroll body quand le modal est ouvert
-  useEffect(() => {
-    if (!isOpen || !mounted) return;
-
-    scrollYRef.current = window.scrollY;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollYRef.current}px`;
-    document.body.style.width = '100%';
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-    document.body.style.touchAction = 'none';
-
-    return () => {
-      const currentTop = parseInt(document.body.style.top || '0', 10);
-      const restoreY = Math.abs(currentTop);
-
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      document.body.style.touchAction = '';
-
-      window.scrollTo(0, restoreY);
-    };
-  }, [isOpen, mounted]);
+  useScrollLock(isOpen && mounted);
 
   // Focus management - save and restore focus
   useEffect(() => {

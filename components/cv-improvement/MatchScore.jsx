@@ -24,102 +24,37 @@ export default function MatchScore({
   const { showCosts, getCost } = useCreditCost();
   const matchScoreCost = getCost("match_score");
   const [isHovered, setIsHovered] = React.useState(false);
-  const [showSuccessEffect, setShowSuccessEffect] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
-  const [isDelayedLoading, setIsDelayedLoading] = React.useState(false);
   const prevStatusRef = React.useRef(status);
   const prevCvFileRef = React.useRef(currentCvFile);
   const isRefreshingRef = React.useRef(false);
-  const prevScoreRef = React.useRef(score);
-  const prevOptimizeButtonReadyRef = React.useRef(isOptimizeButtonReady);
-  const delayTimeoutRef = React.useRef(null);
 
   // Réinitialiser les états visuels lors d'un changement de CV
   React.useEffect(() => {
     if (prevCvFileRef.current !== currentCvFile) {
       setIsHovered(false);
-      setShowSuccessEffect(false);
-      setIsDelayedLoading(false);
-      if (delayTimeoutRef.current) {
-        clearTimeout(delayTimeoutRef.current);
-        delayTimeoutRef.current = null;
-      }
       prevCvFileRef.current = currentCvFile;
     }
   }, [currentCvFile]);
 
-  // Gérer l'animation qui continue jusqu'à ce que le bouton Optimiser soit disponible
+  // Forcer la sortie du hover quand le chargement commence (fix iOS)
   React.useEffect(() => {
     const wasIdle = prevStatusRef.current === "idle" || prevStatusRef.current === null;
     const isNowLoading = status === "loading" || status === "inprogress";
-    const wasLoading = prevStatusRef.current === "loading" || prevStatusRef.current === "inprogress";
-    const isNowIdle = status === "idle" || status === null;
 
-    // Si on commence à charger, forcer la sortie du hover (fix iOS)
     if (wasIdle && isNowLoading) {
       setIsHovered(false);
-      // Activer l'animation prolongée
-      setIsDelayedLoading(true);
     }
 
-    // Si le status passe à idle mais qu'on est en delayed loading
-    if (wasLoading && isNowIdle && !isLoading && !isRefreshing) {
-      // isDelayedLoading reste à true jusqu'à ce que hasScoreBreakdown devienne true
-    }
-
-    // Mettre à jour la ref pour la prochaine fois
     prevStatusRef.current = status;
-  }, [status, isLoading, isRefreshing]);
-
-  // Arrêter l'animation quand le bouton Optimiser devient actif (visible ET cliquable)
-  React.useEffect(() => {
-    const wasNotReady = !prevOptimizeButtonReadyRef.current;
-    const isNowReady = isOptimizeButtonReady;
-
-    if (wasNotReady && isNowReady && isDelayedLoading) {
-      setIsDelayedLoading(false);
-    }
-
-    prevOptimizeButtonReadyRef.current = isOptimizeButtonReady;
-  }, [isOptimizeButtonReady, isDelayedLoading]);
-
-  // WORKAROUND iOS: Forcer le re-render si on détecte un score valide alors qu'on est en loading
-  React.useEffect(() => {
-    if (score !== null && score !== prevScoreRef.current && (status === 'loading' || isLoading)) {
-
-      // Déclencher un événement pour forcer le parent à se rafraîchir
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('matchscore:force-refresh', {
-          detail: { score, cvFile: currentCvFile }
-        }));
-      }
-    }
-    prevScoreRef.current = score;
-  }, [score, status, isLoading, currentCvFile]);
-
-  // Effet de succès quand le score est calculé (détection de transition score null -> score valide)
-  React.useEffect(() => {
-    const hasValidScore = score !== null && score !== undefined;
-    const scoreChanged = prevScoreRef.current !== score;
-
-    if (hasValidScore && scoreChanged) {
-      setShowSuccessEffect(true);
-      const timer = setTimeout(() => setShowSuccessEffect(false), 1000);
-
-      // Déclencher un événement pour notifier que le score a été mis à jour
-      window.dispatchEvent(new CustomEvent('score:updated', {
-        detail: { cvFile: currentCvFile, score, status }
-      }));
-
-      return () => clearTimeout(timer);
-    }
-  }, [status, score, currentCvFile]);
+  }, [status]);
 
   // Détecter si on est vraiment en train de charger (score ou optimisation)
+  // Note: isLoading (fetchMatchScore en cours) est ignoré quand on a déjà un score,
+  // pour éviter que les backup fetches ne flashent le score existant
   const isActuallyLoading = (status === "loading" || isLoading || isRefreshing || optimiseStatus === "inprogress");
-  const isStuckLoading = score !== null && !isLoading && status !== "loading" && !isRefreshing && optimiseStatus !== "inprogress";
-  const shouldShowLoading = (isActuallyLoading && !isStuckLoading) || isDelayedLoading;
-
+  const isStuckLoading = score !== null && status !== "loading" && !isRefreshing && optimiseStatus !== "inprogress";
+  const shouldShowLoading = isActuallyLoading && !isStuckLoading;
 
   // Afficher le composant uniquement si le CV a une offre d'emploi associée ET si la feature est activée
   if (!hasJobOffer || !sourceValue || !settings.feature_match_score) {
@@ -149,8 +84,6 @@ export default function MatchScore({
   };
 
   const getDisplayText = () => {
-    // WORKAROUND iOS: Si on a un score valide, l'afficher même si status=loading
-    // (bug iOS où le status reste bloqué à loading)
     if (score !== null && score !== undefined) {
       return `${score}`;
     }
@@ -166,84 +99,59 @@ export default function MatchScore({
   const getScoreColor = () => {
     if (status === "error") return "text-red-600";
     if (score === null) return "text-gray-500";
-
-    // Score exceptionnel > 90 : or avec effet scintillant
     if (score > 90) return "text-yellow-600";
-
-    // 80-90 : vert
     if (score >= 80) return "text-green-600";
-
-    // 50-80 : orange
     if (score >= 50) return "text-orange-500";
-
-    // 10-50 : dégradé rouge -> orange
     if (score >= 40) return "text-orange-600";
     if (score >= 30) return "text-red-500";
     if (score >= 20) return "text-red-600";
-
-    // 0-10 : rouge foncé
     return "text-red-700";
   };
 
   const getBorderColor = () => {
     if (status === "error") return "border-red-600";
     if (score === null) return "border-white/30";
-
-    // Score exceptionnel > 90 : or
     if (score > 90) return "border-yellow-600";
-
-    // 80-90 : vert
     if (score >= 80) return "border-green-600";
-
-    // 50-80 : orange
     if (score >= 50) return "border-orange-500";
-
-    // 10-50 : dégradé rouge -> orange
     if (score >= 40) return "border-orange-600";
     if (score >= 30) return "border-red-500";
     if (score >= 20) return "border-red-600";
-
-    // 0-10 : rouge foncé
     return "border-red-700";
   };
 
   const isDisabled = shouldShowLoading || isHistoricalVersion;
 
   const getScoreTooltip = () => {
-    // Si version historique
     if (isHistoricalVersion) {
       return score !== null ? `Score: ${score} (ancien)` : t("matchScore.notCalculated");
     }
-    // Si optimisation en cours
     if (optimiseStatus === "inprogress") {
       return t("cvImprovement.improving") || "Amélioration en cours...";
     }
-    // Si on charge actuellement, afficher "Calcul en cours"
     if (shouldShowLoading) {
       return t("matchScore.calculating");
     }
     if (status === "error") {
       return t("matchScore.failed");
     }
-    // Afficher le coût en crédits (mode crédits-only)
     if (showCosts && matchScoreCost > 0) {
       return t("credits.useCredits", { count: matchScoreCost }) || `Utiliser ${matchScoreCost} Cr.`;
     }
-    // Sinon message par défaut
     return t("matchScore.refresh") || "Recalculer";
   };
 
   return (
     <div className="no-print relative -ml-3">
-      {/* Bulle principale */}
+      {/* Bulle principale — PAS de backdrop-blur-xl (crée un contexte de compositing */}
+      {/* GPU sur iOS Safari qui empêche le repaint des éléments enfants) */}
       <div
         data-onboarding="match-score"
         className={`
           relative w-12 h-12 rounded-full flex items-center justify-center
-          bg-white/20 backdrop-blur-xl border-4 ${isHistoricalVersion ? 'border-white/30' : getBorderColor()} shadow-2xl
+          bg-white/30 border-4 ${isHistoricalVersion ? 'border-white/30' : getBorderColor()} shadow-2xl
           ${!isDisabled && !isLoading ? "cursor-pointer" : "cursor-not-allowed"}
-          transition-all duration-300
-          ${showSuccessEffect ? "ring-4 ring-emerald-300" : ""}
+          transition-[border-color] duration-300
           ${isHistoricalVersion ? "opacity-60" : ""}
         `}
         onClick={handleRefresh}
@@ -251,17 +159,13 @@ export default function MatchScore({
         onMouseLeave={() => setIsHovered(false)}
         title={getScoreTooltip()}
       >
-        {/* Contenu de la bulle (score) */}
-        <div
-          className={`
-            absolute inset-0 flex flex-col items-center justify-center rounded-full
-            transition-all duration-300
-            ${shouldShowLoading || (isHovered && !isDisabled) || (score === null && status !== "error" && !isDisabled) ? "blur-sm" : "blur-0"}
-          `}
-        >
-          {score !== null && (
-            <div className="relative flex flex-col items-center justify-center">
-              {/* Score avant optimisation (si disponible) */}
+        {/* Conteneur unique toujours visible — jamais basculé hidden/visible */}
+        {/* transform-gpu isole la couche de compositing du backdrop-blur-xl du header parent */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full">
+          {shouldShowLoading ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : score !== null && score !== undefined ? (
+            <>
               {scoreBefore !== null && scoreBefore !== score && (
                 <span className="text-[9px] text-white/50 line-through leading-none -mb-0.5">
                   {scoreBefore}
@@ -276,40 +180,20 @@ export default function MatchScore({
                       : getScoreColor() + " text-white"
                 }`}
               >
-                {getDisplayText()}
+                {score}
               </span>
-            </div>
+            </>
+          ) : (
+            <RefreshCw
+              className="w-5 h-5 text-white opacity-80 drop-shadow"
+              strokeWidth={2.5}
+            />
           )}
         </div>
 
-        {/* Icône de refresh au survol (seulement si score existe et pas en loading) */}
+        {/* Overlay subtil au survol pour indiquer le clic */}
         {isHovered && !isDisabled && !shouldShowLoading && score !== null && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <RefreshCw
-              className="w-5 h-5 text-white opacity-80 drop-shadow"
-              strokeWidth={2.5}
-            />
-          </div>
-        )}
-
-        {/* Icône de refresh en rotation pendant le chargement */}
-        {shouldShowLoading && (
-          <div className={`absolute inset-0 flex items-center justify-center animate-spin-slow shimmer`}>
-            <RefreshCw
-              className="w-5 h-5 text-white opacity-80 drop-shadow"
-              strokeWidth={2.5}
-            />
-          </div>
-        )}
-
-        {/* Icône de refresh statique quand score non calculé */}
-        {score === null && !shouldShowLoading && status !== "error" && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <RefreshCw
-              className="w-5 h-5 text-white opacity-80 drop-shadow"
-              strokeWidth={2.5}
-            />
-          </div>
+          <div className="absolute inset-0 bg-black/20 rounded-full" />
         )}
       </div>
     </div>

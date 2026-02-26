@@ -75,7 +75,8 @@
       "jobTitleCreationCompleted": "CV para \"{title}\" creado con éxito",
       "improvementCompleted": "CV mejorado con {count} modificación(es)",
       "improvementReplacedCompleted": "CV reemplazado con {count} mejora(s)",
-      "matchScoreDetailedCompleted": "Puntuación calculada: {score}/100 con {suggestions} sugerencia(s)"
+      "matchScoreDetailedCompleted": "Puntuación calculada: {score}/100 con {suggestions} sugerencia(s)",
+      "improvementNoChanges": "Tu CV ya está optimizado para esta oferta"
     },
     "errors": {
       "noJobOfferDetected": "No se detectó ninguna oferta de empleo: {source}",

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { useBackgroundTasks } from "@/components/providers/BackgroundTasksProvider";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { parseApiError } from "@/lib/utils/errorHandler";
 
 /**
@@ -13,6 +14,7 @@ export function useTranslation() {
   const { t } = useLanguage();
   const { localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks } = useBackgroundTasks();
   const { addNotification } = useNotifications();
+  const { executeRecaptcha } = useRecaptcha();
 
   const [isTranslateDropdownOpen, setIsTranslateDropdownOpen] = useState(false);
   const translateDropdownRef = useRef(null);
@@ -75,12 +77,16 @@ export function useTranslation() {
 
     // Envoyer la requête en arrière-plan
     try {
+      // Obtenir le token reCAPTCHA (le serveur gère BYPASS_RECAPTCHA)
+      const recaptchaToken = await executeRecaptcha('translate_cv');
+
       const response = await fetch("/api/background-tasks/translate-cv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sourceFile: currentFile,
           targetLanguage,
+          recaptchaToken: recaptchaToken || '',
           deviceId: localDeviceId,
         }),
       });
@@ -117,7 +123,7 @@ export function useTranslation() {
       // Échec : notifier l'erreur
       const notification = {
         type: "error",
-        message: error?.message || t("translate.notifications.error"),
+        message: error?.message ? t(error.message) : t("translate.notifications.error"),
         duration: 10000,
       };
 
@@ -128,7 +134,7 @@ export function useTranslation() {
 
       addNotification(notification);
     }
-  }, [t, addNotification, localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks]);
+  }, [t, addNotification, localDeviceId, addOptimisticTask, removeOptimisticTask, refreshTasks, executeRecaptcha]);
 
   return {
     isTranslateDropdownOpen,

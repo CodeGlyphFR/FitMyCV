@@ -74,7 +74,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Subscription Change] Erreur:', error);
     return NextResponse.json(
-      { error: error.message || 'Erreur lors du changement d\'abonnement' },
+      { error: 'Erreur lors du changement d\'abonnement' },
       { status: 500 }
     );
   }

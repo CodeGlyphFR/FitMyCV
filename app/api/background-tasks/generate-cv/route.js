@@ -17,7 +17,7 @@ import prisma from '@/lib/prisma';
 import { CommonErrors, apiError } from '@/lib/api/apiErrors';
 import { registerTaskTypeStart, enqueueJob } from '@/lib/background-jobs/jobQueue';
 import { startSingleOfferGeneration } from '@/lib/features/cv-adaptation';
-import { incrementFeatureCounter, refundFeatureUsage } from '@/lib/subscription/featureUsage';
+import { incrementFeatureCounter, refundFeatureUsage, rollbackPreTaskUsage } from '@/lib/subscription/featureUsage';
 import { verifyRecaptcha } from '@/lib/recaptcha/verifyRecaptcha';
 import { validateUploadedFile, sanitizeFilename } from '@/lib/security/fileValidation';
 
@@ -30,11 +30,29 @@ function sanitizeLinks(raw) {
 }
 
 /**
- * Valide le format d'une URL
+ * Valide le format d'une URL et bloque les URLs internes/privées (SSRF protection)
  */
 function isValidUrl(string) {
   try {
-    new URL(string);
+    const url = new URL(string);
+    // Bloquer les protocoles non-HTTP
+    if (!['http:', 'https:'].includes(url.protocol)) return false;
+    const hostname = url.hostname.toLowerCase();
+    // Bloquer les IPs privées et localhost
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '[::1]' ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.') ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('169.254.') ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal')
+    ) {
+      return false;
+    }
     return true;
   } catch {
     return false;
@@ -111,7 +129,12 @@ export async function POST(request) {
     const userInterfaceLanguage = formData.get('userInterfaceLanguage') || 'fr';
     const files = formData.getAll('files').filter(Boolean);
 
-    // Vérification reCAPTCHA
+    // Vérification reCAPTCHA (obligatoire en production)
+    if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
+      if (!recaptchaToken) {
+        return apiError('errors.api.auth.recaptchaFailed', { status: 403 });
+      }
+    }
     if (recaptchaToken) {
       const recaptchaResult = await verifyRecaptcha(recaptchaToken, {
         callerName: 'generate-cv',
@@ -119,7 +142,7 @@ export async function POST(request) {
       });
 
       if (!recaptchaResult.success) {
-        return apiError('errors.auth.recaptchaFailed', { status: 403 });
+        return apiError('errors.api.auth.recaptchaFailed', { status: 403 });
       }
     }
 
@@ -181,11 +204,9 @@ export async function POST(request) {
       const usageResult = await incrementFeatureCounter(userId, 'gpt_cv_generation');
 
       if (!usageResult.success) {
-        // Rembourser les crédits déjà débités
+        // Rembourser les crédits/compteurs déjà débités (pré-task)
         for (const prev of usageResults) {
-          if (prev.transactionId) {
-            await refundFeatureUsage(prev.transactionId);
-          }
+          await rollbackPreTaskUsage(userId, prev);
         }
 
         return NextResponse.json({
@@ -244,6 +265,10 @@ export async function POST(request) {
           createdAt: BigInt(Date.now() + taskIndex),
           shouldUpdateCvList: true,
           deviceId,
+          creditUsed: usageResult.usedCredit,
+          creditTransactionId: usageResult.transactionId || null,
+          featureName: usageResult.featureName || null,
+          featureCounterPeriodStart: usageResult.periodStart || null,
           payload: JSON.stringify({
             taskId: task.id,
             offerId: offer.id,
@@ -307,6 +332,10 @@ export async function POST(request) {
           createdAt: BigInt(Date.now() + taskIndex),
           shouldUpdateCvList: true,
           deviceId,
+          creditUsed: usageResult.usedCredit,
+          creditTransactionId: usageResult.transactionId || null,
+          featureName: usageResult.featureName || null,
+          featureCounterPeriodStart: usageResult.periodStart || null,
           payload: JSON.stringify({
             taskId: task.id,
             offerId: offer.id,

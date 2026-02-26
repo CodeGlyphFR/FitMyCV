@@ -41,7 +41,7 @@ export async function GET(request) {
     return NextResponse.json({
       success: true,
       message: 'Email vérifié avec succès',
-      user: user, // Retourner les infos utilisateur pour connexion auto
+      userId: user?.id, // Retourner uniquement l'ID pour la connexion auto (pas d'email/name)
     });
   } catch (error) {
     logger.error('[verify-email] Erreur:', error);

@@ -45,15 +45,8 @@ class TopBarErrorBoundary extends React.Component {
       // Afficher un placeholder pendant la récupération
       return (
         <div
-          className="no-print fixed top-0 left-0 right-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
-          style={{
-            paddingTop: 'env(safe-area-inset-top)',
-            WebkitBackfaceVisibility: 'hidden',
-            backfaceVisibility: 'hidden',
-            WebkitTransform: 'translate3d(0, 0, 0)',
-            transform: 'translate3d(0, 0, 0)',
-            pointerEvents: 'auto'
-          }}
+          className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <div className="w-full p-3 flex items-center">
             <span className="text-sm text-white/60 animate-pulse">Chargement...</span>

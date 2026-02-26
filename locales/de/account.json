@@ -57,6 +57,7 @@
       "updateButton": "Passwort aktualisieren",
       "updating": "Aktualisieren...",
       "success": "Passwort erfolgreich aktualisiert!",
+      "successReconnect": "Passwort aktualisiert. Neuanmeldung erforderlich...",
       "passwordStrength": {
         "label": "Passwortstärke",
         "weak": "Schwach",

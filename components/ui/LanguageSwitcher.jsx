@@ -64,14 +64,7 @@ export default function LanguageSwitcher() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-6 left-6 z-50 no-print pointer-events-auto"
-      style={{
-        transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden',
-        WebkitTransform: 'translateZ(0)',
-        WebkitBackfaceVisibility: 'hidden',
-        willChange: 'transform'
-      }}
+      className="fixed bottom-6 left-6 z-50 no-print pointer-events-auto fixed-button-layer"
     >
       {/* Language options - appear above the button when open */}
       <div

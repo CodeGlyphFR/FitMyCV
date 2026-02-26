@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Check, X, PartyPopper } from 'lucide-react';
 import TipBox from '@/components/ui/TipBox';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   slideVariants,
   paginationDotsContainer,
@@ -154,33 +155,7 @@ export default function OnboardingCompletionModal({
   }, [currentScreen]);
 
   // Gestion du scroll body
-  useEffect(() => {
-    if (!open) return;
-
-    const scrollY = window.scrollY;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-    document.body.style.touchAction = 'none';
-
-    return () => {
-      const currentTop = parseInt(document.body.style.top || '0', 10);
-      const restoreY = Math.abs(currentTop);
-
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.paddingRight = '';
-      document.body.style.touchAction = '';
-
-      window.scrollTo(0, restoreY);
-    };
-  }, [open]);
+  useScrollLock(open);
 
   // Gestion clavier
   useEffect(() => {
@@ -262,11 +237,11 @@ export default function OnboardingCompletionModal({
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-full mx-2 md:mx-4 md:max-w-2xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-full mx-2 md:mx-4 md:max-w-2xl bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div>
+        <div className="flex-shrink-0">
           {/* Titre et boutons */}
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
@@ -323,7 +298,7 @@ export default function OnboardingCompletionModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="relative overflow-x-hidden overflow-y-auto flex-1 min-h-0" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               key={currentScreen}
@@ -436,7 +411,7 @@ export default function OnboardingCompletionModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10">
+        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10 flex-shrink-0">
           {/* Bouton Précédent (gauche, masqué au premier écran) */}
           {currentScreen > 0 ? (
             <button

@@ -70,6 +70,7 @@
   "errors": {
     "sessionExpired": "Session expired",
     "invalidCredentials": "Incorrect email or password",
+    "tooManyAttempts": "Too many attempts. Please try again in 15 minutes.",
     "emailNotVerified": "Email not verified. Check your inbox.",
     "emailAndPasswordRequired": "Email and password required",
     "tokenRequired": "Session required",

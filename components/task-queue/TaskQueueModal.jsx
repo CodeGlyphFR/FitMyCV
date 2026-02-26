@@ -524,7 +524,7 @@ export default function TaskQueueModal({ open, onClose }) {
     if (typeof window !== "undefined") {
       // Petit délai pour laisser router.refresh() se propager
       setTimeout(() => {
-        window.dispatchEvent(new Event("cv:list:changed"));
+        window.dispatchEvent(new CustomEvent("cv:list:changed", { detail: { file: cvFile } }));
         window.dispatchEvent(new CustomEvent("cv:selected", { detail: { file: cvFile, source: 'task-queue' } }));
       }, 50);
     }

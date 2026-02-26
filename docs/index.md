@@ -31,7 +31,7 @@
 | Document | Description |
 |----------|-------------|
 | [api-reference.md](./api-reference.md) | 114 endpoints API (publics, authentifiés, admin) |
-| [data-models.md](./data-models.md) | 34 modèles Prisma organisés par domaine |
+| [data-models.md](./data-models.md) | 33 modèles Prisma organisés par domaine |
 | [components.md](./components.md) | 138 composants React en 20 domaines |
 
 ### Guide Développement
@@ -57,7 +57,7 @@
 | API Routes | 114 endpoints |
 | Composants React | 138 fichiers |
 | Modules métier (lib/) | 31 modules |
-| Modèles Prisma | 34 modèles |
+| Modèles Prisma | 33 modèles |
 | Langues supportées | 4 (fr, en, de, es) |
 
 ---

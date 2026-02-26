@@ -5,6 +5,7 @@ import { useNotifications } from "@/components/notifications/NotificationProvide
 import { useBackgroundTasks } from "@/components/providers/BackgroundTasksProvider";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 /**
  * Hook for managing match score state and fetching
@@ -13,29 +14,26 @@ export function useMatchScore({ currentVersion }) {
   const { t } = useLanguage();
   const { localDeviceId } = useBackgroundTasks();
   const { addNotification } = useNotifications();
+  const { executeRecaptcha } = useRecaptcha();
 
   const [matchScore, setMatchScore] = useState(null);
   const [scoreBefore, setScoreBefore] = useState(null);
   const [matchScoreStatus, setMatchScoreStatus] = useState("idle");
   const [optimiseStatus, setOptimiseStatus] = useState("idle");
-  const [isLoadingMatchScore, setIsLoadingMatchScore] = useState(false);
+  const [isLoadingMatchScore, setIsLoadingMatchScore] = useState(true);
   const [currentCvFile, setCurrentCvFile] = useState(null);
   const [hasJobOffer, setHasJobOffer] = useState(false);
   const [hasScoreBreakdown, setHasScoreBreakdown] = useState(false);
 
   // Ref pour tracker la version en cours de fetch (éviter race conditions)
   const fetchVersionRef = useRef(currentVersion);
-  const abortControllerRef = useRef(null);
+  // Fetch-id counter : laisse toutes les requêtes compléter mais n'applique
+  // que le résultat de la plus récente (élimine les problèmes d'AbortController sur mobile)
+  const fetchIdRef = useRef(0);
 
   const fetchMatchScore = useCallback(async () => {
-    // Annuler la requête précédente si elle existe
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Créer un nouveau AbortController pour cette requête
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
+    // Incrémenter le counter — seul le résultat du fetch le plus récent sera appliqué
+    const thisFetchId = ++fetchIdRef.current;
 
     // Capturer la version au moment de l'appel
     const versionAtFetchStart = currentVersion;
@@ -47,7 +45,7 @@ export function useMatchScore({ currentVersion }) {
       const cookies = document.cookie.split(';');
       const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
       if (!cvFileCookie) {
-        setIsLoadingMatchScore(false);
+        if (fetchIdRef.current === thisFetchId) setIsLoadingMatchScore(false);
         return;
       }
 
@@ -64,8 +62,10 @@ export function useMatchScore({ currentVersion }) {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
         },
-        signal: abortController.signal
       });
+
+      // Ignorer si un fetch plus récent a été lancé entre-temps
+      if (fetchIdRef.current !== thisFetchId) return;
 
       if (!response.ok) {
         setIsLoadingMatchScore(false);
@@ -73,6 +73,9 @@ export function useMatchScore({ currentVersion }) {
       }
 
       const data = await response.json();
+
+      // Re-vérifier après le parsing JSON (un autre fetch a pu être lancé pendant le parse)
+      if (fetchIdRef.current !== thisFetchId) return;
 
       // Vérifier que le CV ET la version n'ont pas changé entre temps
       const updatedCookies = document.cookie.split(';');
@@ -106,10 +109,8 @@ export function useMatchScore({ currentVersion }) {
         setIsLoadingMatchScore(false);
       }
     } catch (error) {
-      // Ignorer les erreurs d'abort (changement de version rapide)
-      if (error.name === 'AbortError') {
-        return;
-      }
+      // Ignorer les erreurs si un fetch plus récent est en cours
+      if (fetchIdRef.current !== thisFetchId) return;
       setIsLoadingMatchScore(false);
     }
   }, [currentVersion]);
@@ -129,6 +130,9 @@ export function useMatchScore({ currentVersion }) {
 
       const currentFile = decodeURIComponent(cvFileCookie.split('=')[1]);
 
+      // Obtenir le token reCAPTCHA
+      const recaptchaToken = await executeRecaptcha('calculate_match_score');
+
       // Envoyer la requête pour lancer le calcul
       const response = await fetch("/api/background-tasks/calculate-match-score", {
         method: "POST",
@@ -137,6 +141,7 @@ export function useMatchScore({ currentVersion }) {
           cvFile: currentFile,
           isAutomatic: false,
           deviceId: localDeviceId,
+          recaptchaToken,
         }),
       });
 
@@ -169,16 +174,65 @@ export function useMatchScore({ currentVersion }) {
 
       addNotification(notification);
     }
-  }, [t, addNotification, localDeviceId]);
+  }, [t, addNotification, localDeviceId, executeRecaptcha]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount : invalider le fetch-id pour que les requêtes en vol soient ignorées
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      fetchIdRef.current++;
     };
   }, []);
+
+  // Polling autonome : quand le calcul est en cours, interroger l'API
+  // directement toutes les 3s avec son propre fetch (bypass fetchIdRef).
+  // Sur mobile, le SSE tombe silencieusement et les 9 autres callers de
+  // fetchMatchScore() se cannibalisent via le fetchIdRef counter.
+  useEffect(() => {
+    if (matchScoreStatus !== 'inprogress') return;
+
+    let active = true;
+
+    const poll = async () => {
+      try {
+        const cookies = document.cookie.split(';');
+        const cvFileCookie = cookies.find(c => c.trim().startsWith('cvFile='));
+        if (!cvFileCookie || !active) return;
+
+        const file = decodeURIComponent(cvFileCookie.split('=')[1]);
+        const res = await fetch(
+          `/api/cv/match-score?file=${encodeURIComponent(file)}&_=${Date.now()}`,
+          { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } }
+        );
+
+        if (!active || !res.ok) return;
+        const data = await res.json();
+        if (!active) return;
+
+        const status = data.status || 'idle';
+        // Appliquer uniquement quand le score est prêt (pas pendant inprogress)
+        if (status !== 'inprogress' && data.score != null) {
+          // Invalider les fetchMatchScore() en vol pour éviter qu'ils n'écrasent
+          fetchIdRef.current++;
+          setMatchScore(data.score);
+          setScoreBefore(data.scoreBefore || null);
+          setMatchScoreStatus(status);
+          setOptimiseStatus(data.optimiseStatus || 'idle');
+          setHasJobOffer(data.hasJobOffer || false);
+          setHasScoreBreakdown(data.hasScoreBreakdown || false);
+          setIsLoadingMatchScore(false);
+        }
+      } catch {
+        // Silencieux — le prochain tick réessaiera
+      }
+    };
+
+    const pollInterval = setInterval(poll, 3000);
+
+    return () => {
+      active = false;
+      clearInterval(pollInterval);
+    };
+  }, [matchScoreStatus]);
 
   return {
     matchScore,
