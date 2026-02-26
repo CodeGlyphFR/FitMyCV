@@ -8,7 +8,9 @@
         "understood": "Compris",
         "understoodExclaim": "Compris !",
         "start": "Commencer !",
-        "close": "Fermer"
+        "close": "Fermer",
+        "confirmSkip": "Oui, passer",
+        "continueTutorial": "Continuer le tutoriel"
       },
       "aria": {
         "closeModal": "Fermer le modal",
@@ -25,7 +27,7 @@
         "inProgress": "En cours",
         "skipTutorial": "Passer le tutoriel",
         "completed": "Tutoriel complété !",
-        "confirmSkip": "Êtes-vous sûr de vouloir passer le tutoriel ? Vous pourrez le relancer depuis les paramètres.",
+        "confirmSkip": "Êtes-vous sûr de vouloir passer le tutoriel ? Vous pourrez le relancer depuis votre espace Mon compte.",
         "progressLabel": "Progression du tutoriel"
       }
     },
