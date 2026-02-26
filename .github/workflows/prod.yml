@@ -46,6 +46,8 @@ jobs:
           echo "RECAPTCHA_KEY=$(grep '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
           echo "STRIPE_PK=$(grep '^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
           echo "APP_URL=$(grep '^NEXT_PUBLIC_SITE_URL=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+          echo "POSTHOG_KEY=$(grep '^NEXT_PUBLIC_POSTHOG_KEY=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+          echo "POSTHOG_HOST=$(grep '^NEXT_PUBLIC_POSTHOG_HOST=' $PROD_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
 
       - name: Docker Build
         run: |
@@ -54,6 +56,8 @@ jobs:
             --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${{ env.STRIPE_PK }}" \
             --build-arg NEXT_PUBLIC_SITE_URL="${{ env.APP_URL }}" \
             --build-arg NEXT_PUBLIC_APP_URL="${{ env.APP_URL }}" \
+            --build-arg NEXT_PUBLIC_POSTHOG_KEY="${{ env.POSTHOG_KEY }}" \
+            --build-arg NEXT_PUBLIC_POSTHOG_HOST="${{ env.POSTHOG_HOST }}" \
             -t fitmycv:latest .
 
       - name: Deploy via Docker Compose (Production)

@@ -245,7 +245,9 @@ export async function proxy(request) {
   connectSrcSources.push(
     'https://api.openai.com',
     'https://www.google.com',
-    'https://www.gstatic.com'
+    'https://www.gstatic.com',
+    'https://eu.i.posthog.com',
+    'https://eu-assets.i.posthog.com'
   );
 
   // Headers de sécurité pour toutes les réponses
@@ -273,7 +275,7 @@ export async function proxy(request) {
       "default-src 'self'",
       // unsafe-inline nécessaire : Next.js App Router injecte des scripts inline pour le streaming RSC (self.__next_f.push)
       // unsafe-eval uniquement en dev (HMR/Fast Refresh)
-      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com`,
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://eu-assets.i.posthog.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com", // Tailwind + Google Fonts + Prism (docs)
       "img-src 'self' data: https:",
       "font-src 'self' data: https://fonts.gstatic.com",

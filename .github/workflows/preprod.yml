@@ -52,6 +52,8 @@ jobs:
           echo "RECAPTCHA_KEY=$(grep '^NEXT_PUBLIC_RECAPTCHA_SITE_KEY=' $STAGING_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
           echo "STRIPE_PK=$(grep '^NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=' $STAGING_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
           echo "APP_URL=$(grep '^NEXT_PUBLIC_SITE_URL=' $STAGING_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+          echo "POSTHOG_KEY=$(grep '^NEXT_PUBLIC_POSTHOG_KEY=' $STAGING_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
+          echo "POSTHOG_HOST=$(grep '^NEXT_PUBLIC_POSTHOG_HOST=' $STAGING_ENV | cut -d '=' -f2-)" >> $GITHUB_ENV
 
           # Clé secrète Stripe Live (sync coupons) — depuis GitHub Secrets, plus du filesystem
           echo "STRIPE_LIVE_KEY=${{ secrets.STRIPE_LIVE_SECRET_KEY }}" >> $GITHUB_ENV
@@ -86,6 +88,8 @@ jobs:
             --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${{ env.STRIPE_PK }}" \
             --build-arg NEXT_PUBLIC_SITE_URL="${{ env.APP_URL }}" \
             --build-arg NEXT_PUBLIC_APP_URL="${{ env.APP_URL }}" \
+            --build-arg NEXT_PUBLIC_POSTHOG_KEY="${{ env.POSTHOG_KEY }}" \
+            --build-arg NEXT_PUBLIC_POSTHOG_HOST="${{ env.POSTHOG_HOST }}" \
             -t fitmycv:preview .
 
       - name: Deploy Container
