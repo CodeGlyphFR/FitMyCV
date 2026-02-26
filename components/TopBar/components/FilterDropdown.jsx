@@ -35,12 +35,8 @@ const DATE_RANGES = [
 // Checkbox personnalisée style glassmorphism
 function GlassCheckbox({ checked, onChange, label }) {
   return (
-    <label className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-white/10 rounded cursor-pointer transition-colors duration-150 group">
+    <label onClick={(e) => { e.preventDefault(); onChange(); }} className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-white/10 rounded cursor-pointer transition-colors duration-150 group">
       <div
-        onClick={(e) => {
-          e.preventDefault();
-          onChange();
-        }}
         className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 cursor-pointer ${
           checked
             ? 'bg-emerald-500 border-emerald-400'
