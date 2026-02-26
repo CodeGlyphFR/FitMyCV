@@ -167,5 +167,18 @@ export async function GET(){
   const currentCookie = (cookieStore.get("cvFile") || {}).value;
   const current = files.includes(currentCookie) ? currentCookie : (files[0] || null);
 
-  return NextResponse.json({ items, current });
+  const response = NextResponse.json({ items, current });
+
+  // Re-set the cookie without httpOnly to clean up stale httpOnly cookies
+  // left by previous versions of /api/cvs/create
+  if (current) {
+    response.cookies.set('cvFile', current, {
+      path: '/',
+      maxAge: 31536000,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+  }
+
+  return response;
 }
