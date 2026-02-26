@@ -33,9 +33,7 @@ import {
  * - onNext: function - Callback pour passer à l'écran suivant
  * - onPrev: function - Callback pour passer à l'écran précédent
  * - onComplete: function - Callback quand le modal est complété
- * - onSkip: function - Callback pour skip le modal
  * - onClose: function - Callback pour fermer le modal
- * - showSkipButton: boolean - Afficher le bouton "Passer"
  * - disableEscapeKey: boolean - Désactiver la fermeture avec Escape
  * - disableBackdropClick: boolean - Désactiver la fermeture avec clic backdrop
  * - size: string - Taille du modal ('default' | 'large')
@@ -53,9 +51,7 @@ export default function OnboardingModal({
   onPrev,
   onJumpTo, // NEW: Direct jump to specific screen
   onComplete,
-  onSkip,
   onClose,
-  showSkipButton = true,
   disableEscapeKey = false,
   disableBackdropClick = false,
   size = 'large',
@@ -115,10 +111,6 @@ export default function OnboardingModal({
     if (e.target === e.currentTarget && !disableBackdropClick && onClose) {
       onClose();
     }
-  };
-
-  const handleSkip = () => {
-    if (onSkip) onSkip();
   };
 
   // Handler bullet click (jump to specific slide)
@@ -210,19 +202,8 @@ export default function OnboardingModal({
               </div>
             </div>
 
-            {/* Boutons alignés à droite */}
-            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-              {/* Bouton Passer */}
-              {showSkipButton && onSkip && (
-                <button
-                  onClick={onSkip}
-                  className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
-                >
-                  {t('onboarding.common.buttons.skip')}
-                </button>
-              )}
-
-              {/* X Button - Allows user to exit mid-tutorial (different from WelcomeModal where X advances) */}
+            {/* Bouton fermer (X) */}
+            <div className="flex items-center ml-2 flex-shrink-0">
               {onClose && (
                 <button
                   onClick={onClose}

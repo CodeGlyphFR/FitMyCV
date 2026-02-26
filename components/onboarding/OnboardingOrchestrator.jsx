@@ -695,9 +695,7 @@ export default function OnboardingOrchestrator() {
           onPrev={handleModalPrev}
           onJumpTo={handleModalJumpTo}
           onComplete={handleModalComplete}
-          onSkip={handleModalSkip}
           onClose={handleCloseModal}
-          showSkipButton={true}
           size="large"
         />
         {currentStep === 9 && (
