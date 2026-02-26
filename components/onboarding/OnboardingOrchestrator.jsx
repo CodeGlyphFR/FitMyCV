@@ -466,23 +466,33 @@ export default function OnboardingOrchestrator() {
 
     // Phase 2: quand la tâche d'optimisation se termine, on ne complète PAS tout de suite.
     // On attend que l'utilisateur ait reviewé toutes les modifications.
+    // On poll le DOM pendant 10s pour laisser le temps au router.refresh() de rendre
+    // les éléments de review. Si aucun pending n'apparaît après le timeout,
+    // on arrête le polling sans compléter — le highlight reste actif.
     const handleTaskCompleted = (event) => {
       if (isCleanedUp || step7ReviewHandledRef.current) return;
       const task = event.detail?.task;
       if (isImprovementTask(task)) {
-        // Attendre un délai pour laisser le DOM se mettre à jour avec les review items
-        setTimeout(() => {
-          if (isCleanedUp || step7ReviewHandledRef.current) return;
-          const pendingElements = document.querySelectorAll('[data-review-change-pending]');
-          if (pendingElements.length === 0) {
-            // Cas edge : pas de modifications → compléter immédiatement
-            step7ReviewHandledRef.current = true;
-            celebrateAndComplete(7);
-          } else {
-            // Des modifications existent → attendre les reviews
-            setOptimizationTaskDone(true);
+        let pollAttempts = 0;
+        const maxPollAttempts = 20; // 20 × 500ms = 10s
+
+        const pollForPending = setInterval(() => {
+          if (isCleanedUp || step7ReviewHandledRef.current) {
+            clearInterval(pollForPending);
+            return;
           }
-        }, 1000);
+
+          const pendingElements = document.querySelectorAll('[data-review-change-pending]');
+          if (pendingElements.length > 0) {
+            // Des modifications existent → attendre les reviews
+            clearInterval(pollForPending);
+            setOptimizationTaskDone(true);
+          } else if (++pollAttempts >= maxPollAttempts) {
+            // Timeout sans modifications → ne PAS compléter le step.
+            // Le highlight reste actif pour relancer l'optimisation.
+            clearInterval(pollForPending);
+          }
+        }, 500);
       }
     };
 
