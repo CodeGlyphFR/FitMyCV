@@ -39,10 +39,11 @@ export function OnboardingUsersTable({ refreshKey }) {
   const fetchingRef = useRef(false);
   const scrollContainerRef = useRef(null);
 
-  // Debounce recherche
+  // Debounce recherche (+ reset page)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
+      setPage(1);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -54,10 +55,8 @@ export function OnboardingUsersTable({ refreshKey }) {
     }
   }, [statusFilter, stepFilter, debouncedSearch, sortBy, limit, page, refreshKey]);
 
-  // Reset page quand filtres changent
-  useEffect(() => {
-    setPage(1);
-  }, [statusFilter, stepFilter, debouncedSearch, sortBy, limit]);
+  // Helpers pour changer un filtre ET reset la pagination
+  const changeFilter = (setter) => (value) => { setter(value); setPage(1); };
 
   // Scroll chaining prevention
   useEffect(() => {
@@ -237,7 +236,7 @@ export function OnboardingUsersTable({ refreshKey }) {
           <label className="text-white/60 text-sm mb-2 block">Statut :</label>
           <CustomSelect
             value={statusFilter}
-            onChange={setStatusFilter}
+            onChange={changeFilter(setStatusFilter)}
             options={statusOptions}
           />
         </div>
@@ -247,7 +246,7 @@ export function OnboardingUsersTable({ refreshKey }) {
           <label className="text-white/60 text-sm mb-2 block">Étape :</label>
           <CustomSelect
             value={stepFilter}
-            onChange={setStepFilter}
+            onChange={changeFilter(setStepFilter)}
             options={stepOptions}
           />
         </div>
@@ -257,7 +256,7 @@ export function OnboardingUsersTable({ refreshKey }) {
           <label className="text-white/60 text-sm mb-2 block">Tri :</label>
           <CustomSelect
             value={sortBy}
-            onChange={setSortBy}
+            onChange={changeFilter(setSortBy)}
             options={[
               { value: 'newest', label: 'Plus récent' },
               { value: 'oldest', label: 'Plus ancien' },
@@ -277,7 +276,7 @@ export function OnboardingUsersTable({ refreshKey }) {
           <div className="w-20">
             <CustomSelect
               value={limit}
-              onChange={setLimit}
+              onChange={changeFilter(setLimit)}
               options={[
                 { value: '10', label: '10' },
                 { value: '25', label: '25' },

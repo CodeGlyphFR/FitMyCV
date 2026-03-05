@@ -19,6 +19,8 @@ import {
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 
+const EMPTY_TEMPLATES = [];
+
 /**
  * Modal d'export PDF avec sélection granulaire des sections
  */
@@ -48,7 +50,7 @@ export default function ExportPdfModal({
   loadPreview,
   closePreview,
   // Templates
-  templates = [],
+  templates = EMPTY_TEMPLATES,
   isLoadingTemplates,
   isSavingTemplate,
   saveAsTemplate,

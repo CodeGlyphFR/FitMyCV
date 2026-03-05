@@ -44,24 +44,22 @@ export async function GET(request) {
       },
     });
 
-    // Get last activity for each user from telemetry
-    const usersWithActivity = await Promise.all(
-      users.map(async (user) => {
-        const lastEvent = await prisma.telemetryEvent.findFirst({
-          where: { userId: user.id },
-          orderBy: { timestamp: 'desc' },
-          select: { timestamp: true },
-        });
+    // Batch query : récupérer la dernière activité de TOUS les users en une seule requête (au lieu de N+1)
+    const lastEvents = await prisma.$queryRaw`
+      SELECT DISTINCT ON ("userId") "userId", "timestamp"
+      FROM "TelemetryEvent"
+      WHERE "userId" IS NOT NULL
+      ORDER BY "userId", "timestamp" DESC
+    `;
+    const lastEventMap = new Map(lastEvents.map(e => [e.userId, e.timestamp]));
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          cvCount: user._count.cvs,
-          lastActivity: lastEvent?.timestamp || user.createdAt,
-        };
-      })
-    );
+    const usersWithActivity = users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      cvCount: user._count.cvs,
+      lastActivity: lastEventMap.get(user.id) || user.createdAt,
+    }));
 
     // Filter users with at least some activity and sort by last activity
     const activeUsers = usersWithActivity

@@ -5,13 +5,11 @@ import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
-import {
-  useUsersData,
-  useUserActions,
-  AddUserModal,
-  EditUserModal,
-  UserRow
-} from './users';
+import { useUsersData } from './users/hooks/useUsersData';
+import { useUserActions } from './users/hooks/useUserActions';
+import { AddUserModal } from './users/modals/AddUserModal';
+import { EditUserModal } from './users/modals/EditUserModal';
+import { UserRow } from './users/UserRow';
 
 export function UsersTab({ refreshKey }) {
   // Data and filters

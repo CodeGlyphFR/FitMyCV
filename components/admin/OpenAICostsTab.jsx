@@ -8,12 +8,10 @@ import EditAlertModal from './EditAlertModal';
 import { CvGenerationCostsSection } from './CvGenerationCostsSection';
 import { CvImprovementCostsSection } from './CvImprovementCostsSection';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
-import {
-  useScrollChaining,
-  useOpenAICostsData,
-  usePricingManagement,
-  useAlertManagement,
-} from './hooks';
+import { useScrollChaining } from './hooks/useScrollChaining';
+import { useOpenAICostsData } from './hooks/useOpenAICostsData';
+import { usePricingManagement } from './hooks/usePricingManagement';
+import { useAlertManagement } from './hooks/useAlertManagement';
 
 // Constants
 const ALERT_TYPE_LABELS = {

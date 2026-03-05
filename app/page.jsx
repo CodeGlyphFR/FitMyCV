@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React from "react";
 import Header from "@/components/cv-sections/Header";
 import Summary from "@/components/cv-sections/Summary";
 import Skills from "@/components/cv-sections/Skills";

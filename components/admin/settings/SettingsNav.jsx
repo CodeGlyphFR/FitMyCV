@@ -107,11 +107,14 @@ const COLOR_CLASSES = {
  * Navigation latérale pour les settings (desktop)
  * Se transforme en accordéon sur mobile
  */
+const EMPTY_MODIFIED_COUNTS = {};
+const EMPTY_MODIFIED_SETTINGS_LIST = [];
+
 export function SettingsNav({
   categories,
   activeCategory,
   onCategoryChange,
-  modifiedCounts = {},
+  modifiedCounts = EMPTY_MODIFIED_COUNTS,
   isMobile = false,
   expandedCategory = null,
   onToggleExpand = null,
@@ -121,7 +124,7 @@ export function SettingsNav({
   saving = false,
   onSave = null,
   onCancel = null,
-  modifiedSettingsList = [],
+  modifiedSettingsList = EMPTY_MODIFIED_SETTINGS_LIST,
 }) {
   // Sur desktop : navigation sidebar avec footer sauvegarde
   if (!isMobile) {

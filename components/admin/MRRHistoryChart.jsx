@@ -18,12 +18,14 @@ const METRICS = [
  * Graphique d'évolution MRR/ARR avec sélecteurs de période, année et métrique
  * Affichage en ligne SVG avec ordonnée partant de 0
  */
+const EMPTY_YEARS = [];
+
 export function MRRHistoryChart({
   history,
   period = '12months',
   year,
   metric = 'mrr',
-  availableYears = [],
+  availableYears = EMPTY_YEARS,
   onPeriodChange,
   onYearChange,
   onMetricChange

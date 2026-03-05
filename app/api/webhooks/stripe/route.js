@@ -25,7 +25,7 @@
  * - Abonnements : annulation immédiate de l'abonnement
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { headers } from 'next/headers';
 import stripe from '@/lib/stripe';
 import prisma from '@/lib/prisma';
@@ -147,10 +147,16 @@ export async function POST(request) {
         console.log(`[Webhook] Event non géré: ${event.type}`);
     }
 
-    // Marquer l'event comme traité
-    await prisma.stripeWebhookLog.updateMany({
-      where: { eventId: event.id },
-      data: { processed: true },
+    // Marquer l'event comme traité — non-bloquant
+    after(async () => {
+      try {
+        await prisma.stripeWebhookLog.updateMany({
+          where: { eventId: event.id },
+          data: { processed: true },
+        });
+      } catch (e) {
+        console.error('[Webhook] Erreur mise à jour log:', e);
+      }
     });
 
     return NextResponse.json({ received: true });

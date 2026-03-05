@@ -30,4 +30,4 @@ export function useLanguageHasChanges(languageName) {
  * Hook alternatif utilisant le nouveau système de review par section
  * @deprecated Utilisez useLanguageHasChanges ou directement useLanguagesReview
  */
-export { useLanguageHasChanges as useLanguageHasChangesV2 } from "@/lib/cv-core/review/hooks";
+export { useLanguageHasChanges as useLanguageHasChangesV2 } from "@/lib/cv-core/review/hooks/useLanguagesReview";

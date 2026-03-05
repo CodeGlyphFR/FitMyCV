@@ -43,9 +43,10 @@ export const GET = withExtensionAuth(async (request, { userId }) => {
       dbCreatedAt: cf.createdAt,
     }]));
 
-    const rawItems = [];
+    const pLimit = (await import('p-limit')).default;
+    const limit = pLimit(10);
 
-    for (const file of files) {
+    const rawItems = await Promise.all(files.map(file => limit(async () => {
       try {
         const raw = await readUserCvFile(userId, file);
         const json = sanitizeInMemory(JSON.parse(raw));
@@ -72,7 +73,7 @@ export const GET = withExtensionAuth(async (request, { userId }) => {
         const hasTitle = trimmedTitle.length > 0;
         const fallbackTitle = hasTitle ? trimmedTitle : "CV en cours d'édition";
 
-        rawItems.push({
+        return {
           file,
           label: `${dateLabel || '??/??/????'} - ${fallbackTitle}`,
           title: trimmedTitle,
@@ -90,7 +91,7 @@ export const GET = withExtensionAuth(async (request, { userId }) => {
           createdAt: createdTimestamp ? new Date(createdTimestamp).toISOString() : null,
           updatedAt: updatedTimestamp ? new Date(updatedTimestamp).toISOString() : (json?.meta?.updated_at || null),
           sortKey: sortTimestamp,
-        });
+        };
       } catch {
         const sourceData = sourceMap.get(file);
         const createdBy = sourceData?.createdBy || null;
@@ -98,7 +99,7 @@ export const GET = withExtensionAuth(async (request, { userId }) => {
         const sortKey = dbCreatedAt ? new Date(dbCreatedAt).getTime() : timestampFromFilename(file);
         const dateLabel = formatDateLabel(sortKey);
 
-        rawItems.push({
+        return {
           file,
           label: file,
           title: '',
@@ -116,9 +117,9 @@ export const GET = withExtensionAuth(async (request, { userId }) => {
           createdAt: null,
           updatedAt: null,
           sortKey,
-        });
+        };
       }
-    }
+    })));
 
     rawItems.sort((a, b) => {
       const aKey = typeof a.sortKey === 'number' ? a.sortKey : -Infinity;

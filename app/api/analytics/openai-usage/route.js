@@ -100,42 +100,39 @@ export async function GET(request) {
       ],
     });
 
-    // Get last cost for each feature (from individual call records)
-    const lastCostByFeature = await Promise.all(
-      byFeature.map(async (feature) => {
-        const lastCall = await prisma.openAICall.findFirst({
-          where: {
-            featureName: feature.featureName,
-            ...(userId && { userId }),
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-          select: {
-            estimatedCost: true,
-            model: true,
-            promptTokens: true,
-            cachedTokens: true,
-            completionTokens: true,
-            totalTokens: true,
-            createdAt: true,
-            duration: true,
-          },
-        });
-
-        return {
-          featureName: feature.featureName,
-          lastCost: lastCall?.estimatedCost || 0,
-          lastModel: lastCall?.model || null,
-          lastPromptTokens: lastCall?.promptTokens || 0,
-          lastCachedTokens: lastCall?.cachedTokens || 0,
-          lastCompletionTokens: lastCall?.completionTokens || 0,
-          lastTokens: lastCall?.totalTokens || 0,
-          lastCallDate: lastCall?.createdAt || null,
-          lastDuration: lastCall?.duration || null,
-        };
-      })
-    );
+    // Batch query : récupérer le dernier appel de chaque feature en une seule requête (au lieu de N+1)
+    const featureNames = byFeature.map(f => f.featureName);
+    let lastCostByFeature = [];
+    if (featureNames.length > 0) {
+      const lastCalls = userId
+        ? await prisma.$queryRaw`
+            SELECT DISTINCT ON ("featureName")
+              "featureName", "estimatedCost", "model", "promptTokens", "cachedTokens",
+              "completionTokens", "totalTokens", "createdAt", "duration"
+            FROM "OpenAICall"
+            WHERE "featureName" = ANY(${featureNames}) AND "userId" = ${userId}
+            ORDER BY "featureName", "createdAt" DESC
+          `
+        : await prisma.$queryRaw`
+            SELECT DISTINCT ON ("featureName")
+              "featureName", "estimatedCost", "model", "promptTokens", "cachedTokens",
+              "completionTokens", "totalTokens", "createdAt", "duration"
+            FROM "OpenAICall"
+            WHERE "featureName" = ANY(${featureNames})
+            ORDER BY "featureName", "createdAt" DESC
+          `;
+      lastCostByFeature = lastCalls.map(call => ({
+        featureName: call.featureName,
+        lastCost: call.estimatedCost || 0,
+        lastModel: call.model || null,
+        lastPromptTokens: call.promptTokens || 0,
+        lastCachedTokens: call.cachedTokens || 0,
+        lastCompletionTokens: call.completionTokens || 0,
+        lastTokens: call.totalTokens || 0,
+        lastCallDate: call.createdAt || null,
+        lastDuration: call.duration || null,
+      }));
+    }
 
     // Get breakdown by model
     const byModel = await prisma.openAIUsage.groupBy({

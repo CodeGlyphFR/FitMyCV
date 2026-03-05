@@ -8,15 +8,13 @@ import { useNotifications } from "@/components/notifications/NotificationProvide
 import { RefreshCw, X, BarChart3 } from "lucide-react";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { useCreditCost } from "@/hooks/useCreditCost";
-import {
-  ScoreVisualization,
-  SuggestionsSection,
-  MissingSkillsSection,
-  MatchingSkillsSection,
-  OptimizationFooter,
-  useAnimatedScore,
-  useModalAccessibility
-} from "@/components/cv-improvement";
+import ScoreVisualization from "@/components/cv-improvement/ScoreVisualization";
+import SuggestionsSection from "@/components/cv-improvement/SuggestionsSection";
+import MissingSkillsSection from "@/components/cv-improvement/MissingSkillsSection";
+import MatchingSkillsSection from "@/components/cv-improvement/MatchingSkillsSection";
+import OptimizationFooter from "@/components/cv-improvement/OptimizationFooter";
+import { useAnimatedScore } from "@/components/cv-improvement/hooks/useAnimatedScore";
+import { useModalAccessibility } from "@/components/cv-improvement/hooks/useModalAccessibility";
 
 // Constantes
 const SKILLS_VISIBLE_DEFAULT = 5;
@@ -80,10 +78,10 @@ export default function CVImprovementPanel({ cvFile, matchScoreStatus: parentMat
   const [mounted, setMounted] = useState(false);
   const [showAllMissingSkills, setShowAllMissingSkills] = useState(false);
   const [showAllMatchingSkills, setShowAllMatchingSkills] = useState(false);
-  const [selectedSuggestions, setSelectedSuggestions] = useState(new Set());
-  const [selectedMissingSkills, setSelectedMissingSkills] = useState(new Map());
+  const [selectedSuggestions, setSelectedSuggestions] = useState(() => new Set());
+  const [selectedMissingSkills, setSelectedMissingSkills] = useState(() => new Map());
   const [openSkillMenu, setOpenSkillMenu] = useState(null);
-  const [suggestionContexts, setSuggestionContexts] = useState(new Map());
+  const [suggestionContexts, setSuggestionContexts] = useState(() => new Map());
 
   const { t } = useLanguage();
   const { settings } = useSettings();

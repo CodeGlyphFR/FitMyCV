@@ -23,7 +23,11 @@ import {
   Grid,
   ModalFooter,
 } from "@/components/ui/ModalForm";
-import { useMatchScore, useSourceInfo, useTranslation, TranslationDropdown, useJobOfferDetails } from "@/components/header";
+import { useMatchScore } from "@/components/header/hooks/useMatchScore";
+import { useSourceInfo } from "@/components/header/hooks/useSourceInfo";
+import { useTranslation } from "@/components/header/hooks/useTranslation";
+import { useJobOfferDetails } from "@/components/header/hooks/useJobOfferDetails";
+import { TranslationDropdown } from "@/components/header/TranslationDropdown";
 import JobOfferDetailModal from "@/components/cv-improvement/JobOfferDetailModal";
 
 export default function Header(props){

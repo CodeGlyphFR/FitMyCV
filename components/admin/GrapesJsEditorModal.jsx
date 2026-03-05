@@ -5,6 +5,8 @@ import { createPortal } from 'react-dom';
 import { X, Save, Sun, Moon } from 'lucide-react';
 import { useScrollLock } from '@/hooks/useScrollLock';
 
+const EMPTY_VARIABLES = [];
+
 /**
  * GrapesJsEditorModal - Fullscreen modal with GrapesJS editor
  */
@@ -13,7 +15,7 @@ export function GrapesJsEditorModal({
   onClose,
   onSave,
   htmlContent = '',
-  variables = [],
+  variables = EMPTY_VARIABLES,
   templateName = '',
   templateSubject = '',
   saving = false,

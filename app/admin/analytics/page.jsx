@@ -1,20 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { OverviewTab } from '@/components/admin/OverviewTab';
 import { FeaturesTab } from '@/components/admin/FeaturesTab';
 import { ErrorsTab } from '@/components/admin/ErrorsTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
-import { OpenAICostsTab } from '@/components/admin/OpenAICostsTab';
 import { FeedbackTab } from '@/components/admin/FeedbackTab';
 import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
-import { RevenueTab } from '@/components/admin/RevenueTab';
-import { OnboardingTab } from '@/components/admin/OnboardingTab';
 import { EmailManagementTab } from '@/components/admin/EmailManagementTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
+
+// Lazy-load tabs contenant recharts (~300KB) — chargés uniquement quand l'onglet est actif
+const OpenAICostsTab = dynamic(() => import('@/components/admin/OpenAICostsTab').then(m => ({ default: m.OpenAICostsTab })), { ssr: false });
+const RevenueTab = dynamic(() => import('@/components/admin/RevenueTab').then(m => ({ default: m.RevenueTab })), { ssr: false });
+const OnboardingTab = dynamic(() => import('@/components/admin/OnboardingTab').then(m => ({ default: m.OnboardingTab })), { ssr: false });
 
 // Liste des onglets valides
 const VALID_TABS = ['overview', 'features', 'errors', 'openai-costs', 'feedback', 'users', 'onboarding', 'revenue', 'subscriptions', 'emails', 'settings'];

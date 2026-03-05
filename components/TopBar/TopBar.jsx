@@ -29,15 +29,13 @@ import { useResponsiveMode } from "./hooks/useResponsiveMode";
 import { BREAKPOINTS } from "@/lib/constants/breakpoints";
 
 // Components
-import {
-  ItemLabel,
-  FilterDropdown,
-  CvDropdownPortal,
-  UserMenuPortal,
-  TopBarModals,
-  TopBarStyles,
-  TopBarActions
-} from "./components";
+import ItemLabel from "./components/ItemLabel";
+import FilterDropdown from "./components/FilterDropdown";
+import CvDropdownPortal from "./components/CvDropdownPortal";
+import UserMenuPortal from "./components/UserMenuPortal";
+import TopBarModals from "./components/TopBarModals";
+import TopBarStyles from "./components/TopBarStyles";
+import TopBarActions from "./components/TopBarActions";
 
 // Utils
 import { getCvIcon } from "./utils/cvUtils";

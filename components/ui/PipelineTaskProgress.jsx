@@ -351,12 +351,14 @@ export default function PipelineTaskProgress({
  * Version compacte pour l'affichage dans TaskQueueModal (anciens 7 points)
  * Garde la rétrocompatibilité avec l'ancien système
  */
+const EMPTY_COMPLETED_STEPS = {};
+
 export function PipelineTaskProgressCompact({
   currentOffer = 0,
   totalOffers = 1,
   currentStep = null,
   status = 'running',
-  completedSteps = {},
+  completedSteps = EMPTY_COMPLETED_STEPS,
   className = '',
 }) {
   const { t } = useLanguage();
