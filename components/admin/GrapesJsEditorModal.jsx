@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Save, Sun, Moon } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 /**
  * GrapesJsEditorModal - Fullscreen modal with GrapesJS editor
@@ -32,15 +33,8 @@ export function GrapesJsEditorModal({
     return () => setMounted(false);
   }, []);
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = '';
-      };
-    }
-  }, [isOpen]);
+  // Lock scroll when modal is open
+  useScrollLock(isOpen);
 
   // Update local state when props change
   useEffect(() => {

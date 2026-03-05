@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 // Test data for variable substitution
 const TEST_DATA = {
@@ -137,15 +138,8 @@ export function EmailPreviewModal({ isOpen, onClose, htmlContent, subject, templ
     }
   }, [isOpen]);
 
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = '';
-      };
-    }
-  }, [isOpen]);
+  // Lock scroll when modal is open
+  useScrollLock(isOpen);
 
   const handleSendTest = async () => {
     if (!testEmail || !templateId) return;

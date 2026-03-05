@@ -1,7 +1,7 @@
 'use client';
 
 import { createPortal } from 'react-dom';
-import { useEffect } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 /**
  * Confirmation dialog component
@@ -20,15 +20,7 @@ import { useEffect } from 'react';
  * <ConfirmDialog dialog={confirmDialog} onClose={() => setConfirmDialog(null)} />
  */
 export function ConfirmDialog({ dialog, onClose }) {
-  useEffect(() => {
-    if (dialog) {
-      // Prevent body scroll when dialog is open
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = 'unset';
-      };
-    }
-  }, [dialog]);
+  useScrollLock(!!dialog);
 
   if (!dialog) return null;
 

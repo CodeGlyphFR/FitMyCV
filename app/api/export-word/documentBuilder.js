@@ -10,7 +10,7 @@ import {
 } from "docx";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
-import { getTranslation, translateLevel, getSectionTitle } from "./translations";
+import { getTranslation, translateLevel, getSectionTitle } from "@/lib/pdf/cvTranslations";
 
 /**
  * Generate Word document from CV data

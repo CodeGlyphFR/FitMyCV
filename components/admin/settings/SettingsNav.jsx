@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import {
   Cpu,
   Coins,
@@ -282,25 +281,6 @@ export function SettingsNav({
       })}
     </div>
   );
-}
-
-/**
- * Hook pour détecter si on est sur mobile
- */
-export function useIsMobile(breakpoint = 1024) {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < breakpoint);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [breakpoint]);
-
-  return isMobile;
 }
 
 export { CATEGORY_CONFIG, COLOR_CLASSES };

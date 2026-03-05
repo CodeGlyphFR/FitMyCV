@@ -30,7 +30,6 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.6.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "docx": "^9.5.1",
@@ -53,7 +52,6 @@
     "puppeteer": "^24.34.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "qs": "^6.14.1",
     "react": "^19.2.3",
     "react-animated-counter": "^1.8.4",
     "react-dom": "^19.2.3",
@@ -62,7 +60,6 @@
     "resend": "^6.7.0",
     "sharp": "^0.34.5",
     "stripe": "^20.1.2",
-    "supports-color": "^10.2.2",
     "tailwind-scrollbar": "^4.0.2",
     "turndown": "^7.2.2",
     "uuid": "^13.0.0"

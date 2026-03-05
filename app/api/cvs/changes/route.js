@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
-import { getReviewState, getReviewStateForSection, processReviewAction, processBatchReviewAction } from '@/lib/cv-core/changeTracking';
+import { getReviewState, getReviewStateForSection } from '@/lib/cv-core/review/state';
+import { processReviewAction, processBatchReviewAction } from '@/lib/cv-core/review/actions';
 import { CommonErrors } from '@/lib/api/apiErrors';
 
 export const runtime = 'nodejs';

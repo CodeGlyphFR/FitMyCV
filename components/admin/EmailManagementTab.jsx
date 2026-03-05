@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { EmailNav, useIsMobile } from './email/EmailNav';
+import { EmailNav } from './email/EmailNav';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { EmailDashboard } from './email/EmailDashboard';
 import { EmailTemplatesSection } from './email/EmailTemplatesSection';
 import { EmailHistorySection } from './email/EmailHistorySection';
