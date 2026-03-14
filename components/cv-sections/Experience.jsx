@@ -18,6 +18,7 @@ import {
   Calendar,
   MapPin,
   FileText,
+  Link2,
 } from "@/components/ui/ModalForm";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { getCvSectionTitleInCvLanguage, getTranslatorForCvLanguage } from "@/lib/i18n/cvLanguageHelper";
@@ -35,6 +36,11 @@ import MonthPicker from "@/components/ui/MonthPicker";
 import ContextMenu from "@/components/ui/ContextMenu";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
+function ensureAbsoluteUrl(u) {
+  const url = (u || "").trim();
+  if (!url) return "";
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
 
 export default function Experience(props){
   const { t } = useLanguage();
@@ -125,7 +131,7 @@ export default function Experience(props){
   const [addOpen, setAddOpen]   = React.useState(false);
 
   // ---- Forms ----
-  const emptyForm = { title:"", company:"", department_or_client:"", start:"", end:"", city:"", region:"", country_code:"", description:"", responsibilities:"", deliverables:"", skills_used:"" };
+  const emptyForm = { title:"", company:"", department_or_client:"", start:"", end:"", city:"", region:"", country_code:"", description:"", responsibilities:"", deliverables:"", skills_used:"", url:"", url_label:"" };
   const [nf, setNf] = React.useState(emptyForm);
   const [f,  setF]  = React.useState({});
 
@@ -180,7 +186,9 @@ export default function Experience(props){
       description: e.description || "",
       responsibilities: Array.isArray(e.responsibilities) ? e.responsibilities.join("\n") : "",
       deliverables: Array.isArray(e.deliverables) ? e.deliverables.join("\n") : "",
-      skills_used: Array.isArray(e.skills_used) ? e.skills_used.join(", ") : ""
+      skills_used: Array.isArray(e.skills_used) ? e.skills_used.join(", ") : "",
+      url: e.url || "",
+      url_label: e.url_label || ""
     });
     // Utiliser l'index original pour la mutation
     setEditIndex(e._originalIndex ?? i);
@@ -212,6 +220,9 @@ export default function Experience(props){
     const skills = (f.skills_used || "").split(",").map(s => s.trim()).filter(Boolean);
     if (skills.length) p.skills_used = skills;
 
+    if (f.url) p.url = ensureAbsoluteUrl(f.url);
+    if (f.url_label) p.url_label = f.url_label;
+
     await mutate({ op:"set", path:`experience[${editIndex}]`, value:p });
     setEditIndex(null);
   };
@@ -241,6 +252,9 @@ export default function Experience(props){
 
     const skills = (nf.skills_used || "").split(",").map(s => s.trim()).filter(Boolean);
     if (skills.length) p.skills_used = skills;
+
+    if (nf.url) p.url = ensureAbsoluteUrl(nf.url);
+    if (nf.url_label) p.url_label = nf.url_label;
 
     await mutate({ op:"push", path:"experience", value:p });
     setAddOpen(false);
@@ -321,7 +335,13 @@ export default function Experience(props){
                     e.location.region,
                     e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
                   ].filter(Boolean).join(", ")}
-              </div>
+                  {e.url && <>{" — "}<a href={e.url} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300"><svg className="inline w-2.5 h-2.5 align-[-1px] mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>{e.url_label || e.url}</a></>}
+                </div>
+              )}
+              {e.url && !(e.location && (e.location.city || e.location.region || e.location.country_code)) && (
+                <div className="text-xs mt-0.5">
+                  <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300"><svg className="inline w-2.5 h-2.5 align-[-1px] mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>{e.url_label || e.url}</a>
+                </div>
               )}
 
               <div className="mt-3 space-y-3">
@@ -506,6 +526,25 @@ export default function Experience(props){
             </FormField>
           </ModalSection>
 
+          <ModalSection title={t("cvSections.placeholders.experienceUrl")} icon={Link2}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.experienceUrlLabel")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.experienceUrlLabel")}
+                  value={f.url_label || ""}
+                  onChange={e => setF({ ...f, url_label: e.target.value })}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.experienceUrl")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.experienceUrlExample")}
+                  value={f.url || ""}
+                  onChange={e => setF({ ...f, url: e.target.value })}
+                />
+              </FormField>
+            </Grid>
+          </ModalSection>
+
           <ModalFooter onCancel={() => setEditIndex(null)} onSave={saveEdit} cancelLabel={t("common.cancel")} saveLabel={t("common.save")} />
         </div>
       </Modal>
@@ -586,6 +625,25 @@ export default function Experience(props){
             <FormField label={t("cvSections.skillsUsedComma")}>
               <Input placeholder={t("cvSections.placeholders.skillsUsedHint")} value={nf.skills_used || ""} onChange={e => setNf({ ...nf, skills_used: e.target.value })} />
             </FormField>
+          </ModalSection>
+
+          <ModalSection title={t("cvSections.placeholders.experienceUrl")} icon={Link2}>
+            <Grid cols={2}>
+              <FormField label={t("cvSections.placeholders.experienceUrlLabel")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.experienceUrlLabel")}
+                  value={nf.url_label || ""}
+                  onChange={e => setNf({ ...nf, url_label: e.target.value })}
+                />
+              </FormField>
+              <FormField label={t("cvSections.placeholders.experienceUrl")}>
+                <Input
+                  placeholder={t("cvSections.placeholders.experienceUrlExample")}
+                  value={nf.url || ""}
+                  onChange={e => setNf({ ...nf, url: e.target.value })}
+                />
+              </FormField>
+            </Grid>
           </ModalSection>
 
           <ModalFooter onCancel={() => setAddOpen(false)} onSave={saveAdd} cancelLabel={t("common.cancel")} saveLabel={t("common.add")} />

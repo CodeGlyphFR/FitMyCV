@@ -8,12 +8,10 @@ import EditAlertModal from './EditAlertModal';
 import { CvGenerationCostsSection } from './CvGenerationCostsSection';
 import { CvImprovementCostsSection } from './CvImprovementCostsSection';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList } from 'recharts';
-import {
-  useScrollChaining,
-  useOpenAICostsData,
-  usePricingManagement,
-  useAlertManagement,
-} from './hooks';
+import { useScrollChaining } from './hooks/useScrollChaining';
+import { useOpenAICostsData } from './hooks/useOpenAICostsData';
+import { usePricingManagement } from './hooks/usePricingManagement';
+import { useAlertManagement } from './hooks/useAlertManagement';
 
 // Constants
 const ALERT_TYPE_LABELS = {
@@ -85,8 +83,6 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
     fetchAlerts,
     groupedChartData,
     groupedFeatureData,
-    correctedTotalCost,
-    correctedTotalCalls,
     stableTopFeature,
   } = useOpenAICostsData({ period, userId, refreshKey });
 
@@ -166,8 +162,10 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
 
   if (!data) return null;
 
-  // Computed values
-  const avgCostPerCall = correctedTotalCalls > 0 ? correctedTotalCost / correctedTotalCalls : 0;
+  // Computed values — utiliser data.total (source fiable sans limite ni filtre de statut)
+  const totalCost = data.total.cost;
+  const totalCalls = data.total.calls;
+  const avgCostPerCall = totalCalls > 0 ? totalCost / totalCalls : 0;
   const topFeatureLabel = stableTopFeature.name || stableTopFeature.feature || 'N/A';
 
   // Custom tooltip for bar chart
@@ -287,11 +285,11 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
   return (
     <div className="space-y-6 pb-8">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard
           icon="💰"
           label="Coût total"
-          value={formatCurrency(correctedTotalCost)}
+          value={formatCurrency(totalCost)}
           subtitle={null}
           subtitleClassName={null}
           trend={null}
@@ -301,7 +299,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
           icon="🎯"
           label="Total tokens"
           value={formatNumber(data.total.totalTokens)}
-          subtitle={`${formatNumber(correctedTotalCalls)} appels`}
+          subtitle={`${formatNumber(totalCalls)} appels`}
           description={`Nombre total de tokens consommés. Input (non-caché): ${formatNumber(data.total.promptTokens - data.total.cachedTokens)}, Cache: ${formatNumber(data.total.cachedTokens)}, Output: ${formatNumber(data.total.completionTokens)}`}
         />
         <KPICard
@@ -611,8 +609,8 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
               </thead>
               <tbody>
                 {groupedFeatureData.map((feature, index) => {
-                  const percentage = correctedTotalCost > 0
-                    ? ((feature.cost / correctedTotalCost) * 100).toFixed(1)
+                  const percentage = totalCost > 0
+                    ? ((feature.cost / totalCost) * 100).toFixed(1)
                     : 0;
                   const avgCost = feature.calls > 0 ? feature.cost / feature.calls : 0;
                   const hasLevelBreakdown = feature.levelBreakdown && feature.levelBreakdown.length > 0;
@@ -665,8 +663,8 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
                   data={groupedFeatureData.map((feature) => ({
                     name: feature.name,
                     value: feature.cost,
-                    percentage: correctedTotalCost > 0
-                      ? ((feature.cost / correctedTotalCost) * 100).toFixed(1)
+                    percentage: totalCost > 0
+                      ? ((feature.cost / totalCost) * 100).toFixed(1)
                       : 0,
                     color: feature.color,
                   }))}

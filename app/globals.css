@@ -67,6 +67,12 @@ body.ios-fadein .fixed-button-layer {
   }
 }
 
+/* Sections CV hors écran : différer le rendu pour accélérer le paint initial */
+.cv-section + .cv-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 200px;
+}
+
 /* Classe utilitaire pour inverser les icônes PNG en blanc */
 .icon-white {
   filter: invert(1) brightness(2);

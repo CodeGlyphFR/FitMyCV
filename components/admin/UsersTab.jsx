@@ -5,13 +5,12 @@ import { KPICard } from './KPICard';
 import { CustomSelect } from './CustomSelect';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
-import {
-  useUsersData,
-  useUserActions,
-  AddUserModal,
-  EditUserModal,
-  UserRow
-} from './users';
+import { useUsersData } from './users/hooks/useUsersData';
+import { useUserActions } from './users/hooks/useUserActions';
+import { AddUserModal } from './users/modals/AddUserModal';
+import { EditUserModal } from './users/modals/EditUserModal';
+import { UserRow } from './users/UserRow';
+import { CreditDistributionChart } from './CreditDistributionChart';
 
 export function UsersTab({ refreshKey }) {
   // Data and filters
@@ -121,8 +120,8 @@ export function UsersTab({ refreshKey }) {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* KPI Cards avec tooltips */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* KPI Cards + Graphique crédits */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard
           icon="👥"
           label="Total Utilisateurs"
@@ -144,77 +143,53 @@ export function UsersTab({ refreshKey }) {
           subtitle="email non vérifié"
           description="Utilisateurs ayant créé un compte mais n'ayant pas encore validé leur adresse email"
         />
+        <CreditDistributionChart distribution={data.kpis.creditDistribution} />
       </div>
 
-      {/* Bouton Ajouter Utilisateur */}
-      <div className="flex justify-end">
+      {/* Filtres, Recherche et Bouton Ajouter — une seule ligne */}
+      <div className="flex items-center gap-3">
+        <input
+          type="text"
+          placeholder="Rechercher..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1 px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
+        />
+        <CustomSelect
+          value={emailStatusFilter}
+          onChange={setEmailStatusFilter}
+          options={[
+            { value: 'all', label: 'Email: Tous' },
+            { value: 'verified', label: 'Vérifiés' },
+            { value: 'unverified', label: 'Non vérifiés' },
+          ]}
+        />
+        <CustomSelect
+          value={roleFilter}
+          onChange={setRoleFilter}
+          options={[
+            { value: 'all', label: 'Rôle: Tous' },
+            { value: 'USER', label: 'USER' },
+            { value: 'ADMIN', label: 'ADMIN' },
+          ]}
+        />
+        <CustomSelect
+          value={sortBy}
+          onChange={setSortBy}
+          options={[
+            { value: 'newest', label: 'Plus récent' },
+            { value: 'oldest', label: 'Plus ancien' },
+          ]}
+        />
         <button
           onClick={() => setShowAddUserModal(true)}
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2"
+          className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2 text-sm whitespace-nowrap"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Ajouter un utilisateur
+          Ajouter
         </button>
-      </div>
-
-      {/* Filtres et Recherche */}
-      <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {/* Recherche */}
-          <div className="lg:col-span-2">
-            <label className="text-white/60 text-sm mb-2 block">Rechercher :</label>
-            <input
-              type="text"
-              placeholder="Nom ou prénom..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
-            />
-          </div>
-
-          {/* Filtre Statut Email */}
-          <div>
-            <label className="text-white/60 text-sm mb-2 block">Statut Email :</label>
-            <CustomSelect
-              value={emailStatusFilter}
-              onChange={setEmailStatusFilter}
-              options={[
-                { value: 'all', label: 'Tous' },
-                { value: 'verified', label: 'Vérifiés' },
-                { value: 'unverified', label: 'Non vérifiés' },
-              ]}
-            />
-          </div>
-
-          {/* Filtre Rôle */}
-          <div>
-            <label className="text-white/60 text-sm mb-2 block">Rôle :</label>
-            <CustomSelect
-              value={roleFilter}
-              onChange={setRoleFilter}
-              options={[
-                { value: 'all', label: 'Tous' },
-                { value: 'USER', label: 'USER' },
-                { value: 'ADMIN', label: 'ADMIN' },
-              ]}
-            />
-          </div>
-
-          {/* Tri Date */}
-          <div>
-            <label className="text-white/60 text-sm mb-2 block">Tri Date :</label>
-            <CustomSelect
-              value={sortBy}
-              onChange={setSortBy}
-              options={[
-                { value: 'newest', label: 'Plus récent' },
-                { value: 'oldest', label: 'Plus ancien' },
-              ]}
-            />
-          </div>
-        </div>
       </div>
 
       {/* Liste des utilisateurs avec scroll chaining prevention */}
@@ -256,6 +231,7 @@ export function UsersTab({ refreshKey }) {
                 key={user.id}
                 user={user}
                 updating={updating}
+                subscriptionMode={data.subscriptionMode}
                 onRoleChange={handleRoleChange}
                 onEdit={openEditUserModal}
                 onValidateEmail={handleValidateEmail}
@@ -315,6 +291,7 @@ export function UsersTab({ refreshKey }) {
           setSelectedUserForEdit(null);
         }}
         onSubmit={handleUpdateUser}
+        onRoleChange={handleRoleChange}
         user={selectedUserForEdit}
         updating={updating}
       />

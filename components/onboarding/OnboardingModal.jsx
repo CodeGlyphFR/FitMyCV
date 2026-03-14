@@ -39,9 +39,11 @@ import {
  * - size: string - Taille du modal ('default' | 'large')
  */
 
+const EMPTY_SCREENS = [];
+
 export default function OnboardingModal({
   open = false,
-  screens = [],
+  screens = EMPTY_SCREENS,
   currentScreen = 0,
   title, // Titre du modal (passé par le parent avec traduction)
   IconComponent = Pencil, // Icône Lucide du modal

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
-import TopBar from "@/components/TopBar";
+import TopBar from "@/components/TopBar/TopBar";
 
 /**
  * Error Boundary pour TopBar - Attrape les crashes et permet la récupération automatique

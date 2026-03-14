@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import {
   Cpu,
   Coins,
@@ -108,11 +107,14 @@ const COLOR_CLASSES = {
  * Navigation latérale pour les settings (desktop)
  * Se transforme en accordéon sur mobile
  */
+const EMPTY_MODIFIED_COUNTS = {};
+const EMPTY_MODIFIED_SETTINGS_LIST = [];
+
 export function SettingsNav({
   categories,
   activeCategory,
   onCategoryChange,
-  modifiedCounts = {},
+  modifiedCounts = EMPTY_MODIFIED_COUNTS,
   isMobile = false,
   expandedCategory = null,
   onToggleExpand = null,
@@ -122,7 +124,7 @@ export function SettingsNav({
   saving = false,
   onSave = null,
   onCancel = null,
-  modifiedSettingsList = [],
+  modifiedSettingsList = EMPTY_MODIFIED_SETTINGS_LIST,
 }) {
   // Sur desktop : navigation sidebar avec footer sauvegarde
   if (!isMobile) {
@@ -282,25 +284,6 @@ export function SettingsNav({
       })}
     </div>
   );
-}
-
-/**
- * Hook pour détecter si on est sur mobile
- */
-export function useIsMobile(breakpoint = 1024) {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < breakpoint);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [breakpoint]);
-
-  return isMobile;
 }
 
 export { CATEGORY_CONFIG, COLOR_CLASSES };

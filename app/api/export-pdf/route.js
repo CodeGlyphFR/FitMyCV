@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import puppeteer from "puppeteer";
 import { auth } from "@/lib/auth/session";
 import { readUserCvFileWithMeta } from "@/lib/cv-core/storage";
@@ -127,19 +127,21 @@ export async function POST(request) {
 
     await browser.close();
 
-    // Telemetry tracking - Success
+    // Télémétrie non-bloquante — exécutée APRÈS l'envoi de la réponse
     const duration = Date.now() - startTime;
-    try {
-      await trackCvExport({
-        userId: session.user.id,
-        deviceId: null,
-        language,
-        duration,
-        status: 'success',
-      });
-    } catch (trackError) {
-      secureError('[PDF Export] Erreur tracking télémétrie:', trackError);
-    }
+    after(async () => {
+      try {
+        await trackCvExport({
+          userId: session.user.id,
+          deviceId: null,
+          language,
+          duration,
+          status: 'success',
+        });
+      } catch (trackError) {
+        secureError('[PDF Export] Erreur tracking télémétrie:', trackError);
+      }
+    });
 
     // Return PDF
     const pdfFilename = customFilename || filename.replace('.json', '');
@@ -167,20 +169,21 @@ export async function POST(request) {
     }
 
     const duration = Date.now() - startTime;
-    try {
-      const session = await auth();
-      if (session?.user?.id) {
-        await trackCvExport({
-          userId: session.user.id,
-          deviceId: null,
-          language: 'fr',
-          duration,
-          status: 'error',
-          error: error.message,
-        });
-      }
-    } catch (trackError) {
-      secureError('[PDF Export] Erreur tracking télémétrie:', trackError);
+    if (userId) {
+      after(async () => {
+        try {
+          await trackCvExport({
+            userId,
+            deviceId: null,
+            language: 'fr',
+            duration,
+            status: 'error',
+            error: error.message,
+          });
+        } catch (trackError) {
+          secureError('[PDF Export] Erreur tracking télémétrie:', trackError);
+        }
+      });
     }
 
     return OtherErrors.exportPdfFailed();

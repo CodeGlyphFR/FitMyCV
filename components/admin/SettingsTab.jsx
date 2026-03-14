@@ -18,7 +18,8 @@ import {
 } from '@/lib/admin/settingsConfig';
 import { PdfImportSettings } from './settings/PdfImportSettings';
 import { SectionOrderSettings } from './settings/SectionOrderSettings';
-import { SettingsNav, useIsMobile, CATEGORY_CONFIG } from './settings/SettingsNav';
+import { SettingsNav, CATEGORY_CONFIG } from './settings/SettingsNav';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { SettingsFooter } from './settings/SettingsHeader';
 import { SettingsDangerZone } from './settings/SettingsDangerZone';
 import { SettingsSubscriptionMode } from './settings/SettingsSubscriptionMode';

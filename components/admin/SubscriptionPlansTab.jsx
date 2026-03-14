@@ -5,12 +5,10 @@ import { KPICard } from './KPICard';
 import { Toast } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
 import { MACRO_FEATURES } from '@/lib/subscription/macroFeatures';
-import {
-  PlanModal,
-  PackModal,
-  usePlansManagement,
-  usePacksManagement
-} from './SubscriptionPlans';
+import { PlanModal } from './SubscriptionPlans/PlanModal';
+import { PackModal } from './SubscriptionPlans/PackModal';
+import { usePlansManagement } from './SubscriptionPlans/usePlansManagement';
+import { usePacksManagement } from './SubscriptionPlans/usePacksManagement';
 
 // Helper functions for margin colors
 function getMarginColor(marginPercent) {

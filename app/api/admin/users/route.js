@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/session';
 import prisma from '@/lib/prisma';
 import { createManualUser } from '@/lib/admin/userManagement';
+import { isSubscriptionModeEnabled } from '@/lib/settings/settingsUtils';
 
 /**
  * GET /api/admin/users
@@ -57,7 +58,7 @@ export async function GET(request) {
       : { createdAt: 'desc' };
 
     // Exécuter les requêtes en parallèle
-    const [allUsers, totalUsersCount, avgCvPerUser, unverifiedCount] = await Promise.all([
+    const [allUsers, totalUsersCount, avgCvPerUser, unverifiedCount, allCreditBalances] = await Promise.all([
       // Récupérer tous les utilisateurs correspondant aux filtres (sans pagination pour la recherche)
       prisma.user.findMany({
         where,
@@ -116,7 +117,32 @@ export async function GET(request) {
       prisma.user.count({
         where: { emailVerified: null },
       }),
+
+      // Distribution des crédits (tous les soldes)
+      prisma.creditBalance.findMany({
+        select: { balance: true },
+      }),
     ]);
+
+    // Calculer la distribution par tranches de crédits
+    const creditBuckets = [
+      { label: '> 15', min: 16, max: Infinity },
+      { label: '15', min: 15, max: 15 },
+      { label: '13-14', min: 13, max: 14 },
+      { label: '10-12', min: 10, max: 12 },
+      { label: '8-9', min: 8, max: 9 },
+      { label: '5-7', min: 5, max: 7 },
+      { label: '3-4', min: 3, max: 4 },
+      { label: '1-2', min: 1, max: 2 },
+      { label: '0', min: 0, max: 0 },
+    ];
+
+    const creditDistribution = creditBuckets.map(bucket => ({
+      label: bucket.label,
+      count: allCreditBalances.filter(cb =>
+        cb.balance >= bucket.min && cb.balance <= bucket.max
+      ).length,
+    }));
 
     // Filtrer côté serveur par recherche (case-insensitive)
     let filteredUsers = allUsers;
@@ -167,8 +193,11 @@ export async function GET(request) {
       credits: user.creditBalance?.balance || 0,
     }));
 
+    const subscriptionMode = await isSubscriptionModeEnabled();
+
     return NextResponse.json({
       users: usersWithActivity,
+      subscriptionMode,
       pagination: {
         page,
         limit,
@@ -180,6 +209,7 @@ export async function GET(request) {
         totalUsers: totalUsersCount,
         avgCvPerUser: parseFloat(avgCvPerUser),
         unverifiedCount,
+        creditDistribution,
       },
     });
 

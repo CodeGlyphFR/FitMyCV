@@ -53,4 +53,4 @@ export function useEducationAllChanges(institution) {
 /**
  * Re-export du hook du nouveau système pour faciliter la migration
  */
-export { useEducationHasChanges as useEducationHasChangesV2 } from "@/lib/cv-core/review/hooks";
+export { useEducationHasChanges as useEducationHasChangesV2 } from "@/lib/cv-core/review/hooks/useEducationReview";

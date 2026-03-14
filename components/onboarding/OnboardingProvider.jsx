@@ -6,13 +6,11 @@ import { usePathname } from 'next/navigation';
 import { getTotalSteps } from '@/lib/onboarding/onboardingSteps';
 import { useOnboardingSteps } from '@/lib/onboarding/useOnboardingSteps';
 import { onboardingLogger } from '@/lib/utils/onboardingLogger';
-import {
-  useOnboardingFetch,
-  useStepNavigation,
-  useOnboardingAutoStart,
-  useOnboardingStateUpdater,
-  useConditionChecker
-} from './hooks';
+import { useOnboardingFetch } from './hooks/useOnboardingFetch';
+import { useStepNavigation } from './hooks/useStepNavigation';
+import { useOnboardingAutoStart } from './hooks/useOnboardingAutoStart';
+import { useOnboardingStateUpdater } from './hooks/useOnboardingStateUpdater';
+import { useConditionChecker } from './hooks/useConditionChecker';
 import ChecklistPanel from './ChecklistPanel';
 import OnboardingOrchestrator from './OnboardingOrchestrator';
 import WelcomeModal from './WelcomeModal';

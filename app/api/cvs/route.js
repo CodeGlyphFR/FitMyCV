@@ -48,16 +48,17 @@ export async function GET(){
     dbCreatedAt: cf.createdAt,
   }]));
 
-  const rawItems = [];
+  // Lire tous les fichiers CV en parallèle (max 10 concurrents) au lieu de séquentiellement
+  const pLimit = (await import('p-limit')).default;
+  const limit = pLimit(10);
 
-  for (const file of files){
+  const rawItems = await Promise.all(files.map(file => limit(async () => {
     try {
       const raw = await readUserCvFile(userId, file);
       const json = sanitizeInMemory(JSON.parse(raw));
       const title = json?.header?.current_title ? String(json.header.current_title).trim() : "";
       const trimmedTitle = title || "";
 
-      // Récupérer les données de source depuis la DB
       const sourceData = sourceMap.get(file);
       const sourceType = sourceData?.sourceType || null;
       const sourceValue = sourceData?.sourceValue || null;
@@ -66,27 +67,17 @@ export async function GET(){
       const isTranslated = sourceData?.isTranslated || false;
       const dbCreatedAt = sourceData?.dbCreatedAt || null;
 
-      // Récupérer la langue du CV (priorité DB, fallback JSON)
       const cvLanguage = sourceData?.language || json?.language || null;
 
-      // Déterminer le type de CV basé sur createdBy
-      // createdBy = 'generate-cv' => Généré par IA (icon GPT)
-      // createdBy = 'import-pdf' => Importé depuis PDF (icon Import)
-      // createdBy = 'translate-cv' => Traduit (icon basée sur originalCreatedBy + T)
-      // createdBy = null => Créé manuellement (pas d'icon)
       const isGenerated = createdBy === 'generate-cv';
       const isImported = createdBy === 'import-pdf';
       const isManual = createdBy === null;
-      // Get all timestamps - priorité à la DB car generated_at peut être supprimé lors des éditions
       const dbCreatedAtTimestamp = dbCreatedAt ? new Date(dbCreatedAt).getTime() : null;
       const jsonCreatedTimestamp = toTimestamp(json?.meta?.created_at) || toTimestamp(json?.generated_at) || toTimestamp(json?.meta?.generated_at) || timestampFromFilename(file);
       const createdTimestamp = dbCreatedAtTimestamp || jsonCreatedTimestamp;
       const updatedTimestamp = toTimestamp(json?.meta?.updated_at);
 
-      // Use the most recent timestamp for sorting and display
       const mostRecentTimestamp = updatedTimestamp && updatedTimestamp > createdTimestamp ? updatedTimestamp : createdTimestamp;
-
-      // Utiliser dbCreatedAt pour le tri (priorité à la base de données)
       const sortTimestamp = dbCreatedAtTimestamp || mostRecentTimestamp;
 
       const createdAtIso = createdTimestamp ? new Date(createdTimestamp).toISOString() : null;
@@ -95,27 +86,26 @@ export async function GET(){
       const hasTitle = trimmedTitle.length > 0;
       const fallbackTitle = hasTitle ? trimmedTitle : "CV en cours d'édition";
       const labelPrefix = `${dateLabel || "??/??/????"} - `;
-      rawItems.push({
+      return {
         file,
         label: `${labelPrefix}${fallbackTitle}`,
         title: trimmedTitle,
         hasTitle,
         dateLabel: dateLabel || null,
-        sourceType, // 'link', 'pdf', ou null
-        sourceValue, // URL ou nom de fichier PDF
-        createdBy, // 'generate-cv', 'import-pdf', 'translate-cv', ou null
-        originalCreatedBy, // createdBy original pour les CV traduits
-        isGenerated, // true si createdBy === 'generate-cv'
-        isImported, // true si createdBy === 'import-pdf'
-        isManual, // true si createdBy === null
-        isTranslated, // true si c'est un CV traduit
-        language: cvLanguage, // 'fr', 'en', ou null
+        sourceType,
+        sourceValue,
+        createdBy,
+        originalCreatedBy,
+        isGenerated,
+        isImported,
+        isManual,
+        isTranslated,
+        language: cvLanguage,
         createdAt: createdAtIso,
         updatedAt: updatedAtIso,
-        sortKey: sortTimestamp, // Utiliser le timestamp de la DB pour le tri
-      });
+        sortKey: sortTimestamp,
+      };
     } catch (error) {
-      // En cas d'erreur de lecture, utiliser les données de la DB si disponibles
       const sourceData = sourceMap.get(file);
       const sourceType = sourceData?.sourceType || null;
       const sourceValue = sourceData?.sourceValue || null;
@@ -128,10 +118,9 @@ export async function GET(){
       const isImported = createdBy === 'import-pdf';
       const isManual = createdBy === null;
 
-      // Utiliser dbCreatedAt pour le tri, sinon fallback sur le timestamp du filename
       const sortKey = dbCreatedAt ? new Date(dbCreatedAt).getTime() : timestampFromFilename(file);
       const dateLabel = formatDateLabel(sortKey);
-      rawItems.push({
+      return {
         file,
         label: file,
         title: "",
@@ -145,13 +134,13 @@ export async function GET(){
         isImported,
         isManual,
         isTranslated,
-        language: sourceData?.language || null, // Utiliser la langue de la DB si disponible
+        language: sourceData?.language || null,
         createdAt: null,
         updatedAt: null,
         sortKey,
-      });
+      };
     }
-  }
+  })));
 
   rawItems.sort((a, b) => {
     const aKey = typeof a.sortKey === "number" ? a.sortKey : -Infinity;

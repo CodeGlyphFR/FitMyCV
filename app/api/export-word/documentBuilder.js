@@ -10,7 +10,7 @@ import {
 } from "docx";
 import { formatPhoneNumber } from "@/lib/utils/phoneFormatting";
 import { capitalizeSkillName } from "@/lib/utils/textFormatting";
-import { getTranslation, translateLevel, getSectionTitle } from "./translations";
+import { getTranslation, translateLevel, getSectionTitle } from "@/lib/pdf/cvTranslations";
 
 /**
  * Generate Word document from CV data
@@ -277,9 +277,13 @@ function generateExperienceSection(experience, section_titles, language, selecti
 
     if (exp.company) {
       const companyText = exp.company + (exp.department_or_client ? ` (${exp.department_or_client})` : '') + (exp.location ? ` - ${formatLocation(exp.location)}` : '');
+      const companyChildren = [new TextRun({ text: companyText, size: 20, color: "666666" })];
+      if (exp.url) {
+        companyChildren.push(new TextRun({ text: `  ${exp.url_label || exp.url}`, size: 20, color: "0066CC" }));
+      }
       result.push(
         new Paragraph({
-          children: [new TextRun({ text: companyText, size: 20, color: "666666" })],
+          children: companyChildren,
           spacing: { after: 80 }
         })
       );
@@ -386,6 +390,7 @@ function generateProjectsSection(projects, section_titles, language, isSectionEn
   projects.forEach(project => {
     const titleParts = [];
     if (project.name) titleParts.push(new TextRun({ text: project.name, bold: true, size: 22 }));
+    if (project.url) titleParts.push(new TextRun({ text: `  ${project.url_label || project.url}`, size: 20, color: "0066CC" }));
     if (project.role) titleParts.push(new TextRun({ text: ` - ${project.role}`, size: 20, color: "666666" }));
     if (project.start_date || project.end_date) {
       const dateText = project.end_date

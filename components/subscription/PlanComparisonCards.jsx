@@ -3,13 +3,11 @@
 import React from "react";
 import { SkeletonPlanCard } from "@/components/ui/SkeletonLoader";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import {
-  usePlanComparison,
-  PlanCard,
-  DowngradePaidModal,
-  DowngradeToFreeModal,
-  UpgradeModal
-} from "./plan-comparison";
+import { usePlanComparison } from "./plan-comparison/usePlanComparison";
+import PlanCard from "./plan-comparison/PlanCard";
+import DowngradePaidModal from "./plan-comparison/DowngradePaidModal";
+import DowngradeToFreeModal from "./plan-comparison/DowngradeToFreeModal";
+import UpgradeModal from "./plan-comparison/UpgradeModal";
 
 export default function PlanComparisonCards({ currentPlan, subscription, scheduledDowngrade, onUpgradeSuccess, highlightPlanId }) {
   const { t, language } = useLanguage();

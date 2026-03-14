@@ -134,9 +134,9 @@ export async function proxy(request) {
     }
   }
 
-  // Obtenir l'IP du client (compatible avec proxies)
+  // Obtenir l'IP du client — X-Real-IP est défini par Caddy depuis la connexion TCP,
+  // non spoofable contrairement à X-Forwarded-For qui est contrôlé par le client
   const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0] ||
     request.headers.get('x-real-ip') ||
     request.ip ||
     '127.0.0.1';

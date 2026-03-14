@@ -159,9 +159,11 @@
               "type": "array",
               "description": "Compétences utilisées",
               "items": { "type": "string" }
-            }
+            },
+            "url": { "type": ["string", "null"], "description": "URL liée à l'expérience (produit, entreprise, portfolio)" },
+            "url_label": { "type": ["string", "null"], "description": "Label/titre du lien (ex: 'Voir le produit', 'Site entreprise')" }
           },
-          "required": ["title", "company", "department_or_client", "start_date", "end_date", "city", "region", "country_code", "description", "responsibilities", "deliverables", "skills_used"],
+          "required": ["title", "company", "department_or_client", "start_date", "end_date", "city", "region", "country_code", "description", "responsibilities", "deliverables", "skills_used", "url", "url_label"],
           "additionalProperties": false
         }
       },

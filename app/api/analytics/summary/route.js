@@ -55,7 +55,7 @@ export async function GET(request) {
       ...(userId ? { userId } : {}),
     };
 
-    // Run all queries in parallel
+    // Run ALL queries in parallel (including allEvents and conversion rate queries)
     const [
       totalUsers,
       activeUsers,
@@ -69,6 +69,9 @@ export async function GET(request) {
       featureEvents,
       backgroundTasks,
       recentTelemetryEvents,
+      allEvents,
+      usersWhoGenerated,
+      usersWhoExported,
     ] = await Promise.all([
       // Total users (if filtering by user, return 1, otherwise total)
       userId ? Promise.resolve(1) : prisma.user.count(),
@@ -185,6 +188,41 @@ export async function GET(request) {
         },
         orderBy: { timestamp: 'asc' },
       }),
+
+      // All events for admin page filtering
+      prisma.telemetryEvent.findMany({
+        where: whereClause,
+        select: {
+          type: true,
+          metadata: true,
+        },
+      }),
+
+      // Conversion rate: users who generated
+      startDate
+        ? prisma.telemetryEvent.groupBy({
+            by: ['userId'],
+            where: {
+              ...whereClause,
+              type: 'CV_GENERATED',
+              status: 'success',
+              userId: { not: null },
+            },
+          }).then(r => r.length)
+        : Promise.resolve(0),
+
+      // Conversion rate: users who exported
+      startDate
+        ? prisma.telemetryEvent.groupBy({
+            by: ['userId'],
+            where: {
+              ...whereClause,
+              type: 'CV_EXPORTED',
+              status: 'success',
+              userId: { not: null },
+            },
+          }).then(r => r.length)
+        : Promise.resolve(0),
     ]);
 
     // Map events to features and aggregate
@@ -214,43 +252,9 @@ export async function GET(request) {
       .sort((a, b) => b.usageCount - a.usageCount)
       .slice(0, 5);
 
-    // Get all events to filter admin pages
-    const allEvents = await prisma.telemetryEvent.findMany({
-      where: whereClause,
-      select: {
-        type: true,
-        metadata: true,
-      },
-    });
-
     // Filter out admin page events
     const filteredEvents = filterAdminEvents(allEvents);
     const filteredTotalEvents = filteredEvents.length;
-
-    // Calculate conversion rate (users who generated → exported)
-    const usersWhoGenerated = startDate
-      ? await prisma.telemetryEvent.groupBy({
-          by: ['userId'],
-          where: {
-            ...whereClause,
-            type: 'CV_GENERATED',
-            status: 'success',
-            userId: { not: null },
-          },
-        }).then(r => r.length)
-      : 0;
-
-    const usersWhoExported = startDate
-      ? await prisma.telemetryEvent.groupBy({
-          by: ['userId'],
-          where: {
-            ...whereClause,
-            type: 'CV_EXPORTED',
-            status: 'success',
-            userId: { not: null },
-          },
-        }).then(r => r.length)
-      : 0;
 
     const conversionRate = usersWhoGenerated > 0
       ? ((usersWhoExported / usersWhoGenerated) * 100).toFixed(2)

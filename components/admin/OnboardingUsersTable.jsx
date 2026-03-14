@@ -39,10 +39,11 @@ export function OnboardingUsersTable({ refreshKey }) {
   const fetchingRef = useRef(false);
   const scrollContainerRef = useRef(null);
 
-  // Debounce recherche
+  // Debounce recherche (+ reset page)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
+      setPage(1);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -54,10 +55,8 @@ export function OnboardingUsersTable({ refreshKey }) {
     }
   }, [statusFilter, stepFilter, debouncedSearch, sortBy, limit, page, refreshKey]);
 
-  // Reset page quand filtres changent
-  useEffect(() => {
-    setPage(1);
-  }, [statusFilter, stepFilter, debouncedSearch, sortBy, limit]);
+  // Helpers pour changer un filtre ET reset la pagination
+  const changeFilter = (setter) => (value) => { setter(value); setPage(1); };
 
   // Scroll chaining prevention
   useEffect(() => {
@@ -218,53 +217,34 @@ export function OnboardingUsersTable({ refreshKey }) {
     <div className="bg-white/10 backdrop-blur-xl rounded-lg border border-white/20 p-6">
       <h3 className="text-lg font-semibold text-white mb-4">Utilisateurs par statut d'onboarding</h3>
 
-      {/* Filtres */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        {/* Recherche */}
-        <div className="lg:col-span-2">
-          <label className="text-white/60 text-sm mb-2 block">Rechercher :</label>
-          <input
-            type="text"
-            placeholder="Nom ou email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
-          />
-        </div>
-
-        {/* Filtre Statut */}
-        <div>
-          <label className="text-white/60 text-sm mb-2 block">Statut :</label>
-          <CustomSelect
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={statusOptions}
-          />
-        </div>
-
-        {/* Filtre Étape */}
-        <div>
-          <label className="text-white/60 text-sm mb-2 block">Étape :</label>
-          <CustomSelect
-            value={stepFilter}
-            onChange={setStepFilter}
-            options={stepOptions}
-          />
-        </div>
-
-        {/* Tri */}
-        <div>
-          <label className="text-white/60 text-sm mb-2 block">Tri :</label>
-          <CustomSelect
-            value={sortBy}
-            onChange={setSortBy}
-            options={[
-              { value: 'newest', label: 'Plus récent' },
-              { value: 'oldest', label: 'Plus ancien' },
-              { value: 'progress', label: 'Progression' },
-            ]}
-          />
-        </div>
+      {/* Filtres — une seule ligne */}
+      <div className="flex items-center gap-3 mb-6">
+        <input
+          type="text"
+          placeholder="Rechercher..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1 px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
+        />
+        <CustomSelect
+          value={statusFilter}
+          onChange={changeFilter(setStatusFilter)}
+          options={statusOptions}
+        />
+        <CustomSelect
+          value={stepFilter}
+          onChange={changeFilter(setStepFilter)}
+          options={stepOptions}
+        />
+        <CustomSelect
+          value={sortBy}
+          onChange={changeFilter(setSortBy)}
+          options={[
+            { value: 'newest', label: 'Plus récent' },
+            { value: 'oldest', label: 'Plus ancien' },
+            { value: 'progress', label: 'Progression' },
+          ]}
+        />
       </div>
 
       {/* Header avec count et pagination */}
@@ -277,7 +257,7 @@ export function OnboardingUsersTable({ refreshKey }) {
           <div className="w-20">
             <CustomSelect
               value={limit}
-              onChange={setLimit}
+              onChange={changeFilter(setLimit)}
               options={[
                 { value: '10', label: '10' },
                 { value: '25', label: '25' },

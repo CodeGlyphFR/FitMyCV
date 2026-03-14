@@ -138,10 +138,10 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
   const startIndex = page * limit + 1;
   const endIndex = Math.min((page + 1) * limit, filteredInvoices.length);
 
-  // Reset page quand le filtre change
-  React.useEffect(() => {
+  const handleTypeFilter = (type) => {
+    setTypeFilter(type);
     setPage(0);
-  }, [typeFilter]);
+  };
 
   const handlePreviousPage = () => {
     setPage(prev => Math.max(0, prev - 1));
@@ -211,7 +211,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
       {/* Filtres par type */}
       <div className="flex flex-wrap gap-2 mb-4">
         <button
-          onClick={() => setTypeFilter('all')}
+          onClick={() => handleTypeFilter('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             typeFilter === 'all'
               ? 'bg-white/20 text-white border border-white/30'
@@ -222,7 +222,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
         </button>
         {showSubscriptionFilter && (
           <button
-            onClick={() => setTypeFilter('subscription')}
+            onClick={() => handleTypeFilter('subscription')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               typeFilter === 'subscription'
                 ? 'bg-purple-500/20 text-purple-200 border border-purple-500/50'
@@ -233,7 +233,7 @@ export default function InvoicesTable({ creditBalance: creditBalanceProp, curren
           </button>
         )}
         <button
-          onClick={() => setTypeFilter('credit_pack')}
+          onClick={() => handleTypeFilter('credit_pack')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             typeFilter === 'credit_pack'
               ? 'bg-blue-500/20 text-blue-200 border border-blue-500/50'

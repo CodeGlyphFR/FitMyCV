@@ -18,7 +18,9 @@ const getProviders = (t) => [
   { id: "github", label: t("auth.continueWithGithub"), image: "/icons/github.png", width: 28, height: 28 },
 ];
 
-export default function AuthScreen({ initialMode = "login", providerAvailability = {}, registrationEnabled = true, maintenanceEnabled = false, oauthError = null }){
+const EMPTY_PROVIDER_AVAILABILITY = {};
+
+export default function AuthScreen({ initialMode = "login", providerAvailability = EMPTY_PROVIDER_AVAILABILITY, registrationEnabled = true, maintenanceEnabled = false, oauthError = null }){
   const router = useRouter();
   const { t } = useLanguage();
   const { executeRecaptcha } = useRecaptcha();

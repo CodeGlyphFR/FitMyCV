@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Settings, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   EMAIL_SECTION_CONFIG,
@@ -122,25 +121,6 @@ export function EmailNav({
       })}
     </div>
   );
-}
-
-/**
- * Hook pour détecter si on est sur mobile
- */
-export function useIsMobile(breakpoint = 1024) {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < breakpoint);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [breakpoint]);
-
-  return isMobile;
 }
 
 export default EmailNav;

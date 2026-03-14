@@ -26,15 +26,14 @@ export function useUsersData({ refreshKey }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
+      setPage(1);
     }, 1000);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Reset page quand on change de filtres
-  useEffect(() => {
-    setPage(1);
-  }, [roleFilter, emailStatusFilter, sortBy, debouncedSearch, limit]);
+  // Helper : changer un filtre ET reset la pagination
+  const changeFilter = (setter) => (value) => { setter(value); setPage(1); };
 
   // Fetch data
   useEffect(() => {
@@ -97,15 +96,15 @@ export function useUsersData({ refreshKey }) {
     error,
     // Filters
     roleFilter,
-    setRoleFilter,
+    setRoleFilter: changeFilter(setRoleFilter),
     emailStatusFilter,
-    setEmailStatusFilter,
+    setEmailStatusFilter: changeFilter(setEmailStatusFilter),
     sortBy,
-    setSortBy,
+    setSortBy: changeFilter(setSortBy),
     searchQuery,
     setSearchQuery,
     limit,
-    setLimit,
+    setLimit: changeFilter(setLimit),
     page,
     setPage,
     // Actions
