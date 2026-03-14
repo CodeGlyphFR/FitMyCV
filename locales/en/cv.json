@@ -273,6 +273,9 @@
       "projectUrl": "Project URL (GitHub, portfolio...)",
       "projectUrlExample": "https://github.com/...",
       "projectUrlLabel": "Link title (e.g., View on GitHub)",
+      "experienceUrl": "Experience URL (product, website...)",
+      "experienceUrlExample": "https://...",
+      "experienceUrlLabel": "Link title (e.g., View product)",
       "summaryDescription": "Describe your professional profile..."
     }
   },
