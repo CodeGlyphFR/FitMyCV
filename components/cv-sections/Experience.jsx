@@ -335,12 +335,12 @@ export default function Experience(props){
                     e.location.region,
                     e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
                   ].filter(Boolean).join(", ")}
-                  {e.url && <>{" — "}<a href={e.url} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">{e.url_label || e.url}</a></>}
+                  {e.url && <>{" — "}<a href={e.url} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300"><svg className="inline w-2.5 h-2.5 align-[-1px] mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>{e.url_label || e.url}</a></>}
                 </div>
               )}
               {e.url && !(e.location && (e.location.city || e.location.region || e.location.country_code)) && (
                 <div className="text-xs mt-0.5">
-                  <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300">{e.url_label || e.url}</a>
+                  <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300"><svg className="inline w-2.5 h-2.5 align-[-1px] mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>{e.url_label || e.url}</a>
                 </div>
               )}
 
