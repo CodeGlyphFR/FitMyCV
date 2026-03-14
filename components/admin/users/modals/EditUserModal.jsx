@@ -5,12 +5,14 @@ import { useState, useEffect } from 'react';
 /**
  * Modal for editing an existing user
  */
-export function EditUserModal({ isOpen, onClose, onSubmit, user, updating }) {
+export function EditUserModal({ isOpen, onClose, onSubmit, onRoleChange, user, updating }) {
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState('USER');
 
   useEffect(() => {
     if (user) {
       setEmail(user.email || '');
+      setRole(user.role || 'USER');
     }
   }, [user]);
 
@@ -22,6 +24,9 @@ export function EditUserModal({ isOpen, onClose, onSubmit, user, updating }) {
   };
 
   const handleSubmit = async () => {
+    if (role !== user.role) {
+      await onRoleChange(user.id, role);
+    }
     const success = await onSubmit(user.id, {
       email,
       hasOAuth: user.hasOAuth,
@@ -53,6 +58,18 @@ export function EditUserModal({ isOpen, onClose, onSubmit, user, updating }) {
                 L'email ne peut pas être modifié pour un compte OAuth (géré par {user.oauthProviders?.join('/')})
               </p>
             )}
+          </div>
+
+          <div>
+            <label className="text-white/60 text-sm mb-2 block">Rôle</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-hidden focus:border-blue-400/50 transition appearance-none"
+            >
+              <option value="USER" className="bg-gray-900">USER</option>
+              <option value="ADMIN" className="bg-gray-900">ADMIN</option>
+            </select>
           </div>
         </div>
 

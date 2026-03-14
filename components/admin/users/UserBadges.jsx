@@ -100,11 +100,11 @@ export function BillingPeriodBadge({ subscription }) {
  * Credits badge component
  */
 export function CreditsBadge({ credits }) {
-  if (!credits || credits <= 0) return null;
+  const count = credits || 0;
 
   return (
-    <span className="px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">
-      💎 {credits} crédit{credits > 1 ? 's' : ''}
+    <span className={`px-2 py-0.5 text-xs rounded ${count > 0 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
+      💎 {count} crédit{count > 1 ? 's' : ''}
     </span>
   );
 }
