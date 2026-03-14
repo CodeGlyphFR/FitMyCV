@@ -1,7 +1,7 @@
 {
   "name": "FitMyCV",
   "private": true,
-  "version": "1.4.0.0",
+  "version": "1.5.0.0",
   "scripts": {
     "tunnel": "ssh -q -L 5432:localhost:5432 erickdesmet@176.136.226.121 -p 1702 -N",
     "dev": "dotenv -e .env -- sh -c 'concurrently --names next,tunnel --prefix-colors blue,dim \"next dev -p ${PORT}\" \"[ $USE_TUNNEL = true ] && npm run tunnel || sleep infinity\"'",
