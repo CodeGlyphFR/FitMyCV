@@ -3,7 +3,8 @@
   "private": true,
   "version": "1.4.0.0",
   "scripts": {
-    "dev": "dotenv -e .env -- next dev",
+    "tunnel": "ssh -q -L 5432:localhost:5432 erickdesmet@176.136.226.121 -p 1702 -N",
+    "dev": "dotenv -e .env -- sh -c 'concurrently --names next,tunnel --prefix-colors blue,dim \"next dev -p ${PORT}\" \"[ $USE_TUNNEL = true ] && npm run tunnel || sleep infinity\"'",
     "build": "next build",
     "start": "dotenv -e .env -- next start",
     "postinstall": "prisma generate",
@@ -68,6 +69,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.0",
     "autoprefixer": "^10.4.23",
+    "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18"
