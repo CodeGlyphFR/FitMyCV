@@ -329,27 +329,18 @@ export default function Experience(props){
               </div>
 
               {(e.location && (e.location.city || e.location.region || e.location.country_code) || e.url) && (
-                <div className="flex flex-wrap items-center gap-x-2 text-xs opacity-70 mt-0.5">
-                  {e.location && (e.location.city || e.location.region || e.location.country_code) && (
-                    <span>
-                      {[
-                        e.location.city,
-                        e.location.region,
-                        e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
-                      ].filter(Boolean).join(", ")}
-                    </span>
-                  )}
+                <div className="text-xs opacity-70 mt-0.5 leading-tight">
+                  {e.location && (e.location.city || e.location.region || e.location.country_code) &&
+                    [
+                      e.location.city,
+                      e.location.region,
+                      e.location.country_code ? (cvT(`countries.${e.location.country_code}`) || e.location.country_code) : null
+                    ].filter(Boolean).join(", ")
+                  }
                   {e.url && (
-                    <a
-                      href={e.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 opacity-100"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
-                      {e.url_label || e.url}
+                    <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 ml-2">
+                      <svg className="w-2.5 h-2.5 inline -mt-px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                      {" "}{e.url_label || e.url}
                     </a>
                   )}
                 </div>
