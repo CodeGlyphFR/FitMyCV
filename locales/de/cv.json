@@ -147,6 +147,11 @@
       "reset": "Zurücksetzen",
       "close": "Schließen"
     },
+    "demoMode": {
+      "banner": "Demomodus — PDF-Exporte enthalten ein Wasserzeichen. Kaufen Sie ein Kreditpaket, um es zu entfernen und den Word-Export freizuschalten.",
+      "wordDisabled": "Word-Export nach Kauf eines Kreditpakets verfügbar",
+      "buyCredits": "Credits kaufen"
+    },
     "placeholders": {
       "filename": "Mein_Lebenslauf"
     }

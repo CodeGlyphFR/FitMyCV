@@ -147,6 +147,11 @@
       "reset": "Réinitialiser",
       "close": "Fermer"
     },
+    "demoMode": {
+      "banner": "Mode démo — L'export PDF contient un filigrane. Achetez un pack de crédits pour le retirer et débloquer l'export Word.",
+      "wordDisabled": "Export Word disponible après achat d'un pack de crédits",
+      "buyCredits": "Acheter des crédits"
+    },
     "placeholders": {
       "filename": "Mon_CV"
     }

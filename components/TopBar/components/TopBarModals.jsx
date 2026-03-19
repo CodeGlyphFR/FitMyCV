@@ -27,6 +27,7 @@ export default function TopBarModals({
   baseDropdownRef,
   extensionDetected,
   onOpenExtensionTutorial,
+  isDemoExport,
   t
 }) {
   return (
@@ -158,6 +159,7 @@ export default function TopBarModals({
         sectionsOrder={exportModal.sectionsOrder}
         setSectionsOrder={exportModal.setSectionsOrder}
         resetSectionsOrder={exportModal.resetSectionsOrder}
+        isDemoExport={isDemoExport}
         t={t}
       />
 

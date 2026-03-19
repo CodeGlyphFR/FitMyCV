@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/session";
 import { readUserCvFileWithMeta } from "@/lib/cv-core/storage";
 import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
+import { hasPurchasedCredits } from "@/lib/subscription/credits";
 import {
   getTranslation,
   prepareCvData,
@@ -50,8 +51,11 @@ export async function POST(request) {
       return CvErrors.notFound();
     }
 
+    // Check demo mode
+    const isDemoMode = !(await hasPurchasedCredits(session.user.id));
+
     // Generate HTML preview
-    const htmlContent = generatePreviewHtml(cvData, cvLanguage, selections, sectionsOrder);
+    const htmlContent = generatePreviewHtml(cvData, cvLanguage, selections, sectionsOrder, isDemoMode);
 
     return NextResponse.json({ html: htmlContent });
 
@@ -61,7 +65,7 @@ export async function POST(request) {
   }
 }
 
-function generatePreviewHtml(cvData, language = 'fr', selections = null, sectionsOrder = null) {
+function generatePreviewHtml(cvData, language = 'fr', selections = null, sectionsOrder = null, isDemoMode = false) {
   const t = (path) => getTranslation(language, path);
   const order = sectionsOrder || DEFAULT_SECTION_ORDER;
 
@@ -88,6 +92,22 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null, section
   <title>CV Preview - ${data.header.full_name || t('cvSections.header')}</title>
   <style>
     ${getPreviewStyles()}
+    ${isDemoMode ? `
+    .cv-container::before {
+      content: 'fitmycv.io';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 80px;
+      font-weight: bold;
+      color: rgba(0, 0, 0, 0.06);
+      pointer-events: none;
+      z-index: 9999;
+      white-space: nowrap;
+      letter-spacing: 10px;
+    }
+    ` : ''}
   </style>
 </head>
 <body>

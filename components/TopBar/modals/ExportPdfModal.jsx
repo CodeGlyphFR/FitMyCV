@@ -60,6 +60,7 @@ export default function ExportPdfModal({
   sectionsOrder = ['summary', 'skills', 'experience', 'education', 'languages', 'projects', 'extras'],
   setSectionsOrder,
   resetSectionsOrder,
+  isDemoExport = false,
   t
 }) {
   // État local pour la création de template
@@ -554,6 +555,21 @@ export default function ExportPdfModal({
           {/* Affichage du coût en crédits */}
           {exportCost > 0 && <CreditCostDisplay cost={exportCost} show={showCosts} />}
 
+          {/* Bandeau mode démo */}
+          {isDemoExport && (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-400/30">
+              <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm text-amber-200">{t('exportModal.demoMode.banner')}</p>
+                <a href="/pricing" className="inline-block mt-1.5 text-xs font-medium text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors">
+                  {t('exportModal.demoMode.buyCredits')}
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* Footer buttons */}
           <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
             {/* Bouton Annuler masqué sur mobile (la croix suffit) */}
@@ -603,8 +619,13 @@ export default function ExportPdfModal({
             <button
               type="button"
               onClick={exportWord}
-              disabled={isExporting || isExportingWord || isLoadingPreview || !filename.trim()}
-              className="px-4 py-2.5 rounded-lg border border-blue-400/50 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:border-blue-400 text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={isDemoExport || isExporting || isExportingWord || isLoadingPreview || !filename.trim()}
+              title={isDemoExport ? t('exportModal.demoMode.wordDisabled') : undefined}
+              className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors flex items-center gap-2 ${
+                isDemoExport
+                  ? 'border-white/10 bg-white/5 text-white/30 cursor-not-allowed'
+                  : 'border-blue-400/50 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:border-blue-400 disabled:opacity-60 disabled:cursor-not-allowed'
+              }`}
             >
               {isExportingWord && (
                 <svg

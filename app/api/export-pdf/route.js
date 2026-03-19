@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth/session";
 import { readUserCvFileWithMeta } from "@/lib/cv-core/storage";
 import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
-import { refundCredit } from "@/lib/subscription/credits";
+import { refundCredit, hasPurchasedCredits } from "@/lib/subscription/credits";
 import { CommonErrors, CvErrors, OtherErrors } from "@/lib/api/apiErrors";
 import { secureLog, secureError } from "@/lib/security/secureLogger";
 import {
@@ -61,6 +61,9 @@ export async function POST(request) {
     creditTransactionId = usageResult.transactionId;
     creditUsed = usageResult.usedCredit;
 
+    // Check demo mode (no purchased credits)
+    const isDemoMode = !(await hasPurchasedCredits(userId));
+
     // Load CV data
     let cvData;
     let cvLanguage;
@@ -105,7 +108,7 @@ export async function POST(request) {
     });
 
     const page = await browser.newPage();
-    const htmlContent = generateCvHtml(cvData, cvLanguage, selections, sectionsOrder);
+    const htmlContent = generateCvHtml(cvData, cvLanguage, selections, sectionsOrder, isDemoMode);
 
     await page.setContent(htmlContent, {
       waitUntil: 'networkidle0',
@@ -190,7 +193,7 @@ export async function POST(request) {
   }
 }
 
-function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrder = null) {
+function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrder = null, isDemoMode = false) {
   const t = (path) => getTranslation(language, path);
   const order = sectionsOrder || DEFAULT_SECTION_ORDER;
 
@@ -223,7 +226,7 @@ function generateCvHtml(cvData, language = 'fr', selections = null, sectionsOrde
     ${getExportStyles()}
   </style>
 </head>
-<body>
+<body${isDemoMode ? ' class="demo-watermark"' : ''}>
   <div class="cv-container">
     ${headerHtml}
     ${sectionsHtml}

@@ -147,6 +147,11 @@
       "reset": "Reset",
       "close": "Close"
     },
+    "demoMode": {
+      "banner": "Demo mode — PDF exports contain a watermark. Purchase a credit pack to remove it and unlock Word export.",
+      "wordDisabled": "Word export available after purchasing a credit pack",
+      "buyCredits": "Buy credits"
+    },
     "placeholders": {
       "filename": "My_CV"
     }

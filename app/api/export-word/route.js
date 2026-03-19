@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth/session";
 import { readUserCvFileWithMeta } from "@/lib/cv-core/storage";
 import { trackCvExport } from "@/lib/telemetry/server";
 import { incrementFeatureCounter } from "@/lib/subscription/featureUsage";
-import { refundCredit } from "@/lib/subscription/credits";
+import { refundCredit, hasPurchasedCredits } from "@/lib/subscription/credits";
 import { CommonErrors, CvErrors } from "@/lib/api/apiErrors";
 import { secureLog, secureError } from "@/lib/security/secureLogger";
 import { generateWordDocument } from "./documentBuilder";
@@ -38,6 +38,16 @@ export async function POST(request) {
       return CommonErrors.notAuthenticated();
     }
     userId = session.user.id;
+
+    // Bloquer l'export Word en mode démo (pas d'achat de crédits)
+    const purchased = await hasPurchasedCredits(userId);
+    if (!purchased) {
+      return NextResponse.json({
+        error: "L'export Word est disponible après l'achat d'un pack de crédits.",
+        actionRequired: 'purchase_credits',
+        redirectUrl: '/pricing'
+      }, { status: 403 });
+    }
 
     const requestData = await request.json();
     let filename = requestData.filename;
