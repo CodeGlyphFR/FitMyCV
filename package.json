@@ -23,6 +23,7 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@fingerprintjs/fingerprintjs": "^5.1.0",
     "@maily-to/render": "^0.2.2",
     "@mozilla/readability": "^0.6.0",
     "@next-auth/prisma-adapter": "^1.0.7",
