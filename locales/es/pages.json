@@ -119,7 +119,7 @@
         "id": "pricing",
         "title": "3. Precios y Pagos",
         "content": [
-          { "type": "paragraph", "text": "Todos los precios se muestran en euros (EUR). El editor no está sujeto al IVA conforme al artículo 293 B del Código General de Impuestos francés." },
+          { "type": "paragraph", "text": "Los precios se muestran sin IVA. El IVA aplicable se añadirá en el momento del pago, al tipo vigente en el país de residencia del comprador de acuerdo con la normativa europea sobre servicios digitales." },
           { "type": "paragraph", "text": "Los pagos están asegurados por Stripe y aceptan tarjetas de crédito, Apple Pay, Google Pay y otros métodos de pago según tu ubicación." },
           { "type": "paragraph", "text": "Los precios de los paquetes de créditos están disponibles en la página Gestión de créditos.", "link": "/account/subscriptions?tab=credits", "linkText": "Gestión de créditos" }
         ]
@@ -254,7 +254,7 @@
         "title": "15. Información Legal",
         "content": [
           { "type": "paragraph", "text": "Editor del servicio FitMyCV.io:" },
-          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 París, Francia\nEmail: contact@codeglyph.fr\n\nNo sujeto a IVA (Artículo 293 B del Código General de Impuestos francés)" },
+          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 París, Francia\nEmail: contact@codeglyph.fr\n\nN.º de IVA intracomunitario: FR58995375862" },
           { "type": "subtitle", "text": "Alojamiento" },
           { "type": "paragraph", "text": "El servicio está autoalojado por el editor." },
           { "type": "subtitle", "text": "Protección de Datos" },
@@ -306,7 +306,7 @@
           { "type": "subtitle", "text": "4.1 Datos de identificación" },
           { "type": "list", "items": ["Nombre, dirección de correo electrónico, contraseña (cifrada)", "Foto de perfil (si inicia sesión a través de Google, Apple o GitHub)"] },
           { "type": "subtitle", "text": "4.2 Datos del CV" },
-          { "type": "list", "items": ["Información profesional: experiencia, formación, habilidades", "Datos de contacto: teléfono, dirección, enlaces profesionales", "Documentos importados (PDF): no almacenados, enviados a OpenAI para extracción y eliminados inmediatamente", "Historial de versiones de sus CV"] },
+          { "type": "list", "items": ["Información profesional: experiencia, formación, habilidades", "Datos de contacto: teléfono, dirección, enlaces profesionales", "Documentos importados (PDF): no almacenados, enviados a OpenAI para extracción y eliminados inmediatamente", "Historial de versiones de sus CV", "Todos los datos de CV están cifrados en reposo"] },
           { "type": "subtitle", "text": "4.3 Datos de navegación" },
           { "type": "list", "items": ["Dirección IP, tipo de navegador", "Páginas visitadas, datos de sesión"] },
           { "type": "subtitle", "text": "4.4 Datos de pago" },
@@ -324,8 +324,7 @@
             ["Gestión de pagos y suscripciones", "Ejecución del contrato"],
             ["Mejora del servicio, corrección de errores", "Interés legítimo"],
             ["Seguridad y prevención de abusos", "Interés legítimo"],
-            ["Conservación de datos de facturación", "Obligación legal"],
-            ["Cookies analíticas", "Consentimiento"]
+            ["Conservación de datos de facturación", "Obligación legal"]
           ]}
         ]
       },
@@ -338,8 +337,7 @@
             ["Cuenta eliminada", "Eliminación inmediata"],
             ["Cuenta inactiva", "3 años después del último inicio de sesión (notificación 30 días antes de la eliminación)"],
             ["Datos de facturación", "5 años (obligación legal)"],
-            ["Registros de emails", "12 meses"],
-            ["Registros de consentimiento de cookies", "6 meses"]
+            ["Registros de emails", "12 meses"]
           ]}
         ]
       },
@@ -381,7 +379,7 @@
         "id": "cookies",
         "title": "11. Cookies",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io utiliza cookies para la funcionalidad del sitio y, con su consentimiento, para la medición de audiencia. Consulte nuestra política de cookies para más detalles.", "link": "/cookies", "linkText": "política de cookies" }
+          { "type": "paragraph", "text": "FitMyCV.io utiliza cookies esenciales para el funcionamiento del sitio (sesión, autenticación, protección antispam). No se utilizan cookies publicitarias." }
         ]
       },
       {
@@ -392,6 +390,7 @@
           { "type": "list", "items": [
             "Comunicación HTTPS (SSL/TLS)",
             "Contraseñas cifradas (bcrypt)",
+            "CV y datos personales cifrados en reposo (AES-256)",
             "Protección CSRF y cookies seguras",
             "Protección anti-spam vía Google reCAPTCHA v3"
           ]},
