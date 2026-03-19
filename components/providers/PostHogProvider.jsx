@@ -5,7 +5,6 @@ import { PostHogProvider as PHProvider, usePostHog } from "posthog-js/react";
 import { useSession } from "next-auth/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, Suspense } from "react";
-import { getConsent, COOKIE_CATEGORIES } from "@/lib/cookies/consent";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
@@ -17,12 +16,13 @@ if (typeof window !== "undefined" && POSTHOG_KEY && process.env.NODE_ENV === "pr
     capture_pageview: false,
     capture_pageleave: true,
     disable_session_recording: true,
+    before_send: (event) => {
+      if (window.location.pathname.startsWith("/admin")) {
+        return null;
+      }
+      return event;
+    },
   });
-
-  const consent = getConsent();
-  if (consent && consent[COOKIE_CATEGORIES.ANALYTICS] === false) {
-    posthog.opt_out_capturing();
-  }
 }
 
 function PostHogIdentifier() {
@@ -67,30 +67,6 @@ function PageviewTracker() {
   return null;
 }
 
-function ConsentListener() {
-  const ph = usePostHog();
-
-  useEffect(() => {
-    if (!ph || typeof BroadcastChannel === "undefined") return;
-
-    const channel = new BroadcastChannel("cookie_consent_channel");
-    channel.addEventListener("message", (event) => {
-      if (event.data?.type === "consent-updated") {
-        const consent = event.data.consent;
-        if (consent && consent[COOKIE_CATEGORIES.ANALYTICS] === true) {
-          ph.opt_in_capturing();
-        } else {
-          ph.opt_out_capturing();
-        }
-      }
-    });
-
-    return () => channel.close();
-  }, [ph]);
-
-  return null;
-}
-
 export default function PostHogProvider({ children }) {
   if (!POSTHOG_KEY || process.env.NODE_ENV !== "production") {
     return <>{children}</>;
@@ -99,7 +75,6 @@ export default function PostHogProvider({ children }) {
   return (
     <PHProvider client={posthog}>
       <PostHogIdentifier />
-      <ConsentListener />
       <Suspense fallback={null}>
         <PageviewTracker />
       </Suspense>
