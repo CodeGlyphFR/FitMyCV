@@ -64,6 +64,7 @@ export default function TopBarModals({
         baseDropdownRef={baseDropdownRef}
         extensionDetected={extensionDetected}
         onOpenExtensionTutorial={onOpenExtensionTutorial}
+        trackEvent={generator.trackEvent}
       />
 
       <PdfImportModal

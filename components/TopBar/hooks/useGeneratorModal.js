@@ -1,4 +1,5 @@
 import React from "react";
+import { usePostHog } from "posthog-js/react";
 import { CREATE_TEMPLATE_OPTION } from "../utils/constants";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -24,6 +25,12 @@ export function useGeneratorModal({
 }) {
   const { executeRecaptcha } = useRecaptcha();
   const { language: interfaceLanguage } = useLanguage();
+  const posthog = usePostHog();
+
+  const trackEvent = React.useCallback((eventName, properties = {}) => {
+    if (!posthog || posthog.has_opted_out_capturing()) return;
+    posthog.capture(`cv_generator_${eventName}`, properties);
+  }, [posthog]);
   const [openGenerator, setOpenGenerator] = React.useState(false);
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
@@ -43,6 +50,19 @@ export function useGeneratorModal({
       isMountedRef.current = false;
     };
   }, []);
+
+  // Session recording on-demand : actif uniquement quand le modal est ouvert
+  React.useEffect(() => {
+    if (!posthog || posthog.has_opted_out_capturing()) return;
+    if (openGenerator) {
+      posthog.startSessionRecording();
+    }
+    return () => {
+      if (openGenerator) {
+        posthog.stopSessionRecording();
+      }
+    };
+  }, [openGenerator, posthog]);
 
   const generatorSourceItems = React.useMemo(
     () => items.filter((it) => !it.isGenerated),
@@ -95,7 +115,11 @@ export function useGeneratorModal({
     });
     setGeneratorError("");
     setOpenGenerator(true);
-  }, [currentItem, generatorSourceItems, lastSelectedMetaRef]);
+    trackEvent('modal_opened', {
+      base_type: nextBase ? 'existing_cv' : 'template',
+      source_items_count: manualItems.length,
+    });
+  }, [currentItem, generatorSourceItems, lastSelectedMetaRef, trackEvent]);
 
   // Écouter l'événement d'onboarding pour ouvrir le modal automatiquement (étape 2)
   React.useEffect(() => {
@@ -139,6 +163,10 @@ export function useGeneratorModal({
   }
 
   function closeGenerator() {
+    trackEvent('modal_closed', {
+      had_links: linkInputs.some((l) => l.trim() !== ""),
+      had_files: (fileSelection || []).length > 0,
+    });
     setOpenGenerator(false);
     resetGeneratorState();
     // Note: Le flag onboardingGeneratorOpenedRef n'est PAS reset ici pour éviter les ré-ouvertures
@@ -154,10 +182,14 @@ export function useGeneratorModal({
   }
 
   function addLinkField() {
-    setLinkInputs((prev) => [...prev, ""]);
+    setLinkInputs((prev) => {
+      trackEvent('link_field_added', { new_count: prev.length + 1 });
+      return [...prev, ""];
+    });
   }
 
   function removeLinkField(index) {
+    trackEvent('link_field_removed', { removed_index: index });
     setLinkInputs((prev) => {
       const next = prev.filter((_, idx) => idx !== index);
       return next.length ? next : [""];
@@ -167,9 +199,16 @@ export function useGeneratorModal({
   function onFilesChanged(event) {
     const files = Array.from(event.target.files || []);
     setFileSelection(files);
+    if (files.length > 0) {
+      trackEvent('files_selected', {
+        file_count: files.length,
+        file_types: [...new Set(files.map((f) => f.name.split('.').pop()?.toLowerCase()))],
+      });
+    }
   }
 
   function clearFiles() {
+    trackEvent('files_cleared');
     setFileSelection([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
@@ -181,6 +220,7 @@ export function useGeneratorModal({
 
     if (!generatorBaseFile) {
       setGeneratorError(t("cvGenerator.errors.selectReference"));
+      trackEvent('validation_error', { error_type: 'no_base_file' });
       return;
     }
 
@@ -191,6 +231,7 @@ export function useGeneratorModal({
 
     if (!cleanedLinks.length && !hasFiles) {
       setGeneratorError(t("cvGenerator.errors.addLinkOrFile"));
+      trackEvent('validation_error', { error_type: 'no_link_or_file' });
       return;
     }
 
@@ -262,6 +303,11 @@ export function useGeneratorModal({
       // Fermer le modal IMMÉDIATEMENT pour feedback utilisateur
       // IMPORTANT: Faire ceci AVANT toutes les vérifications pour garantir la fermeture
       // même si le composant est unmounted pendant l'onboarding (race condition)
+      trackEvent('form_submitted', {
+        base_type: isTemplateCreation ? 'template' : 'existing_cv',
+        link_count: cleanedLinks.length,
+        file_count: (fileSelection || []).length,
+      });
       closeGenerator();
 
       // Vérifier la réponse API APRÈS fermeture du modal
@@ -326,6 +372,7 @@ export function useGeneratorModal({
         // Le polling (10s interval) rattrapera de toute façon
       }
     } catch (error) {
+      trackEvent('submission_error', { error_message: error?.message || 'unknown' });
       // Fermer le modal avant d'afficher l'erreur
       // IMPORTANT: Faire ceci AVANT isMountedRef check pour garantir la fermeture
       closeGenerator();
@@ -376,5 +423,6 @@ export function useGeneratorModal({
     onFilesChanged,
     clearFiles,
     submitGenerator,
+    trackEvent,
   };
 }
