@@ -47,12 +47,12 @@ model User {
 model BrowserFingerprint {
   id         String   @id @default(cuid())
   visitorId  String   // Hash SHA-256 du visitorId FingerprintJS
-  userId     String
+  userId     String?  // Nullable : conservé après suppression du compte (onDelete: SetNull)
   ipAddress  String?  // IP au moment de la collecte (audit)
   userAgent  String?  // User-Agent au moment de la collecte
   createdAt  DateTime @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([visitorId])
   @@index([userId])
