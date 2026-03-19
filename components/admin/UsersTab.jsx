@@ -146,50 +146,52 @@ export function UsersTab({ refreshKey }) {
         <CreditDistributionChart distribution={data.kpis.creditDistribution} />
       </div>
 
-      {/* Filtres, Recherche et Bouton Ajouter — une seule ligne */}
-      <div className="flex items-center gap-3">
+      {/* Filtres, Recherche et Bouton Ajouter */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <input
           type="text"
           placeholder="Rechercher..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
+          className="w-full sm:flex-1 sm:min-w-[150px] px-3 py-1.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-hidden focus:border-blue-400/50 transition"
         />
-        <CustomSelect
-          value={emailStatusFilter}
-          onChange={setEmailStatusFilter}
-          options={[
-            { value: 'all', label: 'Email: Tous' },
-            { value: 'verified', label: 'Vérifiés' },
-            { value: 'unverified', label: 'Non vérifiés' },
-          ]}
-        />
-        <CustomSelect
-          value={roleFilter}
-          onChange={setRoleFilter}
-          options={[
-            { value: 'all', label: 'Rôle: Tous' },
-            { value: 'USER', label: 'USER' },
-            { value: 'ADMIN', label: 'ADMIN' },
-          ]}
-        />
-        <CustomSelect
-          value={sortBy}
-          onChange={setSortBy}
-          options={[
-            { value: 'newest', label: 'Plus récent' },
-            { value: 'oldest', label: 'Plus ancien' },
-          ]}
-        />
-        <button
-          onClick={() => setShowAddUserModal(true)}
-          className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2 text-sm whitespace-nowrap"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Ajouter
-        </button>
+        <div className="flex flex-1 sm:flex-none items-center gap-2 sm:gap-3 min-w-0">
+          <CustomSelect
+            value={emailStatusFilter}
+            onChange={setEmailStatusFilter}
+            options={[
+              { value: 'all', label: 'Email: Tous' },
+              { value: 'verified', label: 'Vérifiés' },
+              { value: 'unverified', label: 'Non vérifiés' },
+            ]}
+          />
+          <CustomSelect
+            value={roleFilter}
+            onChange={setRoleFilter}
+            options={[
+              { value: 'all', label: 'Rôle: Tous' },
+              { value: 'USER', label: 'USER' },
+              { value: 'ADMIN', label: 'ADMIN' },
+            ]}
+          />
+          <CustomSelect
+            value={sortBy}
+            onChange={setSortBy}
+            options={[
+              { value: 'newest', label: 'Plus récent' },
+              { value: 'oldest', label: 'Plus ancien' },
+            ]}
+          />
+          <button
+            onClick={() => setShowAddUserModal(true)}
+            className="px-2 sm:px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2 text-sm whitespace-nowrap shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="hidden sm:inline">Ajouter</span>
+          </button>
+        </div>
       </div>
 
       {/* Liste des utilisateurs avec scroll chaining prevention */}

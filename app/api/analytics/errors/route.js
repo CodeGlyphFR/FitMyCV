@@ -162,3 +162,89 @@ export async function GET(request) {
     );
   }
 }
+
+/**
+ * DELETE /api/analytics/errors
+ * Delete error events
+ * Query params:
+ *   - id: Single error ID to delete
+ *   - clearAll: true to purge all errors matching filters
+ *   - period: 24h|7d|30d|all (used with clearAll)
+ *   - userId: Filter by user (used with clearAll)
+ */
+export async function DELETE(request) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return CommonErrors.notAuthenticated();
+    }
+
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const clearAll = searchParams.get('clearAll') === 'true';
+
+    if (id) {
+      // Single delete
+      await prisma.telemetryEvent.delete({ where: { id } });
+      return NextResponse.json({ success: true });
+    }
+
+    if (clearAll) {
+      const period = searchParams.get('period') || '7d';
+      const userId = searchParams.get('userId');
+
+      const now = new Date();
+      let startDate = null;
+
+      switch (period) {
+        case '24h':
+          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case '7d':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case 'all':
+        default:
+          startDate = null;
+      }
+
+      const whereClause = {
+        status: 'error',
+        ...(startDate ? { timestamp: { gte: startDate } } : {}),
+        ...(userId ? { userId } : {}),
+      };
+
+      const result = await prisma.telemetryEvent.deleteMany({ where: whereClause });
+      return NextResponse.json({ success: true, deleted: result.count });
+    }
+
+    return NextResponse.json(
+      { error: 'Missing id or clearAll parameter' },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error('[Analytics API] Error deleting errors:', error);
+
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Error not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to delete errors' },
+      { status: 500 }
+    );
+  }
+}
