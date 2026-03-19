@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { usePostHog } from 'posthog-js/react';
 import { Check } from 'lucide-react';
 import OnboardingModal from '@/components/onboarding/OnboardingModal';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -327,9 +328,17 @@ function ExtensionWorkflowMockup({ t }) {
  */
 export default function ExtensionTutorialModal({ open, onClose }) {
   const { t } = useLanguage();
+  const posthog = usePostHog();
   const [currentScreen, setCurrentScreen] = useState(0);
 
   const browser = useMemo(() => detectBrowser(), []);
+
+  // Tracker l'ouverture du tutorial
+  useEffect(() => {
+    if (open && posthog && !posthog.has_opted_out_capturing()) {
+      posthog.capture('extension_tutorial_opened');
+    }
+  }, [open, posthog]);
 
   // Injecter les styles d'animation une seule fois
   useEffect(() => {
@@ -417,6 +426,14 @@ export default function ExtensionTutorialModal({ open, onClose }) {
                       href={btn.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        if (posthog && !posthog.has_opted_out_capturing()) {
+                          posthog.capture('extension_store_link_clicked', {
+                            browser: btn.key,
+                            is_primary: btn.primary,
+                          });
+                        }
+                      }}
                       className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                         btn.primary
                           ? 'bg-sky-500 hover:bg-sky-600 text-white'
@@ -454,16 +471,25 @@ export default function ExtensionTutorialModal({ open, onClose }) {
   }, [t, browser]);
 
   const handleNext = useCallback(() => {
-    setCurrentScreen((prev) => Math.min(prev + 1, screens.length - 1));
-  }, [screens.length]);
+    setCurrentScreen((prev) => {
+      const next = Math.min(prev + 1, screens.length - 1);
+      if (posthog && !posthog.has_opted_out_capturing()) {
+        posthog.capture('extension_tutorial_screen_viewed', { screen: next });
+      }
+      return next;
+    });
+  }, [screens.length, posthog]);
 
   const handlePrev = useCallback(() => {
     setCurrentScreen((prev) => Math.max(prev - 1, 0));
   }, []);
 
   const handleJumpTo = useCallback((idx) => {
+    if (posthog && !posthog.has_opted_out_capturing()) {
+      posthog.capture('extension_tutorial_screen_viewed', { screen: idx });
+    }
     setCurrentScreen(idx);
-  }, []);
+  }, [posthog]);
 
   const handleClose = useCallback(() => {
     setCurrentScreen(0);

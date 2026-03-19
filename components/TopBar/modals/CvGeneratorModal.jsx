@@ -46,6 +46,7 @@ export default function CvGeneratorModal({
   baseDropdownRef,
   extensionDetected,
   onOpenExtensionTutorial,
+  trackEvent,
 }) {
   // Récupérer les coûts en crédits
   const { showCosts, getCost } = useCreditCost();
@@ -72,7 +73,10 @@ export default function CvGeneratorModal({
         {!extensionDetected && onOpenExtensionTutorial && (
           <button
             type="button"
-            onClick={onOpenExtensionTutorial}
+            onClick={() => {
+              trackEvent?.('extension_banner_clicked');
+              onOpenExtensionTutorial();
+            }}
             className="w-full hidden md:flex items-center gap-3 rounded-lg border border-sky-500/40 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-2.5 text-left transition-colors group"
           >
             <img src="/icons/extension-brain.png" alt="" className="w-8 h-8 shrink-0" />
@@ -141,6 +145,7 @@ export default function CvGeneratorModal({
                       onClick={() => {
                         setGeneratorBaseFile(CREATE_TEMPLATE_OPTION);
                         setBaseSelectorOpen(false);
+                        trackEvent?.('base_cv_selected', { base_type: 'template' });
                       }}
                       className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 text-white transition-colors duration-200 hover:bg-white/25 ${CREATE_TEMPLATE_OPTION === generatorBaseFile ? "bg-white/20" : ""}`}
                     >
@@ -162,6 +167,7 @@ export default function CvGeneratorModal({
                         onClick={() => {
                           setGeneratorBaseFile(item.file);
                           setBaseSelectorOpen(false);
+                          trackEvent?.('base_cv_selected', { base_type: 'existing_cv' });
                         }}
                         className={`w-full px-3 py-1 text-left text-sm flex items-center gap-3 text-white transition-colors duration-200 hover:bg-white/25 ${item.file === generatorBaseFile ? "bg-white/20" : ""}`}
                       >
@@ -198,8 +204,9 @@ export default function CvGeneratorModal({
                   data-link-history-dropdown="true"
                   onClick={() => {
                     const isOpening = !linkHistoryDropdowns[index];
-                    if (isOpening && refreshLinkHistory) {
-                      refreshLinkHistory();
+                    if (isOpening) {
+                      if (refreshLinkHistory) refreshLinkHistory();
+                      trackEvent?.('link_history_opened', { link_index: index });
                     }
                     setLinkHistoryDropdowns(prev => ({
                       ...prev,
@@ -255,6 +262,7 @@ export default function CvGeneratorModal({
                                   ...prev,
                                   [index]: false
                                 }));
+                                trackEvent?.('recent_link_selected', { link_index: index, domain: domain || undefined });
                               }}
                               className="flex-1 flex items-center gap-2 px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
                               title={url}
@@ -295,6 +303,12 @@ export default function CvGeneratorModal({
                 placeholder={t("cvGenerator.linkPlaceholder")}
                 value={value}
                 onChange={(event) => updateLink(event.target.value, index)}
+                onBlur={(event) => {
+                  const val = event.target.value.trim();
+                  if (val) {
+                    trackEvent?.('link_typed', { link_index: index, is_url: /^https?:\/\//.test(val) });
+                  }
+                }}
               />
               <button
                 type="button"
@@ -333,7 +347,10 @@ export default function CvGeneratorModal({
           />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              trackEvent?.('file_upload_clicked');
+              fileInputRef.current?.click();
+            }}
             className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white hover:bg-white/10 hover:border-white/30 transition-colors duration-200 flex items-center justify-center gap-2 group"
           >
             <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
