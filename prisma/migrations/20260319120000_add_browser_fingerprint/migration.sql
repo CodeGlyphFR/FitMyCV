@@ -1,7 +1,8 @@
 -- CreateTable
 CREATE TABLE "BrowserFingerprint" (
     "id" TEXT NOT NULL,
-    "visitorId" TEXT NOT NULL,
+    "visitorId" TEXT,
+    "ipHash" TEXT,
     "userId" TEXT,
     "ipAddress" TEXT,
     "userAgent" TEXT,
@@ -12,6 +13,9 @@ CREATE TABLE "BrowserFingerprint" (
 
 -- CreateIndex
 CREATE INDEX "BrowserFingerprint_visitorId_idx" ON "BrowserFingerprint"("visitorId");
+
+-- CreateIndex
+CREATE INDEX "BrowserFingerprint_ipHash_idx" ON "BrowserFingerprint"("ipHash");
 
 -- CreateIndex
 CREATE INDEX "BrowserFingerprint_userId_idx" ON "BrowserFingerprint"("userId");
