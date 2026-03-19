@@ -433,25 +433,25 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
         {showRecentTable && (
           <div className="overflow-x-auto">
             {recentErrors.length > 0 ? (
-              <table className="min-w-full divide-y divide-white/10">
+              <table className="w-full table-fixed divide-y divide-white/10">
                 <thead className="bg-white/5">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
-                      Sévérité
+                    <th className="w-[8%] px-3 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                      Sév.
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                    <th className="w-[18%] px-3 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                    <th className="w-[14%] px-3 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Utilisateur
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Message d'erreur
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                    <th className="w-[15%] px-3 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Date & Heure
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                    <th className="w-[8%] px-3 py-3 text-center text-xs font-medium text-white/60 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -469,26 +469,18 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                         className={`hover:bg-white/5 transition-colors cursor-pointer ${isExpanded ? 'bg-white/5' : ''}`}
                         onClick={() => setExpandedErrorId(isExpanded ? null : error.id)}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{severity.icon}</span>
-                            <span
-                              className="text-xs font-medium"
-                              style={{ color: severity.color }}
-                            >
-                              {severity.label}
-                            </span>
-                          </div>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className="text-lg" title={severity.label}>{severity.icon}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                          <span className="px-2 py-1 bg-white/10 text-white/70 rounded-sm text-xs border border-white/20">
+                        <td className="px-3 py-3 text-sm font-medium text-white truncate">
+                          <span className="px-1.5 py-0.5 bg-white/10 text-white/70 rounded-sm text-xs border border-white/20">
                             {error.type}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white/80">
+                        <td className="px-3 py-3 text-sm text-white/80 truncate">
                           {error.user?.name || error.user?.email || 'Anonyme'}
                         </td>
-                        <td className="px-6 py-4 text-sm max-w-md">
+                        <td className="px-3 py-3 text-sm overflow-hidden">
                           <code className="text-red-300 text-xs block truncate">
                             {error.error || 'N/A'}
                           </code>
@@ -498,25 +490,27 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white/80">
+                        <td className="px-3 py-3 whitespace-nowrap text-xs text-white/80">
                           {new Date(error.timestamp).toLocaleString('fr-FR', {
                             day: '2-digit',
                             month: '2-digit',
-                            year: 'numeric',
+                            year: '2-digit',
                             hour: '2-digit',
                             minute: '2-digit',
-                            second: '2-digit'
                           })}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-3 text-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteError(error.id);
                             }}
-                            className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 rounded text-xs transition-colors"
+                            className="p-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 rounded transition-colors"
+                            title="Supprimer"
                           >
-                            Supprimer
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         </td>
                       </tr>,
