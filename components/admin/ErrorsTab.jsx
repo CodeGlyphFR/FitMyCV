@@ -6,6 +6,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { KPICard } from './KPICard';
+import { Toast } from './Toast';
+import { ConfirmDialog } from './ConfirmDialog';
 
 const ERROR_SEVERITY = {
   CRITICAL: { color: '#EF4444', label: 'Critique', icon: '🔴' },
@@ -16,10 +18,23 @@ const ERROR_SEVERITY = {
 
 const PIE_COLORS = ['#EF4444', '#F59E0B', '#FBBF24', '#3B82F6', '#8B5CF6', '#EC4899'];
 
+const METADATA_LABELS = {
+  featureName: 'Fonctionnalité',
+  taskId: 'Task ID',
+  offerId: 'Offre ID',
+  failedPhase: 'Phase échouée',
+  failedStep: 'Étape échouée',
+  retryCount: 'Tentatives',
+  sourceType: 'Type source',
+};
+
 export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showRecentTable, setShowRecentTable] = useState(false);
+  const [expandedErrorId, setExpandedErrorId] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   useEffect(() => {
     fetchErrors();
@@ -41,6 +56,54 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
       setLoading(false);
     }
   }
+
+  const handleDeleteError = (errorId) => {
+    setConfirmDialog({
+      title: 'Supprimer cette erreur ?',
+      message: 'Cette action est irréversible.',
+      type: 'danger',
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/analytics/errors?id=${encodeURIComponent(errorId)}`, {
+            method: 'DELETE',
+          });
+          if (!response.ok) throw new Error('Failed to delete error');
+          setToast({ type: 'success', message: 'Erreur supprimée avec succès' });
+          if (expandedErrorId === errorId) setExpandedErrorId(null);
+          await fetchErrors();
+        } catch (err) {
+          console.error('Error deleting error:', err);
+          setToast({ type: 'error', message: 'Erreur lors de la suppression' });
+        }
+      }
+    });
+  };
+
+  const handlePurgeErrors = () => {
+    setConfirmDialog({
+      title: 'Purger toutes les erreurs ?',
+      message: `Cette action supprimera les ${statistics.totalErrors} erreur(s) de la période sélectionnée. Cette action est irréversible.`,
+      type: 'danger',
+      confirmText: 'Tout purger',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          const url = `/api/analytics/errors?clearAll=true&period=${period}${userId ? `&userId=${userId}` : ''}`;
+          const response = await fetch(url, { method: 'DELETE' });
+          if (!response.ok) throw new Error('Failed to purge errors');
+          const result = await response.json();
+          setToast({ type: 'success', message: `${result.deleted} erreur(s) supprimée(s)` });
+          setExpandedErrorId(null);
+          await fetchErrors();
+        } catch (err) {
+          console.error('Error purging errors:', err);
+          setToast({ type: 'error', message: 'Erreur lors de la purge' });
+        }
+      }
+    });
+  };
 
   if (loading && !data) {
     return (
@@ -79,6 +142,68 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
     value: e.count
   }));
 
+  const renderErrorDetails = (error) => {
+    const meta = error.metadata || {};
+    const { stackTrace, ...otherMeta } = meta;
+
+    return (
+      <tr key={`${error.id}-details`}>
+        <td colSpan={6} className="px-6 py-4 bg-white/5 border-t border-white/10">
+          <div className="space-y-4">
+            {/* Full error message */}
+            <div>
+              <h4 className="text-xs font-semibold text-white/60 uppercase mb-1">Message complet</h4>
+              <code className="text-sm text-red-300 whitespace-pre-wrap break-all block">
+                {error.error || 'N/A'}
+              </code>
+            </div>
+
+            {/* Stack Trace */}
+            {stackTrace && (
+              <div>
+                <h4 className="text-xs font-semibold text-white/60 uppercase mb-1">Stack Trace</h4>
+                <pre className="text-xs text-green-300/80 bg-black/40 rounded-lg p-4 overflow-x-auto max-h-64 overflow-y-auto border border-white/10 font-mono">
+                  {stackTrace}
+                </pre>
+              </div>
+            )}
+
+            {/* Metadata */}
+            {Object.keys(otherMeta).length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold text-white/60 uppercase mb-2">Metadata</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {Object.entries(otherMeta).map(([key, value]) => (
+                    <div key={key} className="flex items-start gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10">
+                      <span className="text-xs text-white/50 shrink-0">{METADATA_LABELS[key] || key} :</span>
+                      <span className="text-xs text-white/90 break-all">
+                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Extra info row */}
+            <div className="flex flex-wrap gap-4 text-xs text-white/50 pt-2 border-t border-white/10">
+              {error.category && (
+                <span>Catégorie : <span className="text-white/80">{error.category}</span></span>
+              )}
+              <span>Device ID : <span className="text-white/80">{error.deviceId || 'N/A'}</span></span>
+              {error.duration != null && (
+                <span>Durée : <span className="text-white/80">{(error.duration / 1000).toFixed(2)}s</span></span>
+              )}
+              {error.user && (
+                <span>Utilisateur : <span className="text-white/80">{error.user.name || 'N/A'} ({error.user.email}) — {error.user.id}</span></span>
+              )}
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
@@ -112,6 +237,18 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
           description="Nombre de types d'erreurs uniques détectés, utile pour identifier la diversité des problèmes"
         />
       </div>
+
+      {/* Purge button */}
+      {statistics.totalErrors > 0 && (
+        <div className="flex justify-end">
+          <button
+            onClick={handlePurgeErrors}
+            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 rounded-lg text-sm transition-colors"
+          >
+            Purger les erreurs ({statistics.totalErrors})
+          </button>
+        </div>
+      )}
 
       {/* Main Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -314,6 +451,9 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                     <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Date & Heure
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
@@ -321,9 +461,14 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                     // Determine severity based on error type or message
                     const isCritical = error.type.includes('FAILED') || error.error?.toLowerCase().includes('critical');
                     const severity = isCritical ? ERROR_SEVERITY.CRITICAL : ERROR_SEVERITY.MEDIUM;
+                    const isExpanded = expandedErrorId === error.id;
 
-                    return (
-                      <tr key={error.id} className="hover:bg-white/5 transition-colors">
+                    return [
+                      <tr
+                        key={error.id}
+                        className={`hover:bg-white/5 transition-colors cursor-pointer ${isExpanded ? 'bg-white/5' : ''}`}
+                        onClick={() => setExpandedErrorId(isExpanded ? null : error.id)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{severity.icon}</span>
@@ -349,7 +494,7 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                           </code>
                           {error.metadata && (
                             <div className="text-xs text-white/40 mt-1">
-                              Metadata disponible
+                              {isExpanded ? '▼ Détails affichés' : '▶ Cliquer pour voir les détails'}
                             </div>
                           )}
                         </td>
@@ -363,8 +508,20 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
                             second: '2-digit'
                           })}
                         </td>
-                      </tr>
-                    );
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteError(error.id);
+                            }}
+                            className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-400/30 rounded text-xs transition-colors"
+                          >
+                            Supprimer
+                          </button>
+                        </td>
+                      </tr>,
+                      isExpanded && renderErrorDetails(error),
+                    ];
                   })}
                 </tbody>
               </table>
@@ -385,6 +542,9 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
           <p className="text-green-300/80">Aucune erreur détectée sur la période sélectionnée</p>
         </div>
       )}
+
+      <Toast toast={toast} onClose={() => setToast(null)} />
+      <ConfirmDialog dialog={confirmDialog} onClose={() => setConfirmDialog(null)} />
     </div>
   );
 }
