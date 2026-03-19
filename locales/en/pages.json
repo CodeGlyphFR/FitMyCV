@@ -254,7 +254,7 @@
         "title": "15. Legal Information",
         "content": [
           { "type": "paragraph", "text": "Publisher of FitMyCV.io service:" },
-          { "type": "highlight", "variant": "info", "text": "Codeglyph - SIRET: 995 375 862 00019 - 200 rue de la Croix Nivert, 75015 Paris, France - Email: contact@codeglyph.fr - Not subject to VAT (Article 293 B of French General Tax Code)" },
+          { "type": "highlight", "variant": "info", "text": "Codeglyph - SIRET: 995 375 862 00019 - 200 rue de la Croix Nivert, 75015 Paris, France - Email: contact@codeglyph.fr - EU VAT number: FR58995375862" },
           { "type": "subtitle", "text": "Hosting" },
           { "type": "paragraph", "text": "The service is self-hosted by the publisher." },
           { "type": "subtitle", "text": "Data Protection" },
@@ -306,7 +306,7 @@
           { "type": "subtitle", "text": "4.1 Identification Data" },
           { "type": "list", "items": ["Name, email address, password (encrypted)", "Profile picture (if signed in via Google, Apple or GitHub)"] },
           { "type": "subtitle", "text": "4.2 CV Data" },
-          { "type": "list", "items": ["Professional information: experience, education, skills", "Contact details: phone, address, professional links", "Imported documents (PDF): not stored, sent to OpenAI for extraction then deleted immediately", "CV version history"] },
+          { "type": "list", "items": ["Professional information: experience, education, skills", "Contact details: phone, address, professional links", "Imported documents (PDF): not stored, sent to OpenAI for extraction then deleted immediately", "CV version history", "All resume data is encrypted at rest"] },
           { "type": "subtitle", "text": "4.3 Browsing Data" },
           { "type": "list", "items": ["IP address, browser type", "Pages visited, session data"] },
           { "type": "subtitle", "text": "4.4 Payment Data" },
@@ -324,8 +324,7 @@
             ["Payment and subscription management", "Contract execution"],
             ["Service improvement, bug fixes", "Legitimate interest"],
             ["Security and abuse prevention", "Legitimate interest"],
-            ["Billing data retention", "Legal obligation"],
-            ["Analytics cookies", "Consent"]
+            ["Billing data retention", "Legal obligation"]
           ]}
         ]
       },
@@ -338,8 +337,7 @@
             ["Deleted account", "Immediate deletion"],
             ["Inactive account", "3 years after last login (30-day notice before deletion)"],
             ["Billing data", "5 years (legal obligation)"],
-            ["Email logs", "12 months"],
-            ["Cookie consent logs", "6 months"]
+            ["Email logs", "12 months"]
           ]}
         ]
       },
@@ -381,7 +379,7 @@
         "id": "cookies",
         "title": "11. Cookies",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io uses cookies for site functionality and, with your consent, for audience measurement. See our cookie policy for more details.", "link": "/cookies", "linkText": "cookie policy" }
+          { "type": "paragraph", "text": "FitMyCV.io uses essential cookies required for the site to function (session, authentication, anti-spam protection). No advertising cookies are used." }
         ]
       },
       {
@@ -392,6 +390,7 @@
           { "type": "list", "items": [
             "HTTPS communication (SSL/TLS)",
             "Encrypted passwords (bcrypt)",
+            "Resumes and personal data encrypted at rest (AES-256)",
             "CSRF protection and secure cookies",
             "Anti-spam protection via Google reCAPTCHA v3"
           ]},

@@ -119,7 +119,7 @@
         "id": "pricing",
         "title": "3. Preise und Zahlungen",
         "content": [
-          { "type": "paragraph", "text": "Alle Preise werden in Euro (EUR) angezeigt. Der Herausgeber ist gemäß Artikel 293 B des französischen Steuergesetzbuches nicht umsatzsteuerpflichtig." },
+          { "type": "paragraph", "text": "Die Preise verstehen sich ohne Mehrwertsteuer (MwSt.). Die geltende MwSt. wird beim Bezahlvorgang hinzugefügt, zum jeweils gültigen Satz im Wohnsitzland des Käufers gemäß der EU-Verordnung über digitale Dienstleistungen." },
           { "type": "paragraph", "text": "Zahlungen werden über Stripe gesichert und akzeptieren Kreditkarten, Apple Pay, Google Pay und andere Zahlungsmethoden je nach Ihrem Standort." },
           { "type": "paragraph", "text": "Die Preise für Credit-Pakete sind auf der Seite Credit-Verwaltung verfügbar.", "link": "/account/subscriptions?tab=credits", "linkText": "Credit-Verwaltung" }
         ]
@@ -254,7 +254,7 @@
         "title": "15. Rechtliche Informationen",
         "content": [
           { "type": "paragraph", "text": "Herausgeber des FitMyCV.io-Dienstes:" },
-          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, Frankreich\nE-Mail: contact@codeglyph.fr\n\nNicht umsatzsteuerpflichtig (Artikel 293 B des französischen Steuergesetzbuches)" },
+          { "type": "highlight", "variant": "info", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, Frankreich\nE-Mail: contact@codeglyph.fr\n\nUSt-IdNr.: FR58995375862" },
           { "type": "subtitle", "text": "Hosting" },
           { "type": "paragraph", "text": "Der Dienst wird vom Herausgeber selbst gehostet." },
           { "type": "subtitle", "text": "Datenschutz" },
@@ -306,7 +306,7 @@
           { "type": "subtitle", "text": "4.1 Identifikationsdaten" },
           { "type": "list", "items": ["Name, E-Mail-Adresse, Passwort (verschlüsselt)", "Profilbild (bei Anmeldung über Google, Apple oder GitHub)"] },
           { "type": "subtitle", "text": "4.2 Lebenslauf-Daten" },
-          { "type": "list", "items": ["Berufliche Informationen: Erfahrung, Ausbildung, Fähigkeiten", "Kontaktdaten: Telefon, Adresse, berufliche Links", "Importierte Dokumente (PDF): nicht gespeichert, an OpenAI zur Extraktion gesendet und sofort gelöscht", "Versionshistorie Ihrer Lebensläufe"] },
+          { "type": "list", "items": ["Berufliche Informationen: Erfahrung, Ausbildung, Fähigkeiten", "Kontaktdaten: Telefon, Adresse, berufliche Links", "Importierte Dokumente (PDF): nicht gespeichert, an OpenAI zur Extraktion gesendet und sofort gelöscht", "Versionshistorie Ihrer Lebensläufe", "Alle Lebenslauf-Daten sind im Ruhezustand verschlüsselt"] },
           { "type": "subtitle", "text": "4.3 Navigationsdaten" },
           { "type": "list", "items": ["IP-Adresse, Browsertyp", "Besuchte Seiten, Sitzungsdaten"] },
           { "type": "subtitle", "text": "4.4 Zahlungsdaten" },
@@ -324,8 +324,7 @@
             ["Zahlungs- und Abonnementverwaltung", "Vertragserfüllung"],
             ["Serviceverbesserung, Fehlerbehebung", "Berechtigtes Interesse"],
             ["Sicherheit und Missbrauchsprävention", "Berechtigtes Interesse"],
-            ["Aufbewahrung von Rechnungsdaten", "Gesetzliche Verpflichtung"],
-            ["Analytische Cookies", "Einwilligung"]
+            ["Aufbewahrung von Rechnungsdaten", "Gesetzliche Verpflichtung"]
           ]}
         ]
       },
@@ -338,8 +337,7 @@
             ["Gelöschtes Konto", "Sofortige Löschung"],
             ["Inaktives Konto", "3 Jahre nach letzter Anmeldung (30-Tage-Benachrichtigung vor Löschung)"],
             ["Rechnungsdaten", "5 Jahre (gesetzliche Verpflichtung)"],
-            ["E-Mail-Protokolle", "12 Monate"],
-            ["Cookie-Einwilligungsprotokolle", "6 Monate"]
+            ["E-Mail-Protokolle", "12 Monate"]
           ]}
         ]
       },
@@ -381,7 +379,7 @@
         "id": "cookies",
         "title": "11. Cookies",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io verwendet Cookies für die Website-Funktionalität und, mit Ihrer Einwilligung, für die Reichweitenmessung. Weitere Details finden Sie in unserer Cookie-Richtlinie.", "link": "/cookies", "linkText": "Cookie-Richtlinie" }
+          { "type": "paragraph", "text": "FitMyCV.io verwendet essentielle Cookies für den Betrieb der Website (Sitzung, Authentifizierung, Spam-Schutz). Es werden keine Werbe-Cookies verwendet." }
         ]
       },
       {
@@ -392,6 +390,7 @@
           { "type": "list", "items": [
             "HTTPS-Kommunikation (SSL/TLS)",
             "Verschlüsselte Passwörter (bcrypt)",
+            "Lebensläufe und persönliche Daten im Ruhezustand verschlüsselt (AES-256)",
             "CSRF-Schutz und sichere Cookies",
             "Anti-Spam-Schutz über Google reCAPTCHA v3"
           ]},
