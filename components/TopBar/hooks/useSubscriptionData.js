@@ -19,6 +19,7 @@ export function useSubscriptionData() {
     creditBalance: 0,
     creditRatio: 1,
     creditsOnlyMode: false,
+    hasPurchased: true,
     loading: true,
     error: null,
   });
@@ -49,6 +50,7 @@ export function useSubscriptionData() {
             creditBalance: 0,
             creditRatio: 1,
             creditsOnlyMode: false,
+            hasPurchased: true,
             loading: false,
             error: null,
           });
@@ -84,6 +86,7 @@ export function useSubscriptionData() {
           creditBalance: newBalance,
           creditRatio,
           creditsOnlyMode,
+          hasPurchased: (creditsData?.totalPurchased || 0) > 0,
           loading: false,
           error: null,
         });

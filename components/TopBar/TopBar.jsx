@@ -132,7 +132,7 @@ export default function TopBar() {
   }, [generator, modals]);
 
   // Subscription data hook
-  const { planName, planIcon, creditBalance, creditRatio, creditsOnlyMode, loading: subscriptionLoading } = useSubscriptionData();
+  const { planName, planIcon, creditBalance, creditRatio, creditsOnlyMode, hasPurchased, loading: subscriptionLoading } = useSubscriptionData();
 
   // Refs
   const triggerRef = React.useRef(null);
@@ -657,6 +657,7 @@ export default function TopBar() {
         baseDropdownRef={baseDropdownRef}
         extensionDetected={extensionDetected}
         onOpenExtensionTutorial={handleOpenExtensionTutorial}
+        isDemoExport={!hasPurchased}
         t={t}
       />
 

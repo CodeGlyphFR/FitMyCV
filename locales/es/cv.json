@@ -147,6 +147,11 @@
       "reset": "Restablecer",
       "close": "Cerrar"
     },
+    "demoMode": {
+      "banner": "Modo demo — Las exportaciones PDF contienen una marca de agua. Compre un paquete de créditos para eliminarla y desbloquear la exportación Word.",
+      "wordDisabled": "Exportación Word disponible tras la compra de un paquete de créditos",
+      "buyCredits": "Comprar créditos"
+    },
     "placeholders": {
       "filename": "Mi_CV"
     }

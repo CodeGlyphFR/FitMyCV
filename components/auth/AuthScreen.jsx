@@ -11,6 +11,7 @@ import Link from 'next/link';
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useFingerprint } from "@/hooks/useFingerprint";
 
 const getProviders = (t) => [
   { id: "google", label: t("auth.continueWithGoogle"), image: "/icons/g_logo.png", width: 28, height: 28 },
@@ -24,6 +25,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
   const router = useRouter();
   const { t } = useLanguage();
   const { executeRecaptcha } = useRecaptcha();
+  const { visitorId: fingerprintId } = useFingerprint();
   // Protection: forcer login si initialMode=register mais registration bloquée ou maintenance
   const [mode, setMode] = React.useState(
     initialMode === "register" && (!registrationEnabled || maintenanceEnabled) ? "login" : initialMode
@@ -135,7 +137,7 @@ export default function AuthScreen({ initialMode = "login", providerAvailability
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstName, lastName, email, password, recaptchaToken, privacyPolicyAccepted }),
+          body: JSON.stringify({ firstName, lastName, email, password, recaptchaToken, privacyPolicyAccepted, fingerprint: fingerprintId }),
         });
 
         if (!res.ok){

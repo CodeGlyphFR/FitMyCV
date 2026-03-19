@@ -6,6 +6,7 @@ import { validatePassword } from "@/lib/security/passwordPolicy";
 import { createVerificationToken, sendVerificationEmail } from "@/lib/email/emailService";
 import logger from "@/lib/security/secureLogger";
 import { assignDefaultPlan } from "@/lib/subscription/subscriptions";
+import { checkAndSaveFingerprint } from "@/lib/fingerprint/fingerprintService";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { DEFAULT_ONBOARDING_STATE } from "@/lib/onboarding/onboardingState";
 import { CommonErrors, AuthErrors } from "@/lib/api/apiErrors";
@@ -18,7 +19,7 @@ export async function POST(request){
   const body = await request.json().catch(() => null);
   if (!body) return CommonErrors.invalidPayload();
 
-  const { firstName, lastName, name, email, password, recaptchaToken, privacyPolicyAccepted } = body;
+  const { firstName, lastName, name, email, password, recaptchaToken, privacyPolicyAccepted, fingerprint } = body;
 
   // Vérification reCAPTCHA (obligatoire en production)
   if (process.env.NODE_ENV === 'production' && process.env.BYPASS_RECAPTCHA !== 'true') {
@@ -121,11 +122,20 @@ export async function POST(request){
     $set: { email: normalizedEmail, name: cleanName },
   });
 
+  // Vérifier le fingerprint navigateur (anti-abus multi-compte)
+  let fpResult = { isDuplicate: false };
+  try {
+    fpResult = await checkAndSaveFingerprint(user.id, fingerprint || null, request);
+  } catch (fpError) {
+    logger.error('[register] Erreur fingerprint check:', fpError);
+    // Fail-open : crédits accordés en cas d'erreur
+  }
+
   // Attribuer le plan Gratuit par défaut
   try {
-    const subscriptionResult = await assignDefaultPlan(user.id);
+    const subscriptionResult = await assignDefaultPlan(user.id, null, { skipWelcomeCredits: fpResult.isDuplicate });
     if (subscriptionResult.success) {
-      logger.context('register', 'info', `Plan Gratuit attribué à user ${user.id}`);
+      logger.context('register', 'info', `Plan Gratuit attribué à user ${user.id}${fpResult.isDuplicate ? ' (crédits bienvenue bloqués - fingerprint dupliqué)' : ''}`);
     } else {
       logger.warn('[register] Échec attribution plan Gratuit:', subscriptionResult.error);
       // Ne pas bloquer l'inscription si l'attribution du plan échoue
