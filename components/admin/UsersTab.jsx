@@ -184,12 +184,12 @@ export function UsersTab({ refreshKey }) {
           />
           <button
             onClick={() => setShowAddUserModal(true)}
-            className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2 text-sm whitespace-nowrap shrink-0"
+            className="px-2 sm:px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center gap-2 text-sm whitespace-nowrap shrink-0"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Ajouter
+            <span className="hidden sm:inline">Ajouter</span>
           </button>
         </div>
       </div>

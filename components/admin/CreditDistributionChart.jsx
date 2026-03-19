@@ -42,11 +42,29 @@ export function CreditDistributionChart({ distribution }) {
   const chartData = useMemo(() => {
     if (!distribution || distribution.length === 0) return [];
     const total = distribution.reduce((sum, d) => sum + d.count, 0);
+
+    if (showPercent) {
+      const bucketMap = {};
+      distribution.forEach(d => { bucketMap[d.label] = d.count; });
+      const grouped = [
+        { label: '0', count: bucketMap['0'] || 0 },
+        { label: '1-4', count: (bucketMap['1-2'] || 0) + (bucketMap['3-4'] || 0) },
+        { label: '5-9', count: (bucketMap['5-7'] || 0) + (bucketMap['8-9'] || 0) },
+        { label: '10-14', count: (bucketMap['10-12'] || 0) + (bucketMap['13-14'] || 0) },
+        { label: '15', count: bucketMap['15'] || 0 },
+        { label: '> 15', count: bucketMap['> 15'] || 0 },
+      ];
+      return grouped.map(d => ({
+        ...d,
+        percent: total > 0 ? (d.count / total) * 100 : 0,
+      }));
+    }
+
     return distribution.map(d => ({
       ...d,
       percent: total > 0 ? (d.count / total) * 100 : 0,
     }));
-  }, [distribution]);
+  }, [distribution, showPercent]);
 
   if (!distribution || distribution.length === 0) {
     return (
