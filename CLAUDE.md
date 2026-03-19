@@ -49,6 +49,10 @@ Le projet utilise un versioning automatique à 4 parties (`X.X.X.X`) basé sur l
 * Le script scanne **tous les commits** de la PR (pas le message de merge) et applique le niveau le plus élevé trouvé.
 * La version est propagée dans tous les fichiers de la codebase (`package.json`, `docs/`, `README.md`, etc.).
 
+## ⚠️ Migrations Prisma (CRITIQUE)
+
+**Ne JAMAIS modifier un fichier de migration déjà créé.** Une fois qu'une migration existe dans `prisma/migrations/`, elle est potentiellement déjà appliquée en base (pre-prod ou prod). Si une correction ou un ajout est nécessaire, **toujours créer une nouvelle migration** avec les `ALTER TABLE` appropriés.
+
 ## Migrations de Données (Post-Prisma)
 
 Pour toute modification de données (naming, nettoyage, calculs) générée par Claude Code :
