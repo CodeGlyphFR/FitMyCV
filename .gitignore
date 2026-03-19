@@ -67,6 +67,8 @@ deploy.sh
 _*/
 .*/
 !.github/
+!.claude/
+.claude/settings.local.json
 
 # Git worktrees managed by worktree-manager
 .worktrees/
