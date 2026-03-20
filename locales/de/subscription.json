@@ -210,6 +210,13 @@
       "rule3": "Automatische Erstattung bei fehlgeschlagener Aufgabe",
       "rule4": "Verwenden Sie Ihre Credits, um monatliche Limits zu überschreiten"
     },
+    "promo": {
+      "tag": "Promo-Code",
+      "title": "-{discount}% auf Ihren ersten Kauf!",
+      "description": "Verwenden Sie den untenstehenden Code beim Bezahlen, um den Rabatt zu erhalten.",
+      "copied": "Kopiert!",
+      "instruction": "Geben Sie diesen Code bei der Stripe-Zahlung ein"
+    },
     "packs": {
       "title": "Credits kaufen",
       "credits": "Credits",

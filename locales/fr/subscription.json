@@ -210,6 +210,13 @@
       "rule3": "Remboursement automatique si une tâche échoue",
       "rule4": "Utilisez vos crédits pour dépasser les limites mensuelles"
     },
+    "promo": {
+      "tag": "Code promo",
+      "title": "-{discount}% sur votre premier achat !",
+      "description": "Utilisez le code ci-dessous lors du paiement pour bénéficier de la réduction.",
+      "copied": "Copié !",
+      "instruction": "Entrez ce code lors du paiement Stripe"
+    },
     "packs": {
       "title": "Acheter des crédits",
       "credits": "crédits",

@@ -578,7 +578,7 @@ export default function ExportPdfModal({
               </svg>
               <div className="flex-1">
                 <p className="text-sm text-amber-200">{t('exportModal.demoMode.banner')}</p>
-                <a href="/pricing" className="inline-block mt-1.5 text-xs font-medium text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors">
+                <a href="/account/subscriptions?tab=credits" className="inline-block mt-1.5 text-xs font-medium text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors">
                   {t('exportModal.demoMode.buyCredits')}
                 </a>
               </div>
