@@ -210,6 +210,13 @@
       "rule3": "Automatic refund if a task fails",
       "rule4": "Use your credits to exceed monthly limits"
     },
+    "promo": {
+      "tag": "Launch offer",
+      "title": "-{discount}% on your first purchase!",
+      "description": "Use the code below at checkout to get the discount.",
+      "copied": "Copied!",
+      "instruction": "Enter this code at Stripe checkout"
+    },
     "packs": {
       "title": "Purchase credits",
       "credits": "credits",

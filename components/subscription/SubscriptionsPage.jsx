@@ -14,6 +14,7 @@ import CreditBalanceCard from "./CreditBalanceCard";
 import CreditPacksCards from "./CreditPacksCards";
 import CreditTransactionsTable from "./CreditTransactionsTable";
 import InvoicesTable from "./InvoicesTable";
+import PromoBanner from "./PromoBanner";
 import { isFreePlan, getPlanIcon } from "@/lib/subscription/planUtils";
 import {
   SkeletonCurrentPlanCard,
@@ -34,6 +35,15 @@ export default function SubscriptionsPage({ user }) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [successMessage, setSuccessMessage] = React.useState("");
+  const [promoData, setPromoData] = React.useState(null);
+
+  // Fetch promo status
+  React.useEffect(() => {
+    fetch('/api/promo/status')
+      .then(res => res.ok ? res.json() : { active: false })
+      .then(setPromoData)
+      .catch(() => setPromoData({ active: false }));
+  }, []);
 
   // Tracking PostHog : enregistrement session + event au mount
   React.useEffect(() => {
@@ -420,6 +430,9 @@ export default function SubscriptionsPage({ user }) {
               className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300"
             >
               <CreditBalanceCard balance={creditData} />
+              {promoData?.active && (creditData?.totalPurchased || 0) === 0 && (
+                <PromoBanner promoData={promoData} />
+              )}
               <CreditPacksCards onPurchaseSuccess={refreshData} />
             </div>
           )}

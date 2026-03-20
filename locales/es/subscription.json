@@ -210,6 +210,13 @@
       "rule3": "Reembolso automático si una tarea falla",
       "rule4": "Usa tus créditos para superar los límites mensuales"
     },
+    "promo": {
+      "tag": "Oferta de lanzamiento",
+      "title": "-{discount}% en tu primera compra!",
+      "description": "Usa el código a continuación en el pago para obtener el descuento.",
+      "copied": "Copiado!",
+      "instruction": "Introduce este código en el pago de Stripe"
+    },
     "packs": {
       "title": "Comprar créditos",
       "credits": "créditos",
