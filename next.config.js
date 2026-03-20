@@ -34,6 +34,23 @@ const nextConfig = {
   // Config vide pour accepter Turbopack (la config webpack ci-dessous est ignorée)
   turbopack: {},
 
+  async rewrites() {
+    return [
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://eu-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/ingest/:path*",
+        destination: "https://eu.i.posthog.com/:path*",
+      },
+      {
+        source: "/ingest/decide",
+        destination: "https://eu.i.posthog.com/decide",
+      },
+    ];
+  },
+
   experimental: {
     optimizePackageImports: ['lucide-react', 'next-auth'],
     // instrumentationHook supprimé (plus nécessaire en Next.js 16)
