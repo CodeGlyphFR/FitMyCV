@@ -1,6 +1,7 @@
 "use client";
 
 import posthog from "posthog-js";
+import "posthog-js/dist/posthog-recorder";
 import { PostHogProvider as PHProvider, usePostHog } from "posthog-js/react";
 import { useSession } from "next-auth/react";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -16,7 +17,6 @@ if (typeof window !== "undefined" && POSTHOG_KEY && process.env.NODE_ENV === "pr
     cross_subdomain_cookie: true,
     capture_pageview: false,
     capture_pageleave: true,
-    disable_session_recording: true,
     before_send: (event) => {
       if (window.location.pathname.startsWith("/admin")) {
         return null;
