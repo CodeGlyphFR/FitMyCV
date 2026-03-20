@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { CreditCard, Zap, History, Crown, CheckCircle, XCircle, X } from "lucide-react";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { usePostHog } from "posthog-js/react";
 import CurrentPlanCard from "./CurrentPlanCard";
 import PlanComparisonCards from "./PlanComparisonCards";
 import FeatureCountersCard from "./FeatureCountersCard";
@@ -22,6 +23,7 @@ import {
 
 export default function SubscriptionsPage({ user }) {
   const { t } = useLanguage();
+  const posthog = usePostHog();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = React.useState("subscription");
 
@@ -32,6 +34,20 @@ export default function SubscriptionsPage({ user }) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [successMessage, setSuccessMessage] = React.useState("");
+
+  // Tracking PostHog : enregistrement session + event au mount
+  React.useEffect(() => {
+    if (!posthog || posthog.has_opted_out_capturing()) return;
+    posthog.capture('credits_page_viewed', { active_tab: activeTab });
+    posthog.startSessionRecording(true);
+    return () => { try { posthog.stopSessionRecording(); } catch (e) {} };
+  }, []);
+
+  // Tracking PostHog : changement d'onglet
+  React.useEffect(() => {
+    if (!posthog || posthog.has_opted_out_capturing()) return;
+    posthog.capture('credits_tab_changed', { tab: activeTab });
+  }, [activeTab]);
 
   // Fonction de rafraîchissement des données
   const refreshData = React.useCallback(async () => {

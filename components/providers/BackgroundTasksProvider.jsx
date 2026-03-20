@@ -6,6 +6,7 @@ import { useNotifications } from "@/components/notifications/NotificationProvide
 import { useTaskSyncAPI } from "@/hooks/useTaskSyncAPI";
 import { emitTaskAddedEvent } from "@/lib/background-jobs/taskTypes";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { usePostHog } from "posthog-js/react";
 
 const BackgroundTasksContext = createContext(null);
 
@@ -50,6 +51,7 @@ export default function BackgroundTasksProvider({ children }) {
   const [tasks, setTasksInternal] = useState([]);
   const { addNotification } = useNotifications();
   const { t } = useLanguage();
+  const posthog = usePostHog();
   const previousStatusesRef = useRef(new Map());
   const initialLoadRef = useRef(true);
 
@@ -312,16 +314,13 @@ export default function BackgroundTasksProvider({ children }) {
         const isImportOrCreateTask = task.type === 'import' || task.type === 'create-manual';
 
         if (isImportOrCreateTask) {
-          // Déclencher un enregistrement PostHog de 15s après import CV réussi
-          if (task.type === 'import' && typeof window !== 'undefined') {
-            import('posthog-js').then(({ default: ph }) => {
-              if (ph && typeof ph.startSessionRecording === 'function') {
-                ph.startSessionRecording();
-                setTimeout(() => {
-                  try { ph.stopSessionRecording(); } catch (e) {}
-                }, 15000);
-              }
-            }).catch(() => {});
+          // Tracking PostHog + enregistrement de 15s après import CV réussi
+          if (task.type === 'import' && posthog && !posthog.has_opted_out_capturing()) {
+            posthog.capture('cv_import_completed', { cv_file: task.cvFile });
+            posthog.startSessionRecording(true);
+            setTimeout(() => {
+              try { posthog.stopSessionRecording(); } catch (e) {}
+            }, 15000);
           }
 
           // Vérifier combien de CV l'utilisateur a maintenant

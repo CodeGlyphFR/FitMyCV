@@ -27,6 +27,7 @@ import {
   REVIEW_EVENTS,
 } from "@/lib/cv-core/review/hooks/useReviewContext";
 import { emitOnboardingEvent, ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
+import { usePostHog } from "posthog-js/react";
 
 /**
  * ReviewProvider - Contexte complet pour la review par section
@@ -46,6 +47,7 @@ export function ReviewProvider({
   cv,
 }) {
   const router = useRouter();
+  const posthog = usePostHog();
 
   // État legacy (pour rétrocompatibilité avec changesMade)
   const [changesMade, setChangesMade] = useState([]);
@@ -153,6 +155,16 @@ export function ReviewProvider({
         loadVersions();
         // Rafraîchir le Server Component pour mettre à jour le CV affiché
         router.refresh();
+
+        // Tracking PostHog + enregistrement session 15s
+        if (posthog && !posthog.has_opted_out_capturing()) {
+          const source = task.type === 'generate-cv' ? 'generation' : 'optimization';
+          posthog.capture('review_mode_activated', { source, cv_file: filename });
+          posthog.startSessionRecording(true);
+          setTimeout(() => {
+            try { posthog.stopSessionRecording(); } catch (e) {}
+          }, 15000);
+        }
       }
     };
 

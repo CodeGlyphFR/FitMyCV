@@ -15,6 +15,7 @@ import MatchingSkillsSection from "@/components/cv-improvement/MatchingSkillsSec
 import OptimizationFooter from "@/components/cv-improvement/OptimizationFooter";
 import { useAnimatedScore } from "@/components/cv-improvement/hooks/useAnimatedScore";
 import { useModalAccessibility } from "@/components/cv-improvement/hooks/useModalAccessibility";
+import { usePostHog } from "posthog-js/react";
 
 // Constantes
 const SKILLS_VISIBLE_DEFAULT = 5;
@@ -88,6 +89,7 @@ export default function CVImprovementPanel({ cvFile, matchScoreStatus: parentMat
   const { addNotification } = useNotifications();
   const { showCosts, getCost } = useCreditCost();
   const optimizeCost = getCost("optimize_cv");
+  const posthog = usePostHog();
   const isDraggingRef = useRef(false);
 
   const labels = getLabels(t);
@@ -161,6 +163,19 @@ export default function CVImprovementPanel({ cvFile, matchScoreStatus: parentMat
     } else {
       setIsAnimationReady(false);
     }
+  }, [isOpen]);
+
+  // Tracking PostHog : enregistrement session + event à l'ouverture
+  useEffect(() => {
+    if (!posthog || posthog.has_opted_out_capturing() || !isOpen) return;
+    posthog.capture('optimization_modal_opened', {
+      cv_file: cvFile,
+      match_score: cvData?.matchScore,
+      suggestions_count: suggestions.length,
+      missing_skills_count: missingSkills.length,
+    });
+    posthog.startSessionRecording(true);
+    return () => { try { posthog.stopSessionRecording(); } catch (e) {} };
   }, [isOpen]);
 
   // Fermer le dropdown skill quand on clique en dehors
@@ -258,6 +273,17 @@ export default function CVImprovementPanel({ cvFile, matchScoreStatus: parentMat
       index,
       context: suggestionContexts.get(index) || ''
     }));
+
+    // Tracking PostHog
+    if (posthog && !posthog.has_opted_out_capturing()) {
+      posthog.capture('optimization_submitted', {
+        cv_file: cvFile,
+        suggestions_selected: selectedSuggestions.size,
+        suggestions_with_context: suggestionsWithContext.filter(s => s.context).length,
+        skills_selected: selectedMissingSkills.size,
+        match_score_before: cvData?.matchScore,
+      });
+    }
 
     try {
       const response = await fetch("/api/cv/improve", {
@@ -375,7 +401,16 @@ export default function CVImprovementPanel({ cvFile, matchScoreStatus: parentMat
                   </h2>
                 </div>
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    if (posthog && !posthog.has_opted_out_capturing()) {
+                      posthog.capture('optimization_modal_closed', {
+                        suggestions_selected: selectedSuggestions.size,
+                        skills_selected: selectedMissingSkills.size,
+                        contexts_written: Array.from(suggestionContexts.values()).filter(Boolean).length,
+                      });
+                    }
+                    setIsOpen(false);
+                  }}
                   className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                   aria-label={labels.close}
                 >
