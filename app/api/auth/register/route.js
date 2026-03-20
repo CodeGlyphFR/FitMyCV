@@ -10,7 +10,7 @@ import { checkAndSaveFingerprint } from "@/lib/fingerprint/fingerprintService";
 import { verifyRecaptcha } from "@/lib/recaptcha/verifyRecaptcha";
 import { DEFAULT_ONBOARDING_STATE } from "@/lib/onboarding/onboardingState";
 import { CommonErrors, AuthErrors } from "@/lib/api/apiErrors";
-import { trackServerEvent } from "@/lib/analytics/posthog";
+import { trackServerEvent, identifyUser } from "@/lib/analytics/posthog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -120,6 +120,12 @@ export async function POST(request){
   // Tracking PostHog — Compte créé
   trackServerEvent(user.id, 'user_signed_up', {
     $set: { email: normalizedEmail, name: cleanName },
+  });
+
+  // Identification PostHog server-side (résilient aux ad blockers)
+  identifyUser(user.id, {
+    email: normalizedEmail,
+    name: cleanName,
   });
 
   // Vérifier le fingerprint navigateur (anti-abus multi-compte)
