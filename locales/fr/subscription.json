@@ -211,7 +211,7 @@
       "rule4": "Utilisez vos crédits pour dépasser les limites mensuelles"
     },
     "promo": {
-      "tag": "Offre de lancement",
+      "tag": "Code promo",
       "title": "-{discount}% sur votre premier achat !",
       "description": "Utilisez le code ci-dessous lors du paiement pour bénéficier de la réduction.",
       "copied": "Copié !",

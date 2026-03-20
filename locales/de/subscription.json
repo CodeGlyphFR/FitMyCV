@@ -211,7 +211,7 @@
       "rule4": "Verwenden Sie Ihre Credits, um monatliche Limits zu überschreiten"
     },
     "promo": {
-      "tag": "Einführungsangebot",
+      "tag": "Promo-Code",
       "title": "-{discount}% auf Ihren ersten Kauf!",
       "description": "Verwenden Sie den untenstehenden Code beim Bezahlen, um den Rabatt zu erhalten.",
       "copied": "Kopiert!",

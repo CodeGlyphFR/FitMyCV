@@ -36,7 +36,7 @@ export default function PromoBanner({ promoData }) {
         </span>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 text-center">
           <p className="text-white font-semibold text-sm sm:text-base">
             {t("subscription.promo.title").replace("{discount}", String(discount))}
           </p>

@@ -211,7 +211,7 @@
       "rule4": "Use your credits to exceed monthly limits"
     },
     "promo": {
-      "tag": "Launch offer",
+      "tag": "Promo code",
       "title": "-{discount}% on your first purchase!",
       "description": "Use the code below at checkout to get the discount.",
       "copied": "Copied!",
