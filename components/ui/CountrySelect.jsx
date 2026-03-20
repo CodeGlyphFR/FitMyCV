@@ -121,7 +121,7 @@ export default function CountrySelect({ value, onChange, className, placeholder 
   const dropdown = isOpen && mounted ? createPortal(
     <div
       ref={dropdownRef}
-      className="fixed max-h-48 overflow-y-auto rounded-lg border border-white/20 bg-gray-800 shadow-2xl"
+      className="fixed max-h-48 overflow-y-auto rounded-lg border border-white/20 bg-gray-800 shadow-2xl custom-scrollbar"
       style={{
         top: position.top,
         left: position.left,

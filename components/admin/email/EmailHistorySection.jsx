@@ -205,7 +205,7 @@ export function EmailHistorySection({ refreshKey }) {
 
       {/* Table */}
       <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-8 h-8 border-4 border-violet-400 border-t-transparent rounded-full animate-spin" />

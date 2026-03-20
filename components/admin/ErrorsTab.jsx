@@ -160,7 +160,7 @@ export function ErrorsTab({ period, userId, refreshKey, isInitialLoad }) {
         {stackTrace && (
           <div>
             <h4 className="text-xs font-semibold text-white/60 uppercase mb-1">Stack Trace</h4>
-            <pre className="text-xs text-green-300/80 bg-black/40 rounded-lg p-4 overflow-x-auto max-h-64 overflow-y-auto border border-white/10 font-mono">
+            <pre className="text-xs text-green-300/80 bg-black/40 rounded-lg p-4 overflow-x-auto max-h-64 overflow-y-auto custom-scrollbar border border-white/10 font-mono">
               {stackTrace}
             </pre>
           </div>

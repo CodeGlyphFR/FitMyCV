@@ -333,7 +333,7 @@ export function FeaturesTab({ period, userId, refreshKey, isInitialLoad }) {
         </div>
 
         {showTable && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="min-w-full divide-y divide-white/10">
               <thead className="bg-white/5">
                 <tr>

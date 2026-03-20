@@ -2,15 +2,6 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
-/* ===========================================
-   GPU OPTIMIZATION - Désactive will-change excessif
-   =========================================== */
-
-/* Désactiver will-change qui force les layers GPU (sauf fixed-button-layer) */
-*:not(.fixed-button-layer):not(.backdrop-layer) {
-  will-change: auto !important;
-}
-
 /* GPU promotion pour les boutons fixes qui ont besoin de recovery iOS */
 .fixed-button-layer {
   will-change: transform;
@@ -45,7 +36,6 @@ body.ios-fadein .fixed-button-layer {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
     background-color: white;
   }
 

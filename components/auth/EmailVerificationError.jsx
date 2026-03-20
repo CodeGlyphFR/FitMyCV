@@ -6,7 +6,7 @@ export default function EmailVerificationError({ message }) {
   const router = useRouter();
 
   return (
-    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto bg-[rgb(2,6,23)] flex items-start justify-center p-6 pt-12 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ios-auth-container">
+    <div className="relative min-h-screen min-h-[100dvh] w-full overflow-y-auto custom-scrollbar bg-[rgb(2,6,23)] flex items-start justify-center p-6 pt-12 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ios-auth-container">
       <div className="relative z-10 w-full max-w-lg rounded-3xl border-2 border-white/30 bg-white/15 backdrop-blur-xl shadow-2xl p-8 mt-12">
         <div className="text-center">
           <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">

@@ -169,11 +169,11 @@ export default function OnboardingModal({
 
       {/* Modal */}
       <div
-        className={`relative w-full ${sizeClasses[size] || sizeClasses.default} bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden`}
+        className={`relative w-full ${sizeClasses[size] || sizeClasses.default} bg-[rgb(2,6,23)] rounded-xl border border-white/20 shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div>
+        <div className="flex-shrink-0">
           {/* Titre et boutons */}
           <div className="flex items-center justify-between p-4 md:p-6">
             <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
@@ -238,7 +238,7 @@ export default function OnboardingModal({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative overflow-hidden" role="tabpanel" aria-live="polite">
+        <div className="flex-1 min-h-0 overflow-x-hidden overflow-y-auto custom-scrollbar" role="tabpanel" aria-live="polite">
           <AnimatePresence initial={true} custom={direction} mode="wait">
             <motion.div
               id="onboarding-carousel-content"
@@ -257,7 +257,7 @@ export default function OnboardingModal({
               dragElastic={1}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
-              className="p-4 md:p-6 md:pb-16 cursor-grab active:cursor-grabbing"
+              className="p-4 md:p-6 cursor-grab active:cursor-grabbing"
             >
               {/* customRender : le parent contrôle le rendu */}
               {screens[currentScreen]?.customRender
@@ -717,37 +717,37 @@ export default function OnboardingModal({
               )}
             </motion.div>
           </AnimatePresence>
-
-          {/* Pagination Bullets (Desktop only) */}
-          <motion.div
-            className="hidden md:flex absolute bottom-4 left-1/2 -translate-x-1/2 gap-1 z-20"
-            role="tablist"
-            variants={paginationDotsContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            {screens.map((_, idx) => (
-              <motion.button
-                key={idx}
-                onClick={() => handleBulletClick(idx)}
-                role="tab"
-                aria-selected={idx === currentScreen}
-                aria-controls="onboarding-carousel-content"
-                variants={paginationDot}
-                animate={idx === currentScreen ? 'active' : 'inactive'}
-                {...createDotAnimations(shouldReduceMotion)}
-                transition={transitions.snappy}
-                className="relative w-8 h-8 flex items-center justify-center"
-                aria-label={t('onboarding.common.aria.goToScreen', { current: idx + 1, total: screens.length })}
-              >
-                <span className={`block rounded-full transition-colors duration-200 ${idx === currentScreen ? 'w-2 h-2 bg-emerald-500' : 'w-[5px] h-[5px] bg-white/40'}`} />
-              </motion.button>
-            ))}
-          </motion.div>
         </div>
 
+        {/* Pagination Bullets (Desktop only) */}
+        <motion.div
+          className="hidden md:flex flex-shrink-0 justify-center gap-1 py-2"
+          role="tablist"
+          variants={paginationDotsContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          {screens.map((_, idx) => (
+            <motion.button
+              key={idx}
+              onClick={() => handleBulletClick(idx)}
+              role="tab"
+              aria-selected={idx === currentScreen}
+              aria-controls="onboarding-carousel-content"
+              variants={paginationDot}
+              animate={idx === currentScreen ? 'active' : 'inactive'}
+              {...createDotAnimations(shouldReduceMotion)}
+              transition={transitions.snappy}
+              className="relative w-8 h-8 flex items-center justify-center"
+              aria-label={t('onboarding.common.aria.goToScreen', { current: idx + 1, total: screens.length })}
+            >
+              <span className={`block rounded-full transition-colors duration-200 ${idx === currentScreen ? 'w-2 h-2 bg-emerald-500' : 'w-[5px] h-[5px] bg-white/40'}`} />
+            </motion.button>
+          ))}
+        </motion.div>
+
         {/* Footer avec boutons */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-t border-white/10">
+        <div className="flex-shrink-0 flex items-center justify-between p-4 md:p-6 border-t border-white/10">
           {/* Bouton Précédent (gauche, masqué au premier écran) */}
           {currentScreen > 0 ? (
             <button

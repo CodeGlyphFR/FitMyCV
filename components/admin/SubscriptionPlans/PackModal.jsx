@@ -8,7 +8,7 @@ import { ToggleSwitch } from '../ToggleSwitch';
  */
 export function PackModal({ title, formData, setFormData, onSave, onCancel, updating }) {
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-[9999] p-4 pt-32 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-[9999] p-4 pt-32 overflow-y-auto custom-scrollbar">
       <div className="bg-gray-900 border border-white/20 rounded-lg p-6 max-w-2xl w-full my-8">
         <h3 className="text-xl font-bold text-white mb-6">{title}</h3>
 

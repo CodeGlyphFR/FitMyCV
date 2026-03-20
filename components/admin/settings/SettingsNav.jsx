@@ -208,7 +208,7 @@ export function SettingsNav({
 
             {/* Liste des modifications */}
             {modifiedSettingsList.length > 0 && (
-              <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto">
+              <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10 max-h-48 overflow-y-auto custom-scrollbar">
                 <p className="text-xs text-white/50 mb-2">Modifications :</p>
                 <ul className="space-y-1">
                   {modifiedSettingsList.map((item, index) => (

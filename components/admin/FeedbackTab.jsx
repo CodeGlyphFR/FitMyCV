@@ -253,7 +253,7 @@ export function FeedbackTab({ period, userId, refreshKey }) {
       {data.topUsers && data.topUsers.length > 0 && (
         <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Top 10 utilisateurs par nombre de feedbacks</h3>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full">
               <thead>
                 <tr className="text-left text-white/60 text-sm border-b border-white/10">

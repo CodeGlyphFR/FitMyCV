@@ -134,7 +134,7 @@ function ContentBlock({ item }) {
 
     case 'table':
       return (
-        <div className="overflow-x-auto mb-3">
+        <div className="overflow-x-auto custom-scrollbar mb-3">
           <table className="w-full text-sm text-white/90 border-collapse">
             <thead>
               <tr className="bg-white/10">
