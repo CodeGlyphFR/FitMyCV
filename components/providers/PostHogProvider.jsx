@@ -11,7 +11,7 @@ const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
 if (typeof window !== "undefined" && POSTHOG_KEY && process.env.NODE_ENV === "production") {
   posthog.init(POSTHOG_KEY, {
-    api_host: "/ingest",
+    api_host: "/t",
     ui_host: POSTHOG_HOST,
     cross_subdomain_cookie: true,
     capture_pageview: false,
