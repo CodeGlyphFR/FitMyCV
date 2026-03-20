@@ -120,6 +120,26 @@ export async function proxy(request) {
     return NextResponse.next();
   }
 
+  // --- PostHog reverse proxy via /t/* (chemin non-évident pour éviter les ad blockers) ---
+  if (pathname.startsWith('/t/')) {
+    const url = request.nextUrl.clone();
+    const hostname = pathname.startsWith('/t/static/')
+      ? 'eu-assets.i.posthog.com'
+      : 'eu.i.posthog.com';
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('host', hostname);
+
+    url.protocol = 'https';
+    url.hostname = hostname;
+    url.port = '443';
+    url.pathname = pathname.replace(/^\/t/, '');
+
+    return NextResponse.rewrite(url, {
+      headers: requestHeaders,
+    });
+  }
+
   // --- Extension CORS handling ---
   if (isExtensionRoute(pathname)) {
     const origin = request.headers.get('origin');
