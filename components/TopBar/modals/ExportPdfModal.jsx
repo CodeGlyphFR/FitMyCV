@@ -4,6 +4,7 @@ import Modal from '@/components/ui/Modal';
 import SectionCard from './ExportPdfModal/SectionCard';
 import { useCreditCost } from "@/hooks/useCreditCost";
 import CreditCostDisplay from "@/components/ui/CreditCostDisplay";
+import { usePostHog } from "posthog-js/react";
 import {
   DndContext,
   closestCenter,
@@ -74,6 +75,15 @@ export default function ExportPdfModal({
   // Récupérer les coûts en crédits
   const { showCosts, getCost } = useCreditCost();
   const exportCost = getCost("export_cv");
+  const posthog = usePostHog();
+
+  // Tracking PostHog : enregistrement session + event à l'ouverture
+  React.useEffect(() => {
+    if (!posthog || posthog.has_opted_out_capturing() || !isOpen) return;
+    posthog.capture('export_modal_opened');
+    posthog.startSessionRecording(true);
+    return () => { try { posthog.stopSessionRecording(); } catch (e) {} };
+  }, [isOpen]);
 
   // Mapping des noms de sections
   const sectionNames = {
@@ -164,7 +174,12 @@ export default function ExportPdfModal({
             </button>
             <button
               type="button"
-              onClick={exportPdf}
+              onClick={() => {
+                if (posthog && !posthog.has_opted_out_capturing()) {
+                  posthog.capture('export_completed', { format: 'pdf' });
+                }
+                exportPdf();
+              }}
               disabled={isExporting || !filename.trim()}
               className="px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
             >
@@ -618,7 +633,12 @@ export default function ExportPdfModal({
             {/* Bouton Export Word */}
             <button
               type="button"
-              onClick={exportWord}
+              onClick={() => {
+                if (posthog && !posthog.has_opted_out_capturing()) {
+                  posthog.capture('export_completed', { format: 'word' });
+                }
+                exportWord();
+              }}
               disabled={isDemoExport || isExporting || isExportingWord || isLoadingPreview || !filename.trim()}
               title={isDemoExport ? t('exportModal.demoMode.wordDisabled') : undefined}
               className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors flex items-center gap-2 ${
@@ -654,7 +674,12 @@ export default function ExportPdfModal({
             {/* Bouton Export PDF */}
             <button
               type="button"
-              onClick={exportPdf}
+              onClick={() => {
+                if (posthog && !posthog.has_opted_out_capturing()) {
+                  posthog.capture('export_completed', { format: 'pdf' });
+                }
+                exportPdf();
+              }}
               disabled={isExporting || isExportingWord || isLoadingPreview || !filename.trim()}
               className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
             >

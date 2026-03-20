@@ -55,7 +55,7 @@ export function useGeneratorModal({
   React.useEffect(() => {
     if (!posthog || posthog.has_opted_out_capturing()) return;
     if (openGenerator) {
-      posthog.startSessionRecording();
+      posthog.startSessionRecording(true);
     }
     return () => {
       if (openGenerator) {
