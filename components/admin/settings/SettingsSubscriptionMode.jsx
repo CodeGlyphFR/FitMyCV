@@ -98,7 +98,7 @@ export function SettingsSubscriptionMode({
       {/* Modal d'annulation massive */}
       {showCancelAllConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg shadow-2xl border border-orange-500/30 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-900/95 backdrop-blur-xl rounded-lg shadow-2xl border border-orange-500/30 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
             <h3 className="text-xl font-semibold text-orange-400 mb-4">
               Annuler tous les abonnements payants ?
             </h3>
@@ -123,7 +123,7 @@ export function SettingsSubscriptionMode({
                 </div>
 
                 {cancelAllPreview.subscriptions?.length > 0 && (
-                  <div className="mb-4 max-h-40 overflow-y-auto">
+                  <div className="mb-4 max-h-40 overflow-y-auto custom-scrollbar">
                     <p className="text-white/70 text-sm mb-2">Abonnements concernés :</p>
                     <div className="space-y-1">
                       {cancelAllPreview.subscriptions.map((sub, i) => (

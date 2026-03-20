@@ -595,7 +595,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Table */}
-          <div className="lg:col-span-2 overflow-x-auto">
+          <div className="lg:col-span-2 overflow-x-auto custom-scrollbar">
             <table className="w-full">
               <thead>
                 <tr className="text-left text-white/60 text-sm border-b border-white/10">
@@ -714,7 +714,7 @@ export function OpenAICostsTab({ period, userId, refreshKey, isInitialLoad, trig
         {data.topUsers && data.topUsers.length > 0 && (
           <div className="bg-white/5 backdrop-blur-xl rounded-lg border border-white/10 p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Top 10 utilisateurs par coût</h3>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full">
                 <thead>
                   <tr className="text-left text-white/60 text-sm border-b border-white/10">

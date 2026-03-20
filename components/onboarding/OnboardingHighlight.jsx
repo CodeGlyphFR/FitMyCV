@@ -29,6 +29,7 @@ export default function OnboardingHighlight({
   backdropOpacity = 50,
   blurAmount = '6px',
   additionalCutoutSelector,
+  onTargetClick,
 }) {
   const bounds = useElementPosition(targetSelector, show);
 
@@ -267,11 +268,63 @@ export default function OnboardingHighlight({
     </div>
   );
 
+  // Zone cliquable transparente sur l'élément ciblé (au-dessus de l'overlay, en dessous du tooltip)
+  const clickableTargetContent = onTargetClick && blurEnabled ? (
+    <div
+      className="fixed inset-0 z-[10002] pointer-events-none"
+      role="presentation"
+      aria-hidden="true"
+    >
+      <div
+        className="absolute cursor-pointer pointer-events-auto"
+        data-onboarding-target-click
+        style={{
+          top: rect.innerTop,
+          left: rect.innerLeft,
+          width: rect.innerWidth,
+          height: rect.innerHeight,
+          borderRadius: borderRadius,
+        }}
+        onClick={() => {
+          onTargetClick();
+          const el = document.querySelector(targetSelector);
+          if (el) el.click();
+        }}
+      />
+      {additionalRects.map((r, i) => (
+        <div
+          key={i}
+          className="absolute cursor-pointer pointer-events-auto"
+          data-onboarding-target-click
+          style={{
+            top: r.top,
+            left: r.left,
+            width: r.width,
+            height: r.height,
+            borderRadius: borderRadius,
+          }}
+          onClick={() => {
+            onTargetClick();
+            if (!additionalCutoutSelector) return;
+            const elements = Array.from(document.querySelectorAll(additionalCutoutSelector))
+              .filter(el => {
+                if (targetSelector && el.matches(targetSelector)) return false;
+                const elRect = el.getBoundingClientRect();
+                return elRect.width > 0 && elRect.height > 0;
+              });
+            if (elements[i]) elements[i].click();
+          }}
+        />
+      ))}
+    </div>
+  ) : null;
+
   if (typeof window === 'undefined') return null;
 
   return (
     <>
       {backdropContent && createPortal(backdropContent, document.body)}
+      {clickableTargetContent && createPortal(clickableTargetContent, document.body)}
       {createPortal(ringsContent, document.body)}
     </>
   );

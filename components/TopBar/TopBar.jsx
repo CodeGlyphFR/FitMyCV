@@ -414,7 +414,7 @@ export default function TopBar() {
   if (status === "loading") {
     return (
       <div
-        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur shadow-[0_1px_0_0_rgba(255,255,255,0.15)] isolation-isolate min-h-[60px]"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="w-full p-3 flex items-center justify-between">
@@ -434,7 +434,7 @@ export default function TopBar() {
     return (
       <div
         ref={barRef}
-        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur shadow-[0_1px_0_0_rgba(255,255,255,0.15)] isolation-isolate min-h-[60px]"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="w-full p-3 flex items-center justify-between">
@@ -450,7 +450,7 @@ export default function TopBar() {
     <>
       <div
         ref={barRef}
-        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur border-b border-white/20 min-h-[60px]"
+        className="no-print relative shrink-0 z-[10001] w-full bg-white/15 backdrop-blur-md ios-optimized-blur shadow-[0_1px_0_0_rgba(255,255,255,0.15)] isolation-isolate min-h-[60px]"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="w-full p-3 flex flex-wrap md:flex-nowrap items-center gap-x-2 gap-y-2 sm:gap-3">

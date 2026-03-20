@@ -10,7 +10,7 @@
         "start": "Start!",
         "close": "Close",
         "confirmSkip": "Yes, skip",
-        "continueTutorial": "Continue tutorial"
+        "continueTutorial": "Continue"
       },
       "aria": {
         "closeModal": "Close modal",

@@ -208,7 +208,7 @@ export default async function RootLayout(props){
           <GlobalBackground />
           {/* TopBar dans le flux normal (pas position:fixed) — évite le bug WebKit #160953 */}
           <ConditionalTopBar />
-          <div id="scroll-container" className="relative z-10 flex-1 overflow-y-auto min-h-0">
+          <div id="scroll-container" className="relative z-10 flex-1 overflow-y-auto min-h-0 custom-scrollbar">
             <ConditionalMainWrapper
               footerPlaceholder={
                 <div className="footer-placeholder h-[56px]">

@@ -10,7 +10,7 @@
         "start": "¡Comenzar!",
         "close": "Cerrar",
         "confirmSkip": "Sí, saltar",
-        "continueTutorial": "Continuar el tutorial"
+        "continueTutorial": "Continuar"
       },
       "aria": {
         "closeModal": "Cerrar modal",

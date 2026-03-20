@@ -208,6 +208,7 @@ export default function OnboardingOrchestrator() {
     const handleClick = (e) => {
       if (step1ModalShownRef.current) return;
       if (e.target.closest('[data-onboarding-tooltip-close]')) return;
+      if (e.target.closest('[data-onboarding-target-click]')) return;
       e.preventDefault();
       e.stopPropagation();
     };
@@ -691,6 +692,7 @@ export default function OnboardingOrchestrator() {
           blurEnabled={!tooltipClosed}
           targetSelector={step.targetSelector}
           additionalCutoutSelector={currentStep === 1 ? '[data-onboarding-edit-kebab]' : undefined}
+          onTargetClick={handleTooltipClose}
         />
         {currentStep === 1 && step1TargetReady && (
           <OnboardingMultiHighlight
@@ -738,6 +740,7 @@ export default function OnboardingOrchestrator() {
         currentStep={currentStep}
         tooltipClosed={tooltipClosed}
         onTooltipClose={handleTooltipClose}
+        onTargetClick={handleTooltipClose}
         persistent={currentStep === 3}
       />
     );
@@ -752,6 +755,7 @@ export default function OnboardingOrchestrator() {
         currentStep={currentStep}
         tooltipClosed={tooltipClosed}
         onTooltipClose={handleTooltipClose}
+        onTargetClick={handleTooltipClose}
         preconditionMet={cvGenerated}
       />
     );

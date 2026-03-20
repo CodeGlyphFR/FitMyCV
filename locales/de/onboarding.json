@@ -10,7 +10,7 @@
         "start": "Starten!",
         "close": "Schließen",
         "confirmSkip": "Ja, überspringen",
-        "continueTutorial": "Tutorial fortsetzen"
+        "continueTutorial": "Fortsetzen"
       },
       "aria": {
         "closeModal": "Modal schließen",

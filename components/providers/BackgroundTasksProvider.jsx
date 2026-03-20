@@ -312,6 +312,18 @@ export default function BackgroundTasksProvider({ children }) {
         const isImportOrCreateTask = task.type === 'import' || task.type === 'create-manual';
 
         if (isImportOrCreateTask) {
+          // Déclencher un enregistrement PostHog de 15s après import CV réussi
+          if (task.type === 'import' && typeof window !== 'undefined') {
+            import('posthog-js').then(({ default: ph }) => {
+              if (ph && typeof ph.startSessionRecording === 'function') {
+                ph.startSessionRecording();
+                setTimeout(() => {
+                  try { ph.stopSessionRecording(); } catch (e) {}
+                }, 15000);
+              }
+            }).catch(() => {});
+          }
+
           // Vérifier combien de CV l'utilisateur a maintenant
           const checkFirstCv = async () => {
             try {

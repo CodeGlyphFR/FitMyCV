@@ -111,7 +111,7 @@ export async function POST(request) {
     const htmlContent = generateCvHtml(cvData, cvLanguage, selections, sectionsOrder, isDemoMode);
 
     await page.setContent(htmlContent, {
-      waitUntil: 'networkidle0',
+      waitUntil: 'domcontentloaded',
       timeout: 30000
     });
 
