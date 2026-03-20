@@ -7,7 +7,7 @@
    =========================================== */
 
 /* Désactiver will-change qui force les layers GPU (sauf fixed-button-layer) */
-*:not(.fixed-button-layer) {
+*:not(.fixed-button-layer):not(.backdrop-layer) {
   will-change: auto !important;
 }
 
@@ -46,7 +46,6 @@ body.ios-fadein .fixed-button-layer {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    font-synthesis: none;
     background-color: white;
   }
 
@@ -65,12 +64,6 @@ body.ios-fadein .fixed-button-layer {
   html {
     background-color: rgb(2, 6, 23);
   }
-}
-
-/* Sections CV hors écran : différer le rendu pour accélérer le paint initial */
-.cv-section + .cv-section {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 200px;
 }
 
 /* Classe utilitaire pour inverser les icônes PNG en blanc */
@@ -131,9 +124,6 @@ a:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bulle
   /* Prevent text selection on double-tap */
   -webkit-user-select: none;
   user-select: none;
-  /* Hardware acceleration for better performance */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
   /* Enable active state on iOS */
   cursor: pointer;
 }
@@ -142,6 +132,12 @@ a:not(.swiper-button-prev):not(.swiper-button-next):not(.swiper-pagination-bulle
    Reference: https://stackoverflow.com/questions/79753701
    Reference: https://github.com/mui/material-ui/issues/46953 */
 @supports (-webkit-touch-callout: none) {
+  /* Hardware acceleration for better touch performance (iOS only) */
+  button, a, [role="button"], [onclick], .clickable {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
   /* Auth layout - Position form at top with margin */
   .ios-auth-container {
     align-items: flex-start !important;
