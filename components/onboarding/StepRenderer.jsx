@@ -24,6 +24,7 @@ export default function StepRenderer({
   onModalSkip,
   onModalClose,
   onTooltipClose,
+  onTargetClick,
   showSkipButton = true,
   modalSize = 'large',
   // Conditions supplémentaires pour l'affichage
@@ -43,6 +44,7 @@ export default function StepRenderer({
           show={!modalOpen && currentStep === step.id}
           blurEnabled={!tooltipClosed}
           targetSelector={step.targetSelector}
+          onTargetClick={onTargetClick}
         />
       )}
 
@@ -88,6 +90,7 @@ export function TooltipOnlyStep({
   currentStep,
   tooltipClosed,
   onTooltipClose,
+  onTargetClick,
   preconditionMet = true,
   persistent = false
 }) {
@@ -99,6 +102,7 @@ export function TooltipOnlyStep({
         show={currentStep === step.id}
         blurEnabled={!tooltipClosed}
         targetSelector={step.targetSelector}
+        onTargetClick={onTargetClick}
       />
 
       {step.tooltip && (
