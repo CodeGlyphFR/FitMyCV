@@ -156,20 +156,22 @@ export function ReviewProvider({
         // Rafraîchir le Server Component pour mettre à jour le CV affiché
         router.refresh();
 
-        // Tracking PostHog + enregistrement session 15s
+        // Tracking PostHog + enregistrement session pendant tout le review
         if (posthog && !posthog.has_opted_out_capturing()) {
           const source = task.type === 'generate-cv' ? 'generation' : 'optimization';
           posthog.capture('review_mode_activated', { source, cv_file: filename });
           posthog.startSessionRecording(true);
-          setTimeout(() => {
-            try { posthog.stopSessionRecording(); } catch (e) {}
-          }, 15000);
         }
       }
     };
 
     window.addEventListener("task:completed", handleTaskCompleted);
-    return () => window.removeEventListener("task:completed", handleTaskCompleted);
+    return () => {
+      window.removeEventListener("task:completed", handleTaskCompleted);
+      if (posthog && !posthog.has_opted_out_capturing()) {
+        try { posthog.stopSessionRecording(); } catch (e) {}
+      }
+    };
   }, [filename, refreshReviewState, loadVersions, router]);
 
   // Charger le contenu d'une version précédente pour comparaison
