@@ -97,13 +97,13 @@ export async function handleCheckoutCompleted(session) {
     console.log(`[Webhook] → Pas de facture à créer (paiement à 0€)`);
   }
 
-  // Notification Telegram (non-bloquant)
+  // Notification Telegram (non-bloquant) — pas pour les admins
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true, email: true },
+    select: { name: true, email: true, role: true },
   });
 
-  if (user) {
+  if (user && user.role !== 'ADMIN') {
     const balanceAfter = result.balance;
     sendPaymentNotification({
       user: { name: user.name, email: user.email },

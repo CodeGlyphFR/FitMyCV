@@ -61,13 +61,13 @@ export async function handlePaymentSuccess(paymentIntent) {
 
   console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (payment_intent.succeeded fallback)`);
 
-  // Notification Telegram (non-bloquant)
+  // Notification Telegram (non-bloquant) — pas pour les admins
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true, email: true },
+    select: { name: true, email: true, role: true },
   });
 
-  if (user) {
+  if (user && user.role !== 'ADMIN') {
     const balanceAfter = result.balance;
     sendPaymentNotification({
       user: { name: user.name, email: user.email },
