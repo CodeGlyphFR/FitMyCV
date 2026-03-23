@@ -15,6 +15,7 @@ import CookieBanner from "@/components/cookies/CookieBanner";
 import FeedbackButton from "@/components/feedback/FeedbackButton";
 import RootProviders from "@/components/providers/RootProviders";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
+import SessionTracker from "@/components/session/SessionTracker";
 import GlobalBackground from "@/components/layout/GlobalBackground";
 import IconPreloader from "@/components/ui/IconPreloader";
 import { auth } from "@/lib/auth/session";
@@ -222,6 +223,7 @@ export default async function RootLayout(props){
           <CookieBanner />
           <FeedbackButton />
           <LoadingOverlay />
+          <SessionTracker />
         </RootProviders>
       </body>
     </html>
