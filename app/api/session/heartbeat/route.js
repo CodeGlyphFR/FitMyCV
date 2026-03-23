@@ -1,13 +1,10 @@
-import { heartbeat, cleanupStaleSessions } from '@/lib/session/sessionManager';
+import { heartbeat } from '@/lib/session/sessionManager';
 
 export async function POST(request) {
   const { sessionId } = await request.json();
   if (!sessionId) {
     return Response.json({ error: 'sessionId requis' }, { status: 400 });
   }
-
-  // Profiter de chaque heartbeat pour nettoyer les sessions stale d'autres utilisateurs
-  cleanupStaleSessions();
 
   const found = heartbeat(sessionId);
   if (!found) {
