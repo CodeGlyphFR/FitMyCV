@@ -31,11 +31,11 @@ export function TelegramTab({ refreshKey }) {
       const res = await fetch('/api/admin/telegram');
       if (!res.ok) throw new Error('Erreur lors du chargement');
       const data = await res.json();
-      setEnabled(data.telegram_enabled ?? false);
+      setEnabled(data.telegram_enabled === '1' || data.telegram_enabled === 'true' || data.telegram_enabled === true);
       setBotToken(data.telegram_bot_token ?? '');
       setChatId(data.telegram_chat_id ?? '');
-      setNotifySessionEnd(data.telegram_notify_session_end ?? false);
-      setNotifyPayment(data.telegram_notify_payment ?? false);
+      setNotifySessionEnd(data.telegram_notify_session_end === '1' || data.telegram_notify_session_end === 'true' || data.telegram_notify_session_end === true);
+      setNotifyPayment(data.telegram_notify_payment === '1' || data.telegram_notify_payment === 'true' || data.telegram_notify_payment === true);
     } catch (err) {
       setToast({ type: 'error', message: err.message });
     } finally {
@@ -50,11 +50,11 @@ export function TelegramTab({ refreshKey }) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          telegram_enabled: enabled,
+          telegram_enabled: enabled ? '1' : '0',
           telegram_bot_token: botToken,
           telegram_chat_id: chatId,
-          telegram_notify_session_end: notifySessionEnd,
-          telegram_notify_payment: notifyPayment,
+          telegram_notify_session_end: notifySessionEnd ? '1' : '0',
+          telegram_notify_payment: notifyPayment ? '1' : '0',
         }),
       });
       if (!res.ok) {
