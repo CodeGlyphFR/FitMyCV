@@ -3,25 +3,36 @@ import { authOptions } from '@/lib/auth/options';
 import { getSettingValue } from '@/lib/settings/settingsUtils';
 import { decryptJsonField } from '@/lib/security/fieldEncryption';
 
-export async function POST() {
+export async function POST(request) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'ADMIN') {
     return Response.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const encryptedToken = await getSettingValue('telegram_bot_token', '');
-  const encryptedChatId = await getSettingValue('telegram_chat_id', '');
+  // Accepter token/chatId depuis le body (test avant enregistrement) ou depuis la DB
+  const body = await request.json().catch(() => ({}));
+  let token = body.telegram_bot_token || '';
+  let chatId = body.telegram_chat_id || '';
 
-  if (!encryptedToken || !encryptedChatId) {
-    return Response.json({ error: 'Token ou Chat ID manquant.' }, { status: 400 });
+  // Si non fournis dans le body, lire depuis la DB
+  if (!token || !chatId) {
+    const encryptedToken = await getSettingValue('telegram_bot_token', '');
+    const encryptedChatId = await getSettingValue('telegram_chat_id', '');
+
+    if (!encryptedToken || !encryptedChatId) {
+      return Response.json({ error: 'Token ou Chat ID manquant.' }, { status: 400 });
+    }
+
+    try {
+      token = token || decryptJsonField(encryptedToken);
+      chatId = chatId || decryptJsonField(encryptedChatId);
+    } catch {
+      return Response.json({ error: 'Erreur de déchiffrement des credentials.' }, { status: 400 });
+    }
   }
 
-  let token, chatId;
-  try {
-    token = decryptJsonField(encryptedToken);
-    chatId = decryptJsonField(encryptedChatId);
-  } catch {
-    return Response.json({ error: 'Erreur de déchiffrement des credentials.' }, { status: 400 });
+  if (!token || !chatId) {
+    return Response.json({ error: 'Token ou Chat ID manquant.' }, { status: 400 });
   }
 
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
