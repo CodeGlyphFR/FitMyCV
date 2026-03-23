@@ -10,6 +10,7 @@ import { FeedbackTab } from '@/components/admin/FeedbackTab';
 import { UsersTab } from '@/components/admin/UsersTab';
 import { SubscriptionPlansTab } from '@/components/admin/SubscriptionPlansTab';
 import { EmailManagementTab } from '@/components/admin/EmailManagementTab';
+import { TelegramTab } from '@/components/admin/TelegramTab';
 import { DateRangePicker } from '@/components/admin/DateRangePicker';
 import { UserFilter } from '@/components/admin/UserFilter';
 import { TabsBar } from '@/components/admin/TabsBar';
@@ -20,7 +21,7 @@ const RevenueTab = dynamic(() => import('@/components/admin/RevenueTab').then(m 
 const OnboardingTab = dynamic(() => import('@/components/admin/OnboardingTab').then(m => ({ default: m.OnboardingTab })), { ssr: false });
 
 // Liste des onglets valides
-const VALID_TABS = ['overview', 'features', 'errors', 'openai-costs', 'feedback', 'users', 'onboarding', 'revenue', 'subscriptions', 'emails', 'settings'];
+const VALID_TABS = ['overview', 'features', 'errors', 'openai-costs', 'feedback', 'users', 'onboarding', 'revenue', 'subscriptions', 'emails', 'settings', 'telegram'];
 
 export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -70,6 +71,7 @@ export default function AnalyticsDashboard() {
     { id: 'subscriptions', label: 'Abonnements', icon: '💳' },
     { id: 'emails', label: 'Gestion Emails', icon: '📧' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'telegram', label: 'Telegram', icon: '🤖' },
   ];
 
   // Fetch triggered alerts on mount and refresh
@@ -96,8 +98,8 @@ export default function AnalyticsDashboard() {
   // Auto-refresh every 10 seconds (skip for Settings and Emails tabs)
   // Utilise Page Visibility API pour stopper le polling quand l'onglet est inactif
   useEffect(() => {
-    // Don't auto-refresh the Settings or Emails tabs (editor loses focus)
-    if (activeTab === 'settings' || activeTab === 'emails') return;
+    // Don't auto-refresh the Settings, Emails or Telegram tabs (editor loses focus)
+    if (activeTab === 'settings' || activeTab === 'emails' || activeTab === 'telegram') return;
 
     let interval = null;
 
@@ -247,6 +249,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'subscriptions' && <SubscriptionPlansTab refreshKey={refreshKey} />}
         {activeTab === 'emails' && <EmailManagementTab refreshKey={refreshKey} />}
         {activeTab === 'settings' && <SettingsTab refreshKey={refreshKey} />}
+        {activeTab === 'telegram' && <TelegramTab refreshKey={refreshKey} />}
       </div>
     </div>
   );
