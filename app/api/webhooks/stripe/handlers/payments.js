@@ -5,6 +5,7 @@
 
 import prisma from '@/lib/prisma';
 import { grantCredits } from '@/lib/subscription/credits';
+import { sendPaymentNotification } from '@/lib/telegram/notifications';
 
 /**
  * Gère le succès d'un paiement (FALLBACK)
@@ -37,8 +38,9 @@ export async function handlePaymentSuccess(paymentIntent) {
 
   // Attribuer les crédits (FALLBACK)
   const pricePaid = (paymentIntent.amount || 0) / 100;
+  let result;
   try {
-    const result = await grantCredits(userId, creditAmount, 'purchase', {
+    result = await grantCredits(userId, creditAmount, 'purchase', {
       stripePaymentIntentId: paymentIntent.id,
       source: 'credit_pack_purchase',
       pricePaid,
@@ -58,4 +60,24 @@ export async function handlePaymentSuccess(paymentIntent) {
   }
 
   console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (payment_intent.succeeded fallback)`);
+
+  // Notification Telegram (non-bloquant)
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true },
+  });
+
+  if (user) {
+    const balanceAfter = result.balance;
+    sendPaymentNotification({
+      user: { name: user.name, email: user.email },
+      pack: {
+        creditAmount,
+        price: pricePaid,
+        priceCurrency: (paymentIntent.currency || 'eur').toUpperCase(),
+      },
+      balanceAfter,
+      balanceBefore: balanceAfter - creditAmount,
+    }).catch((err) => console.error('[stripe] Erreur notification Telegram:', err));
+  }
 }
