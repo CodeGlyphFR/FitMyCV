@@ -1,6 +1,9 @@
 # Dépendances
 node_modules/
 
+# Superpowers brainstorming
+.superpowers/
+
 # Builds Next.js
 .next/
 out/

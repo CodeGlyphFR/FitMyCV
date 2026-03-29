@@ -4,6 +4,7 @@
 
 import prisma from '@/lib/prisma';
 import { grantCredits } from '@/lib/subscription/credits';
+import { sendPaymentNotification } from '@/lib/telegram/notifications';
 import { updateCustomerBillingDetailsFromCheckout } from './utils.js';
 
 /**
@@ -94,5 +95,25 @@ export async function handleCheckoutCompleted(session) {
   } else {
     console.log(`[Webhook] ${creditAmount} crédits attribués à user ${userId} (checkout gratuit, coupon 100%)`);
     console.log(`[Webhook] → Pas de facture à créer (paiement à 0€)`);
+  }
+
+  // Notification Telegram (non-bloquant) — pas pour les admins
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true, role: true },
+  });
+
+  if (user && user.role !== 'ADMIN') {
+    const balanceAfter = result.balance;
+    sendPaymentNotification({
+      user: { name: user.name, email: user.email },
+      pack: {
+        creditAmount,
+        price: pricePaid,
+        priceCurrency: (session.currency || 'eur').toUpperCase(),
+      },
+      balanceAfter,
+      balanceBefore: balanceAfter - creditAmount,
+    }).catch((err) => console.error('[stripe] Erreur notification Telegram:', err));
   }
 }
