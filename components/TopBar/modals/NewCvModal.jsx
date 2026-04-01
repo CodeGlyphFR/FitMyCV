@@ -47,6 +47,7 @@ export default function NewCvModal({
             {t("newCvModal.fullName")}<span className="text-red-400" aria-hidden="true"> {t("newCvModal.required")}</span>
           </label>
           <input
+            maxLength={1000}
             className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -59,6 +60,7 @@ export default function NewCvModal({
             {t("newCvModal.currentTitle")}<span className="text-red-400" aria-hidden="true"> {t("newCvModal.required")}</span>
           </label>
           <input
+            maxLength={1000}
             className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             value={currentTitle}
             onChange={(e) => setCurrentTitle(e.target.value)}
@@ -69,6 +71,7 @@ export default function NewCvModal({
         <div>
           <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow block mb-1">{t("newCvModal.email")}</label>
           <input
+            maxLength={1000}
             className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
