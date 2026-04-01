@@ -139,9 +139,15 @@ export async function POST(request){
 
   // Attribuer le plan Gratuit par défaut
   try {
-    const subscriptionResult = await assignDefaultPlan(user.id, null, { skipWelcomeCredits: fpResult.isDuplicate });
+    const skipWelcomeCredits = fpResult.isDuplicate && (fpResult.hasVerifiedAccount ?? true);
+    const subscriptionResult = await assignDefaultPlan(user.id, null, { skipWelcomeCredits });
     if (subscriptionResult.success) {
-      logger.context('register', 'info', `Plan Gratuit attribué à user ${user.id}${fpResult.isDuplicate ? ' (crédits bienvenue bloqués - fingerprint dupliqué)' : ''}`);
+      const fpNote = fpResult.isDuplicate
+        ? (skipWelcomeCredits
+          ? ' (crédits bienvenue bloqués - fingerprint dupliqué avec compte vérifié)'
+          : ' (crédits bienvenue accordés - comptes dupliqués non vérifiés)')
+        : '';
+      logger.context('register', 'info', `Plan Gratuit attribué à user ${user.id}${fpNote}`);
     } else {
       logger.warn('[register] Échec attribution plan Gratuit:', subscriptionResult.error);
       // Ne pas bloquer l'inscription si l'attribution du plan échoue
