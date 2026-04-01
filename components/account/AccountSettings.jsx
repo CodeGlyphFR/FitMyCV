@@ -260,6 +260,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.profile.fullName')}</label>
             <input
               type="text"
+              maxLength={1000}
               value={name}
               onChange={event => setName(event.target.value)}
               className="w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
@@ -270,6 +271,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
             <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.profile.email')}</label>
             <input
               type="email"
+              maxLength={1000}
               value={email}
               onChange={event => setEmail(event.target.value)}
               className={`w-full rounded-lg border border-white/40 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/25 hover:border-white/60 focus:bg-white/30 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -461,6 +463,7 @@ export default function AccountSettings({ user, isOAuthUser = false, oauthProvid
                 <label className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t('account.deleteAccount.emailLabel')}</label>
                 <input
                   type="email"
+                  maxLength={1000}
                   id="deleteEmail"
                   name="deleteEmail"
                   value={deleteEmail}
