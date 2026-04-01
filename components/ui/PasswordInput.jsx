@@ -23,6 +23,7 @@ export default function PasswordInput({
   autoComplete,
   className = "",
   disabled = false,
+  maxLength = 100,
 }) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isToggling, setIsToggling] = React.useState(false);
@@ -48,6 +49,7 @@ export default function PasswordInput({
         id={id}
         name={name}
         type={showPassword ? "text" : "password"}
+        maxLength={maxLength}
         value={value}
         onChange={onChange}
         disabled={disabled}
