@@ -578,6 +578,7 @@ export default function TopBar() {
                 </span>
                 <input
                   type="text"
+                  maxLength={1000}
                   value={modals.jobTitleInput}
                   onChange={(e) => modals.setJobTitleInput(e.target.value)}
                   onKeyDown={(e) => modals.handleJobTitleSubmit(e, language, showCosts, jobTitleCost)}
