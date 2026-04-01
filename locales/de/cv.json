@@ -48,7 +48,8 @@
     "upgradeTooltipLine2": "um auf diese Stufe zuzugreifen",
     "errors": {
       "selectReference": "Wählen Sie einen Referenz-Lebenslauf, bevor Sie die Analyse starten.",
-      "addLinkOrFile": "Fügen Sie mindestens einen Link oder eine Datei hinzu."
+      "addLinkOrFile": "Fügen Sie mindestens einen Link oder eine Datei hinzu.",
+      "fileTooLarge": "Die Datei \"{fileName}\" überschreitet die maximal zulässige Größe ({maxSize} MB)"
     },
     "notifications": {
       "scheduled": "Anpassung des Lebenslaufs '{baseCvName}' geplant",
@@ -66,6 +67,7 @@
     "cancel": "Abbrechen",
     "import": "Importieren",
     "importing": "Importieren...",
+    "fileTooLarge": "Die Datei überschreitet die maximal zulässige Größe ({maxSize} MB)",
     "notifications": {
       "scheduled": "Import '{fileName}' geplant",
       "error": "Fehler bei der Planung des Imports"

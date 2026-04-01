@@ -13,6 +13,7 @@ export default function PdfImportModal({
   onClose,
   onSubmit,
   pdfFile,
+  pdfFileError,
   onPdfFileChanged,
   pdfFileInputRef,
   busy,
@@ -46,9 +47,13 @@ export default function PdfImportModal({
             type="button"
             onClick={() => pdfFileInputRef.current?.click()}
             disabled={busy}
-            className={`w-full min-w-0 rounded-lg border px-4 py-3 text-sm text-white transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed ${pdfFile ? "border-emerald-400/50 bg-emerald-500/20 hover:bg-emerald-500/30 hover:border-emerald-400/70" : "border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30"}`}
+            className={`w-full min-w-0 rounded-lg border px-4 py-3 text-sm text-white transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed ${pdfFileError ? "border-red-400/50 bg-red-500/20 hover:bg-red-500/30 hover:border-red-400/70" : pdfFile ? "border-emerald-400/50 bg-emerald-500/20 hover:bg-emerald-500/30 hover:border-emerald-400/70" : "border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30"}`}
           >
-            {pdfFile ? (
+            {pdfFileError ? (
+              <svg className="w-5 h-5 shrink-0 text-red-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            ) : pdfFile ? (
               <svg className="w-5 h-5 shrink-0 text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
@@ -57,8 +62,8 @@ export default function PdfImportModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             )}
-            <span className="font-medium truncate">
-              {pdfFile ? pdfFile.name : t("pdfImport.selectFile")}
+            <span className={`font-medium truncate ${pdfFileError ? "text-red-300" : ""}`}>
+              {pdfFileError || (pdfFile ? pdfFile.name : t("pdfImport.selectFile"))}
             </span>
           </button>
         </div>
@@ -77,7 +82,7 @@ export default function PdfImportModal({
           <button
             type="submit"
             className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            disabled={!pdfFile || busy}
+            disabled={!pdfFile || busy || !!pdfFileError}
           >
             {busy ? (
               <span className="flex items-center gap-2">

@@ -5,6 +5,8 @@ import { parseApiError } from "@/lib/utils/errorHandler";
 /**
  * Hook pour gérer tous les états de modals et UI
  */
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, refreshTasks, addNotification, localDeviceId, reload, router }) {
   const { executeRecaptcha } = useRecaptcha();
   // Delete modal
@@ -17,10 +19,12 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
   const [openPdfImport, setOpenPdfImport] = React.useState(false);
   const [pdfFile, setPdfFile] = React.useState(null);
   const [pdfImportBusy, setPdfImportBusy] = React.useState(false);
+  const [pdfFileError, setPdfFileError] = React.useState(null);
   const pdfFileInputRef = React.useRef(null);
 
   function resetPdfImportState() {
     setPdfFile(null);
+    setPdfFileError(null);
     if (pdfFileInputRef.current) pdfFileInputRef.current.value = "";
   }
 
@@ -31,6 +35,12 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
 
   function onPdfFileChanged(event) {
     const file = event.target.files?.[0] || null;
+    if (file && file.size > MAX_FILE_SIZE) {
+      setPdfFileError(t("pdfImport.fileTooLarge", { maxSize: "10" }));
+      setPdfFile(null);
+      return;
+    }
+    setPdfFileError(null);
     setPdfFile(file);
   }
 
@@ -435,6 +445,7 @@ export function useModalStates({ t, addOptimisticTask, removeOptimisticTask, ref
     pdfFile,
     setPdfFile,
     pdfImportBusy,
+    pdfFileError,
     pdfFileInputRef,
     closePdfImport,
     onPdfFileChanged,

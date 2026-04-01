@@ -7,6 +7,8 @@ import { parseApiError } from "@/lib/utils/errorHandler";
 import { TASK_TYPES } from "@/lib/background-jobs/taskTypes";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 /**
  * Hook pour gérer le modal de génération de CV
  */
@@ -34,6 +36,7 @@ export function useGeneratorModal({
   const [openGenerator, setOpenGenerator] = React.useState(false);
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
+  const [fileSelectionError, setFileSelectionError] = React.useState(null);
   const [generatorError, setGeneratorError] = React.useState("");
   const [generatorBaseFile, setGeneratorBaseFile] = React.useState("");
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
@@ -198,6 +201,14 @@ export function useGeneratorModal({
 
   function onFilesChanged(event) {
     const files = Array.from(event.target.files || []);
+    const oversized = files.find(f => f.size > MAX_FILE_SIZE);
+    if (oversized) {
+      setFileSelectionError(t("cvGenerator.errors.fileTooLarge", { fileName: oversized.name, maxSize: "10" }));
+      setFileSelection([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    setFileSelectionError(null);
     setFileSelection(files);
     if (files.length > 0) {
       trackEvent('files_selected', {
@@ -210,6 +221,7 @@ export function useGeneratorModal({
   function clearFiles() {
     trackEvent('files_cleared');
     setFileSelection([]);
+    setFileSelectionError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -403,6 +415,7 @@ export function useGeneratorModal({
     setLinkInputs,
     fileSelection,
     setFileSelection,
+    fileSelectionError,
     generatorError,
     setGeneratorError,
     generatorBaseFile,

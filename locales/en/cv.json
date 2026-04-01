@@ -48,7 +48,8 @@
     "upgradeTooltipLine2": "to access this level",
     "errors": {
       "selectReference": "Select a reference CV before starting the analysis.",
-      "addLinkOrFile": "Add at least one link or file."
+      "addLinkOrFile": "Add at least one link or file.",
+      "fileTooLarge": "The file \"{fileName}\" exceeds the maximum allowed size ({maxSize} MB)"
     },
     "notifications": {
       "scheduled": "CV adaptation '{baseCvName}' scheduled",
@@ -66,6 +67,7 @@
     "cancel": "Cancel",
     "import": "Import",
     "importing": "Importing...",
+    "fileTooLarge": "The file exceeds the maximum allowed size ({maxSize} MB)",
     "notifications": {
       "scheduled": "Import '{fileName}' scheduled",
       "error": "Error scheduling import"

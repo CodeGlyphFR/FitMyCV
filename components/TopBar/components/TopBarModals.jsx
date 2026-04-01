@@ -41,6 +41,7 @@ export default function TopBarModals({
         addLinkField={generator.addLinkField}
         removeLinkField={generator.removeLinkField}
         fileSelection={generator.fileSelection}
+        fileSelectionError={generator.fileSelectionError}
         onFilesChanged={generator.onFilesChanged}
         clearFiles={generator.clearFiles}
         fileInputRef={generator.fileInputRef}
@@ -72,6 +73,7 @@ export default function TopBarModals({
         onClose={modals.closePdfImport}
         onSubmit={modals.submitPdfImport}
         pdfFile={modals.pdfFile}
+        pdfFileError={modals.pdfFileError}
         onPdfFileChanged={modals.onPdfFileChanged}
         pdfFileInputRef={modals.pdfFileInputRef}
         busy={modals.pdfImportBusy}

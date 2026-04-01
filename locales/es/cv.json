@@ -48,7 +48,8 @@
     "upgradeTooltipLine2": "para acceder a este nivel",
     "errors": {
       "selectReference": "Selecciona un CV de referencia antes de iniciar el análisis.",
-      "addLinkOrFile": "Añade al menos un enlace o archivo."
+      "addLinkOrFile": "Añade al menos un enlace o archivo.",
+      "fileTooLarge": "El archivo \"{fileName}\" supera el tamaño máximo permitido ({maxSize} MB)"
     },
     "notifications": {
       "scheduled": "Adaptación de CV '{baseCvName}' programada",
@@ -66,6 +67,7 @@
     "cancel": "Cancelar",
     "import": "Importar",
     "importing": "Importando...",
+    "fileTooLarge": "El archivo supera el tamaño máximo permitido ({maxSize} MB)",
     "notifications": {
       "scheduled": "Importación de '{fileName}' programada",
       "error": "Error al programar la importación"
