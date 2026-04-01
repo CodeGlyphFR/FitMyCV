@@ -49,7 +49,8 @@
     "errors": {
       "selectReference": "Select a reference CV before starting the analysis.",
       "addLinkOrFile": "Add at least one link or file.",
-      "fileTooLarge": "The file \"{fileName}\" exceeds the maximum allowed size ({maxSize} MB)"
+      "fileTooLarge": "The file \"{fileName}\" exceeds the maximum allowed size ({maxSize} MB)",
+      "invalidFormat": "The file \"{fileName}\" is not in a valid format"
     },
     "notifications": {
       "scheduled": "CV adaptation '{baseCvName}' scheduled",
@@ -68,6 +69,7 @@
     "import": "Import",
     "importing": "Importing...",
     "fileTooLarge": "The file exceeds the maximum allowed size ({maxSize} MB)",
+    "invalidFormat": "The selected file is not a valid PDF",
     "notifications": {
       "scheduled": "Import '{fileName}' scheduled",
       "error": "Error scheduling import"

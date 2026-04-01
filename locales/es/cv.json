@@ -49,7 +49,8 @@
     "errors": {
       "selectReference": "Selecciona un CV de referencia antes de iniciar el análisis.",
       "addLinkOrFile": "Añade al menos un enlace o archivo.",
-      "fileTooLarge": "El archivo \"{fileName}\" supera el tamaño máximo permitido ({maxSize} MB)"
+      "fileTooLarge": "El archivo \"{fileName}\" supera el tamaño máximo permitido ({maxSize} MB)",
+      "invalidFormat": "El archivo \"{fileName}\" no tiene un formato válido"
     },
     "notifications": {
       "scheduled": "Adaptación de CV '{baseCvName}' programada",
@@ -68,6 +69,7 @@
     "import": "Importar",
     "importing": "Importando...",
     "fileTooLarge": "El archivo supera el tamaño máximo permitido ({maxSize} MB)",
+    "invalidFormat": "El archivo seleccionado no es un PDF válido",
     "notifications": {
       "scheduled": "Importación de '{fileName}' programada",
       "error": "Error al programar la importación"
