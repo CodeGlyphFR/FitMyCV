@@ -8,6 +8,6 @@ export async function POST() {
     return Response.json({ error: 'Non authentifié' }, { status: 401 });
   }
 
-  const sessionId = startSession(authSession.user.id);
+  const sessionId = await startSession(authSession.user.id);
   return Response.json({ sessionId });
 }

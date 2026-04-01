@@ -536,6 +536,7 @@ export default function Header(props){
               {linksLocal.map((row, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
                   <input
+                    maxLength={1000}
                     className="w-28 shrink-0 rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white placeholder:text-white/40 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none"
                     placeholder={t("header.labelPlaceholder")}
                     value={row.label}
@@ -546,6 +547,7 @@ export default function Header(props){
                     }}
                   />
                   <input
+                    maxLength={1000}
                     className="flex-1 min-w-0 rounded-md border border-white/20 bg-white/5 px-2.5 py-1.5 text-sm text-white placeholder:text-white/40 transition-all duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 focus:outline-none"
                     placeholder={t("header.urlPlaceholder")}
                     value={row.url}

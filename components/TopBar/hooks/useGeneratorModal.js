@@ -7,6 +7,19 @@ import { parseApiError } from "@/lib/utils/errorHandler";
 import { TASK_TYPES } from "@/lib/background-jobs/taskTypes";
 import { ONBOARDING_EVENTS } from "@/lib/onboarding/onboardingEvents";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const PDF_MAGIC_BYTES = [0x25, 0x50, 0x44, 0x46]; // %PDF
+const DOCX_MAGIC_BYTES = [0x50, 0x4B, 0x03, 0x04]; // PK (ZIP/DOCX)
+const DOC_MAGIC_BYTES = [0xD0, 0xCF, 0x11, 0xE0]; // OLE2 (DOC)
+
+function getExpectedMagic(fileName) {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return PDF_MAGIC_BYTES;
+  if (ext === 'docx') return DOCX_MAGIC_BYTES;
+  if (ext === 'doc') return DOC_MAGIC_BYTES;
+  return null;
+}
+
 /**
  * Hook pour gérer le modal de génération de CV
  */
@@ -34,6 +47,7 @@ export function useGeneratorModal({
   const [openGenerator, setOpenGenerator] = React.useState(false);
   const [linkInputs, setLinkInputs] = React.useState([""]);
   const [fileSelection, setFileSelection] = React.useState([]);
+  const [fileSelectionError, setFileSelectionError] = React.useState(null);
   const [generatorError, setGeneratorError] = React.useState("");
   const [generatorBaseFile, setGeneratorBaseFile] = React.useState("");
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
@@ -196,8 +210,28 @@ export function useGeneratorModal({
     });
   }
 
-  function onFilesChanged(event) {
+  async function onFilesChanged(event) {
     const files = Array.from(event.target.files || []);
+    const oversized = files.find(f => f.size > MAX_FILE_SIZE);
+    if (oversized) {
+      setFileSelectionError(t("cvGenerator.errors.fileTooLarge", { fileName: oversized.name, maxSize: "10" }));
+      setFileSelection([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    for (const file of files) {
+      const expected = getExpectedMagic(file.name);
+      if (expected) {
+        const header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+        if (!expected.every((b, i) => header[i] === b)) {
+          setFileSelectionError(t("cvGenerator.errors.invalidFormat", { fileName: file.name }));
+          setFileSelection([]);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+      }
+    }
+    setFileSelectionError(null);
     setFileSelection(files);
     if (files.length > 0) {
       trackEvent('files_selected', {
@@ -210,6 +244,7 @@ export function useGeneratorModal({
   function clearFiles() {
     trackEvent('files_cleared');
     setFileSelection([]);
+    setFileSelectionError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -403,6 +438,7 @@ export function useGeneratorModal({
     setLinkInputs,
     fileSelection,
     setFileSelection,
+    fileSelectionError,
     generatorError,
     setGeneratorError,
     generatorBaseFile,

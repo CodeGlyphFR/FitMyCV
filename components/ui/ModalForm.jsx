@@ -74,9 +74,10 @@ export function FormField({ label, required, error, children, className }) {
 // ============================================
 // INPUT - Champ texte amélioré
 // ============================================
-export function Input({ className, ...props }) {
+export function Input({ className, maxLength = 1000, ...props }) {
   return (
     <input
+      maxLength={maxLength}
       className={clsx(inputBaseClass, className)}
       {...props}
     />
@@ -86,9 +87,10 @@ export function Input({ className, ...props }) {
 // ============================================
 // TEXTAREA - Zone de texte améliorée
 // ============================================
-export function Textarea({ className, ...props }) {
+export function Textarea({ className, maxLength = 1000, ...props }) {
   return (
     <textarea
+      maxLength={maxLength}
       className={clsx(textareaBaseClass, className)}
       {...props}
     />
