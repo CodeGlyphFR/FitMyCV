@@ -77,19 +77,20 @@ export async function GET() {
       }
     }
 
-    // Enrichir les liens avec id, titre, company, language et domaine
-    // On utilise l'URL normalisée pour chercher les données
-    const enrichedLinks = links.map(link => {
-      const data = urlToData.get(normalizeJobUrl(link.url)) || {};
-      return {
-        id: link.id,
-        url: link.url,
-        title: data.title || null,
-        company: data.company || null,
-        language: data.language || null,
-        domain: extractDomainName(link.url),
-      };
-    });
+    // Enrichir les liens et ne garder que ceux avec une offre parsée en DB
+    const enrichedLinks = links
+      .map(link => {
+        const data = urlToData.get(normalizeJobUrl(link.url)) || {};
+        return {
+          id: link.id,
+          url: link.url,
+          title: data.title || null,
+          company: data.company || null,
+          language: data.language || null,
+          domain: extractDomainName(link.url),
+        };
+      })
+      .filter(link => link.title);
 
     return NextResponse.json({
       success: true,

@@ -50,7 +50,13 @@
       "selectReference": "Select a reference CV before starting the analysis.",
       "addLinkOrFile": "Add at least one link or file.",
       "fileTooLarge": "The file \"{fileName}\" exceeds the maximum allowed size ({maxSize} MB)",
-      "invalidFormat": "The file \"{fileName}\" is not in a valid format"
+      "invalidFormat": "The file \"{fileName}\" is not in a valid format",
+      "siteBlocked": "This site blocks automatic extraction",
+      "useExtension": "Install extension",
+      "extensionHint": "Use the browser extension to extract this offer",
+      "pasteManually": "Paste offer",
+      "manualOfferPlaceholder": "Paste the job offer text here (copy it from the website)...",
+      "blockedWithoutPaste": "A link is blocked: paste the offer text or remove the link."
     },
     "notifications": {
       "scheduled": "CV adaptation '{baseCvName}' scheduled",

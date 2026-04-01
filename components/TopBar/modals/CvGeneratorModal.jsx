@@ -48,6 +48,12 @@ export default function CvGeneratorModal({
   extensionDetected,
   onOpenExtensionTutorial,
   trackEvent,
+  linkValidations = {},
+  manualOfferTexts = {},
+  showManualPaste = {},
+  validateUrl,
+  updateManualText,
+  toggleManualPaste,
 }) {
   // Récupérer les coûts en crédits
   const { showCosts, getCost } = useCreditCost();
@@ -59,6 +65,20 @@ export default function CvGeneratorModal({
   const unitCost = getCost("gpt_cv_generation");
   const totalCost = unitCost * totalOperations;
   const costDetail = totalOperations > 1 ? `${totalOperations} × ${unitCost}` : null;
+  const isValidating = Object.values(linkValidations).some(v => v?.status === 'checking');
+  const hasBlockedWithoutPaste = linkInputs.some((link, i) =>
+    link.trim() && linkValidations[i]?.status === 'failed' && !(manualOfferTexts[i] && manualOfferTexts[i].trim())
+  );
+
+  const [descriptionHidden, setDescriptionHidden] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('fitmycv_generator_desc_hidden') === '1';
+  });
+
+  function hideDescription() {
+    setDescriptionHidden(true);
+    localStorage.setItem('fitmycv_generator_desc_hidden', '1');
+  }
 
   return (
     <Modal
@@ -67,9 +87,22 @@ export default function CvGeneratorModal({
       title={t("cvGenerator.title")}
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="text-sm text-white/90 drop-shadow bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-3 text-justify">
-          {t("cvGenerator.description")}
-        </div>
+        {!descriptionHidden && (
+          <div>
+            <div className="flex justify-end -mb-0.5 -mt-4">
+              <button
+                type="button"
+                onClick={hideDescription}
+                className="text-[10px] text-white/40 hover:text-white/70 transition-colors cursor-pointer"
+              >
+                ✕ fermer
+              </button>
+            </div>
+            <div className="text-sm text-white/90 drop-shadow bg-emerald-500/10 border border-emerald-500/50 rounded-lg p-3 text-justify">
+              {t("cvGenerator.description")}
+            </div>
+          </div>
+        )}
 
         {!extensionDetected && onOpenExtensionTutorial && (
           <button
@@ -198,7 +231,8 @@ export default function CvGeneratorModal({
         <div className="space-y-2">
           <div className="text-xs font-medium uppercase tracking-wide text-white drop-shadow">{t("cvGenerator.links")}</div>
           {linkInputs.map((value, index) => (
-            <div key={index} className="flex gap-2">
+            <React.Fragment key={index}>
+            <div className="flex gap-2">
               <div className="relative">
                 <button
                   type="button"
@@ -264,6 +298,7 @@ export default function CvGeneratorModal({
                                   [index]: false
                                 }));
                                 trackEvent?.('recent_link_selected', { link_index: index, domain: domain || undefined });
+                                if (validateUrl) validateUrl(url, index);
                               }}
                               className="flex-1 flex items-center gap-2 px-3 py-2 text-left text-xs text-white hover:bg-white/25 truncate transition-colors duration-200"
                               title={url}
@@ -299,19 +334,59 @@ export default function CvGeneratorModal({
                   </div>
                 )}
               </div>
-              <input
-                maxLength={1000}
-                className="flex-1 min-w-0 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50 focus:outline-hidden"
-                placeholder={t("cvGenerator.linkPlaceholder")}
-                value={value}
-                onChange={(event) => updateLink(event.target.value, index)}
-                onBlur={(event) => {
-                  const val = event.target.value.trim();
-                  if (val) {
-                    trackEvent?.('link_typed', { link_index: index, is_url: /^https?:\/\//.test(val) });
-                  }
-                }}
-              />
+              <div className="relative flex-1 min-w-0">
+                <input
+                  maxLength={1000}
+                  className={`w-full rounded-lg border pr-9 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 focus:outline-hidden ${
+                    linkValidations[index]?.status === 'failed'
+                      ? 'border-orange-400/60 bg-orange-500/5 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50'
+                      : 'border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50'
+                  }`}
+                  placeholder={t("cvGenerator.linkPlaceholder")}
+                  value={value}
+                  onChange={(event) => updateLink(event.target.value, index)}
+                  onBlur={(event) => {
+                    const val = event.target.value.trim();
+                    if (val) {
+                      trackEvent?.('link_typed', { link_index: index, is_url: /^https?:\/\//.test(val) });
+                      if (validateUrl) validateUrl(val, index);
+                    }
+                  }}
+                />
+                {linkValidations[index]?.status === 'checking' && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white/80 rounded-full animate-spin" />
+                  </div>
+                )}
+                {linkValidations[index]?.status === 'ok' && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400/60 pointer-events-none">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+                {linkValidations[index]?.status === 'failed' && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-400/80 pointer-events-none">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <button
+                  type="button"
+                  onClick={() => toggleManualPaste(index)}
+                  className={`rounded-lg border px-2 py-1 text-xs transition-colors duration-200 ${
+                    showManualPaste[index]
+                      ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-400'
+                      : 'border-white/20 bg-white/5 text-white/50 hover:bg-white/10 hover:border-white/30 hover:text-white'
+                  }`}
+                  title={t("cvGenerator.errors.pasteManually")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
               <button
                 type="button"
                 onClick={() => removeLinkField(index)}
@@ -321,6 +396,43 @@ export default function CvGeneratorModal({
                 ✕
               </button>
             </div>
+            {linkValidations[index]?.status === 'failed' && (
+              <div className="flex items-center justify-between -mt-1">
+                <div>
+                  <p className="text-xs text-orange-300/80">{t("cvGenerator.errors.siteBlocked")}</p>
+                  <p className="text-xs text-white/40 mt-0.5">
+                    {extensionDetected ? (
+                      t("cvGenerator.errors.extensionHint")
+                    ) : onOpenExtensionTutorial ? (
+                      <button type="button" onClick={onOpenExtensionTutorial} className="text-sky-400 hover:text-sky-300 underline underline-offset-2 transition-colors">
+                        {t("cvGenerator.errors.useExtension")}
+                      </button>
+                    ) : null}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleManualPaste(index)}
+                  className="shrink-0 text-xs px-3 py-1.5 rounded-md bg-white/5 text-emerald-400 border border-white/15 hover:bg-white/10 hover:text-emerald-300 transition-colors"
+                >
+                  {t("cvGenerator.errors.pasteManually")}
+                </button>
+              </div>
+            )}
+            {showManualPaste[index] && (
+              <div className="h-[100px] overflow-hidden rounded-lg border border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30 focus-within:bg-white/10 focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-400/50 transition-colors duration-200">
+                <div className="origin-top-left h-full" style={{ transform: 'scale(0.8)', width: '125%', height: '125%' }}>
+                  <textarea
+                    maxLength={10000}
+                    className="block w-full h-full bg-transparent px-3 py-2 text-base text-white/80 placeholder:text-white/30 focus:outline-hidden resize-none"
+                    placeholder={t("cvGenerator.errors.manualOfferPlaceholder")}
+                    value={manualOfferTexts[index] || ''}
+                    onChange={(e) => updateManualText(e.target.value, index)}
+                  />
+                </div>
+              </div>
+            )}
+            </React.Fragment>
           ))}
           <div className="flex justify-end">
             <button
@@ -419,7 +531,7 @@ export default function CvGeneratorModal({
           <button
             type="submit"
             className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            disabled={!generatorBaseFile || isSubmitting}
+            disabled={!generatorBaseFile || isSubmitting || isValidating || hasBlockedWithoutPaste}
           >
             {isSubmitting ? t("cvGenerator.submitting") : t("cvGenerator.validate")}
           </button>

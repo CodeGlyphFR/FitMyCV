@@ -66,6 +66,12 @@ export default function TopBarModals({
         extensionDetected={extensionDetected}
         onOpenExtensionTutorial={onOpenExtensionTutorial}
         trackEvent={generator.trackEvent}
+        linkValidations={generator.linkValidations}
+        manualOfferTexts={generator.manualOfferTexts}
+        showManualPaste={generator.showManualPaste}
+        validateUrl={generator.validateUrl}
+        updateManualText={generator.updateManualText}
+        toggleManualPaste={generator.toggleManualPaste}
       />
 
       <PdfImportModal

@@ -437,7 +437,7 @@ export async function DELETE(request) {
       // Récupérer la tâche pour savoir quel CV elle concerne
       const task = await prisma.backgroundTask.findUnique({
         where: { id: taskId },
-        select: { type: true, cvFile: true, userId: true, status: true }
+        select: { type: true, cvFile: true, userId: true, status: true, creditTransactionId: true }
       });
 
       // Ne rembourser les crédits que si la tâche était en attente ou en cours (pas déjà terminée)
@@ -446,16 +446,27 @@ export async function DELETE(request) {
       // Rembourser les crédits si nécessaire
       let refundResult = null;
       if (shouldRefund && task.userId === userId) {
-        // Trouver la transaction de débit associée à cette tâche
-        const creditTransaction = await prisma.creditTransaction.findFirst({
-          where: {
-            taskId: taskId,
-            userId: userId,
-            amount: { lt: 0 }, // Débit (montant négatif)
-            refunded: false,
-          },
-          orderBy: { createdAt: 'desc' },
-        });
+        // Utiliser le creditTransactionId stocké dans BackgroundTask (fiable)
+        // Fallback: chercher par taskId sur la creditTransaction (ancien comportement)
+        let creditTransaction = null;
+        if (task.creditTransactionId) {
+          creditTransaction = await prisma.creditTransaction.findUnique({
+            where: { id: task.creditTransactionId },
+          });
+          // Vérifier qu'elle n'est pas déjà remboursée
+          if (creditTransaction?.refunded) creditTransaction = null;
+        }
+        if (!creditTransaction) {
+          creditTransaction = await prisma.creditTransaction.findFirst({
+            where: {
+              taskId: taskId,
+              userId: userId,
+              amount: { lt: 0 },
+              refunded: false,
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+        }
 
         if (creditTransaction) {
           refundResult = await refundCredit(userId, creditTransaction.id, 'Annulation de tâche');
@@ -464,6 +475,8 @@ export async function DELETE(request) {
           } else {
             console.error(`[cancel] ❌ Échec remboursement crédits:`, refundResult.error);
           }
+        } else {
+          console.warn(`[cancel] ⚠️ Aucune transaction de débit trouvée pour tâche ${taskId}`);
         }
       }
 
