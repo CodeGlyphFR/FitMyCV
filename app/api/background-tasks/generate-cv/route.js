@@ -239,7 +239,7 @@ export async function POST(request) {
       const url = links[i];
       const isManualOffer = url.startsWith('manual://');
       const usageResult = usageResults[taskIndex];
-      const domain = isManualOffer ? 'Offre collée' : extractDomain(url);
+      const domain = isManualOffer ? 'En cours de détection' : extractDomain(url);
 
       const task = await prisma.cvGenerationTask.create({
         data: {
@@ -285,7 +285,7 @@ export async function POST(request) {
             taskId: task.id,
             offerId: offer.id,
             sourceCvFile: baseFile,
-            url,
+            url: isManualOffer ? null : url,
             offerIndex: taskIndex,
             totalOffersInBatch: totalOffers,
             userInterfaceLanguage,
