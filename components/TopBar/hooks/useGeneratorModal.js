@@ -53,6 +53,12 @@ export function useGeneratorModal({
   const [baseSelectorOpen, setBaseSelectorOpen] = React.useState(false);
   const [linkHistoryDropdowns, setLinkHistoryDropdowns] = React.useState({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  // Pré-validation URL : { [index]: { status: 'idle'|'checking'|'ok'|'failed', reason?: string } }
+  const [linkValidations, setLinkValidations] = React.useState({});
+  // Texte d'offre collé manuellement (fallback quand URL bloquée)
+  const [manualOfferTexts, setManualOfferTexts] = React.useState({});
+  // Contrôle l'affichage du textarea de collage par index
+  const [showManualPaste, setShowManualPaste] = React.useState({});
 
   const fileInputRef = React.useRef(null);
   const isMountedRef = React.useRef(true);
@@ -173,6 +179,9 @@ export function useGeneratorModal({
     setBaseSelectorOpen(false);
     setLinkHistoryDropdowns({});
     setIsSubmitting(false);
+    setLinkValidations({});
+    setManualOfferTexts({});
+    setShowManualPaste({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -195,6 +204,43 @@ export function useGeneratorModal({
     });
   }
 
+  async function validateUrl(url, index) {
+    if (!url) {
+      setLinkValidations(prev => ({ ...prev, [index]: { status: 'idle' } }));
+      return;
+    }
+    if (!/^https?:\/\/.+\..+/.test(url)) {
+      setLinkValidations(prev => ({ ...prev, [index]: { status: 'invalid' } }));
+      return;
+    }
+    setLinkValidations(prev => ({ ...prev, [index]: { status: 'checking' } }));
+    try {
+      const res = await fetch('/api/job-offers/validate-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (data.extractable) {
+        setLinkValidations(prev => ({ ...prev, [index]: { status: 'ok', cached: !!data.cached } }));
+      } else {
+        setLinkValidations(prev => ({ ...prev, [index]: { status: 'failed', reason: data.reason } }));
+        trackEvent('url_validation_failed', { url_domain: new URL(url).hostname, reason: data.reason });
+      }
+    } catch {
+      // Fail-open : ne pas bloquer si la validation échoue
+      setLinkValidations(prev => ({ ...prev, [index]: { status: 'idle' } }));
+    }
+  }
+
+  function updateManualText(text, index) {
+    setManualOfferTexts(prev => ({ ...prev, [index]: text }));
+  }
+
+  function toggleManualPaste(index) {
+    setShowManualPaste(prev => ({ ...prev, [index]: !prev[index] }));
+  }
+
   function addLinkField() {
     setLinkInputs((prev) => {
       trackEvent('link_field_added', { new_count: prev.length + 1 });
@@ -208,6 +254,10 @@ export function useGeneratorModal({
       const next = prev.filter((_, idx) => idx !== index);
       return next.length ? next : [""];
     });
+    // Clear validation, texte collé et panneau pour cet index
+    setLinkValidations(prev => { const n = { ...prev }; delete n[index]; return n; });
+    setManualOfferTexts(prev => { const n = { ...prev }; delete n[index]; return n; });
+    setShowManualPaste(prev => { const n = { ...prev }; delete n[index]; return n; });
   }
 
   async function onFilesChanged(event) {
@@ -259,14 +309,43 @@ export function useGeneratorModal({
       return;
     }
 
+    // Vérifier le format des URLs avant tout (filet de sécurité si onBlur n'a pas été déclenché)
+    const invalidLink = linkInputs.find((link) => {
+      const val = (link || '').trim();
+      return val && !/^https?:\/\/.+\..+/.test(val);
+    });
+    if (invalidLink) {
+      // Marquer toutes les URLs invalides
+      linkInputs.forEach((link, i) => {
+        const val = (link || '').trim();
+        if (val && !/^https?:\/\/.+\..+/.test(val)) {
+          setLinkValidations(prev => ({ ...prev, [i]: { status: 'invalid' } }));
+        }
+      });
+      setGeneratorError(t("cvGenerator.errors.invalidUrl"));
+      trackEvent('validation_error', { error_type: 'invalid_url' });
+      return;
+    }
+
     const cleanedLinks = linkInputs
       .map((l) => (l || "").trim())
       .filter(Boolean);
     const hasFiles = (fileSelection || []).length > 0;
+    const hasManualTexts = Object.values(manualOfferTexts).some(t => t && t.trim());
 
-    if (!cleanedLinks.length && !hasFiles) {
+    if (!cleanedLinks.length && !hasFiles && !hasManualTexts) {
       setGeneratorError(t("cvGenerator.errors.addLinkOrFile"));
       trackEvent('validation_error', { error_type: 'no_link_or_file' });
+      return;
+    }
+
+    // Vérifier qu'aucun lien bloqué n'est sans texte collé
+    const hasBlockedWithoutPaste = linkInputs.some((link, i) =>
+      link.trim() && linkValidations[i]?.status === 'failed' && !(manualOfferTexts[i] && manualOfferTexts[i].trim())
+    );
+    if (hasBlockedWithoutPaste) {
+      setGeneratorError(t("cvGenerator.errors.blockedWithoutPaste"));
+      trackEvent('validation_error', { error_type: 'blocked_without_paste' });
       return;
     }
 
@@ -300,8 +379,38 @@ export function useGeneratorModal({
       // Note: Pas de check isMountedRef ici - l'appel API doit TOUJOURS se faire
       // pour que la tâche soit créée sur le serveur et détectée par le polling
 
+      // Ajouter les offres collées manuellement sans URL comme des entrées à part
+      for (let i = 0; i < linkInputs.length; i++) {
+        const link = (linkInputs[i] || '').trim();
+        const text = manualOfferTexts[i];
+        if (!link && text && text.trim()) {
+          // Pas d'URL mais du texte collé → ajouter un placeholder
+          cleanedLinks.push(`manual://offer-${i}`);
+        }
+      }
+
+      // Construire les contenus manuels indexés par position dans cleanedLinks
+      const manualContents = {};
+      cleanedLinks.forEach((link, i) => {
+        if (link.startsWith('manual://')) {
+          // Offre manuelle sans URL
+          const origIndex = parseInt(link.split('-')[1], 10);
+          manualContents[i] = manualOfferTexts[origIndex].trim();
+        } else {
+          // URL avec éventuellement un texte collé en override
+          const originalIndex = linkInputs.findIndex((l, idx) => l.trim() === link && idx >= i);
+          const text = manualOfferTexts[originalIndex >= 0 ? originalIndex : i];
+          if (text && text.trim()) {
+            manualContents[i] = text.trim();
+          }
+        }
+      });
+
       const formData = new FormData();
       formData.append("links", JSON.stringify(cleanedLinks));
+      if (Object.keys(manualContents).length > 0) {
+        formData.append("manualContents", JSON.stringify(manualContents));
+      }
       if (recaptchaToken) {
         formData.append("recaptchaToken", recaptchaToken);
       }
@@ -460,5 +569,11 @@ export function useGeneratorModal({
     clearFiles,
     submitGenerator,
     trackEvent,
+    linkValidations,
+    manualOfferTexts,
+    showManualPaste,
+    validateUrl,
+    updateManualText,
+    toggleManualPaste,
   };
 }

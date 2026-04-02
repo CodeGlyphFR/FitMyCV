@@ -66,6 +66,7 @@
       "pipelineCancelled": "Génération CV annulée",
       "pipelinePartial": "Génération partiellement réussie",
       "offers": "offres",
+      "detecting": "En cours de détection",
       "cvReadyForOffer": "CV prêt pour l'offre {index}",
       "cvGenerated": "{count} CV généré(s)",
       "offerFailed": "Échec pour l'offre {index} - {credits} crédit remboursé",

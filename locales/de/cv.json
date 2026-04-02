@@ -50,7 +50,14 @@
       "selectReference": "Wählen Sie einen Referenz-Lebenslauf, bevor Sie die Analyse starten.",
       "addLinkOrFile": "Fügen Sie mindestens einen Link oder eine Datei hinzu.",
       "fileTooLarge": "Die Datei \"{fileName}\" überschreitet die maximal zulässige Größe ({maxSize} MB)",
-      "invalidFormat": "Die Datei \"{fileName}\" hat kein gültiges Format"
+      "invalidFormat": "Die Datei \"{fileName}\" hat kein gültiges Format",
+      "invalidUrl": "Der Link muss mit http:// oder https:// beginnen",
+      "siteBlocked": "Diese Website blockiert die automatische Extraktion",
+      "useExtension": "Erweiterung installieren",
+      "extensionHint": "Verwenden Sie die Browser-Erweiterung, um dieses Angebot zu extrahieren",
+      "pasteManually": "Angebot einfügen",
+      "manualOfferPlaceholder": "Fügen Sie hier den Text des Stellenangebots ein (kopieren Sie ihn von der Website)...",
+      "blockedWithoutPaste": "Ein Link ist blockiert: Fügen Sie den Text des Angebots ein oder entfernen Sie den Link."
     },
     "notifications": {
       "scheduled": "Anpassung des Lebenslaufs '{baseCvName}' geplant",

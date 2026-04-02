@@ -158,8 +158,19 @@ export async function POST(request) {
 
     const links = sanitizeLinks(parsedLinks);
 
-    // Valider le format des URLs
-    const invalidUrls = links.filter(url => !isValidUrl(url));
+    // Parser les contenus manuels (texte collé par l'utilisateur quand l'URL est bloquée)
+    let manualContents = {};
+    const rawManualContents = formData.get('manualContents');
+    if (rawManualContents) {
+      try {
+        manualContents = JSON.parse(rawManualContents);
+      } catch {
+        // Ignorer si le format est invalide
+      }
+    }
+
+    // Valider le format des URLs (exclure les offres collées manuellement)
+    const invalidUrls = links.filter(url => !url.startsWith('manual://') && !isValidUrl(url));
     if (invalidUrls.length > 0) {
       return apiError('errors.api.generate.invalidUrlFormat', {
         status: 400,
@@ -226,8 +237,9 @@ export async function POST(request) {
     // 5a. Créer les tâches pour les URLs
     for (let i = 0; i < links.length; i++) {
       const url = links[i];
+      const isManualOffer = url.startsWith('manual://');
       const usageResult = usageResults[taskIndex];
-      const domain = extractDomain(url);
+      const domain = isManualOffer ? 'En cours de détection' : extractDomain(url);
 
       const task = await prisma.cvGenerationTask.create({
         data: {
@@ -245,7 +257,7 @@ export async function POST(request) {
       const offer = await prisma.cvGenerationOffer.create({
         data: {
           taskId: task.id,
-          sourceUrl: url,
+          sourceUrl: isManualOffer ? null : url,
           jobOfferId: null,
           offerIndex: 0,
           status: 'pending',
@@ -273,10 +285,11 @@ export async function POST(request) {
             taskId: task.id,
             offerId: offer.id,
             sourceCvFile: baseFile,
-            url,
+            url: isManualOffer ? null : url,
             offerIndex: taskIndex,
             totalOffersInBatch: totalOffers,
             userInterfaceLanguage,
+            ...(manualContents[i] ? { markdownContent: manualContents[i], markdownTitle: domain } : {}),
           }),
         },
       });

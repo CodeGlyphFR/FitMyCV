@@ -49,8 +49,15 @@
     "errors": {
       "selectReference": "Sélectionnez un CV de référence avant de lancer l'analyse.",
       "addLinkOrFile": "Ajoutez au moins un lien ou un fichier.",
+      "invalidUrl": "Le lien doit commencer par http:// ou https://",
       "fileTooLarge": "Le fichier \"{fileName}\" dépasse la taille maximale autorisée ({maxSize} MB)",
-      "invalidFormat": "Le fichier \"{fileName}\" n'est pas dans un format valide"
+      "invalidFormat": "Le fichier \"{fileName}\" n'est pas dans un format valide",
+      "siteBlocked": "Ce site bloque l'extraction automatique",
+      "useExtension": "Installer l'extension",
+      "extensionHint": "Utilisez l'extension navigateur pour extraire cette offre",
+      "pasteManually": "Coller l'offre",
+      "manualOfferPlaceholder": "Collez ici le texte de l'offre d'emploi (copiez-le depuis le site)...",
+      "blockedWithoutPaste": "Un lien est bloqué : collez le texte de l'offre ou supprimez le lien."
     },
     "notifications": {
       "scheduled": "Adaptation du CV '{baseCvName}' planifié",

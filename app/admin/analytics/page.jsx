@@ -19,9 +19,10 @@ import { TabsBar } from '@/components/admin/TabsBar';
 const OpenAICostsTab = dynamic(() => import('@/components/admin/OpenAICostsTab').then(m => ({ default: m.OpenAICostsTab })), { ssr: false });
 const RevenueTab = dynamic(() => import('@/components/admin/RevenueTab').then(m => ({ default: m.RevenueTab })), { ssr: false });
 const OnboardingTab = dynamic(() => import('@/components/admin/OnboardingTab').then(m => ({ default: m.OnboardingTab })), { ssr: false });
+const ExtractionErrorsTab = dynamic(() => import('@/components/admin/ExtractionErrorsTab').then(m => ({ default: m.ExtractionErrorsTab })), { ssr: false });
 
 // Liste des onglets valides
-const VALID_TABS = ['overview', 'features', 'errors', 'openai-costs', 'feedback', 'users', 'onboarding', 'revenue', 'subscriptions', 'emails', 'settings', 'telegram'];
+const VALID_TABS = ['overview', 'features', 'errors', 'extraction-errors', 'openai-costs', 'feedback', 'users', 'onboarding', 'revenue', 'subscriptions', 'emails', 'settings', 'telegram'];
 
 export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -63,6 +64,7 @@ export default function AnalyticsDashboard() {
     { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
     { id: 'features', label: 'Features', icon: '⚡' },
     { id: 'errors', label: 'Erreurs', icon: '🐛' },
+    { id: 'extraction-errors', label: 'Extractions', icon: '🔗' },
     { id: 'openai-costs', label: 'OpenAI Costs', icon: '💰', badge: triggeredAlerts?.totalTriggered || 0 },
     { id: 'feedback', label: 'Feedback', icon: '💬' },
     { id: 'users', label: 'Utilisateurs', icon: '👨‍💼' },
@@ -170,7 +172,7 @@ export default function AnalyticsDashboard() {
               {!['settings', 'users', 'subscriptions', 'revenue', 'onboarding', 'emails'].includes(activeTab) && (
                 <UserFilter value={selectedUserId} onChange={setSelectedUserId} />
               )}
-              {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
+              {['overview', 'features', 'sessions', 'errors', 'extraction-errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
                 <DateRangePicker value={period} onChange={setPeriod} />
               )}
               <div className="h-6 w-px bg-white/10"></div>
@@ -203,7 +205,7 @@ export default function AnalyticsDashboard() {
             </button>
             <h1 className="text-sm font-bold text-white">Analytics Dashboard</h1>
             <div className="flex items-center gap-2">
-              {['overview', 'features', 'sessions', 'errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
+              {['overview', 'features', 'sessions', 'errors', 'extraction-errors', 'openai-costs', 'feedback', 'onboarding'].includes(activeTab) && (
                 <DateRangePicker value={period} onChange={setPeriod} />
               )}
               <button
@@ -241,6 +243,7 @@ export default function AnalyticsDashboard() {
         {activeTab === 'overview' && <OverviewTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} triggeredAlerts={triggeredAlerts} />}
         {activeTab === 'features' && <FeaturesTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'errors' && <ErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
+        {activeTab === 'extraction-errors' && <ExtractionErrorsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'openai-costs' && <OpenAICostsTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} triggeredAlerts={triggeredAlerts} />}
         {activeTab === 'feedback' && <FeedbackTab period={period} userId={selectedUserId} refreshKey={refreshKey} isInitialLoad={isInitialLoad} />}
         {activeTab === 'users' && <UsersTab refreshKey={refreshKey} />}
