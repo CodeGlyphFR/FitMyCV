@@ -79,7 +79,7 @@ function OfferProgressLine({ offer, t, createdAt }) {
 
   // Titre de l'offre (jobTitle ou URL tronquée ou fallback)
   const offerIndex = typeof offer.offerIndex === 'number' ? offer.offerIndex + 1 : 1;
-  const offerTitle = offer.jobTitle || (offer.sourceUrl ? truncateUrl(offer.sourceUrl) : `Offre ${offerIndex}`);
+  const offerTitle = offer.jobTitle || (offer.sourceUrl ? truncateUrl(offer.sourceUrl) : t("taskQueue.messages.detecting") || 'En cours de détection');
 
   // Déterminer le step courant à afficher
   // Priorité : premier step "running" dans l'ordre du pipeline
