@@ -66,6 +66,7 @@
       "pipelineCancelled": "Lebenslauf-Erstellung abgebrochen",
       "pipelinePartial": "Erstellung teilweise erfolgreich",
       "offers": "Angebote",
+      "detecting": "Angebot wird erkannt",
       "cvReadyForOffer": "Lebenslauf bereit für Angebot {index}",
       "cvGenerated": "{count} Lebenslauf(e) erstellt",
       "offerFailed": "Fehlgeschlagen für Angebot {index} - {credits} Kredit erstattet",
