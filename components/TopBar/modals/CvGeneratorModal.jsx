@@ -376,7 +376,8 @@ export default function CvGeneratorModal({
               <button
                   type="button"
                   onClick={() => toggleManualPaste(index)}
-                  className={`rounded-lg border px-2 py-1 text-xs transition-colors duration-200 ${
+                  disabled={linkValidations[index]?.cached}
+                  className={`rounded-lg border px-2 py-1 text-xs transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
                     showManualPaste[index]
                       ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-400'
                       : 'border-white/20 bg-white/5 text-white/50 hover:bg-white/10 hover:border-white/30 hover:text-white'

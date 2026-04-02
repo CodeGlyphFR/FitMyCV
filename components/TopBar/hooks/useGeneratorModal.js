@@ -218,7 +218,7 @@ export function useGeneratorModal({
       });
       const data = await res.json();
       if (data.extractable) {
-        setLinkValidations(prev => ({ ...prev, [index]: { status: 'ok' } }));
+        setLinkValidations(prev => ({ ...prev, [index]: { status: 'ok', cached: !!data.cached } }));
       } else {
         setLinkValidations(prev => ({ ...prev, [index]: { status: 'failed', reason: data.reason } }));
         trackEvent('url_validation_failed', { url_domain: new URL(url).hostname, reason: data.reason });
