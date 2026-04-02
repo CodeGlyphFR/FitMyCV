@@ -309,6 +309,24 @@ export function useGeneratorModal({
       return;
     }
 
+    // Vérifier le format des URLs avant tout (filet de sécurité si onBlur n'a pas été déclenché)
+    const invalidLink = linkInputs.find((link) => {
+      const val = (link || '').trim();
+      return val && !/^https?:\/\/.+\..+/.test(val);
+    });
+    if (invalidLink) {
+      // Marquer toutes les URLs invalides
+      linkInputs.forEach((link, i) => {
+        const val = (link || '').trim();
+        if (val && !/^https?:\/\/.+\..+/.test(val)) {
+          setLinkValidations(prev => ({ ...prev, [i]: { status: 'invalid' } }));
+        }
+      });
+      setGeneratorError(t("cvGenerator.errors.invalidUrl"));
+      trackEvent('validation_error', { error_type: 'invalid_url' });
+      return;
+    }
+
     const cleanedLinks = linkInputs
       .map((l) => (l || "").trim())
       .filter(Boolean);
