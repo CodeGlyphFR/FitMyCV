@@ -5,7 +5,8 @@ import prisma from '@/lib/prisma';
 import { normalizeJobUrl } from '@/lib/utils/normalizeJobUrl';
 import { fetchHtmlWithFallback } from '@/lib/job-offer/extraction/url';
 import { extractJobOfferContent } from '@/lib/utils/htmlToMarkdown/index.js';
-import { detectExpiredOrDeletedPage } from '@/lib/utils/htmlToMarkdown/detection';
+import { detectExpiredOrDeletedPage, detectLoginPage } from '@/lib/utils/htmlToMarkdown/detection';
+import { AUTH_REQUIRED_DOMAINS } from '@/lib/utils/siteSelectors';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,8 +57,20 @@ export async function POST(request) {
       return NextResponse.json({ extractable: true, cached: true });
     }
 
+    // Vérifier si le domaine nécessite une authentification (check rapide, pas de fetch)
+    const lowerUrl = url.toLowerCase();
+    if (AUTH_REQUIRED_DOMAINS.some(domain => lowerUrl.includes(domain))) {
+      return NextResponse.json({ extractable: false, reason: 'auth_required' });
+    }
+
     // Exécuter le vrai pipeline : fetch HTML (simple + Puppeteer fallback) + markdown
     const html = await fetchHtmlWithFallback(normalizedUrl);
+
+    // Détecter les pages de connexion
+    const loginCheck = detectLoginPage(html, url);
+    if (loginCheck.isLoginPage) {
+      return NextResponse.json({ extractable: false, reason: 'auth_required' });
+    }
 
     const { content: markdown } = extractJobOfferContent(html, url);
 
