@@ -205,8 +205,12 @@ export function useGeneratorModal({
   }
 
   async function validateUrl(url, index) {
-    if (!url || !/^https?:\/\/.+\..+/.test(url)) {
+    if (!url) {
       setLinkValidations(prev => ({ ...prev, [index]: { status: 'idle' } }));
+      return;
+    }
+    if (!/^https?:\/\/.+\..+/.test(url)) {
+      setLinkValidations(prev => ({ ...prev, [index]: { status: 'invalid' } }));
       return;
     }
     setLinkValidations(prev => ({ ...prev, [index]: { status: 'checking' } }));

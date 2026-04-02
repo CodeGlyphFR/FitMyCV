@@ -69,6 +69,9 @@ export default function CvGeneratorModal({
   const hasBlockedWithoutPaste = linkInputs.some((link, i) =>
     link.trim() && linkValidations[i]?.status === 'failed' && !(manualOfferTexts[i] && manualOfferTexts[i].trim())
   );
+  const hasInvalidUrl = linkInputs.some((link, i) =>
+    link.trim() && linkValidations[i]?.status === 'invalid'
+  );
 
   const [descriptionHidden, setDescriptionHidden] = React.useState(() => {
     if (typeof window === 'undefined') return false;
@@ -338,8 +341,8 @@ export default function CvGeneratorModal({
                 <input
                   maxLength={1000}
                   className={`w-full rounded-lg border pr-9 px-3 py-2 text-sm text-white placeholder:text-white/50 transition-colors duration-200 focus:outline-hidden ${
-                    linkValidations[index]?.status === 'failed'
-                      ? 'border-orange-400/60 bg-orange-500/5 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50'
+                    linkValidations[index]?.status === 'failed' || linkValidations[index]?.status === 'invalid'
+                      ? 'border-red-400/60 bg-red-500/5 focus:border-red-400 focus:ring-2 focus:ring-red-400/50'
                       : 'border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30 focus:bg-white/10 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/50'
                   }`}
                   placeholder={t("cvGenerator.linkPlaceholder")}
@@ -350,6 +353,8 @@ export default function CvGeneratorModal({
                     if (val) {
                       trackEvent?.('link_typed', { link_index: index, is_url: /^https?:\/\//.test(val) });
                       if (validateUrl) validateUrl(val, index);
+                    } else if (validateUrl) {
+                      validateUrl('', index);
                     }
                   }}
                 />
@@ -365,8 +370,8 @@ export default function CvGeneratorModal({
                     </svg>
                   </div>
                 )}
-                {linkValidations[index]?.status === 'failed' && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-400/80 pointer-events-none">
+                {(linkValidations[index]?.status === 'failed' || linkValidations[index]?.status === 'invalid') && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400/80 pointer-events-none">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
@@ -532,7 +537,7 @@ export default function CvGeneratorModal({
           <button
             type="submit"
             className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            disabled={!generatorBaseFile || isSubmitting || isValidating || hasBlockedWithoutPaste}
+            disabled={!generatorBaseFile || isSubmitting || isValidating || hasBlockedWithoutPaste || hasInvalidUrl}
           >
             {isSubmitting ? t("cvGenerator.submitting") : t("cvGenerator.validate")}
           </button>
