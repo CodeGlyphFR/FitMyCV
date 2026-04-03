@@ -97,6 +97,18 @@ export async function POST(request) {
     }
 
     const links = sanitizeLinks(parsedLinks);
+
+    // Parser les contenus manuels (texte collé par l'utilisateur quand l'URL est bloquée)
+    let manualContents = {};
+    const rawManualContents = formData.get('manualContents');
+    if (rawManualContents) {
+      try {
+        manualContents = JSON.parse(rawManualContents);
+      } catch {
+        // Ignorer si le format est invalide
+      }
+    }
+
     const files = formData.getAll("files").filter(Boolean);
 
     if (!links.length && !files.length) {
@@ -135,13 +147,19 @@ export async function POST(request) {
         continue;
       }
 
+      const isManualOffer = link.startsWith('manual://');
+
       // Extraire un nom court du lien pour l'affichage
       let linkDisplay = link;
-      try {
-        const url = new URL(link);
-        linkDisplay = url.hostname + (url.pathname !== '/' ? url.pathname.slice(0, 30) : '');
-      } catch {
-        linkDisplay = link.slice(0, 50);
+      if (isManualOffer) {
+        linkDisplay = 'En cours de détection';
+      } else {
+        try {
+          const url = new URL(link);
+          linkDisplay = url.hostname + (url.pathname !== '/' ? url.pathname.slice(0, 30) : '');
+        } catch {
+          linkDisplay = link.slice(0, 50);
+        }
       }
 
       // Titre initial = juste le domaine (sera mis à jour avec le titre de l'offre après extraction)
@@ -153,6 +171,7 @@ export async function POST(request) {
         model: requestedModel,
         uploads: [],
         uploadDirectory: null,
+        ...(manualContents[i] ? { markdownContent: manualContents[i], markdownTitle: linkDisplay } : {}),
       };
 
       await prisma.backgroundTask.create({
