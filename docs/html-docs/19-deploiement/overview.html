@@ -103,7 +103,7 @@ flowchart TB
         <h3>Stage 1 — <code>deps</code> (Toutes les dépendances)</h3>
         <p>Installe l'ensemble des dépendances (build + dev) nécessaires à la compilation. Les packages natifs (<code>python3</code>, <code>make</code>, <code>g++</code>) sont requis pour compiler certains modules Node.js natifs.</p>
 
-        <pre><code class="language-bash">FROM node:20-alpine AS deps
+        <pre><code class="language-bash">FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 COPY package*.json ./
@@ -114,7 +114,7 @@ RUN npm ci</code></pre>
         <h3>Stage 2 — <code>production-deps</code> (Dépendances de production)</h3>
         <p>Stage séparé qui installe uniquement les dépendances de production (<code>--omit=dev</code>). Cela permet d'obtenir un <code>node_modules</code> minimal pour l'image finale.</p>
 
-        <pre><code class="language-bash">FROM node:20-alpine AS production-deps
+        <pre><code class="language-bash">FROM node:24-alpine AS production-deps
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
