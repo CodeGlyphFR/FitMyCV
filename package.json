@@ -51,7 +51,7 @@
     "posthog-js": "^1.363.1",
     "posthog-node": "^5.28.5",
     "prisma": "^6.19.1",
-    "puppeteer": "^24.34.0",
+    "puppeteer": "^25.1.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "qs": "^6.15.0",
