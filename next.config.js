@@ -28,7 +28,7 @@ const nextConfig = {
   allowedDevOrigins: ['dev.fitmycv.io'],
 
   // Next.js 16: serverComponentsExternalPackages déplacé hors de experimental
-  serverExternalPackages: ['puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'],
+  serverExternalPackages: ['puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth', 'pdf-parse', 'pdfjs-dist'],
 
   // Next.js 16: Turbopack est le bundler par défaut
   // Config vide pour accepter Turbopack (la config webpack ci-dessous est ignorée)
