@@ -422,7 +422,7 @@ docs/html-docs/
 
 | Fichier | Rôle |
 |---------|------|
-| `package.json` | Dépendances (v1.8.6.2) |
+| `package.json` | Dépendances (v1.8.6.3) |
 | `next.config.js` | Config Next.js 16 (Turbopack) |
 | `tailwind.config.js` | Config Tailwind (dark mode, animations) |
 | `jsconfig.json` | Alias `@/*` |
