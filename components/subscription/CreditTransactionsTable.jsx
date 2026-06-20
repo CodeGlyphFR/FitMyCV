@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { Loader2, ChevronLeft, ChevronRight, ArrowUpCircle, ArrowDownCircle, RotateCcw, Gift, Plus } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CircleArrowUp, CircleArrowDown, RotateCcw, Gift, Plus } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const TYPE_ICONS = {
-  purchase: ArrowUpCircle,
-  usage: ArrowDownCircle,
+  purchase: CircleArrowUp,
+  usage: CircleArrowDown,
   refund: RotateCcw,
   gift: Gift,
   cv_creation: Plus,
@@ -97,7 +97,7 @@ export default function CreditTransactionsTable() {
               </thead>
               <tbody>
                 {transactions.map((transaction) => {
-                  const TypeIcon = TYPE_ICONS[transaction.type] || ArrowDownCircle;
+                  const TypeIcon = TYPE_ICONS[transaction.type] || CircleArrowDown;
                   const typeColor = TYPE_COLORS[transaction.type] || "text-gray-300";
                   const typeLabel = t(`subscription.transactions.types.${transaction.type}`, transaction.type);
 

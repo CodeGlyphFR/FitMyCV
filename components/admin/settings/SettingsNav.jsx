@@ -6,7 +6,7 @@ import {
   Settings,
   FileImage,
   LayoutList,
-  AlertTriangle,
+  TriangleAlert,
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
@@ -50,7 +50,7 @@ const CATEGORY_CONFIG = {
     description: 'Ordre des sections',
   },
   danger: {
-    icon: AlertTriangle,
+    icon: TriangleAlert,
     label: 'Zone danger',
     color: 'red',
     description: 'Actions irréversibles',
