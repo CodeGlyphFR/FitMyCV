@@ -3,7 +3,7 @@
 # ============================================================
 
 # --- Stage 1: All dependencies (build + dev) ---
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 COPY package*.json ./
@@ -12,7 +12,7 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci
 
 # --- Stage 2: Production dependencies only ---
-FROM node:20-alpine AS production-deps
+FROM node:24-alpine AS production-deps
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
@@ -22,7 +22,7 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci --omit=dev
 
 # --- Stage 3: Build ---
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -49,7 +49,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # --- Stage 4: Production runner ---
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # Chromium pour Puppeteer (export PDF + extraction URL) + polices pour le rendu
