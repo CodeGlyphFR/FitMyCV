@@ -8,6 +8,10 @@ RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
+# Prisma 7 : la datasource URL vit dans prisma.config.ts (retirée du schema),
+# requise par le postinstall `prisma generate` déclenché par `npm ci`.
+COPY prisma.config.ts ./
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci
 
@@ -17,6 +21,8 @@ RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma
+# Prisma 7 : prisma.config.ts (datasource URL) requis par le postinstall `prisma generate`
+COPY prisma.config.ts ./
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci --omit=dev
@@ -45,6 +51,9 @@ ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
 # Dummy .env for Prisma schema validation during build
 RUN cp .env.example .env
 ENV NODE_ENV=production
+# Prisma 7 ne charge plus automatiquement .env via le CLI : on fournit DATABASE_URL
+# directement dans l'environnement pour que `prisma generate` résolve la datasource.
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 RUN npm run build
 
