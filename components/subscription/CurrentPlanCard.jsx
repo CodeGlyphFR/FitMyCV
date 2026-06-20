@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Crown, Calendar, CheckCircle, XCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { Crown, Calendar, CircleCheckBig, CircleX, TriangleAlert, Loader2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { isFreePlan, getPlanIcon, getYearlyDiscount } from "@/lib/subscription/planUtils";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -19,21 +19,21 @@ export default function CurrentPlanCard({ subscription, plan, cvStats, onCancelS
       case "active":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/20 border border-green-500/50 text-green-200 text-xs">
-            <CheckCircle size={14} />
+            <CircleCheckBig size={14} />
             {t('subscription.currentPlan.status.active')}
           </span>
         );
       case "canceled":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/20 border border-orange-500/50 text-orange-200 text-xs">
-            <AlertTriangle size={14} />
+            <TriangleAlert size={14} />
             {t('subscription.currentPlan.status.canceled')}
           </span>
         );
       case "past_due":
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/20 border border-red-500/50 text-red-200 text-xs">
-            <XCircle size={14} />
+            <CircleX size={14} />
             {t('subscription.currentPlan.status.pastDue')}
           </span>
         );

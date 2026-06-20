@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Sparkles, HelpCircle, Rocket, X, Check } from 'lucide-react';
+import { Sparkles, CircleHelp, Rocket, X, Check } from 'lucide-react';
 import TipBox from '@/components/ui/TipBox';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { ONBOARDING_TIMINGS } from '@/lib/onboarding/onboardingConfig';
@@ -113,7 +113,7 @@ function createWelcomeScreens(t) {
     {
       type: 'problems',
       title: t('onboarding.welcome.screen2.title'),
-      icon: HelpCircle,
+      icon: CircleHelp,
       iconBg: 'bg-amber-500/20',
       iconColor: 'text-amber-400',
       problems: t('onboarding.welcome.screen2.problems'),

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
-import { RefreshCw, X, BarChart3 } from "lucide-react";
+import { RefreshCw, X, ChartColumn } from "lucide-react";
 import { parseApiError } from "@/lib/utils/errorHandler";
 import { useCreditCost } from "@/hooks/useCreditCost";
 import ScoreVisualization from "@/components/cv-improvement/ScoreVisualization";
@@ -394,7 +394,7 @@ export default function CVImprovementPanel({ cvFile, matchScoreStatus: parentMat
               <div className="flex items-center justify-between p-4 md:p-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                    <BarChart3 className="w-5 h-5 text-emerald-400" />
+                    <ChartColumn className="w-5 h-5 text-emerald-400" />
                   </div>
                   <h2 id="optimization-modal-title" className="text-lg font-bold text-white">
                     {labels.title}

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CreditCard, Zap, History, Crown, CheckCircle, XCircle, X } from "lucide-react";
+import { CreditCard, Zap, History, Crown, CircleCheckBig, CircleX, X } from "lucide-react";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { usePostHog } from "posthog-js/react";
@@ -287,7 +287,7 @@ export default function SubscriptionsPage({ user }) {
             role="alert"
           >
             <div className="flex items-start gap-3">
-              <CheckCircle className="flex-shrink-0 text-green-400 mt-0.5" size={20} />
+              <CircleCheckBig className="flex-shrink-0 text-green-400 mt-0.5" size={20} />
               <div className="flex-1">
                 <p className="font-medium text-green-100">{successMessage}</p>
               </div>
@@ -307,7 +307,7 @@ export default function SubscriptionsPage({ user }) {
             role="alert"
           >
             <div className="flex items-start gap-3">
-              <XCircle className="flex-shrink-0 text-red-400 mt-0.5" size={20} />
+              <CircleX className="flex-shrink-0 text-red-400 mt-0.5" size={20} />
               <div className="flex-1">
                 <p className="font-medium text-red-100">{error}</p>
               </div>
@@ -377,7 +377,7 @@ export default function SubscriptionsPage({ user }) {
                       <span className="text-white font-medium">{t('subscription.currentPlan.freePlan')}</span>
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-500/20 border border-green-500/50 text-green-200 text-xs">
-                      <CheckCircle size={14} />
+                      <CircleCheckBig size={14} />
                       {t('subscription.currentPlan.status.active')}
                     </span>
                   </div>

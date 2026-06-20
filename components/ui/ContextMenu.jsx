@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { MoreVertical } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
 
 /**
  * Menu contextuel (kebab ⋮) réutilisable
@@ -137,7 +137,7 @@ export default function ContextMenu({ items, className = "", compact = false, da
         {...(dataOnboarding ? { 'data-onboarding': dataOnboarding } : {})}
         data-onboarding-edit-kebab
       >
-        <MoreVertical className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+        <EllipsisVertical className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
       </button>
 
       {/* Menu dropdown via portal */}

@@ -39,7 +39,7 @@
     "grapesjs": "^0.22.14",
     "grapesjs-preset-newsletter": "^1.0.2",
     "jsdom": "^29.1.1",
-    "lucide-react": "^0.562.0",
+    "lucide-react": "^1.21.0",
     "luxon": "^3.7.2",
     "next": "^16.1.6",
     "next-auth": "^4.24.13",

@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
-import { Mail, Send, AlertTriangle, Activity } from 'lucide-react';
+import { Mail, Send, TriangleAlert, Activity } from 'lucide-react';
 
 // Limite SMTP OVH
 const SMTP_HOURLY_LIMIT = 200;
@@ -68,7 +68,7 @@ export function EmailDashboard({ refreshKey }) {
     return (
       <div className="bg-red-500/10 rounded-xl border border-red-500/30 p-6">
         <div className="flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-400" />
+          <TriangleAlert className="w-5 h-5 text-red-400" />
           <p className="text-red-400">Erreur: {error}</p>
         </div>
       </div>
@@ -146,7 +146,7 @@ export function EmailDashboard({ refreshKey }) {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-white/60">Échecs</span>
             <div className={`p-2 rounded-lg ${summary.totalFailed > 0 ? 'bg-red-500/20' : 'bg-white/10'}`}>
-              <AlertTriangle className={`w-4 h-4 ${summary.totalFailed > 0 ? 'text-red-400' : 'text-white/40'}`} />
+              <TriangleAlert className={`w-4 h-4 ${summary.totalFailed > 0 ? 'text-red-400' : 'text-white/40'}`} />
             </div>
           </div>
           <div className="flex items-baseline gap-2">
