@@ -28,9 +28,9 @@ async function syncStaging() {
     process.exit(1);
   }
 
-  const stripeTest = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripeTest = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' });
   const stripeLive = process.env.STRIPE_LIVE_SECRET_KEY
-    ? new Stripe(process.env.STRIPE_LIVE_SECRET_KEY)
+    ? new Stripe(process.env.STRIPE_LIVE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' })
     : null;
 
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
