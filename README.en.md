@@ -8,7 +8,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2024-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma_6-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Prisma_7-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4.1_%7C_o4--mini_%7C_GPT--4o-412991?logo=openai&logoColor=white)](https://openai.com/)
 [![Docker](https://img.shields.io/badge/Docker-Prod-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
@@ -154,14 +154,14 @@ Beyond AI, the project covers the entire SaaS spectrum:
 | Layer | Technologies | Scope |
 |-------|-------------|-------|
 | **Frontend** | Next.js 16 (App Router), React 19, Tailwind CSS 4 | 138 components |
-| **Backend** | Next.js API Routes, Prisma 6, PostgreSQL | 113 endpoints, 33 models |
+| **Backend** | Next.js API Routes, Prisma 7, PostgreSQL | 113 endpoints, 33 models |
 | **AI** | OpenAI API — GPT-4.1, GPT-4o, o4-mini, GPT-4.1-mini (Vision) | 2 pipelines, 12 phases |
 | **Auth** | NextAuth.js — email/password, Google, GitHub, Apple OAuth | JWT, 7-day sessions |
 | **Payments** | Stripe | À la carte credits, no subscription |
 | **Extension** | Vite, Manifest V3, Readability, Turndown | Chrome + Firefox, 11 job boards |
 | **Import / Export** | Vision API (PDF→JSON), PDF and DOCX | Custom templates |
 | **Multi-language** | 4 languages (FR, EN, DE, ES) | Language policy per prompt |
-| **Infra** | Docker, GitHub Actions, Caddy, Cloudflare | Automated CI/CD, continuous deployment |
+| **Infra** | Docker (Node 24), GitHub Actions, Caddy, Cloudflare | Automated CI/CD, continuous deployment |
 
 ---
 
