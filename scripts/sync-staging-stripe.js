@@ -15,6 +15,7 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
 const Stripe = require('stripe');
 
 async function syncStaging() {
@@ -32,7 +33,7 @@ async function syncStaging() {
     ? new Stripe(process.env.STRIPE_LIVE_SECRET_KEY)
     : null;
 
-  const prisma = new PrismaClient();
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
   const stats = { products: 0, prices: 0, plans: 0, packs: 0, coupons: 0, promos: 0, errors: [] };
 
   try {

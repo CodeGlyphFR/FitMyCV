@@ -1,8 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
 const fs = require('fs');
 const path = require('path');
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 const OUTPUT_DIR = path.join(__dirname, '../prisma/email-templates');
 
 function slugify(str) {
