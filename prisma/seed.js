@@ -632,9 +632,9 @@ const AI_MODEL_SETTINGS = [
   },
   {
     settingName: 'effort_cv_batch_summary',
-    value: 'none',
+    value: 'low',
     category: 'ai_models',
-    description: 'Effort de raisonnement pour model_cv_batch_summary (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+    description: 'Effort de raisonnement pour model_cv_batch_summary (none | low | medium | high). Raisonnement léger : plus fin, un peu plus lent',
   },
   {
     settingName: 'effort_generate_from_job_title',

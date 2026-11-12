@@ -68,6 +68,24 @@ Suggère un titre de poste ATS-friendly en analysant UNIQUEMENT :
 | Langue cible | Titre dans la langue cible du CV |
 | ⛔ Indépendant de l'offre | NE PAS utiliser les termes de l'offre d'emploi |
 | Fidèle au rôle | Refléter le MÉTIER RÉEL décrit, pas les outils |
+| ⛔ Niveau hiérarchique conservé | NE JAMAIS gonfler le niveau du titre original (voir ci-dessous) |
+
+### ⛔ RÈGLE ANTI-GONFLEMENT : Niveau hiérarchique
+
+Le titre adapté doit garder le **même niveau de responsabilité** que le titre original.
+
+Le titre original est fourni dans `_original_title_level_only` : il sert **UNIQUEMENT** à connaître ce niveau (le mot de niveau, ex: « Ingénieur », « Consultant », peut être repris). Le métier du titre reste déterminé par les responsabilités, et ce champ ne doit PAS servir à déterminer `domain`.
+
+| Titre original | Interdit | Autorisé |
+|----------------|----------|----------|
+| Ingénieur / Engineer | "Responsable…", "Chef de projet…", "Manager…", "Lead…" | "Ingénieur [métier réel]" |
+| Consultant | "Directeur…", "Manager…" | "Consultant [métier réel]" |
+| Chargé(e) de… / Assistant(e) | "Responsable…", "Chef…" | "Chargé(e) de [métier réel]" |
+| Lead / Work Package Leader / Responsable | "Directeur…", "Head of…" | "Responsable…", "Lead…" |
+
+**Seule exception** : l'expérience source mentionne EXPLICITEMENT l'encadrement d'une équipe ou la responsabilité d'un périmètre (ex: "Responsabilité d'une équipe de huit personnes") → un titre de niveau "Responsable" / "Lead" est permis.
+
+En cas de doute, **garder le niveau du titre original**.
 
 ### ⛔ PIÈGE À ÉVITER : Contamination par l'offre
 

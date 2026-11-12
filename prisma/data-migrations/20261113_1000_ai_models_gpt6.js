@@ -7,8 +7,8 @@
  * - gpt-4o / gpt-4o-mini / gpt-4.1 / gpt-4.1-mini : coupure le 2027-01-14
  *
  * Profils (qualité / rapidité) :
- * - Raisonnement : gpt-6.1-terra, effort low  (classification, compétences, score, pré-traitement)
- * - Rédaction    : gpt-6.1-terra, effort none (expériences, projets, résumé, import PDF…)
+ * - Raisonnement : gpt-6.1-terra, effort low  (classification, compétences, score, pré-traitement, résumé)
+ * - Rédaction    : gpt-6.1-terra, effort none (expériences, projets, import PDF…)
  * - Mécanique    : gpt-6-luna,    effort none (langues, traductions, détection…) — low pour l'extraction d'offres
  *
  * Tables impactées :
@@ -34,7 +34,7 @@ const TASKS = {
   // Rédaction / lecture PDF
   cv_batch_experience: [TERRA, 'none'],
   cv_batch_projects: [TERRA, 'none'],
-  cv_batch_summary: [TERRA, 'none'],
+  cv_batch_summary: [TERRA, 'low'],
   generate_from_job_title: [TERRA, 'none'],
   improve_experience: [TERRA, 'none'],
   improve_project: [TERRA, 'none'],

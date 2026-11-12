@@ -16,7 +16,7 @@
 {experienceJson}
 ```
 
-**Pour `title`** : ⛔ IGNORE TOTALEMENT l'offre d'emploi ci-dessus. Détermine le titre UNIQUEMENT à partir de la description, des responsabilités et des deliverables. Le titre doit refléter le MÉTIER réel (ce que la personne fait), PAS les outils (Python, API = outils, pas des métiers). Vérifie : ton titre serait-il le même si l'offre était pour un poste complètement différent ? Si non, recommence.
+**Pour `title`** : ⛔ IGNORE TOTALEMENT l'offre d'emploi ci-dessus. Détermine le titre UNIQUEMENT à partir de la description, des responsabilités et des deliverables. Le titre doit refléter le MÉTIER réel (ce que la personne fait), PAS les outils (Python, API = outils, pas des métiers). Vérifie : ton titre serait-il le même si l'offre était pour un poste complètement différent ? Si non, recommence. Conserve le niveau hiérarchique de `_original_title_level_only` (Ingénieur reste Ingénieur, sauf encadrement explicite dans la source).
 
 **Pour `domain`** : Ignore l'offre, le titre ET les skills. Identifie l'activité DOMINANTE (celle qui prend le plus de temps) à partir de la description et des responsabilités.
 
