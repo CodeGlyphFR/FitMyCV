@@ -1,7 +1,7 @@
 /**
  * Auth Receiver — Content Script
  *
- * Injected on fitmycv.io/extension-auth pages.
+ * Injected on fitmycv.fr/extension-auth pages.
  * Listens for postMessage from the page containing the extension JWT token
  * after OAuth login, and stores it in extension storage.
  */

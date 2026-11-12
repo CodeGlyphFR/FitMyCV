@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Authentification &amp; Intégration SaaS | FitMyCV.io</title>
+  <title>Authentification &amp; Intégration SaaS | FitMyCV</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -170,8 +170,8 @@ sequenceDiagram
 
         <h3>auth-receiver.js (Content Script)</h3>
 
-        <pre><code class="language-javascript">// Injecté uniquement sur *://app.fitmycv.io/extension-auth*
-// et *://dev.fitmycv.io/extension-auth*
+        <pre><code class="language-javascript">// Injecté uniquement sur *://app.fitmycv.fr/extension-auth*
+// et *://dev.fitmycv.fr/extension-auth*
 
 window.addEventListener('message', async (event) => {
   // Sécurité : accepte uniquement les messages du même origin

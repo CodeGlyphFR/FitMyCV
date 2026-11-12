@@ -7,7 +7,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const browser = process.env.TARGET_BROWSER || 'chrome';
 
-const apiBase = process.env.API_BASE || 'https://app.fitmycv.io';
+const apiBase = process.env.API_BASE || 'https://app.fitmycv.fr';
 
 // Simple plugin to copy static assets (icons + locales) to dist
 function copyStaticAssets(outDir) {

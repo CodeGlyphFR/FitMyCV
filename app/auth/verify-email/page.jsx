@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma';
 import dbEmitter from '@/lib/events/dbEmitter';
 
 export const metadata = {
-  title: "Vérification d'email - FitMyCV.io",
+  title: "Vérification d'email - FitMyCV",
   description: "Vérification de votre adresse email",
 };
 

@@ -83,7 +83,7 @@ async function attemptTokenRefresh() {
   if (!token || !shouldRefreshToken(token)) return false;
 
   try {
-    const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+    const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.fr';
     const response = await fetch(`${API_BASE}/api/auth/extension-token/refresh`, {
       method: 'POST',
       headers: {
@@ -126,7 +126,7 @@ async function pollTasks() {
     const syncData = await browser.storage.local.get(STORAGE_KEYS.LAST_SYNC);
     const since = syncData[STORAGE_KEYS.LAST_SYNC] || null;
 
-    const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+    const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.fr';
     const params = new URLSearchParams({ deviceId });
     if (since) params.set('since', String(since));
 

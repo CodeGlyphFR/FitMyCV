@@ -1,4 +1,4 @@
-# Documentation FitMyCV.io
+# Documentation FitMyCV
 
 > Index maître de la documentation technique
 
@@ -8,7 +8,7 @@
 
 | Propriété | Valeur |
 |-----------|--------|
-| **Nom** | FitMyCV.io |
+| **Nom** | FitMyCV |
 | **Version** | 1.8.8.1 |
 | **Type** | Application SaaS |
 | **Framework** | Next.js 16.1.1 (App Router) |

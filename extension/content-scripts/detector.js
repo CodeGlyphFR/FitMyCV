@@ -20,7 +20,7 @@ import {
 // Signal presence to the FitMyCV web app for extension detection
 (function signalPresence() {
   const host = location.hostname;
-  if (host === 'app.fitmycv.io' || host === 'dev.fitmycv.io' || host === 'localhost') {
+  if (host === 'app.fitmycv.fr' || host === 'dev.fitmycv.fr' || host === 'localhost') {
     document.documentElement.dataset.fitmycvExtension = 'true';
     window.dispatchEvent(new CustomEvent('fitmycv:extension-ready'));
   }

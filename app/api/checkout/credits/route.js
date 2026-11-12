@@ -129,7 +129,7 @@ export async function POST(request) {
       invoice_creation: {
         enabled: true,
         invoice_data: {
-          description: `Achat de ${pack.creditAmount} crédits FitMyCV.io`,
+          description: `Achat de ${pack.creditAmount} crédits FitMyCV`,
           metadata: {
             userId,
             packId: packId.toString(),

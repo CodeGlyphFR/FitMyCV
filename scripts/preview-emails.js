@@ -28,20 +28,20 @@ const OUTPUT_DIR = path.join(__dirname, '../.email-preview');
 const TEST_VARIABLES = {
   email_verification: {
     userName: 'Jean Dupont',
-    verificationUrl: 'https://app.fitmycv.io/auth/verify-email?token=abc123xyz',
+    verificationUrl: 'https://app.fitmycv.fr/auth/verify-email?token=abc123xyz',
   },
   welcome: {
     userName: 'Marie Martin',
-    loginUrl: 'https://app.fitmycv.io/auth/signin',
+    loginUrl: 'https://app.fitmycv.fr/auth/signin',
     welcomeCredits: '5',
   },
   password_reset: {
     userName: 'Pierre Bernard',
-    resetUrl: 'https://app.fitmycv.io/auth/reset-password?token=reset123xyz',
+    resetUrl: 'https://app.fitmycv.fr/auth/reset-password?token=reset123xyz',
   },
   email_change: {
     userName: 'Sophie Durand',
-    verificationUrl: 'https://app.fitmycv.io/auth/verify-email-change?token=change123xyz',
+    verificationUrl: 'https://app.fitmycv.fr/auth/verify-email-change?token=change123xyz',
     newEmail: 'sophie.new@example.com',
   },
   purchase_credits: {
@@ -166,7 +166,7 @@ function generateIndexHtml(templates) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Preview Emails - FitMyCV.io</title>
+  <title>Preview Emails - FitMyCV</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -205,7 +205,7 @@ function generateIndexHtml(templates) {
 <body>
   <div class="container">
     <h1>Preview des Emails</h1>
-    <p class="subtitle">FitMyCV.io - Templates avec support Dark/Light mode</p>
+    <p class="subtitle">FitMyCV - Templates avec support Dark/Light mode</p>
 
     <div class="tip">
       <strong>Astuce :</strong> Le mode "Auto" s'adapte aux préférences de votre système.
@@ -272,7 +272,7 @@ function startServer(port = 3333) {
   server.listen(port, () => {
     log('\n╔════════════════════════════════════════════════════════════╗', 'cyan');
     log('║                                                            ║', 'cyan');
-    log('║   🎨  FitMyCV.io - Email Preview Server                    ║', 'cyan');
+    log('║   🎨  FitMyCV - Email Preview Server                    ║', 'cyan');
     log('║                                                            ║', 'cyan');
     log('╚════════════════════════════════════════════════════════════╝', 'cyan');
     log('', 'reset');

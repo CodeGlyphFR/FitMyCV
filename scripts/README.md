@@ -1,6 +1,6 @@
 # 🛠️ Scripts & Automatisation
 
-Ce dossier contient les outils de maintenance et les moteurs de l'automatisation du projet FitMyCV.io.
+Ce dossier contient les outils de maintenance et les moteurs de l'automatisation du projet FitMyCV.
 
 ## ⚠️ Avertissement Production
 

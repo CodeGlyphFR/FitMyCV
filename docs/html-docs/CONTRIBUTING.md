@@ -1,6 +1,6 @@
 # Guide de Contribution - Documentation HTML
 
-Ce document décrit la méthodologie à suivre pour ajouter ou modifier des éléments dans la documentation HTML de FitMyCV.io.
+Ce document décrit la méthodologie à suivre pour ajouter ou modifier des éléments dans la documentation HTML de FitMyCV.
 
 ## Structure des Fichiers
 
@@ -109,7 +109,7 @@ Ajouter les endpoints avec leur documentation :
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Titre Page | FitMyCV.io</title>
+  <title>Titre Page | FitMyCV</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patterns & Conventions | FitMyCV.io</title>
+  <title>Patterns & Conventions | FitMyCV</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
 
         <h1>Patterns & Conventions</h1>
         <p class="lead">
-          Patterns de code et conventions utilisés dans FitMyCV.io pour garantir cohérence et maintenabilité.
+          Patterns de code et conventions utilisés dans FitMyCV pour garantir cohérence et maintenabilité.
         </p>
 
         <h2>Pattern API Route</h2>
@@ -489,10 +489,10 @@ export async function withExtensionAuth(request) {
           <div class="diagram-title">Pipeline de déploiement</div>
           <div class="mermaid">
 flowchart LR
-    PR["Demande de fusion<br/>vers main"] --> PreProd["Pre-prod<br/>dev.fitmycv.io:3001"]
+    PR["Demande de fusion<br/>vers main"] --> PreProd["Pre-prod<br/>dev.fitmycv.fr:3001"]
     PreProd --> Test["Tests sur<br/>base dupliquée"]
     Merge["Fusion vers main"] --> Bump["Mise à jour<br/>version automatique"]
-    Bump --> Deploy["Déploiement prod<br/>app.fitmycv.io:3000"]
+    Bump --> Deploy["Déploiement prod<br/>app.fitmycv.fr:3000"]
     Deploy --> Sync["Synchronisation<br/>branches release + dev"]
 
     style PR fill:#0ea5e9,stroke:#0284c7,color:#fff

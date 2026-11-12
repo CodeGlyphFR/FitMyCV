@@ -20,7 +20,7 @@
   },
   "account": {
     "meta": {
-      "title": "Mon compte - FitMyCV.io",
+      "title": "Mon compte - FitMyCV",
       "description": "Gérez vos informations personnelles et vos préférences"
     },
     "backToCvs": "Retour",
@@ -83,7 +83,7 @@
     },
     "tutorial": {
       "title": "Tutoriel d'intégration",
-      "description": "Relancez le tutoriel de prise en main pour redécouvrir les fonctionnalités de FitMyCV.io",
+      "description": "Relancez le tutoriel de prise en main pour redécouvrir les fonctionnalités de FitMyCV",
       "resetButton": "Relancer le tutoriel",
       "resetting": "Réinitialisation...",
       "success": "Le tutoriel a été réinitialisé. Redirection...",

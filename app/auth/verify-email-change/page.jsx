@@ -5,7 +5,7 @@ import logger from '@/lib/security/secureLogger';
 import prisma from '@/lib/prisma';
 
 export const metadata = {
-  title: "Vérification de changement d'email - FitMyCV.io",
+  title: "Vérification de changement d'email - FitMyCV",
   description: "Confirmation de votre nouvelle adresse email",
 };
 

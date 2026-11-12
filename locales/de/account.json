@@ -20,7 +20,7 @@
   },
   "account": {
     "meta": {
-      "title": "Mein Konto - FitMyCV.io",
+      "title": "Mein Konto - FitMyCV",
       "description": "Verwalten Sie Ihre persönlichen Informationen und Einstellungen"
     },
     "backToCvs": "Zurück",
@@ -83,7 +83,7 @@
     },
     "tutorial": {
       "title": "Einführungs-Tutorial",
-      "description": "Starten Sie das Einführungs-Tutorial neu, um die Funktionen von FitMyCV.io wiederzuentdecken",
+      "description": "Starten Sie das Einführungs-Tutorial neu, um die Funktionen von FitMyCV wiederzuentdecken",
       "resetButton": "Tutorial neu starten",
       "resetting": "Wird zurückgesetzt...",
       "success": "Das Tutorial wurde zurückgesetzt. Weiterleitung...",

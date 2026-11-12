@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Nouveau CV - FitMyCV.io",
+  title: "Nouveau CV - FitMyCV",
   description: "Créez un nouveau CV personnalisé",
 };
 

@@ -164,7 +164,7 @@ async function showMainView() {
 
 // --- Logo link ---
 
-const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.fr';
 document.getElementById('logo-link').addEventListener('click', (e) => {
   e.preventDefault();
   browser.tabs.create({ url: API_BASE });

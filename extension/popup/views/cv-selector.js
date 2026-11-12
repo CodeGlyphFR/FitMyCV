@@ -50,7 +50,7 @@ export async function initCvSelector(container, onChange) {
       `;
       container.querySelector('#link-create-cv')?.addEventListener('click', (e) => {
         e.preventDefault();
-        const apiBase = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+        const apiBase = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.fr';
         browser.tabs.create({ url: apiBase });
       });
       return;

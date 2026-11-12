@@ -4,7 +4,7 @@
 
 # FitMyCV — SaaS d'optimisation de CV par IA
 
-[![En production](https://img.shields.io/badge/En_production-app.fitmycv.io-00C853)](https://app.fitmycv.io)
+[![En production](https://img.shields.io/badge/En_production-app.fitmycv.fr-00C853)](https://app.fitmycv.fr)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2024-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
@@ -12,7 +12,7 @@
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4.1_%7C_o4--mini_%7C_GPT--4o-412991?logo=openai&logoColor=white)](https://openai.com/)
 [![Docker](https://img.shields.io/badge/Docker-Prod-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
-**[app.fitmycv.io](https://app.fitmycv.io)** · **[fitmycv.io](https://www.fitmycv.io)**
+**[app.fitmycv.fr](https://app.fitmycv.fr)** · **[fitmycv.fr](https://www.fitmycv.fr)**
 
 <img src="public/icons/fr.svg" alt="Français" width="24" height="24">&nbsp;&nbsp;<a href="README.en.md"><img src="public/icons/gb.svg" alt="English" width="24" height="24"></a>
 
@@ -20,7 +20,7 @@
 
 <div align="center">
 
-### [Documentation](https://app.fitmycv.io/docs)
+### [Documentation](https://app.fitmycv.fr/docs)
 
 Architecture · 113 endpoints API · 33 modèles de données · 138 composants React
 
