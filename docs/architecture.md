@@ -1,4 +1,4 @@
-# Architecture Technique - FitMyCV.io
+# Architecture Technique - FitMyCV
 
 > Application SaaS de génération de CV optimisés par IA
 
@@ -6,7 +6,7 @@
 
 ## Vue d'ensemble
 
-**FitMyCV.io** est une application web full-stack monolithique construite avec Next.js 16 (App Router). Elle permet aux utilisateurs de créer, optimiser et exporter des CV personnalisés grâce à l'intelligence artificielle.
+**FitMyCV** est une application web full-stack monolithique construite avec Next.js 16 (App Router). Elle permet aux utilisateurs de créer, optimiser et exporter des CV personnalisés grâce à l'intelligence artificielle.
 
 ### Caractéristiques architecturales
 
@@ -531,7 +531,7 @@ locales/
 | Environnement | URL | Base de données |
 |---------------|-----|-----------------|
 | Development | localhost:3001 | PostgreSQL local |
-| Production | app.fitmycv.io | PostgreSQL managed |
+| Production | app.fitmycv.fr | PostgreSQL managed |
 
 ### Variables d'environnement critiques
 
@@ -541,7 +541,7 @@ DATABASE_URL="postgresql://..."
 
 # Auth
 NEXTAUTH_SECRET="..."
-NEXTAUTH_URL="https://app.fitmycv.io"
+NEXTAUTH_URL="https://app.fitmycv.fr"
 
 # OpenAI
 OPENAI_API_KEY="sk-..."
@@ -615,10 +615,10 @@ Génère les messages d'acceptation des CGV localisés pour Stripe Checkout.
 import { getTermsMessage } from '@/lib/stripe/checkoutLocale';
 
 getTermsMessage('fr')
-// → "J'accepte les [Conditions Générales de Vente](https://app.fitmycv.io/terms)."
+// → "J'accepte les [Conditions Générales de Vente](https://app.fitmycv.fr/terms)."
 
 getTermsMessage('en')
-// → "I accept the [Terms of Service](https://app.fitmycv.io/terms)."
+// → "I accept the [Terms of Service](https://app.fitmycv.fr/terms)."
 ```
 
 **Langues supportées :** `fr`, `en`, `es`, `de`

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Extension Navigateur - Vue d'ensemble | FitMyCV.io</title>
+  <title>Extension Navigateur - Vue d'ensemble | FitMyCV</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -95,7 +95,7 @@ graph TB
         LIB["Librairies partagées"]
     end
 
-    subgraph SaaS["SaaS FitMyCV.io"]
+    subgraph SaaS["SaaS FitMyCV"]
         API_AUTH["Authentification<br/>extension"]
         API_REFRESH["Renouvellement<br/>du jeton"]
         API_SESSION["Jeton depuis<br/>session web"]
@@ -221,8 +221,8 @@ graph TB
         <h3>Host Permissions</h3>
 
         <pre><code class="language-json">"host_permissions": [
-  "https://app.fitmycv.io/*",
-  "https://dev.fitmycv.io/*"
+  "https://app.fitmycv.fr/*",
+  "https://dev.fitmycv.fr/*"
 ]</code></pre>
 
         <p>Ces permissions permettent au service worker d'effectuer des requêtes <code>fetch()</code> vers les API du SaaS (authentification, polling, génération).</p>
@@ -256,7 +256,7 @@ graph TB
             <tr>
               <td><code>auth-receiver.js</code></td>
               <td><code>document_idle</code></td>
-              <td><code>*://app.fitmycv.io/extension-auth*</code><br/><code>*://dev.fitmycv.io/extension-auth*</code></td>
+              <td><code>*://app.fitmycv.fr/extension-auth*</code><br/><code>*://dev.fitmycv.fr/extension-auth*</code></td>
               <td>Réception du JWT après login OAuth</td>
             </tr>
           </tbody>
@@ -281,7 +281,7 @@ graph TB
           <tbody>
             <tr>
               <td><code>__API_BASE__</code></td>
-              <td><code>https://app.fitmycv.io</code></td>
+              <td><code>https://app.fitmycv.fr</code></td>
               <td>URL de base de l'API SaaS (injecté via <code>define</code> dans Vite)</td>
             </tr>
             <tr>
@@ -311,19 +311,19 @@ graph TB
             <tr>
               <td><code>npm run dev</code></td>
               <td>Build watch + mode développement</td>
-              <td><code>https://dev.fitmycv.io</code></td>
+              <td><code>https://dev.fitmycv.fr</code></td>
               <td><code>dist/chrome/</code></td>
             </tr>
             <tr>
               <td><code>npm run build:chrome</code></td>
               <td>Build production Chrome</td>
-              <td><code>https://app.fitmycv.io</code></td>
+              <td><code>https://app.fitmycv.fr</code></td>
               <td><code>dist/chrome/</code></td>
             </tr>
             <tr>
               <td><code>npm run build:firefox</code></td>
               <td>Build production Firefox</td>
-              <td><code>https://app.fitmycv.io</code></td>
+              <td><code>https://app.fitmycv.fr</code></td>
               <td><code>dist/firefox/</code></td>
             </tr>
             <tr>
@@ -347,7 +347,7 @@ graph TB
 import webExtension from 'vite-plugin-web-extension';
 
 const browser = process.env.TARGET_BROWSER || 'chrome';
-const apiBase = process.env.API_BASE || 'https://app.fitmycv.io';
+const apiBase = process.env.API_BASE || 'https://app.fitmycv.fr';
 
 export default defineConfig({
   define: {

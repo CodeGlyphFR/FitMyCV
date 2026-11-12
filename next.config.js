@@ -1,6 +1,6 @@
 const { version } = require("./package.json");
 
-const SITE_NAME = "FitMyCV.io";
+const SITE_NAME = "FitMyCV";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -25,7 +25,7 @@ const nextConfig = {
   compress: true,
 
   // Next.js 16: Autoriser les requêtes cross-origin en développement
-  allowedDevOrigins: ['dev.fitmycv.io'],
+  allowedDevOrigins: ['dev.fitmycv.fr'],
 
   // Next.js 16: serverComponentsExternalPackages déplacé hors de experimental
   serverExternalPackages: ['puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth', 'pdf-parse', 'pdfjs-dist', '@prisma/client', '@prisma/adapter-pg', 'pg'],

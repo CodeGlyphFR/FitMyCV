@@ -1,4 +1,4 @@
-# Composants React - FitMyCV.io
+# Composants React - FitMyCV
 
 > Documentation des 138 fichiers organisés en 20 domaines (150+ composants)
 

@@ -5,7 +5,7 @@
  * Sécurisé par CRON_SECRET dans le header Authorization
  *
  * Usage:
- * curl -X POST https://fitmycv.io/api/cron/data-retention \
+ * curl -X POST https://fitmycv.fr/api/cron/data-retention \
  *   -H "Authorization: Bearer $CRON_SECRET"
  */
 

@@ -7,8 +7,8 @@ import { useScrollLock } from '@/hooks/useScrollLock';
 // Test data for variable substitution
 const TEST_DATA = {
   userName: 'Jean Dupont',
-  verificationUrl: 'https://FitMyCV.io/auth/verify-email?token=test-token-123',
-  resetUrl: 'https://FitMyCV.io/auth/reset-password?token=test-token-456',
+  verificationUrl: 'https://app.fitmycv.fr/auth/verify-email?token=test-token-123',
+  resetUrl: 'https://app.fitmycv.fr/auth/reset-password?token=test-token-456',
   newEmail: 'nouveau.email@test.com',
 };
 

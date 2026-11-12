@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Déploiement &amp; Infrastructure | FitMyCV.io</title>
+  <title>Déploiement &amp; Infrastructure | FitMyCV</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@
 
         <h1>Déploiement &amp; Infrastructure</h1>
         <p class="lead">
-          Architecture Docker multi-stage, pipelines CI/CD GitHub Actions sur runner auto-hébergé, variables d'environnement, health checks et configuration Next.js 16 standalone. Le déploiement couvre deux environnements : pre-prod (<code>dev.fitmycv.io</code>) et production (<code>app.fitmycv.io</code>).
+          Architecture Docker multi-stage, pipelines CI/CD GitHub Actions sur runner auto-hébergé, variables d'environnement, health checks et configuration Next.js 16 standalone. Le déploiement couvre deux environnements : pre-prod (<code>dev.fitmycv.fr</code>) et production (<code>app.fitmycv.fr</code>).
         </p>
 
         <!-- ==================== ARCHITECTURE DOCKER ==================== -->
@@ -148,7 +148,7 @@ RUN npm ci --omit=dev</code></pre>
             </tr>
             <tr>
               <td><code>NEXT_PUBLIC_SITE_URL</code></td>
-              <td>URL publique du site (ex: <code>https://app.fitmycv.io</code>)</td>
+              <td>URL publique du site (ex: <code>https://app.fitmycv.fr</code>)</td>
             </tr>
             <tr>
               <td><code>NEXT_PUBLIC_APP_URL</code></td>
@@ -329,7 +329,7 @@ flowchart LR
     - npm audit --audit-level=critical || true</code></pre>
 
         <h4>Job 2 — Deploy Preview (Staging)</h4>
-        <p>Déploie l'application sur <code>dev.fitmycv.io</code> (port 3001) avec une base de données clonée depuis la production :</p>
+        <p>Déploie l'application sur <code>dev.fitmycv.fr</code> (port 3001) avec une base de données clonée depuis la production :</p>
 
         <ol>
           <li><strong>Clone DB</strong> — <code>pg_dump fitmycv_prod</code> → <code>fitmycv_release</code> (uniquement à l'ouverture de la PR)</li>
@@ -505,7 +505,7 @@ docker exec fitmycv-prod node scripts/run-data-migrations.js</code></pre>
             <tr>
               <td><code>EMAIL_FROM</code></td>
               <td>Email</td>
-              <td>Adresse d'expédition (ex: <code>FitMyCV &lt;noreply@fitmycv.io&gt;</code>)</td>
+              <td>Adresse d'expédition (ex: <code>FitMyCV &lt;noreply@fitmycv.fr&gt;</code>)</td>
             </tr>
             <tr>
               <td><code>TRUSTPILOT_INVITE_EMAIL</code></td>
@@ -626,7 +626,7 @@ docker exec fitmycv-prod node scripts/run-data-migrations.js</code></pre>
   // Version et nom du site injectés comme variables d'env
   env: {
     NEXT_PUBLIC_APP_VERSION: version,  // Depuis package.json
-    NEXT_PUBLIC_SITE_NAME: "FitMyCV.io",
+    NEXT_PUBLIC_SITE_NAME: "FitMyCV",
   },
 
   // Optimisation des images (AVIF + WebP)
@@ -683,7 +683,7 @@ docker exec fitmycv-prod node scripts/run-data-migrations.js</code></pre>
             </tr>
             <tr>
               <td><code>allowedDevOrigins</code></td>
-              <td><code>['dev.fitmycv.io']</code></td>
+              <td><code>['dev.fitmycv.fr']</code></td>
               <td>Autorise les requêtes cross-origin en développement depuis le domaine de staging</td>
             </tr>
             <tr>
@@ -743,7 +743,7 @@ docker exec fitmycv-prod node scripts/run-data-migrations.js</code></pre>
 flowchart TB
     Dev["Développeur push sur dev"] --> PR["Ouvre PR vers main"]
     PR --> CI["Validation du build"]
-    CI --> Staging["Déploiement sur<br/>dev.fitmycv.io"]
+    CI --> Staging["Déploiement sur<br/>dev.fitmycv.fr"]
     Staging --> Clone["Cloner la base de<br/>données vers staging"]
     Clone --> Test["Tests manuels<br/>sur staging"]
     Test -->|"Approuve"| Merge["Merge PR dans main"]

@@ -119,7 +119,7 @@ async function renderTasks(container) {
   container.style.display = '';
   container.innerHTML = '';
 
-  const apiBase = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+  const apiBase = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.fr';
   const TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'];
   const hasTerminalTasks = tasks.some(t => TERMINAL_STATUSES.includes(t.status));
 

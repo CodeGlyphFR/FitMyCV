@@ -1,4 +1,4 @@
-# Arborescence Source - FitMyCV.io
+# Arborescence Source - FitMyCV
 
 > Structure complète du projet avec annotations
 

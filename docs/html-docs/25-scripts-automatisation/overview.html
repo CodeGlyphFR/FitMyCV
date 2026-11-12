@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scripts d'Automatisation | FitMyCV.io</title>
+  <title>Scripts d'Automatisation | FitMyCV</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
@@ -515,7 +515,7 @@ graph LR
 {
   "name": "Bienvenue sur FitMyCV",
   "triggerName": "welcome",
-  "subject": "Bienvenue sur FitMyCV.io !",
+  "subject": "Bienvenue sur FitMyCV !",
   "variables": ["userName", "loginUrl", "welcomeCredits"],
   "htmlContent": "&lt;!DOCTYPE html&gt;...",
   "designJson": { ... },
@@ -579,20 +579,20 @@ node scripts/preview-emails.js --port 4000</code></pre>
         <pre><code class="language-javascript">const TEST_VARIABLES = {
   email_verification: {
     userName: 'Jean Dupont',
-    verificationUrl: 'https://app.fitmycv.io/auth/verify-email?token=abc123xyz',
+    verificationUrl: 'https://app.fitmycv.fr/auth/verify-email?token=abc123xyz',
   },
   welcome: {
     userName: 'Marie Martin',
-    loginUrl: 'https://app.fitmycv.io/auth/signin',
+    loginUrl: 'https://app.fitmycv.fr/auth/signin',
     welcomeCredits: '5',
   },
   password_reset: {
     userName: 'Pierre Bernard',
-    resetUrl: 'https://app.fitmycv.io/auth/reset-password?token=reset123xyz',
+    resetUrl: 'https://app.fitmycv.fr/auth/reset-password?token=reset123xyz',
   },
   email_change: {
     userName: 'Sophie Durand',
-    verificationUrl: 'https://app.fitmycv.io/auth/verify-email-change?token=...',
+    verificationUrl: 'https://app.fitmycv.fr/auth/verify-email-change?token=...',
     newEmail: 'sophie.new@example.com',
   },
   purchase_credits: {
@@ -651,7 +651,7 @@ http://localhost:3001/purchase_credits.html</code></pre>
             <tr>
               <td><code>node scripts/sync-staging-stripe.js</code></td>
               <td>Staging</td>
-              <td>Avant tests de paiement sur <code>dev.fitmycv.io</code></td>
+              <td>Avant tests de paiement sur <code>dev.fitmycv.fr</code></td>
             </tr>
             <tr>
               <td><code>node scripts/export-email-templates.js</code></td>

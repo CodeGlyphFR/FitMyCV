@@ -94,7 +94,7 @@ function generatePreviewHtml(cvData, language = 'fr', selections = null, section
     ${getPreviewStyles()}
     ${isDemoMode ? `
     .cv-container::before {
-      content: 'fitmycv.io';
+      content: 'fitmycv.fr';
       position: absolute;
       top: 50%;
       left: 50%;

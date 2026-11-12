@@ -1,4 +1,4 @@
-# Référence API - FitMyCV.io
+# Référence API - FitMyCV
 
 > 114 endpoints REST documentés
 

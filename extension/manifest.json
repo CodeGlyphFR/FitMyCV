@@ -11,8 +11,8 @@
     }
   },
   "name": "FitMyCV - Job Offer Extractor",
-  "version": "1.2.0",
-  "description": "Extract job offers and generate tailored CVs with FitMyCV.io",
+  "version": "1.3.0",
+  "description": "Extract job offers and generate tailored CVs with FitMyCV",
   "permissions": [
     "storage",
     "activeTab",
@@ -20,8 +20,8 @@
     "cookies"
   ],
   "host_permissions": [
-    "https://app.fitmycv.io/*",
-    "https://dev.fitmycv.io/*"
+    "https://app.fitmycv.fr/*",
+    "https://dev.fitmycv.fr/*"
   ],
   "background": {
     "scripts": ["background/service-worker.js"],
@@ -57,8 +57,8 @@
     },
     {
       "matches": [
-        "*://app.fitmycv.io/extension-auth*",
-        "*://dev.fitmycv.io/extension-auth*"
+        "*://app.fitmycv.fr/extension-auth*",
+        "*://dev.fitmycv.fr/extension-auth*"
       ],
       "js": [
         "content-scripts/auth-receiver.js"

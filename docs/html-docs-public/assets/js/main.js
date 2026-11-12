@@ -1,5 +1,5 @@
 /**
- * FitMyCV.io - Documentation Technique
+ * FitMyCV - Documentation Technique
  * JavaScript principal : recherche, navigation, Mermaid
  */
 

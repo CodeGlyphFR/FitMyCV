@@ -69,7 +69,7 @@
     "contact": {
       "title": "Any questions?",
       "description": "Our team is here to help. Don't hesitate to reach out!",
-      "email": "contact@fitmycv.io",
+      "email": "contact@fitmycv.fr",
       "linksPrefix": "Also check our",
       "linksTerms": "terms of service",
       "linksAnd": "and",
@@ -83,16 +83,16 @@
         "id": "acceptance",
         "title": "1. Acceptance of Terms",
         "content": [
-          { "type": "paragraph", "text": "By using FitMyCV.io and making a credit purchase, you unconditionally accept these Terms of Service." },
+          { "type": "paragraph", "text": "By using FitMyCV and making a credit purchase, you unconditionally accept these Terms of Service." },
           { "type": "paragraph", "text": "If you do not accept these terms, please do not use our paid services." },
-          { "type": "paragraph", "text": "Use of FitMyCV.io is restricted to individuals aged 16 and over." }
+          { "type": "paragraph", "text": "Use of FitMyCV is restricted to individuals aged 16 and over." }
         ]
       },
       {
         "id": "services",
         "title": "2. Service Description",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io is a CV creation and optimization platform using artificial intelligence." },
+          { "type": "paragraph", "text": "FitMyCV is a CV creation and optimization platform using artificial intelligence." },
           { "type": "subtitle", "text": "2.1. Free services" },
           { "type": "list", "items": [
             "Unlimited manual CV creation",
@@ -138,7 +138,7 @@
         "title": "5. Refund Policy",
         "content": [
           { "type": "paragraph", "text": "All credit purchases are final once the service has been used (CV generation, export, translation, etc.). By making a purchase, you acknowledge having read and accepted this clause." },
-          { "type": "paragraph", "text": "In case of technical issues preventing service use, contact our support at support@fitmycv.io. We will review your situation individually.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" }
+          { "type": "paragraph", "text": "In case of technical issues preventing service use, contact our support at support@fitmycv.fr. We will review your situation individually.", "link": "mailto:support@fitmycv.fr", "linkText": "support@fitmycv.fr" }
         ]
       },
       {
@@ -157,7 +157,7 @@
         "id": "ai",
         "title": "7. Artificial Intelligence",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io acts as a \"deployer\" of an artificial intelligence system within the meaning of European Regulation 2024/1689 (AI Act)." },
+          { "type": "paragraph", "text": "FitMyCV acts as a \"deployer\" of an artificial intelligence system within the meaning of European Regulation 2024/1689 (AI Act)." },
           { "type": "subtitle", "text": "7.1. Features using AI" },
           { "type": "list", "items": [
             "CV generation and adaptation",
@@ -178,8 +178,8 @@
         "id": "intellectual-property",
         "title": "8. Intellectual Property",
         "content": [
-          { "type": "paragraph", "text": "The CVs you create via FitMyCV.io belong to you. You retain all rights to the content you provide." },
-          { "type": "paragraph", "text": "The interface, source code, algorithms, and all elements of FitMyCV.io are the exclusive property of the publisher and are protected by copyright." }
+          { "type": "paragraph", "text": "The CVs you create via FitMyCV belong to you. You retain all rights to the content you provide." },
+          { "type": "paragraph", "text": "The interface, source code, algorithms, and all elements of FitMyCV are the exclusive property of the publisher and are protected by copyright." }
         ]
       },
       {
@@ -187,7 +187,7 @@
         "title": "9. Limitation of Liability",
         "content": [
           { "type": "paragraph", "text": "Services are provided \"as is\", without warranty of any kind, express or implied." },
-          { "type": "paragraph", "text": "FitMyCV.io does not guarantee:" },
+          { "type": "paragraph", "text": "FitMyCV does not guarantee:" },
           { "type": "list", "items": [
             "Continuous and uninterrupted service availability",
             "The absence of technical errors or bugs",
@@ -213,14 +213,14 @@
             "Any use contrary to public morals or order",
             "Creation of illegal, defamatory content or content infringing third-party rights"
           ]},
-          { "type": "highlight", "variant": "danger", "title": "Sanctions:", "text": "In case of violation, FitMyCV.io reserves the right to suspend or delete the account without notice or refund." }
+          { "type": "highlight", "variant": "danger", "title": "Sanctions:", "text": "In case of violation, FitMyCV reserves the right to suspend or delete the account without notice or refund." }
         ]
       },
       {
         "id": "termination",
         "title": "11. Account Termination and Deletion",
         "content": [
-          { "type": "paragraph", "text": "You can delete your account at any time from your personal space settings or by contacting us at support@fitmycv.io.", "link": "mailto:support@fitmycv.io", "linkText": "support@fitmycv.io" },
+          { "type": "paragraph", "text": "You can delete your account at any time from your personal space settings or by contacting us at support@fitmycv.fr.", "link": "mailto:support@fitmycv.fr", "linkText": "support@fitmycv.fr" },
           { "type": "paragraph", "text": "Account deletion results in the permanent deletion of all your data (CVs, job offers, history) in accordance with our privacy policy.", "link": "/privacy", "linkText": "privacy policy" },
           { "type": "highlight", "variant": "warning", "title": "Unused credits:", "text": "Remaining credits on your account are lost upon deletion and cannot be refunded or transferred." }
         ]
@@ -237,7 +237,7 @@
         "title": "13. Consumer Mediation",
         "content": [
           { "type": "paragraph", "text": "In accordance with Articles L.616-1 and R.616-1 of the French Consumer Code, in case of dispute, the User may freely resort to a consumer mediator." },
-          { "type": "paragraph", "text": "The name and contact details of the competent mediator will be provided upon simple request to contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" },
+          { "type": "paragraph", "text": "The name and contact details of the competent mediator will be provided upon simple request to contact@fitmycv.fr.", "link": "mailto:contact@fitmycv.fr", "linkText": "contact@fitmycv.fr" },
           { "type": "highlight", "variant": "info", "title": "ODR Platform:", "text": "You may also use the European Commission's Online Dispute Resolution platform: https://ec.europa.eu/consumers/odr" }
         ]
       },
@@ -253,13 +253,13 @@
         "id": "legal-info",
         "title": "15. Legal Information",
         "content": [
-          { "type": "paragraph", "text": "Publisher of FitMyCV.io service:" },
+          { "type": "paragraph", "text": "Publisher of FitMyCV service:" },
           { "type": "highlight", "variant": "info", "text": "Codeglyph - SIRET: 995 375 862 00019 - 200 rue de la Croix Nivert, 75015 Paris, France - Email: contact@codeglyph.fr - EU VAT number: FR58995375862" },
           { "type": "subtitle", "text": "Hosting" },
           { "type": "paragraph", "text": "The service is self-hosted by the publisher." },
           { "type": "subtitle", "text": "Data Protection" },
           { "type": "paragraph", "text": "To learn more about how we process your personal data, please see our privacy policy.", "link": "/privacy", "linkText": "privacy policy" },
-          { "type": "paragraph", "text": "For any questions regarding these Terms, contact us at contact@fitmycv.io.", "link": "mailto:contact@fitmycv.io", "linkText": "contact@fitmycv.io" }
+          { "type": "paragraph", "text": "For any questions regarding these Terms, contact us at contact@fitmycv.fr.", "link": "mailto:contact@fitmycv.fr", "linkText": "contact@fitmycv.fr" }
         ]
       }
     ]
@@ -271,7 +271,7 @@
         "id": "controller",
         "title": "1. Data Controller",
         "content": [
-          { "type": "paragraph", "text": "Codeglyph operates the FitMyCV.io website and, as such, collects and processes personal data about you." },
+          { "type": "paragraph", "text": "Codeglyph operates the FitMyCV website and, as such, collects and processes personal data about you." },
           { "type": "infobox", "text": "Codeglyph\nSIRET: 995 375 862 00019\n200 rue de la Croix Nivert, 75015 Paris, France\nEmail: contact@codeglyph.fr" }
         ]
       },
@@ -279,7 +279,7 @@
         "id": "age",
         "title": "2. Minimum Age",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io is intended for individuals aged 16 and over. By using this service, you confirm that you meet the age requirement." }
+          { "type": "paragraph", "text": "FitMyCV is intended for individuals aged 16 and over. By using this service, you confirm that you meet the age requirement." }
         ]
       },
       {
@@ -352,7 +352,7 @@
         "id": "ai-providers",
         "title": "8. Third-Party AI Providers",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io uses artificial intelligence to generate and optimize your CVs. Your CV data (experience, skills, education) is transmitted to:" },
+          { "type": "paragraph", "text": "FitMyCV uses artificial intelligence to generate and optimize your CVs. Your CV data (experience, skills, education) is transmitted to:" },
           { "type": "list", "items": ["OpenAI (United States)"] },
           { "type": "paragraph", "text": "OpenAI states that it does not use data transmitted via its API to train its models.", "link": "https://openai.com/privacy", "linkText": "OpenAI" },
           { "type": "subtitle", "text": "Automated Decisions" },
@@ -363,7 +363,7 @@
         "id": "payments",
         "title": "9. Payment Processing",
         "content": [
-          { "type": "paragraph", "text": "Payments are processed by Stripe Payments Europe, Ltd. (Ireland). FitMyCV.io never stores complete credit card numbers." },
+          { "type": "paragraph", "text": "Payments are processed by Stripe Payments Europe, Ltd. (Ireland). FitMyCV never stores complete credit card numbers." },
           { "type": "paragraph", "text": "Stripe Privacy Policy", "link": "https://stripe.com/privacy", "linkText": "Stripe Privacy Policy" }
         ]
       },
@@ -379,7 +379,7 @@
         "id": "cookies",
         "title": "11. Cookies",
         "content": [
-          { "type": "paragraph", "text": "FitMyCV.io uses essential cookies required for the site to function (session, authentication, anti-spam protection). No advertising cookies are used." }
+          { "type": "paragraph", "text": "FitMyCV uses essential cookies required for the site to function (session, authentication, anti-spam protection). No advertising cookies are used." }
         ]
       },
       {

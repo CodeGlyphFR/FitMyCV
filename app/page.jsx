@@ -21,7 +21,7 @@ import { getCvVersionContent } from "@/lib/cv-core/versioning";
 import { getSectionOrder, getSectionTitles } from "@/lib/cv-core/constants";
 
 export const metadata = {
-  title: "Mes CVs - FitMyCV.io",
+  title: "Mes CVs - FitMyCV",
   description: "Visualisez et gérez vos CV personnalisés",
 };
 

@@ -173,7 +173,7 @@ export function useEmailTemplates({ refreshKey, onLogsRefresh }) {
     try {
       const body = {
         name: newTemplateName.trim(),
-        subject: `${selectedTrigger.label} - FitMyCV.io`,
+        subject: `${selectedTrigger.label} - FitMyCV`,
       };
 
       if (copyFromTemplateId) {

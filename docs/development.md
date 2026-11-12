@@ -1,4 +1,4 @@
-# Guide de Développement - FitMyCV.io
+# Guide de Développement - FitMyCV
 
 > Instructions pour le développement, configuration et déploiement
 
@@ -107,14 +107,14 @@ Application disponible sur `http://localhost:3001`
 | `DATABASE_URL` | URL PostgreSQL | `postgresql://user:pass@localhost:5432/fitmycv` |
 | `OPENAI_API_KEY` | Clé API OpenAI | `sk-...` |
 | `NEXTAUTH_SECRET` | Secret NextAuth (32+ chars) | Générer avec `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | URL application | `https://app.fitmycv.io` |
+| `NEXTAUTH_URL` | URL application | `https://app.fitmycv.fr` |
 
 ### Email
 
 | Variable | Description | Défaut |
 |----------|-------------|--------|
 | `EMAIL_PROVIDER` | Provider email | `"auto"` |
-| `EMAIL_FROM` | Expéditeur | `"FitMyCV <noreply@fitmycv.io>"` |
+| `EMAIL_FROM` | Expéditeur | `"FitMyCV <noreply@fitmycv.fr>"` |
 | `SMTP_HOST` | Serveur SMTP | `ssl0.ovh.net` |
 | `SMTP_PORT` | Port SMTP | `587` |
 | `SMTP_USER` | Utilisateur SMTP | - |
@@ -541,7 +541,7 @@ npm run test:e2e
 ```env
 NODE_ENV=production
 DATABASE_URL="postgresql://..."
-NEXTAUTH_URL="https://app.fitmycv.io"
+NEXTAUTH_URL="https://app.fitmycv.fr"
 # ... autres variables
 ```
 

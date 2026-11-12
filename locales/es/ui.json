@@ -99,7 +99,7 @@
   },
   "footer": {
     "cookieManagement": "Gestión de cookies",
-    "copyright": "© 2026 FitMyCV.io",
+    "copyright": "© 2026 FitMyCV",
     "about": "Acerca de",
     "cookies": "Cookies",
     "terms": "Términos de servicio",
@@ -364,14 +364,14 @@
     "lastUpdated": "Última actualización:",
     "terms": {
       "meta": {
-        "title": "Términos de servicio - FitMyCV.io",
+        "title": "Términos de servicio - FitMyCV",
         "description": "Términos de servicio y condiciones de uso"
       },
       "title": "Términos de servicio"
     },
     "privacy": {
       "meta": {
-        "title": "Política de privacidad - FitMyCV.io",
+        "title": "Política de privacidad - FitMyCV",
         "description": "Política de privacidad y protección de datos personales"
       },
       "title": "Política de privacidad"

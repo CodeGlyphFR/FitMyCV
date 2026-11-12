@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Mot de passe oublié - FitMyCV.io",
+  title: "Mot de passe oublié - FitMyCV",
   description: "Réinitialisez votre mot de passe",
 };
 

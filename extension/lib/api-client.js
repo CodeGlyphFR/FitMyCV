@@ -11,7 +11,7 @@ import { shouldRefreshToken } from './token-utils.js';
 // Base URL — configurable via build env
 const API_BASE = typeof __API_BASE__ !== 'undefined'
   ? __API_BASE__
-  : 'https://app.fitmycv.io';
+  : 'https://app.fitmycv.fr';
 
 const STORAGE_KEYS = {
   TOKEN: 'fitmycv_token',

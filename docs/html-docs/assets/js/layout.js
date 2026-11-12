@@ -1,5 +1,5 @@
 /**
- * FitMyCV.io - Documentation Technique
+ * FitMyCV - Documentation Technique
  * Layout injection : charge sidebar et header depuis les templates
  */
 

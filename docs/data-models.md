@@ -1,4 +1,4 @@
-# Modèles de Données - FitMyCV.io
+# Modèles de Données - FitMyCV
 
 > Documentation des 33 modèles Prisma organisés par domaine fonctionnel
 

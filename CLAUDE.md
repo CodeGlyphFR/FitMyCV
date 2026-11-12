@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-Instructions pour Claude Code sur le repository FitMyCV.io.
+Instructions pour Claude Code sur le repository FitMyCV.
 
 ## Vue d'Ensemble
 
-**FitMyCV.io** - Application SaaS de génération de CV optimisés par IA.
+**FitMyCV** - Application SaaS de génération de CV optimisés par IA.
 - **Stack** : Next.js 16 (App Router) + React 19 + Tailwind CSS 4.
 - **Database** : PostgreSQL via Prisma 6 (33 modèles).
 - **Infrastructure** : Déploiement automatisé via Docker et GitHub Actions sur runner auto-hébergé.
@@ -74,14 +74,14 @@ module.exports = async (prisma) => {
 
 * **Branches** : `main` (Production) ← `dev` (Travail).
 * **Pull Request vers `main**` :
-* Déclenche un déploiement Pre-prod sur `dev.fitmycv.io` (Port 3001).
+* Déclenche un déploiement Pre-prod sur `dev.fitmycv.fr` (Port 3001).
 * Clone automatiquement la DB `fitmycv_prod` vers `fitmycv_release` pour les tests.
 * **Nettoyage** : La fermeture de la PR (merge ou close) arrête et supprime automatiquement le serveur de test.
 
 
 * **Merge sur `main**` :
 * Incrémente la version et la propage dynamiquement dans toute la codebase.
-* Déploie en production sur `app.fitmycv.io` (Port 3000).
+* Déploie en production sur `app.fitmycv.fr` (Port 3000).
 * Synchronise automatiquement `main` vers la branche `dev`.
 
 
@@ -116,7 +116,7 @@ Extension Chrome/Firefox Manifest V3 pour extraire les offres d'emploi depuis le
 ### Commandes Extension
 
 ```bash
-cd extension && npm run dev           # Build watch + API dev (dev.fitmycv.io)
+cd extension && npm run dev           # Build watch + API dev (dev.fitmycv.fr)
 cd extension && npm run build:chrome  # Build production Chrome
 cd extension && npm run build:firefox # Build production Firefox
 cd extension && npm run zip:chrome    # Zip pour publication Chrome Web Store
@@ -144,7 +144,7 @@ extension/
 
 ### Points Clés Extension ↔ SaaS
 
-* **Variable `__API_BASE__`** : Définie dans `vite.config.js` via `API_BASE` env var (défaut: `https://fitmycv.io`)
+* **Variable `__API_BASE__`** : Définie dans `vite.config.js` via `API_BASE` env var (défaut: `https://fitmycv.fr`)
 * **Variable `TARGET_BROWSER`** : Utiliser `TARGET_BROWSER` (pas `process.env.BROWSER` qui est pris par VS Code Server)
 * **Auth** : L'extension s'authentifie via `/api/auth/extension-token` → JWT vérifié par `withExtensionAuth` (`lib/api/withExtensionAuth.js`)
 * **API Extension** : Routes `/api/ext/*` — CVs, crédits, tâches background

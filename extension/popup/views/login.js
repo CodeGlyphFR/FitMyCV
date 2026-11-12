@@ -21,7 +21,7 @@ export function initLogin(onLoginSuccess) {
   const btnText = btnLogin.querySelector('.btn-text');
   const btnLoading = btnLogin.querySelector('.btn-loading');
 
-  const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.io';
+  const API_BASE = typeof __API_BASE__ !== 'undefined' ? __API_BASE__ : 'https://app.fitmycv.fr';
 
   // Links — open SaaS in new tab
   document.getElementById('link-forgot').addEventListener('click', (e) => {
