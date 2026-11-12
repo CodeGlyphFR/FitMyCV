@@ -1,26 +1,40 @@
+# Résumé actuel du candidat (BASE À ADAPTER)
+
+{currentSummary}
+
+---
+
 # Données du candidat
 
-## Titres actuels
-
-{currentTitles}
-
-## Années d'expérience totales
+## Ancienneté totale
 
 {totalYears} ans
 
-## Expérience par domaine (total agrégé)
+## Poste(s) actuel(s)
 
-{experiencesByDomain}
+{currentTitles}
+
+## Détail des expériences (adaptées à l'offre)
+
+{experienceDetails}
 
 ## Durée de chaque expérience
 
 {experienceDurations}
 
-## Top réalisations chiffrées (pour phrase ACCOMPLISSEMENT)
+## Expérience par domaine (total agrégé)
+
+{experiencesByDomain}
+
+## Projets
+
+{projectDetails}
+
+## Réalisations chiffrées
 
 {topDeliverables}
 
-## Skills pertinents pour l'offre
+## Compétences du candidat pertinentes pour l'offre
 
 {topSkills}
 
@@ -28,11 +42,11 @@
 
 # Offre d'emploi cible
 
-## Titre du poste visé
+## Poste visé
 
 {jobTitle}
 
-## Mots-clés requis (pour optimisation ATS)
+## Mots-clés de l'offre (à reprendre seulement s'ils correspondent à des faits du CV)
 
 {jobKeywords}
 
@@ -40,14 +54,10 @@
 
 # Instructions
 
-**Langue du résumé (description):** {targetLanguage}
+**Langue du résumé (description) :** {targetLanguage}
 
-**Langue de la raison (reason):** {interfaceLanguage}
+**Langue de la raison (reason) :** {interfaceLanguage}
 
-Génère le résumé professionnel en suivant la structure DOMAINE + ACCOMPLISSEMENT + VALEUR.
-
-Le domaine de la phrase 1 doit être le plus pertinent pour « {jobTitle} » parmi les domaines réellement exercés (pas forcément celui qui totalise le plus d'années).
-
-RAPPEL: NE PAS commencer par un titre de poste. Commencer par les années d'expérience.
+Adapte le résumé actuel au poste « {jobTitle} » en suivant la structure POSITIONNEMENT + PREUVE + VALEUR (3 à 4 phrases, 60 à 90 mots), sans pronom personnel et sans rien inventer.
 
 Réponds en JSON valide avec `description` et `reason`.

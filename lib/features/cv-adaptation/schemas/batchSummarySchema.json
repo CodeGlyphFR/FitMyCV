@@ -6,7 +6,7 @@
     "properties": {
       "description": {
         "type": "string",
-        "description": "Résumé professionnel généré (2-4 phrases, 50-75 mots, langue cible)"
+        "description": "Résumé professionnel adapté au poste (3-4 phrases, 60-90 mots, sans pronom personnel, langue cible)"
       },
       "reason": {
         "type": "string",
