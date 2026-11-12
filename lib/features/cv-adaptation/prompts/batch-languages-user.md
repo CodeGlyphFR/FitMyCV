@@ -12,6 +12,7 @@
 
 ## Langue source du CV: {sourceLanguage}
 ## Langue de sortie: {targetLanguage}
+## Langue des raisons (`reason`): {interfaceLanguage}
 
 ## Ta Tâche
 
@@ -21,6 +22,7 @@
 
 **IMPORTANT**:
 - Ne JAMAIS augmenter artificiellement le niveau (seulement reformuler)
+- Rédige TOUS les champs `reason` en **{interfaceLanguage}** (langue de l'interface), quelle que soit la langue de sortie
 - Utilise `action: "kept"` UNIQUEMENT si name_before = name_after ET level_before = level_after (aucun changement de texte). Toute traduction, même mineure, est `action: "modified"`.
 
 Réponds en JSON valide.
