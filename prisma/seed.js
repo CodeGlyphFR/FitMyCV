@@ -233,6 +233,40 @@ const SUBSCRIPTION_PLANS = [
 // 5. OPENAI PRICING (Données DEV - prix/MTok)
 // ============================================================================
 const OPENAI_PRICING = [
+  // GPT-6 series (actifs) — Priority = Fast mode (2x)
+  {
+    modelName: 'gpt-6-luna',
+    inputPricePerMToken: 0.10,
+    outputPricePerMToken: 0.50,
+    cachePricePerMToken: 0.01,
+    inputPricePerMTokenPriority: 0.20,
+    outputPricePerMTokenPriority: 1.00,
+    cachePricePerMTokenPriority: 0.02,
+    description: 'GPT-6 Luna - tâches ciblées et volumineuses',
+    isActive: true,
+  },
+  {
+    modelName: 'gpt-6.1-terra',
+    inputPricePerMToken: 1.00,
+    outputPricePerMToken: 5.00,
+    cachePricePerMToken: 0.05,
+    inputPricePerMTokenPriority: 2.00,
+    outputPricePerMTokenPriority: 10.00,
+    cachePricePerMTokenPriority: 0.10,
+    description: 'GPT-6.1 Terra - rédaction et raisonnement visuel, rapide',
+    isActive: true,
+  },
+  {
+    modelName: 'gpt-6.1-sol',
+    inputPricePerMToken: 2.00,
+    outputPricePerMToken: 10.00,
+    cachePricePerMToken: 0.10,
+    inputPricePerMTokenPriority: 4.00,
+    outputPricePerMTokenPriority: 20.00,
+    cachePricePerMTokenPriority: 0.20,
+    description: 'GPT-6.1 Sol - travail complexe',
+    isActive: true,
+  },
   // GPT-4.1 series
   {
     modelName: 'gpt-4.1-2025-04-14',
@@ -240,7 +274,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 8.00,
     cachePricePerMToken: 0.5,
     description: 'GPT-4.1 - Improved reasoning model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-4.1-mini-2025-04-14',
@@ -248,7 +282,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 1.6,
     cachePricePerMToken: 0.1,
     description: 'GPT-4.1 Mini - Compact reasoning model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-4.1-nano',
@@ -256,7 +290,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 0.4,
     cachePricePerMToken: 0.025,
     description: '',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   // GPT-4o series
   {
@@ -265,7 +299,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 10.00,
     cachePricePerMToken: 1.25,
     description: 'GPT-4o - Multimodal flagship model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-4o-mini',
@@ -273,7 +307,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 0.60,
     cachePricePerMToken: 0.075,
     description: 'GPT-4o Mini - Affordable and intelligent small model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-4o-mini-tts',
@@ -281,7 +315,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 0.60,
     cachePricePerMToken: 0.075,
     description: 'GPT-4o Mini TTS - Text-to-speech model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-4o-mini-transcribe',
@@ -289,7 +323,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 0.60,
     cachePricePerMToken: 0.075,
     description: 'GPT-4o Mini Transcribe - Audio transcription model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   // GPT-5 series
   {
@@ -298,7 +332,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 10.00,
     cachePricePerMToken: 0.125,
     description: 'GPT-5 - Advanced model with extended context',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-5-mini-2025-08-07',
@@ -306,7 +340,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 2.00,
     cachePricePerMToken: 0.025,
     description: 'GPT-5 Mini - Standard model for most tasks',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-5-mini',
@@ -314,7 +348,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 2.00,
     cachePricePerMToken: 0.025,
     description: '',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-5-nano-2025-08-07',
@@ -322,7 +356,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 0.40,
     cachePricePerMToken: 0.005,
     description: 'GPT-5 Nano - Fast and economical model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'gpt-5-nano',
@@ -330,7 +364,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 0.40,
     cachePricePerMToken: 0.005,
     description: '',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   // o-series (reasoning models)
   {
@@ -339,7 +373,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 8.00,
     cachePricePerMToken: 0.5,
     description: '',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'o3-deep-research',
@@ -347,7 +381,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 40.00,
     cachePricePerMToken: 2.5,
     description: '',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'o3-deep-research-2025-06-26',
@@ -355,7 +389,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 40.00,
     cachePricePerMToken: 2.5,
     description: 'o3 - Advanced deep research reasoning model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'o4-mini',
@@ -363,7 +397,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 4.4,
     cachePricePerMToken: 0.275,
     description: '',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
   {
     modelName: 'o4-mini-deep-research-2025-06-26',
@@ -371,7 +405,7 @@ const OPENAI_PRICING = [
     outputPricePerMToken: 8.00,
     cachePricePerMToken: 0.5,
     description: 'o4 Mini - Compact deep research reasoning model',
-    isActive: true,
+    isActive: false, // retiré ou en cours de retrait par OpenAI
   },
 ];
 
@@ -415,149 +449,294 @@ const OPENAI_ALERTS = [
 const AI_MODEL_SETTINGS = [
   {
     settingName: 'model_cv_generation',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Modèle utilisé pour la génération de CV',
   },
   {
     settingName: 'model_match_score',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Modèle pour calcul du score de correspondance',
   },
   {
     settingName: 'model_translate_cv',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Modèle pour traduction de CV',
   },
   {
     settingName: 'model_extract_job_offer',
-    value: 'o4-mini',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: "Modèle pour extraction d'offres d'emploi",
   },
   {
     settingName: 'model_generate_from_job_title',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Modèle pour génération de CV depuis titre de poste',
   },
   {
     settingName: 'model_import_pdf',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Modèle pour import de CV depuis PDF',
   },
   {
     settingName: 'model_first_import_pdf',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: "Modèle IA utilisé pour le premier import PDF d'un utilisateur (sans historique d'import)",
   },
   {
     settingName: 'model_optimize_cv',
-    value: 'gpt-4o',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Modèle pour optimisation de CV',
   },
   {
     settingName: 'model_detect_language',
-    value: 'gpt-4o-mini',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Modèle pour détection de langue de CV (léger, 50 chars max)',
   },
   // Pipeline Adaptation CV - Models par phase
   {
     settingName: 'model_cv_classify',
-    value: 'gpt-4o',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour la phase classification (KEEP/REMOVE/MOVE)',
   },
   {
     settingName: 'model_cv_batch_experience',
-    value: 'o4-mini',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour adaptation des expériences',
   },
   {
     settingName: 'model_cv_batch_projects',
-    value: 'gpt-4o',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour adaptation des projets',
   },
   {
     settingName: 'model_cv_batch_extras',
-    value: 'gpt-4o',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour adaptation des extras',
   },
   {
     settingName: 'model_cv_batch_education',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Pipeline Adaptation: Modèle pour traduction des formations',
   },
   {
     settingName: 'model_cv_batch_languages',
-    value: 'gpt-4o-mini',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Pipeline Adaptation: Modèle pour adaptation des langues',
   },
   {
     settingName: 'model_cv_batch_skills',
-    value: 'o4-mini',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour déduction des compétences',
   },
   {
     settingName: 'model_cv_batch_summary',
-    value: 'o4-mini',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline v2: Modèle pour génération du summary',
   },
   // Pipeline Amélioration CV - Models par stage
   {
     settingName: 'model_improve_preprocess',
-    value: 'gpt-4o',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline Amélioration v2: Modèle pour classifier les suggestions',
   },
   {
     settingName: 'model_improve_experience',
-    value: 'gpt-4.1-2025-04-14',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline Amélioration v2: Modèle pour améliorer une expérience',
   },
   {
     settingName: 'model_improve_project',
-    value: 'gpt-4.1-2025-04-14',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline Amélioration v2: Modèle pour améliorer ou créer un projet',
   },
   {
     settingName: 'model_improve_summary',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: 'Pipeline Amélioration v2: Modèle pour mettre à jour le summary',
   },
   {
     settingName: 'model_improve_classify_skills',
-    value: 'gpt-4o',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Pipeline Amélioration v2: Modèle pour classifier les skills ajoutées',
   },
   {
     settingName: 'model_improve_languages',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Modèle pour optimisation des langues (Pipeline V2)',
   },
   {
     settingName: 'model_improve_extras',
-    value: 'gpt-4.1-mini-2025-04-14',
+    value: 'gpt-6-luna',
     category: 'ai_models',
     description: 'Pipeline Amélioration: Modèle pour améliorer les extras (certifications, hobbies)',
+  },
+  // Efforts de raisonnement par tâche (GPT-6)
+  {
+    settingName: 'effort_cv_classify',
+    value: 'low',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_classify (none | low | medium | high). Raisonnement léger : plus fin, un peu plus lent',
+  },
+  {
+    settingName: 'effort_cv_batch_skills',
+    value: 'low',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_batch_skills (none | low | medium | high). Raisonnement léger : plus fin, un peu plus lent',
+  },
+  {
+    settingName: 'effort_match_score',
+    value: 'low',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_match_score (none | low | medium | high). Raisonnement léger : plus fin, un peu plus lent',
+  },
+  {
+    settingName: 'effort_improve_preprocess',
+    value: 'low',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_improve_preprocess (none | low | medium | high). Raisonnement léger : plus fin, un peu plus lent',
+  },
+  {
+    settingName: 'effort_cv_batch_experience',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_batch_experience (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_cv_batch_projects',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_batch_projects (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_cv_batch_summary',
+    value: 'low',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_batch_summary (none | low | medium | high). Raisonnement léger : plus fin, un peu plus lent',
+  },
+  {
+    settingName: 'effort_generate_from_job_title',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_generate_from_job_title (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_improve_experience',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_improve_experience (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_improve_project',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_improve_project (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_improve_summary',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_improve_summary (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_first_import_pdf',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_first_import_pdf (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_import_pdf',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_import_pdf (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_optimize_cv',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_optimize_cv (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_extract_job_offer',
+    value: 'low',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_extract_job_offer (none | low | medium | high). Raisonnement léger : plus fin, un peu plus lent',
+  },
+  {
+    settingName: 'effort_detect_language',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_detect_language (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_cv_batch_languages',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_batch_languages (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_cv_batch_extras',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_batch_extras (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_cv_batch_education',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_batch_education (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_translate_cv',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_translate_cv (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_cv_generation',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_cv_generation (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_improve_classify_skills',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_improve_classify_skills (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_improve_languages',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_improve_languages (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
+  },
+  {
+    settingName: 'effort_improve_extras',
+    value: 'none',
+    category: 'ai_models',
+    description: 'Effort de raisonnement pour model_improve_extras (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
   },
 ];
 

@@ -15,6 +15,8 @@ import {
   getAIModelsStructure,
   getCreditsStructure,
   AVAILABLE_AI_MODELS,
+  AVAILABLE_REASONING_EFFORTS,
+  isReasoningEffortSetting,
 } from '@/lib/admin/settingsConfig';
 import { PdfImportSettings } from './settings/PdfImportSettings';
 import { SectionOrderSettings } from './settings/SectionOrderSettings';
@@ -371,12 +373,15 @@ export function SettingsTab({ refreshKey }) {
     const currentValue = getCurrentValue(setting);
     const isBinary = isBinaryValue(setting.value);
     const isAIModel = setting.category === 'ai_models';
+    const isEffort = isReasoningEffortSetting(setting.settingName);
     const isModified = modifiedSettings[setting.id] !== undefined;
 
-    const modelOptions = availableModels.map((model) => ({
-      value: model,
-      label: model,
-    }));
+    const modelOptions = isEffort
+      ? AVAILABLE_REASONING_EFFORTS.map((effort) => ({ value: effort, label: effort }))
+      : availableModels.map((model) => ({
+          value: model,
+          label: model,
+        }));
 
     return (
       <div
@@ -500,7 +505,7 @@ export function SettingsTab({ refreshKey }) {
                 <div className="p-3 space-y-2 bg-white/5">
                   {settingNames.map((settingName) => {
                     const setting = settingsByName[settingName];
-                    return setting ? <SettingRow key={setting.id} setting={setting} /> : null;
+                    return setting ? <SettingRow key={setting.id} setting={setting} indent={isReasoningEffortSetting(settingName)} /> : null;
                   })}
                 </div>
               )}
