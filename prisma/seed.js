@@ -267,146 +267,6 @@ const OPENAI_PRICING = [
     description: 'GPT-6.1 Sol - travail complexe',
     isActive: true,
   },
-  // GPT-4.1 series
-  {
-    modelName: 'gpt-4.1-2025-04-14',
-    inputPricePerMToken: 2.00,
-    outputPricePerMToken: 8.00,
-    cachePricePerMToken: 0.5,
-    description: 'GPT-4.1 - Improved reasoning model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-4.1-mini-2025-04-14',
-    inputPricePerMToken: 0.4,
-    outputPricePerMToken: 1.6,
-    cachePricePerMToken: 0.1,
-    description: 'GPT-4.1 Mini - Compact reasoning model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-4.1-nano',
-    inputPricePerMToken: 0.1,
-    outputPricePerMToken: 0.4,
-    cachePricePerMToken: 0.025,
-    description: '',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  // GPT-4o series
-  {
-    modelName: 'gpt-4o',
-    inputPricePerMToken: 2.50,
-    outputPricePerMToken: 10.00,
-    cachePricePerMToken: 1.25,
-    description: 'GPT-4o - Multimodal flagship model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-4o-mini',
-    inputPricePerMToken: 0.15,
-    outputPricePerMToken: 0.60,
-    cachePricePerMToken: 0.075,
-    description: 'GPT-4o Mini - Affordable and intelligent small model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-4o-mini-tts',
-    inputPricePerMToken: 0.15,
-    outputPricePerMToken: 0.60,
-    cachePricePerMToken: 0.075,
-    description: 'GPT-4o Mini TTS - Text-to-speech model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-4o-mini-transcribe',
-    inputPricePerMToken: 0.15,
-    outputPricePerMToken: 0.60,
-    cachePricePerMToken: 0.075,
-    description: 'GPT-4o Mini Transcribe - Audio transcription model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  // GPT-5 series
-  {
-    modelName: 'gpt-5-2025-08-07',
-    inputPricePerMToken: 1.25,
-    outputPricePerMToken: 10.00,
-    cachePricePerMToken: 0.125,
-    description: 'GPT-5 - Advanced model with extended context',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-5-mini-2025-08-07',
-    inputPricePerMToken: 0.25,
-    outputPricePerMToken: 2.00,
-    cachePricePerMToken: 0.025,
-    description: 'GPT-5 Mini - Standard model for most tasks',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-5-mini',
-    inputPricePerMToken: 0.25,
-    outputPricePerMToken: 2.00,
-    cachePricePerMToken: 0.025,
-    description: '',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-5-nano-2025-08-07',
-    inputPricePerMToken: 0.05,
-    outputPricePerMToken: 0.40,
-    cachePricePerMToken: 0.005,
-    description: 'GPT-5 Nano - Fast and economical model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'gpt-5-nano',
-    inputPricePerMToken: 0.05,
-    outputPricePerMToken: 0.40,
-    cachePricePerMToken: 0.005,
-    description: '',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  // o-series (reasoning models)
-  {
-    modelName: 'o3',
-    inputPricePerMToken: 2.00,
-    outputPricePerMToken: 8.00,
-    cachePricePerMToken: 0.5,
-    description: '',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'o3-deep-research',
-    inputPricePerMToken: 10.00,
-    outputPricePerMToken: 40.00,
-    cachePricePerMToken: 2.5,
-    description: '',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'o3-deep-research-2025-06-26',
-    inputPricePerMToken: 10.00,
-    outputPricePerMToken: 40.00,
-    cachePricePerMToken: 2.5,
-    description: 'o3 - Advanced deep research reasoning model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'o4-mini',
-    inputPricePerMToken: 1.1,
-    outputPricePerMToken: 4.4,
-    cachePricePerMToken: 0.275,
-    description: '',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
-  {
-    modelName: 'o4-mini-deep-research-2025-06-26',
-    inputPricePerMToken: 2.00,
-    outputPricePerMToken: 8.00,
-    cachePricePerMToken: 0.5,
-    description: 'o4 Mini - Compact deep research reasoning model',
-    isActive: false, // retiré ou en cours de retrait par OpenAI
-  },
 ];
 
 // ============================================================================
@@ -488,12 +348,6 @@ const AI_MODEL_SETTINGS = [
     value: 'gpt-6.1-terra',
     category: 'ai_models',
     description: "Modèle IA utilisé pour le premier import PDF d'un utilisateur (sans historique d'import)",
-  },
-  {
-    settingName: 'model_optimize_cv',
-    value: 'gpt-6.1-terra',
-    category: 'ai_models',
-    description: 'Modèle pour optimisation de CV',
   },
   {
     settingName: 'model_detect_language',
@@ -671,12 +525,6 @@ const AI_MODEL_SETTINGS = [
     value: 'none',
     category: 'ai_models',
     description: 'Effort de raisonnement pour model_import_pdf (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
-  },
-  {
-    settingName: 'effort_optimize_cv',
-    value: 'none',
-    category: 'ai_models',
-    description: 'Effort de raisonnement pour model_optimize_cv (none | low | medium | high). Sans raisonnement : réponse la plus rapide',
   },
   {
     settingName: 'effort_extract_job_offer',
